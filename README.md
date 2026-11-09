@@ -1,64 +1,77 @@
 # Dubai Rent Atlas
 
-An interactive, browser-based Dubai rental intelligence map based on **actual registered DLD / Ejari rental transaction data**, not advertised listing prices.
+Interactive Dubai rental map using **actual Dubai Land Department (DLD / Ejari) registered rental transactions**, not advertised asking rents.
 
-## Current state (2026-11-09)
+**Expected site URL after Pages deployment:** https://jamalxcode.github.io/dubai_rent/  
+**Repository:** https://github.com/jamalxcode/dubai_rent
 
-**MVP implemented.** Static browser application with Leaflet, OpenStreetMap, CSV import, filters, map visualization, table, and filtered CSV export. **No real transactions are bundled**. No live API has been authorized or connected. No unattended server-side daily refresh is configured.
+## Status (9 November 2026)
+
+- **Built:** static responsive Leaflet/OpenStreetMap map, browser CSV importer, annual-rent filters, community bubbles, illustrative-position individual markers, median statistics, transaction table and filtered CSV export.
+- **Built:** optional authorized CORS HTTPS CSV/JSON feed with opt-in refresh on the next page opening after 24 hours.
+- **Committed:** GitHub Actions Pages deployment workflow.
+- **Not confirmed:** GitHub Pages enabled or deployment successful.
+- **Not implemented:** live DLD API integration, truly unattended daily refresh, official GIS polygons, building-level locations, and an owner portfolio overlay.
+- **No real rental transactions are bundled.** The app starts empty by design.
+
+## Vision
+
+Make an intuitive map to discover **how much people actually pay annually to rent across Dubai**. Show recent Ejari registrations and renewal patterns, compare neighborhoods and property types, and export data to spreadsheets. Prioritize registered amounts, provenance, transparency, historical comparisons and useful portfolio benchmarks. Scope is **Dubai Emirate only**.
+
+See [full design notes and decision log](docs/DECISIONS.md).
 
 ## Launch
 
-1. Open `index.html` in a modern browser. Internet access is needed for Leaflet and OpenStreetMap tiles.
-2. Go to the [official DLD real-estate data portal](https://dubailand.gov.ae/en/open-data/real-estate-data/) and select **Rents**.
-3. Choose registration dates, complete the site's required CAPTCHA, then download **CSV**.
-4. Use **DLD rental CSV** in the left pane. Filter by area, rent, bedroom count and registration date.
-5. Switch between community bubble and individual marker displays. Export filtered CSV when needed.
+**Online:** Once Pages is enabled, use https://jamalxcode.github.io/dubai_rent/.
 
-To serve locally:
+**Configure Pages:** Visit [Pages settings](https://github.com/jamalxcode/dubai_rent/settings/pages) and choose **GitHub Actions** under Build and deployment. Check [Actions](https://github.com/jamalxcode/dubai_rent/actions) for successful deployment.
 
+**Local:**
 ```sh
+git clone https://github.com/jamalxcode/dubai_rent.git
+cd dubai_rent
 python3 -m http.server 8080
 ```
+Open http://localhost:8080. An internet connection is required for Leaflet CDN and OpenStreetMap tiles.
 
-Open http://localhost:8080.
+## Getting real registered rent data
 
-## Data schema
+1. Visit [DLD Real Estate Data](https://dubailand.gov.ae/en/open-data/real-estate-data/), choose **Rents** and select the date range.
+2. Follow the portal's access requirements, including CAPTCHA when shown, and export a CSV.
+3. On the website, import the file using **DLD rental CSV**.
+4. Filter by area, project, bedroom count, annual AED amount and registration date. View community bubbles or transaction markers; export your filtered selection.
 
-The portal currently publishes the following rental headers:
+The public DLD rental data includes **Annual Amount** (AED/year), Contract Amount, registration/start/end dates, Area, Project/Master Project, property size and room count, subject to availability. Annual Amount should not be confused with total Contract Amount. No tenant names, unit numbers or precise transaction address are promised.
 
-`Registration Date`, `Start Date`, `End Date`, `Version`, `Area`, `Contract Amount`, `Annual Amount`, `Is Free Hold?`, `Property Size (sq.m)`, `Property Type`, `Property Sub Type`, `Number of Rooms`, `Usage`, `Nearest Metro`, `Nearest Mall`, `Nearest Landmark`, `Parking`, `No of Units`, `Master Project`, `Project`.
+## Geography: important accuracy warning
 
-The importer is tolerant of selected normalized API-style field names. It requires a non-empty Area and positive Annual Amount. It parses quoted CSV cells, escaped quotes and line breaks. For alternate column names, update the `normalize()` mapping in `index.html`.
+Public transaction rows generally lack authoritative per-contract GPS coordinates or unit addresses. The MVP uses a small hand-curated dictionary of **approximate community centers**. Individual-marker mode spreads markers near those centers solely to make multiple records visible: **these marker positions are not rental-property locations**. Unmatched locations stay in the table but are not mapped. Future enhancements should use permitted and verified community polygons and verified building locations with a displayed location-confidence level.
 
-## Geographic precision
+## Refresh strategy
 
-**The public rental feed does not contain verified individual contract street addresses or lat/lon.** The included `LOCATIONS` dictionary contains a limited set of approximate community centers for visualization, not authoritative DLD GIS boundaries or building coordinates. A record without a match remains in the table and is included in summary statistics, but not plotted. Individual point mode spreads multiple markers for visual legibility: **those positions are artificial and must never be interpreted as rental unit coordinates**.
+**Today:** Manual CSV and optional feed. The browser can fetch a CORS-enabled, authorized HTTPS CSV/JSON source. Opt-in auto-refresh runs only when a user next opens the page and at least 24 hours have passed since the previous successful fetch. This is **not** a background scheduler.
 
-Suggested production upgrade: obtain licensed official community polygon boundaries, normalize DLD community codes/names, and render choropleth aggregations with confidence labels. Only add building coordinates after matching verified reference data.
+**Planned:** First verify DLD authorization, contract-feed availability, API terms and licence. Then implement a separate secure scheduled collector, once daily, with limited incremental date windows, overlap for late registrations/corrections, deduplication, retries/backoff, logging, freshness indicators and approved sanitized hosting. Never bypass CAPTCHA or access controls or assume undocumented endpoints are licensed.
 
-## Data feeds and daily updates
+## Roadmap
 
-The optional **Authorized feed** input accepts a CORS-accessible HTTPS endpoint serving an array of JSON records, `{records: [...]}`, `{data: [...]}`, or a DLD-shaped CSV. This is **not** a direct integration with the DLD site. A browser can fetch it manually; the opt-in refresh-on-open runs only when the page opens and the previous successful fetch was at least 24 hours ago. It does **not** perform an unattended daily fetch while the browser is closed.
+1. Validate importer against real DLD CSV, update field mapping and add tests.
+2. Confirm licensed API or allowed automated export method.
+3. Implement reliable daily ingestion, cache, corrections and audit trail.
+4. Introduce verified GIS community polygons and provenance-aware location matching.
+5. Add AED/m², medians by area, rooms/property type, time series, validated new/renewal separation and heat-map legend.
+6. Add secure, separate comparison with owner's Dubai properties without publishing private contracts.
+7. Optimize large datasets and add data-quality statistics and mobile usability improvements.
 
-**Do not automate CAPTCHA or access-control bypass.** Confirm API terms/licensing with DLD before scheduling a data harvester. For truly unattended daily updates, add a separate licensed collector and publish sanitized permitted records to an HTTPS feed. Cache, track freshness, deduplicate, retain correction history, and observe rate limits.
+## Files
 
-## Security and privacy
+- `index.html`: map application.
+- `.github/workflows/pages.yml`: Pages deployment.
+- `docs/DECISIONS.md`: full design rationale, requirements, limitations and milestone plan.
+- `README.md`: this overview.
 
-- Never put DLD API tokens, usernames, private contracts, or sensitive tenant data in the public GitHub repository.
-- This repository is currently **public**. Import is browser-local; records are not uploaded by this application.
-- Only save the optional feed URL and refresh settings in local browser storage.
-- A commercial or government feed may require authenticated server-side proxy; do not embed credentials in client JavaScript.
-- Map tiles and Leaflet code load from third parties. Review their terms and privacy implications before public deployment.
+## Privacy, licence and attribution
 
-## Design notes
+This is an independent tool, **not** an official RERA/DLD service. Repository is currently **public**. Do not commit credentials, tenant details, private owner rental contracts or restricted DLD data. Respect DLD terms, allowed distribution and rate limits. Tiles © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright); mapping via [Leaflet](https://leafletjs.com/).
 
-See [docs/DECISIONS.md](docs/DECISIONS.md) for user requirements, sources, trade-offs and roadmap.
-
-## Sources
-
-- [DLD Real Estate Data](https://dubailand.gov.ae/en/open-data/real-estate-data/)
-- [DLD API Gateway](https://dubailand.gov.ae/en/eservices/api-gateway/)
-- [OpenStreetMap attribution](https://www.openstreetmap.org/copyright)
-- [Leaflet](https://leafletjs.com/)
-
-This independent visualization is **not** an official DLD or RERA service.
+Official sources: [DLD real-estate data](https://dubailand.gov.ae/en/open-data/real-estate-data/) and [DLD API Gateway](https://dubailand.gov.ae/en/eservices/api-gateway/).
