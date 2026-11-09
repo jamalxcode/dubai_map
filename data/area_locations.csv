@@ -1,0 +1,54 @@
+match,label,lat,lng,field
+marsa dubai,Dubai Marina,25.0800,55.1400,area
+business bay,Business Bay,25.1860,55.2680,area
+burj khalifa,Downtown Dubai,25.1950,55.2760,area
+al barsha south fourth,Jumeirah Village Circle,25.0570,55.2090,area
+al barsha south fifth,Jumeirah Village Triangle,25.0470,55.1880,area
+al barsha south third,Arjan,25.0650,55.2350,area
+al thanyah fifth,Jumeirah Lake Towers,25.0700,55.1450,area
+al warsan first,International City,25.1650,55.4100,area
+nadd hessa,Dubai Silicon Oasis,25.1200,55.3800,area
+palm jumeirah,Palm Jumeirah,25.1120,55.1380,area
+hadaeq sheikh mohammed bin rashid,Dubai Hills Estate,25.1100,55.2500,area
+al merkadh,Meydan / Sobha Hartland,25.1700,55.3000,area
+al khairan first,Dubai Creek Harbour,25.2050,55.3450,area
+al hebiah fourth,Dubai Sports City,25.0400,55.2200,area
+madinat al mataar,Dubai South,24.9000,55.1600,area
+al barsha first,Al Barsha,25.1150,55.1980,area
+mirdif,Mirdif,25.2200,55.4200,area
+al qusais first,Al Qusais,25.2750,55.3750,area
+al nahda second,Al Nahda,25.2900,55.3750,area
+al karama,Al Karama,25.2450,55.3030,area
+al mankhool,Al Mankhool,25.2520,55.2930,area
+al satwa,Al Satwa,25.2300,55.2750,area
+jumeirah first,Jumeirah 1,25.2250,55.2580,area
+international city,International City,25.1650,55.4100,any
+jumeirah village circle,Jumeirah Village Circle,25.0570,55.2090,any
+jumeirah village triangle,Jumeirah Village Triangle,25.0470,55.1880,any
+jumeirah lakes towers,Jumeirah Lake Towers,25.0700,55.1450,any
+jumeirah lake towers,Jumeirah Lake Towers,25.0700,55.1450,any
+dubai marina,Dubai Marina,25.0800,55.1400,any
+downtown dubai,Downtown Dubai,25.1950,55.2760,any
+dubai silicon oasis,Dubai Silicon Oasis,25.1200,55.3800,any
+dubai sports city,Dubai Sports City,25.0400,55.2200,any
+dubai hills,Dubai Hills Estate,25.1100,55.2500,any
+discovery gardens,Discovery Gardens,25.0420,55.1400,any
+arabian ranches,Arabian Ranches,25.0570,55.2700,any
+al furjan,Al Furjan,25.0280,55.1520,any
+town square,Town Square,25.0020,55.2800,any
+dubai investment park,Dubai Investment Park,24.9880,55.1710,any
+motor city,Motor City,25.0460,55.2420,any
+damac hills 2,Damac Hills 2,25.0000,55.3700,any
+damac hills,Damac Hills,25.0170,55.2470,any
+the greens,The Greens / The Views,25.0970,55.1740,any
+the views,The Greens / The Views,25.0970,55.1740,any
+dubai creek harbour,Dubai Creek Harbour,25.2050,55.3450,any
+creek harbour,Dubai Creek Harbour,25.2050,55.3450,any
+emirates hills,Emirates Hills,25.0690,55.1660,any
+bluewaters,Bluewaters,25.0800,55.1220,any
+city walk,City Walk,25.2070,55.2620,any
+dubai production city,Dubai Production City,25.0400,55.1900,any
+dubai land residence complex,Dubailand Residence Complex,25.0900,55.3800,any
+liwan,Liwan,25.0900,55.3800,any
+deira,Deira,25.2700,55.3230,area
+bur dubai,Bur Dubai,25.2570,55.2970,area

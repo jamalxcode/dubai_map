@@ -1,8 +1,8 @@
 # Dubai Rent Atlas: design notes, goals and decision log
 
 **Last updated:** 2026-11-09  
-**Repository:** `jamalxcode/dubai_rent`  
-**Planned public site:** https://jamalxcode.github.io/dubai_rent/
+**Repository:** `jamalxcode/dubai_map`  
+**Planned public site:** https://jamalxcode.github.io/dubai_map/
 
 ## The idea
 
@@ -83,6 +83,18 @@ Authorized DLD transaction endpoint / allowed official export
 
 **Not implemented or verified:** Actual DLD transaction load, schema against a freshly downloaded file, a live DLD API integration, unattended daily update, precise building mapping, official geographic polygons, private portfolio integration, or confirmation GitHub Pages is enabled/published.
 
+## Decisions on 2026-11-09 (second pass)
+
+- **Repo name is `dubai_map`.** All docs and URLs now use it; the old `dubai_rent` name was never a real repo.
+- **Source: Ejari rent contracts** (`dld_rent_contracts` on Dubai Pulse), not the RERA Rental Index.
+- **Once-daily, well-behaved pull.** GitHub Actions at 05:17 Kuwait time. The collector refuses a second API call on the same Dubai day, uses one token per run, a 2-day window, 1,000-row pages with 4 s pauses, a 30-page cap, bounded waits on 429/503 and then stops until tomorrow. Credentials live only in GitHub Secrets.
+- **Storage:** monthly gzip CSV partitions in `data/contracts/`, deduplicated on `contract_id` + `line_number` (hash key for website exports without an id). Only small aggregate JSON is published to Pages.
+- **Manual fallback:** CSVs dropped in `data/inbox/` are imported by the same workflow without calling the API.
+- **Map:** community bubbles from precomputed 12-month stats; individual "spread" markers removed because their positions were artificial. The browser CSV importer and the in-browser feed were removed; ingestion now happens server-side.
+- **Fixed:** the Leaflet stylesheet had an invalid SRI hash, so browsers blocked it and the map rendered broken.
+- **Matching:** official DLD area names first (`field=area`), then marketing names in master project/project (`field=any`). Unmatched areas are reported in `meta.json`.
+- **Not verified yet:** the exact Dubai Pulse endpoint for this dataset and its filter syntax. Both are configurable (`EJARI_API_URL`, `EJARI_FILTER`) and the first real run reports its status in `meta.json`.
+
 ## Prioritized next work
 
 **P0: working verified data**
@@ -119,6 +131,8 @@ Authorized DLD transaction endpoint / allowed official export
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-09: Renamed docs to `dubai_map`; added daily Ejari collector, aggregate builder, inbox import, rebuilt map page around precomputed data; fixed Leaflet CSS integrity hash; Pages enabled.
 
 - 2026-11-09: Built initial map and stored first README/decisions.
 - 2026-11-09: Added GitHub Pages Actions workflow. Activation and deployment not verified.

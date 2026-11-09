@@ -1,77 +1,77 @@
 # Dubai Rent Atlas
 
-Interactive Dubai rental map using **actual Dubai Land Department (DLD / Ejari) registered rental transactions**, not advertised asking rents.
+A map of what people **actually pay** to rent across Dubai, built from **Ejari rent contracts** registered with the Dubai Land Department (DLD). Not advertised asking prices, and not the RERA Rental Index calculator.
 
-**Expected site URL after Pages deployment:** https://jamalxcode.github.io/dubai_rent/  
-**Repository:** https://github.com/jamalxcode/dubai_rent
+- **Site:** https://jamalxcode.github.io/dubai_map/
+- **Repository:** https://github.com/jamalxcode/dubai_map
 
-## Status (9 November 2026)
+## What you see
 
-- **Built:** static responsive Leaflet/OpenStreetMap map, browser CSV importer, annual-rent filters, community bubbles, illustrative-position individual markers, median statistics, transaction table and filtered CSV export.
-- **Built:** optional authorized CORS HTTPS CSV/JSON feed with opt-in refresh on the next page opening after 24 hours.
-- **Committed:** GitHub Actions Pages deployment workflow.
-- **Not confirmed:** GitHub Pages enabled or deployment successful.
-- **Not implemented:** live DLD API integration, truly unattended daily refresh, official GIS polygons, building-level locations, and an owner portfolio overlay.
-- **No real rental transactions are bundled.** The app starts empty by design.
+- **Community bubbles:** size = contracts in the last 12 months, colour = median annual rent, AED per m², or contract count. Filter by unit type.
+- **Popup per community:** median and middle-half range, new vs renewal counts, a 12-month median trend, medians by unit type, and the busiest projects/buildings.
+- **Table:** every contract that started in the last 30 days, searchable, filterable by rent, exportable to CSV.
+- **Freshness:** last data build and last Ejari pull, shown in Kuwait time.
 
-## Vision
+Bubbles sit at an **approximate reference point per community**, not on a building. Areas without a reference point still appear in the table and are listed under "Areas not yet placed on the map".
 
-Make an intuitive map to discover **how much people actually pay annually to rent across Dubai**. Show recent Ejari registrations and renewal patterns, compare neighborhoods and property types, and export data to spreadsheets. Prioritize registered amounts, provenance, transparency, historical comparisons and useful portfolio benchmarks. Scope is **Dubai Emirate only**.
+## Data source
 
-See [full design notes and decision log](docs/DECISIONS.md).
+[Ejari rent contracts on Dubai Pulse](https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open) (`dld_rent_contracts`), published by DLD and listed as updated daily. Fields used: contract id and line, new/renew type, start/end dates, annual amount, size, property type/sub type, usage, DLD area, master project, project, nearest metro/mall/landmark. No tenant or unit details are stored.
 
-## Launch
+## How the daily update works (and why it won't get us blocked)
 
-**Online:** Once Pages is enabled, use https://jamalxcode.github.io/dubai_rent/.
+`.github/workflows/daily-ejari.yml` runs once a day at **05:17 Kuwait time**:
 
-**Configure Pages:** Visit [Pages settings](https://github.com/jamalxcode/dubai_rent/settings/pages) and choose **GitHub Actions** under Build and deployment. Check [Actions](https://github.com/jamalxcode/dubai_rent/actions) for successful deployment.
+1. `collector/fetch_ejari.py` pulls contracts from the Dubai Pulse API, **politely**:
+   - at most **one pull per Dubai calendar day** (a state file records it; re-runs the same day don't call the API, even manual ones, unless "force" is ticked);
+   - one access token per run, a small window (last 2 days of contract start dates);
+   - pages of 1,000 rows with a 4-second pause between pages, capped at 30 pages;
+   - on "slow down" (429/503) it waits as asked at most twice, then **stops until tomorrow**;
+   - an honest User-Agent pointing at this repo; no scraping of CAPTCHA-protected pages.
+2. New contracts are merged into monthly files under `data/contracts/` (deduplicated on contract id + line, so overlaps and corrections are safe).
+3. `collector/build.py` writes the small files the page loads: `data/areas.json`, `data/latest.json`, `data/meta.json`.
+4. The data commit triggers the Pages deploy. Only the page and those JSON files are published, not the raw archive.
 
-**Local:**
+### Setup (one time)
+
+1. Register at [Dubai Pulse](https://www.dubaipulse.gov.ae/) and request API access to `dld_rent_contracts-open`. You get an API key and secret by email.
+2. In this repo: **Settings → Secrets and variables → Actions**
+   - Secrets: `DUBAI_PULSE_KEY`, `DUBAI_PULSE_SECRET`
+   - Variable `EJARI_API_URL`, only if the endpoint in your Dubai Pulse account differs from the default `https://api.dubaipulse.gov.ae/open/dld/dld_rent_contracts-open`
+   - Variable `EJARI_FILTER`, only if the date filter syntax needs adjusting (default `contract_start_date>='{from}' AND contract_start_date<='{to}'`)
+3. Run **Actions → Daily Ejari pull → Run workflow** once to check. `data/meta.json` → `state.last_api_status` shows `ok` or the reason it stopped.
+
+### No API key yet? Manual import
+
+Download a Rents CSV from [DLD open data](https://dubailand.gov.ae/en/open-data/real-estate-data/) yourself and upload it into `data/inbox/` on GitHub (Add file → Upload files). The workflow imports it, deletes it from the inbox and rebuilds the map. The API isn't touched.
+
+## Placing communities on the map
+
+`data/area_locations.csv` maps names to approximate reference points:
+
+- `field=area` rows match the official DLD area name exactly (e.g. Marsa Dubai → Dubai Marina, Al Barsha South Fourth → JVC, Al Warsan First → International City).
+- `field=any` rows match a marketing name anywhere in the master project, project or area (e.g. "damac hills 2").
+
+After real data arrives, `data/meta.json` → `unmatched_areas` lists the busiest unplaced areas. Add rows for them.
+
+## Run locally
+
 ```sh
-git clone https://github.com/jamalxcode/dubai_rent.git
-cd dubai_rent
-python3 -m http.server 8080
+python3 collector/fetch_ejari.py   # imports data/inbox/*.csv; API pull if keys are in env
+python3 collector/build.py
+python3 -m http.server 8080        # open http://localhost:8080
 ```
-Open http://localhost:8080. An internet connection is required for Leaflet CDN and OpenStreetMap tiles.
 
-## Getting real registered rent data
-
-1. Visit [DLD Real Estate Data](https://dubailand.gov.ae/en/open-data/real-estate-data/), choose **Rents** and select the date range.
-2. Follow the portal's access requirements, including CAPTCHA when shown, and export a CSV.
-3. On the website, import the file using **DLD rental CSV**.
-4. Filter by area, project, bedroom count, annual AED amount and registration date. View community bubbles or transaction markers; export your filtered selection.
-
-The public DLD rental data includes **Annual Amount** (AED/year), Contract Amount, registration/start/end dates, Area, Project/Master Project, property size and room count, subject to availability. Annual Amount should not be confused with total Contract Amount. No tenant names, unit numbers or precise transaction address are promised.
-
-## Geography: important accuracy warning
-
-Public transaction rows generally lack authoritative per-contract GPS coordinates or unit addresses. The MVP uses a small hand-curated dictionary of **approximate community centers**. Individual-marker mode spreads markers near those centers solely to make multiple records visible: **these marker positions are not rental-property locations**. Unmatched locations stay in the table but are not mapped. Future enhancements should use permitted and verified community polygons and verified building locations with a displayed location-confidence level.
-
-## Refresh strategy
-
-**Today:** Manual CSV and optional feed. The browser can fetch a CORS-enabled, authorized HTTPS CSV/JSON source. Opt-in auto-refresh runs only when a user next opens the page and at least 24 hours have passed since the previous successful fetch. This is **not** a background scheduler.
-
-**Planned:** First verify DLD authorization, contract-feed availability, API terms and licence. Then implement a separate secure scheduled collector, once daily, with limited incremental date windows, overlap for late registrations/corrections, deduplication, retries/backoff, logging, freshness indicators and approved sanitized hosting. Never bypass CAPTCHA or access controls or assume undocumented endpoints are licensed.
+Standard-library Python only; nothing to install.
 
 ## Roadmap
 
-1. Validate importer against real DLD CSV, update field mapping and add tests.
-2. Confirm licensed API or allowed automated export method.
-3. Implement reliable daily ingestion, cache, corrections and audit trail.
-4. Introduce verified GIS community polygons and provenance-aware location matching.
-5. Add AED/m², medians by area, rooms/property type, time series, validated new/renewal separation and heat-map legend.
-6. Add secure, separate comparison with owner's Dubai properties without publishing private contracts.
-7. Optimize large datasets and add data-quality statistics and mobile usability improvements.
+1. First real pull: confirm endpoint, filter syntax and field values; tune `area_locations.csv` from `unmatched_areas`.
+2. Community polygons (Dubai Municipality `dm_community` on Dubai Pulse) with a DLD-area crosswalk, to turn bubbles into a shaded map.
+3. Building/project points, geocoded once per project name and cached with a confidence level; unresolved projects stay at community level.
+4. Longer trends, year-on-year change, new-vs-renewal rent gap.
+5. Private comparison against your own units, kept out of this public repo.
 
-## Files
+## Notes
 
-- `index.html`: map application.
-- `.github/workflows/pages.yml`: Pages deployment.
-- `docs/DECISIONS.md`: full design rationale, requirements, limitations and milestone plan.
-- `README.md`: this overview.
-
-## Privacy, licence and attribution
-
-This is an independent tool, **not** an official RERA/DLD service. Repository is currently **public**. Do not commit credentials, tenant details, private owner rental contracts or restricted DLD data. Respect DLD terms, allowed distribution and rate limits. Tiles © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright); mapping via [Leaflet](https://leafletjs.com/).
-
-Official sources: [DLD real-estate data](https://dubailand.gov.ae/en/open-data/real-estate-data/) and [DLD API Gateway](https://dubailand.gov.ae/en/eservices/api-gateway/).
+Independent tool, not an official DLD/RERA service. Respect Dubai Pulse terms. Never commit API keys (they live in GitHub Secrets). Map tiles © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), mapping via [Leaflet](https://leafletjs.com/). Design history: [docs/DECISIONS.md](docs/DECISIONS.md).

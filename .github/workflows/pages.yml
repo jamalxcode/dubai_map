@@ -3,6 +3,9 @@ name: Deploy Dubai Rent Atlas to GitHub Pages
 on:
   push:
     branches: [main]
+  workflow_run:
+    workflows: ["Daily Ejari pull"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -12,7 +15,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -23,12 +26,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with: { ref: main }
+      - name: Assemble site (page + small JSON only, not the raw contract archive)
+        run: |
+          mkdir -p _site/data
+          cp index.html .nojekyll _site/ 2>/dev/null || cp index.html _site/
+          cp data/areas.json data/latest.json data/meta.json data/area_locations.csv _site/data/ 2>/dev/null || true
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
