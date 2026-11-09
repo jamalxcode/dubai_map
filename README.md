@@ -14,9 +14,16 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 
 Bubbles sit at an **approximate reference point per community**, not on a building. Areas without a reference point still appear in the table and are listed under "Areas not yet placed on the map".
 
-## Data source
+## Data sources
 
-[Ejari rent contracts on Dubai Pulse](https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open) (`dld_rent_contracts`), published by DLD and listed as updated daily. Fields used: contract id and line, new/renew type, start/end dates, annual amount, size, property type/sub type, usage, DLD area, master project, project, nearest metro/mall/landmark. No tenant or unit details are stored.
+The map uses whichever is richer, automatically:
+
+1. **Per-contract Ejari data (once a Dubai Pulse key is added).** [Ejari rent contracts on Dubai Pulse](https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open), published by DLD. Gives contract-level detail: 12-month trend, AED/m², new vs renewal, top buildings, last-30-days table. Used once at least 1,000 contracts from the last 12 months are stored.
+2. **Community medians from Dubai Data (works today, no key).** [Dubai Data](https://datadubai.ae/) imports the same Ejari feed daily and publishes trailing-12-month median annual rent per community and per bedroom count, plus gross yield and median sale price, under **CC BY 4.0** ([GitHub mirror](https://github.com/datadubai/dubai-real-estate-dld), updated weekly). Covers ~300,000 contracts across ~100 master communities. Older non-master-planned districts (Deira, Bur Dubai, Karama…) are not in it.
+
+   Attribution: *Dubai Data (datadubai.ae), Continental Club Property — based on Dubai Land Department open data. Not an official DLD product.*
+
+Neither source includes tenant or unit details.
 
 ## How the daily update works (and why it won't get us blocked)
 
@@ -29,8 +36,9 @@ Bubbles sit at an **approximate reference point per community**, not on a buildi
    - on "slow down" (429/503) it waits as asked at most twice, then **stops until tomorrow**;
    - an honest User-Agent pointing at this repo; no scraping of CAPTCHA-protected pages.
 2. New contracts are merged into monthly files under `data/contracts/` (deduplicated on contract id + line, so overlaps and corrections are safe).
-3. `collector/build.py` writes the small files the page loads: `data/areas.json`, `data/latest.json`, `data/meta.json`.
-4. The data commit triggers the Pages deploy. Only the page and those JSON files are published, not the raw archive.
+3. `collector/fetch_datadubai.py` refreshes the Dubai Data files from GitHub (conditional requests, so unchanged files cost nothing; DLD is not contacted).
+4. `collector/build.py` writes the small files the page loads: `data/areas.json`, `data/latest.json`, `data/meta.json`.
+5. The data commit triggers the Pages deploy. Only the page and those JSON files are published, not the raw archive.
 
 ### Setup (one time)
 
@@ -47,7 +55,7 @@ Download a Rents CSV from [DLD open data](https://dubailand.gov.ae/en/open-data/
 
 ## Placing communities on the map
 
-`data/area_locations.csv` maps names to approximate reference points:
+`data/community_locations.csv` holds an approximate point per Dubai Data community (cross-checked against project coordinates in the same dataset). `data/area_locations.csv` maps names to approximate reference points:
 
 - `field=area` rows match the official DLD area name exactly (e.g. Marsa Dubai → Dubai Marina, Al Barsha South Fourth → JVC, Al Warsan First → International City).
 - `field=any` rows match a marketing name anywhere in the master project, project or area (e.g. "damac hills 2").

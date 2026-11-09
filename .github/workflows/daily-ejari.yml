@@ -39,6 +39,8 @@ jobs:
           EJARI_FILTER: ${{ vars.EJARI_FILTER }}
           FORCE: ${{ inputs.force && '1' || '0' }}
         run: python3 collector/fetch_ejari.py
+      - name: Refresh Dubai Data community rents (GitHub, conditional requests)
+        run: python3 collector/fetch_datadubai.py
       - name: Build map data
         run: python3 collector/build.py
       - name: Commit data

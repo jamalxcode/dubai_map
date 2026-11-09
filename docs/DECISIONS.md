@@ -95,6 +95,10 @@ Authorized DLD transaction endpoint / allowed official export
 - **Matching:** official DLD area names first (`field=area`), then marketing names in master project/project (`field=any`). Unmatched areas are reported in `meta.json`.
 - **Not verified yet:** the exact Dubai Pulse endpoint for this dataset and its filter syntax. Both are configurable (`EJARI_API_URL`, `EJARI_FILTER`) and the first real run reports its status in `meta.json`.
 
+## Decision on 2026-11-09 (third pass): fallback source
+
+The DLD website export is CAPTCHA-gated and the Dubai Pulse API needs a key, so the map had no data. Added **Dubai Data** (datadubai.ae) community aggregates as a fallback: same Ejari source, trailing-12-month medians per community and bedroom count, CC BY 4.0, mirrored on GitHub. Fetched from GitHub with ETag conditional requests. `build.py` uses it when fewer than 1,000 own contracts exist; the page switches to a community × unit table. Rejected: scraping Property Finder / Bayut / DXBinteract pages (terms of use, fragile), paid third-party APIs, and anything that works around the DLD CAPTCHA.
+
 ## Prioritized next work
 
 **P0: working verified data**

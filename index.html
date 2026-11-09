@@ -31,11 +31,11 @@ details{margin-top:10px;font-size:12px}summary{cursor:pointer}ul.plain{padding-l
 <div class="statgrid"><div class="stat"><span>Contracts, last 12 months</span><b id="n12">—</b></div><div class="stat"><span>Median annual rent</span><b id="med">—</b></div><div class="stat"><span>On the map</span><b id="mapped">—</b></div><div class="stat"><span>Newest contract start</span><b id="newest">—</b></div></div>
 <details id="unmatchedBox"><summary>Areas not yet placed on the map (<span id="unmatchedN">0</span>)</summary><p class="muted">These are in the table but have no reference point yet. Add them to <code>data/area_locations.csv</code>.</p><ul class="plain" id="unmatched"></ul></details>
 <h2>How to read the map</h2><div class="notice">Each bubble is a <b>community reference point</b>, not a building. Bubble size = number of contracts, colour = the selected measure. Click a bubble for unit-type medians, monthly trend and top projects.</div>
-<p><a target="_blank" rel="noopener" href="https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open">Ejari rent contracts (Dubai Pulse)</a> · Independent tool, not an official DLD/RERA service · Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open">Ejari rent contracts (Dubai Pulse)</a> · Community medians: <a target="_blank" rel="noopener" href="https://datadubai.ae/">Dubai Data</a>, Continental Club Property, from DLD open data, <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> · Independent tool, not an official DLD/RERA service · Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
 </aside><main class="main">
-<div class="toolbar"><div><strong>Contracts started in the last 30 days</strong><br><small id="updated">—</small></div><div class="legend" id="legend"></div><button id="export" class="secondary">Export table CSV</button></div>
+<div class="toolbar"><div><strong id="tableTitle">Contracts started in the last 30 days</strong><br><small id="updated">—</small></div><div class="legend" id="legend"></div><button id="export" class="secondary">Export table CSV</button></div>
 <div id="map" class="map" role="region" aria-label="Dubai rent map"></div>
-<div class="tableWrap"><table><thead><tr><th>Start</th><th>Community</th><th>Project</th><th>Unit</th><th>Annual AED</th><th>m²</th><th>AED/m²</th><th>Type</th></tr></thead><tbody id="rows"><tr><td colspan="8" class="muted">Loading…</td></tr></tbody></table></div>
+<div class="tableWrap"><table><thead id="thead"><tr><th>Start</th><th>Community</th><th>Project</th><th>Unit</th><th>Annual AED</th><th>m²</th><th>AED/m²</th><th>Type</th></tr></thead><tbody id="rows"><tr><td colspan="8" class="muted">Loading…</td></tr></tbody></table></div>
 </main></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
@@ -50,7 +50,7 @@ const COLORS=['#27b3a5','#7cc49b','#f2bb55','#f08a52','#e0584f'];
 const map=L.map('map').setView([25.13,55.27],11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
 const layer=L.layerGroup().addTo(map);
-let AREAS=[],ROWS=[],META={},view=[];
+let AREAS=[],ROWS=[],META={},view=[],AGG=false;
 
 async function getJSON(p){const r=await fetch(p,{cache:'no-cache'});if(!r.ok)throw Error(p+' '+r.status);return r.json()}
 
@@ -59,7 +59,15 @@ async function init(){
   catch(e){setStatus('No data yet','The first daily pull has not run. The collector adds data once a day at about 05:17 Kuwait time.',true);$('rows').innerHTML='<tr><td colspan="8" class="muted">No data yet.</td></tr>';return}
   const st=META.state||{};
   const ok=st.last_api_status==='ok';
-  setStatus(META.contracts_last_12m?fmt(META.contracts_last_12m)+' contracts loaded':'No contracts yet',
+  AGG=META.mode==='aggregate';
+  if(AGG){
+    setStatus(fmt(META.contracts_last_12m)+' Ejari contracts, last 12 months',
+      'Community medians by <a href="https://datadubai.ae/" target="_blank" rel="noopener">Dubai Data</a> from DLD Ejari open data, data through '+safe(META.data_through||'—')+'. Last refresh: '+kuwait(META.generated_at)+'.<br><small>Per-contract detail switches on automatically once the Dubai Pulse key is added.</small>',false);
+    $('tableTitle').textContent='Median annual rent by community and unit, last 12 months';
+    $('thead').innerHTML='<tr><th>Community</th><th>DLD area</th><th>Unit</th><th>Median annual AED</th><th>Contracts</th><th>Gross yield</th><th></th></tr>';
+    const o=$('metric').querySelector('option[value=median_sqm]');o.value='yield';o.textContent='Gross rental yield %';
+    $('newest').parentElement.querySelector('span').textContent='Data through';
+  }else setStatus(META.contracts_last_12m?fmt(META.contracts_last_12m)+' contracts loaded':'No contracts yet',
     'Last data build: '+kuwait(META.generated_at)+'<br>Last Ejari pull: '+(st.last_api_pull_at?kuwait(st.last_api_pull_at):'never')+(st.last_api_status&&!ok?' ('+safe(st.last_api_status)+')':''),
     !META.contracts_last_12m||(st.last_api_status&&!ok));
   $('updated').textContent='Updated '+kuwait(META.generated_at);
@@ -75,6 +83,7 @@ function setStatus(head,body,warn){$('state').textContent=head;$('status').inner
 function areaValue(a,metric,unit){
   if(metric==='n')return unit?(a.by_unit.find(u=>u.u===unit)||{}).n:a.n;
   if(metric==='median_sqm')return a.median_sqm;
+  if(metric==='yield')return unit?(a.by_unit.find(u=>u.u===unit)||{}).yield:a.yield_pct;
   return unit?(a.by_unit.find(u=>u.u===unit)||{}).median:a.median;
 }
 function spark(monthly){
@@ -86,12 +95,13 @@ function spark(monthly){
 function popup(a){
   const types=Object.entries(a.reg_types||{}).map(([k,v])=>safe(k)+' '+fmt(v)).join(' · ');
   return '<b class="t">'+safe(a.label)+'</b><br>'+fmt(a.n)+' contracts, last 12 months<br>'+
-    'Median <b>AED '+fmt(a.median)+'</b>/yr · middle half '+fmt(a.p25)+'–'+fmt(a.p75)+'<br>'+
+    'Median <b>AED '+fmt(a.median)+'</b>/yr'+(a.p25!=null?' · middle half '+fmt(a.p25)+'–'+fmt(a.p75):'')+'<br>'+
+    (a.yield_pct!=null?'Gross yield '+a.yield_pct+'%'+(a.sale_median?' · median sale AED '+fmt(a.sale_median):'')+'<br>':'')+
     (a.median_sqm?'Median AED '+fmt(a.median_sqm)+' per m²/yr<br>':'')+(types?'<small>'+types+'</small><br>':'')+
     spark(a.monthly)+
-    '<table><tr><th>Unit</th><th>n</th><th>Median</th></tr>'+a.by_unit.slice(0,6).map(u=>'<tr><td>'+safe(u.u)+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>'+
-    '<table><tr><th>Top projects</th><th>n</th><th>Median</th></tr>'+a.top_projects.slice(0,6).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>'+
-    '<small>DLD area: '+a.dld_areas.map(safe).join(', ')+'<br>Point is an approximate community reference, not a building.</small>';
+    (a.by_unit.length?'<table><tr><th>Unit</th><th>Contracts</th><th>Median AED</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr><td>'+safe(u.u)+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>':'')+
+    (a.top_projects.length?'<table><tr><th>Top projects</th><th>n</th><th>Median</th></tr>'+a.top_projects.slice(0,6).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
+    '<small>DLD area: '+a.dld_areas.map(safe).join(', ')+'<br>Point is an approximate community reference, not a building.'+(a.url?'<br><a href="'+safe(a.url)+'" target="_blank" rel="noopener">Details on Dubai Data</a>':'')+'</small>';
 }
 function draw(){
   const q=$('search').value.trim().toLowerCase(),unit=$('unit').value,metric=$('metric').value,min=+$('min').value||0,max=+$('max').value||Infinity;
@@ -102,16 +112,24 @@ function draw(){
   const pal=Array.from({length:cuts.length+1},(_,i)=>COLORS[cuts.length?Math.round(i*4/cuts.length):0]);
   const colorOf=v=>pal[cuts.filter(c=>v>c).length];
   for(const a of shown){const v=areaValue(a,metric,unit);if(v==null)continue;const n=unit?(a.by_unit.find(u=>u.u===unit)||{}).n||0:a.n;
-    L.circleMarker([a.lat,a.lng],{radius:Math.min(34,7+Math.sqrt(n)*.9),color:'#fff',weight:1,fillColor:colorOf(v),fillOpacity:.8}).bindPopup(popup(a),{maxWidth:300}).bindTooltip(a.label+': '+(metric==='n'?fmt(v)+' contracts':'AED '+fmt(v))).addTo(layer)}
-  const unitName=metric==='n'?'contracts':metric==='median_sqm'?'AED/m²':'AED/yr';
-  const last=cuts.length;
-  $('legend').innerHTML=vals.length?pal.map((c,i)=>'<span><span class="dot" style="background:'+c+'"></span>'+(!last?'all':i===0?'≤ '+fmt(cuts[0]):i===last?'> '+fmt(cuts[last-1]):fmt(cuts[i-1])+'–'+fmt(cuts[i]))+'</span>').join('')+'<span class="muted">'+unitName+'</span>':'';
+    L.circleMarker([a.lat,a.lng],{radius:Math.min(34,7+Math.sqrt(n)*.9),color:'#fff',weight:1,fillColor:colorOf(v),fillOpacity:.8}).bindPopup(popup(a),{maxWidth:300}).bindTooltip(a.label+': '+(metric==='n'?fmt(v)+' contracts':metric==='yield'?v+'% yield':'AED '+fmt(v))).addTo(layer)}
+  const unitName=metric==='n'?'contracts':metric==='median_sqm'?'AED/m²':metric==='yield'?'% gross yield':'AED/yr';
+  const last=cuts.length,f=metric==='yield'?(v=>Number(v).toFixed(1)):fmt;
+  $('legend').innerHTML=vals.length?pal.map((c,i)=>'<span><span class="dot" style="background:'+c+'"></span>'+(!last?'all':i===0?'≤ '+f(cuts[0]):i===last?'> '+f(cuts[last-1]):f(cuts[i-1])+'–'+f(cuts[i]))+'</span>').join('')+'<span class="muted">'+unitName+'</span>':'';
   const inArea=AREAS.filter(a=>!q||(a.label+' '+a.dld_areas.join(' ')).toLowerCase().includes(q));
   $('n12').textContent=fmt(inArea.reduce((s,a)=>s+a.n,0));$('mapped').textContent=fmt(shown.reduce((s,a)=>s+a.n,0));
-  view=ROWS.filter(r=>(!unit||r.u===unit)&&r.a>=min&&r.a<=max&&(!q||(r.c+' '+r.ar+' '+r.mp+' '+r.p).toLowerCase().includes(q)));
+  view=ROWS.filter(r=>(!unit||r.u===unit)&&r.a>=min&&r.a<=max&&(!q||[r.c,r.ar,r.mp,r.p].filter(Boolean).join(' ').toLowerCase().includes(q)));
   const m=median(view.map(r=>r.a));
   $('med').textContent=q&&inArea.length===1&&!unit?'AED '+fmt(inArea[0].median):m==null?'—':'AED '+fmt(m)+' (30 days)';
   const tb=$('rows');tb.replaceChildren();
+  if(AGG){
+    $('med').textContent=q&&inArea.length===1&&!unit?'AED '+fmt(inArea[0].median):m==null?'—':'AED '+fmt(m)+' (typical row)';
+    for(const r of view){const tr=document.createElement('tr');
+      for(const v of [r.c,r.ar,r.u,fmt(r.a),fmt(r.n),r.y!=null?r.y+'%':'']){const td=document.createElement('td');td.textContent=v;tr.append(td)}
+      const td=document.createElement('td');if(r.url){const a=document.createElement('a');a.href=r.url;a.target='_blank';a.rel='noopener';a.textContent='details';td.append(a)}tr.append(td);tb.append(tr)}
+    if(!view.length)tb.innerHTML='<tr><td colspan="7" class="muted">No matching communities.</td></tr>';
+    return;
+  }
   for(const r of view.slice(0,600)){const tr=document.createElement('tr');
     for(const v of [r.s,r.c,r.p||r.mp,r.u,fmt(r.a),r.sq?fmt(r.sq):'',r.sq?fmt(r.a/r.sq):'',r.t]){const td=document.createElement('td');td.textContent=v;tr.append(td)}tb.append(tr)}
   if(!view.length)tb.innerHTML='<tr><td colspan="8" class="muted">No matching contracts in the last 30 days.</td></tr>';
@@ -119,9 +137,11 @@ function draw(){
 }
 ['search','min','max'].forEach(id=>$(id).addEventListener('input',draw));['unit','metric'].forEach(id=>$(id).addEventListener('change',draw));
 const cell=x=>{const s=String(x??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
-$('export').onclick=()=>{const head=['start','end','annual_aed','size_sqm','unit','reg_type','dld_area','community','master_project','project','on_map'],keys=['s','e','a','sq','u','t','ar','c','mp','p','m'];
-  const csv=[head.join(','),...view.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n');
-  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='dubai-ejari-rents.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+$('export').onclick=()=>{if(AGG){const head=['community','dld_area','unit','median_annual_aed','contracts_12m','gross_yield_pct','on_map','source_url'],keys=['c','ar','u','a','n','y','m','url'];
+  return download([head.join(','),...view.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n'),'dubai-rents-by-community.csv')}
+  const head=['start','end','annual_aed','size_sqm','unit','reg_type','dld_area','community','master_project','project','on_map'],keys=['s','e','a','sq','u','t','ar','c','mp','p','m'];
+  download([head.join(','),...view.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n'),'dubai-ejari-rents.csv')};
+function download(csv,name){const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 init();
 </script>
 </body></html>
