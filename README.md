@@ -7,12 +7,15 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 
 ## What you see
 
-- **Community bubbles:** size = contracts in the last 12 months, colour = median annual rent, AED per m², or contract count. Filter by unit type.
-- **Popup per community:** median and middle-half range, new vs renewal counts, a 12-month median trend, medians by unit type, and the busiest projects/buildings.
-- **Table:** every contract that started in the last 30 days, searchable, filterable by rent, exportable to CSV.
-- **Freshness:** last data build and last Ejari pull, shown in Kuwait time.
+- **Rent as text on the map:** each community shows its median annual rent, e.g. "AED 67k · Jumeirah Village Circle".
+- **One number per group:** communities too close to read apart merge into one dark label with the average rent (weighted by contracts), e.g. "AED 75k avg · 22 communities". Click to zoom in and split it. Labels never overlap.
+- **Average rent in view:** one headline number for whatever is on screen, updating as you pan and zoom.
+- **Filters:** unit type (studio, 1-bed…), and show rent, gross yield or contract count.
+- **Popup per community:** medians by unit type, gross yield and median sale price (plus trend, AED/m² and top buildings once per-contract data is available).
+- **Table:** community × unit type with median rent, contracts and yield, exportable to CSV.
+- **Freshness:** data-through date and last refresh, in Kuwait time.
 
-Bubbles sit at an **approximate reference point per community**, not on a building. Areas without a reference point still appear in the table and are listed under "Areas not yet placed on the map".
+Labels sit at an **approximate reference point per community**, not on a building. Areas without a reference point still appear in the table and are listed under "Areas not yet placed on the map".
 
 ## Data sources
 
@@ -75,11 +78,12 @@ Standard-library Python only; nothing to install.
 ## Roadmap
 
 1. First real pull: confirm endpoint, filter syntax and field values; tune `area_locations.csv` from `unmatched_areas`.
-2. Community polygons (Dubai Municipality `dm_community` on Dubai Pulse) with a DLD-area crosswalk, to turn bubbles into a shaded map.
+2. Community polygons (Dubai Municipality `dm_community` on Dubai Pulse) with a DLD-area crosswalk, to shade areas under the rent labels.
 3. Building/project points, geocoded once per project name and cached with a confidence level; unresolved projects stay at community level.
 4. Longer trends, year-on-year change, new-vs-renewal rent gap.
 5. Private comparison against your own units, kept out of this public repo.
+6. Other cities in the region, each with its own source adapter and location file.
 
 ## Notes
 
-Independent tool, not an official DLD/RERA service. Respect Dubai Pulse terms. Never commit API keys (they live in GitHub Secrets). Map tiles © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), mapping via [Leaflet](https://leafletjs.com/). Design history: [docs/DECISIONS.md](docs/DECISIONS.md).
+Independent tool, not an official DLD/RERA service. Respect Dubai Pulse terms. Never commit API keys (they live in GitHub Secrets). Map tiles © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), mapping via [Leaflet](https://leafletjs.com/). Design goals: [docs/DESIGN_GOALS.md](docs/DESIGN_GOALS.md) · decision log: [docs/DECISIONS.md](docs/DECISIONS.md) · how it was built: [docs/CONVERSATION.md](docs/CONVERSATION.md).

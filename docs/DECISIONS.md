@@ -1,8 +1,9 @@
 # Dubai Rent Atlas: design notes, goals and decision log
 
-**Last updated:** 2026-11-09  
+**Last updated:** 2026-11-10  
 **Repository:** `jamalxcode/dubai_map`  
-**Planned public site:** https://jamalxcode.github.io/dubai_map/
+**Public site (live):** https://jamalxcode.github.io/dubai_map/  
+**See also:** [DESIGN_GOALS.md](DESIGN_GOALS.md) (what we're aiming for) · [CONVERSATION.md](CONVERSATION.md) (how we got here)
 
 ## The idea
 
@@ -14,10 +15,10 @@ The initial use case is monitoring International City, JVC and other relevant Du
 
 1. **API or whole CSV?** DLD offers a public Rents download and a formal API gateway. An undocumented data endpoint is not sufficient evidence of a licensed automation right. Ship a CSV importer first, design a feed adapter for a future authorized source.
 2. **Daily updates without upsetting RERA?** Aim for once per day at low volume, only where authorized. Don't bypass CAPTCHA or assume a daily query is automatically permitted. Use cached incremental ingestion, overlapping periods to capture corrections, rate limits and a documented agreement before unattended automation.
-3. **Which emirates?** DLD/Ejari transactions cover **Dubai only**. Other UAE emirates have separate authorities and are out of scope for V1.
+3. **Which emirates?** DLD/Ejari transactions cover **Dubai only**. Other UAE emirates have separate authorities and are out of scope for V1. The project is meant to expand to other cities in the region later, each with its own source adapter.
 4. **Annual rent and address?** Yes, `Annual Amount` and broad area/project fields; **no guaranteed per-unit street address, GPS or verified building location**. Do not imply exact addresses.
 5. **Map overlay?** Use OpenStreetMap/Leaflet; aggregate transaction values by community for accurate high-level presentation; verified GIS polygons are a longer-term goal.
-6. **Source control and hosting?** Keep code, README and design rationale in `dubai_rent`; prepare GitHub Pages deployment and provide the expected Pages URL, explicitly marking it unverified until deployment succeeds.
+6. **Source control and hosting?** Keep code, README and design rationale in `dubai_map` (originally written as `dubai_rent`); prepare GitHub Pages deployment and provide the expected Pages URL, explicitly marking it unverified until deployment succeeds.
 
 ## Intended user experience
 
@@ -99,7 +100,13 @@ Authorized DLD transaction endpoint / allowed official export
 
 The DLD website export is CAPTCHA-gated and the Dubai Pulse API needs a key, so the map had no data. Added **Dubai Data** (datadubai.ae) community aggregates as a fallback: same Ejari source, trailing-12-month medians per community and bedroom count, CC BY 4.0, mirrored on GitHub. Fetched from GitHub with ETag conditional requests. `build.py` uses it when fewer than 1,000 own contracts exist; the page switches to a community × unit table. Rejected: scraping Property Finder / Bayut / DXBinteract pages (terms of use, fragile), paid third-party APIs, and anything that works around the DLD CAPTCHA.
 
+## Decision on 2026-11-10 (fourth pass): rents as text labels
+
+The owner found the sized/coloured circles confusing. Replaced with **text labels** showing the rent. Labels that would overlap at the current zoom merge into **one label with a single number**: the contract-weighted average of the group, marked "avg" with the community count. Merging is iterative (merge any overlapping pair, recompute the position, repeat), so no labels overlap; verified at zoom 9–15 on 1350 px and 390 px widths. Clicking a group fits its bounds; at max zoom it lists the members. The side panel's confusing "typical row" median was replaced by **Average rent in view**, recomputed on pan/zoom. Rejected: Leaflet.markercluster (count bubbles, not rent averages) and size-scaled markers.
+
 ## Prioritized next work
+
+**Status on 2026-11-10:** P0 items 1–3 are done via the Dubai Data fallback and a live Pages deploy. P1 is built and waiting for the Dubai Pulse key. Next up: P2 item 6 (community polygons).
 
 **P0: working verified data**
 1. Download one DLD Rents CSV through official allowed flow and test every column.
@@ -135,6 +142,10 @@ The DLD website export is CAPTCHA-gated and the Dubai Pulse API needs a key, so 
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-10: Text rent labels with overlap-free merging into average labels; "Average rent in view" stat; added DESIGN_GOALS.md and CONVERSATION.md.
+- 2026-11-09: All 102 Dubai Data communities placed (11 via manual OSM geocoding job).
+- 2026-11-09: Dubai Data (CC BY 4.0) community medians as fallback source; real rents live.
 
 - 2026-11-09: Renamed docs to `dubai_map`; added daily Ejari collector, aggregate builder, inbox import, rebuilt map page around precomputed data; fixed Leaflet CSS integrity hash; Pages enabled.
 
