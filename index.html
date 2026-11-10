@@ -15,6 +15,9 @@ button{background:#157f79;border:0;border-radius:8px;padding:10px 12px;color:whi
 table{width:100%;border-collapse:collapse;font-size:12px;text-align:left}th,td{padding:9px 12px;white-space:nowrap;border-bottom:1px solid #293547}th{position:sticky;top:0;background:#172232;z-index:1}
 a{color:#8ee6d7}.legend{font-size:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}.muted{color:#9bb0c3}
 details{margin-top:10px;font-size:12px}summary{cursor:pointer}ul.plain{padding-left:16px;margin:6px 0;line-height:1.6}
+.rl-wrap{background:none;border:0}.rl{position:absolute;transform:translate(-50%,-50%);background:#fff;color:#14202c;border-radius:7px;padding:3px 8px 4px;font:700 13px/1.15 system-ui,-apple-system,Segoe UI,Arial,sans-serif;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.45);border-left:4px solid var(--c,#27b3a5);cursor:pointer;text-align:left}
+.rl small{display:block;font-weight:500;font-size:10px;color:#4a5a6a;max-width:140px;overflow:hidden;text-overflow:ellipsis}.rl:hover{z-index:1000;transform:translate(-50%,-50%) scale(1.06)}
+.rl.grp{background:#14202c;color:#fff;border:1.5px solid #8ee6d7;border-left:4px solid var(--c,#27b3a5);font-size:14px}.rl.grp small{color:#a9c4d6}
 .leaflet-popup-content{color:#1d2832;line-height:1.45;font-size:12px;min-width:230px}.leaflet-popup-content b.t{font-size:15px}.leaflet-popup-content table{font-size:11px}.leaflet-popup-content td,.leaflet-popup-content th{padding:2px 6px 2px 0;border:0;background:none;color:#1d2832;position:static}
 @media(max-width:820px){.app{display:block}.side{max-height:none}.map{height:54vh}.tableWrap{max-height:35vh}}
 </style></head><body>
@@ -28,9 +31,9 @@ details{margin-top:10px;font-size:12px}summary{cursor:pointer}ul.plain{padding-l
 <label class="field">Colour communities by<select id="metric"><option value="median">Median annual rent</option><option value="median_sqm">Median AED per m² per year</option><option value="n">Number of contracts</option></select></label>
 <label class="field">Minimum annual rent (AED)<input id="min" type="number" min="0" placeholder="0"></label>
 <label class="field">Maximum annual rent (AED)<input id="max" type="number" min="0" placeholder="Any"></label>
-<div class="statgrid"><div class="stat"><span>Contracts, last 12 months</span><b id="n12">—</b></div><div class="stat"><span>Median annual rent</span><b id="med">—</b></div><div class="stat"><span>On the map</span><b id="mapped">—</b></div><div class="stat"><span>Newest contract start</span><b id="newest">—</b></div></div>
+<div class="statgrid"><div class="stat"><span>Contracts, last 12 months</span><b id="n12">—</b></div><div class="stat"><span id="medLabel">Average rent in view</span><b id="med">—</b></div><div class="stat"><span>On the map</span><b id="mapped">—</b></div><div class="stat"><span>Newest contract start</span><b id="newest">—</b></div></div>
 <details id="unmatchedBox"><summary>Areas not yet placed on the map (<span id="unmatchedN">0</span>)</summary><p class="muted">These are in the table but have no reference point yet. Add them to <code>data/area_locations.csv</code>.</p><ul class="plain" id="unmatched"></ul></details>
-<h2>How to read the map</h2><div class="notice">Each bubble is a <b>community reference point</b>, not a building. Bubble size = number of contracts, colour = the selected measure. Click a bubble for unit-type medians, monthly trend and top projects.</div>
+<h2>How to read the map</h2><div class="notice">Each label shows a community's <b>median annual rent</b> (or the measure you pick) at an approximate community point, not a building. Where communities are too close to read apart, they merge into <b>one dark label with the average</b>, weighted by number of contracts; click it to zoom in. Click a white label for the unit-by-unit breakdown.</div>
 <p><a target="_blank" rel="noopener" href="https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open">Ejari rent contracts (Dubai Pulse)</a> · Community medians: <a target="_blank" rel="noopener" href="https://datadubai.ae/">Dubai Data</a>, Continental Club Property, from DLD open data, <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> · Independent tool, not an official DLD/RERA service · Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></p>
 </aside><main class="main">
 <div class="toolbar"><div><strong id="tableTitle">Contracts started in the last 30 days</strong><br><small id="updated">—</small></div><div class="legend" id="legend"></div><button id="export" class="secondary">Export table CSV</button></div>
@@ -50,6 +53,44 @@ const COLORS=['#27b3a5','#7cc49b','#f2bb55','#f08a52','#e0584f'];
 const map=L.map('map').setView([25.13,55.27],11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(map);
 const layer=L.layerGroup().addTo(map);
+let POINTS=[],LABEL={};
+const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
+function labelText(v,metric){return metric==='yield'?Number(v).toFixed(1)+'%':metric==='n'?compact(v)+' contracts':'AED '+compact(v)}
+// Merge labels that would overlap at the current zoom into one label with the contract-weighted average.
+function renderLabels(){
+  layer.clearLayers();if(!POINTS.length)return;
+  const {metric,colorOf}=LABEL,PAD=6;
+  const make=members=>{const N=members.reduce((s,o)=>s+o.n,0),w=o=>N?o.n/N:1/members.length;
+    const val=metric==='n'?N:members.reduce((s,o)=>s+o.v*w(o),0);
+    const lat=members.reduce((s,o)=>s+o.a.lat*w(o),0),lng=members.reduce((s,o)=>s+o.a.lng*w(o),0);
+    const single=members.length===1,top=labelText(val,metric)+(single||metric==='n'?'':' avg'),sub=single?members[0].a.label:members.length+' communities';
+    const px=map.latLngToLayerPoint([lat,lng]);
+    return {members,N,val,lat,lng,single,px,w:Math.max(top.length*8.2,Math.min(sub.length,24)*5.6)+24,h:36};};
+  const hit=(a,b)=>Math.abs(a.px.x-b.px.x)*2<a.w+b.w+PAD&&Math.abs(a.px.y-b.px.y)*2<a.h+b.h+PAD;
+  // Start with one label per community, then keep merging any two that overlap until none do.
+  let cl=POINTS.map(p=>make([p])),again=true;
+  while(again){again=false;
+    cl.sort((x,y)=>y.N-x.N);
+    outer:for(let i=0;i<cl.length;i++)for(let k=i+1;k<cl.length;k++)if(hit(cl[i],cl[k])){
+      cl[i]=make(cl[i].members.concat(cl[k].members));cl.splice(k,1);again=true;break outer}}
+  for(const c of cl){const g=c.members;
+    const html='<div class="rl'+(c.single?'':' grp')+'" style="--c:'+colorOf(c.val)+'">'+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':' <span style="font-weight:500;font-size:11px">avg</span>')+'<small>'+(c.single?safe(g[0].a.label):g.length+' communities')+'</small></div>';
+    const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
+    if(c.single)m.bindPopup(popup(g[0].a),{maxWidth:300});
+    else m.on('click',()=>{const b=L.latLngBounds(g.map(o=>[o.a.lat,o.a.lng])),z=map.getBoundsZoom(b,false,L.point(140,140));
+      if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<b>'+g.length+' communities</b> · '+safe(labelText(c.val,metric))+(metric==='n'?'':' average')+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(o.a.label)+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
+      else map.fitBounds(b,{padding:[70,70],maxZoom:16})});
+  }
+}
+map.on('zoomend',renderLabels);
+// One number for what's on screen: contract-weighted average of the visible communities.
+function viewStat(){
+  if(!POINTS.length){$('med').textContent='—';return}
+  const b=map.getBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0),metric=LABEL.metric;
+  $('medLabel').textContent=(metric==='yield'?'Average yield':metric==='n'?'Contracts':'Average rent')+' in view'+(vis.length?' ('+vis.length+')':'');
+  $('med').textContent=!vis.length?'—':metric==='n'?fmt(N):metric==='yield'?(vis.reduce((s,p)=>s+p.v*p.n,0)/N).toFixed(1)+'%':'AED '+fmt(Math.round(vis.reduce((s,p)=>s+p.v*p.n,0)/N/100)*100);
+}
+map.on('moveend',viewStat);
 let AREAS=[],ROWS=[],META={},view=[],AGG=false;
 
 async function getJSON(p){const r=await fetch(p,{cache:'no-cache'});if(!r.ok)throw Error(p+' '+r.status);return r.json()}
@@ -111,8 +152,8 @@ function draw(){
   const cuts=[...new Set([.2,.4,.6,.8].map(p=>vals[Math.floor(p*(vals.length-1))]))];
   const pal=Array.from({length:cuts.length+1},(_,i)=>COLORS[cuts.length?Math.round(i*4/cuts.length):0]);
   const colorOf=v=>pal[cuts.filter(c=>v>c).length];
-  for(const a of shown){const v=areaValue(a,metric,unit);if(v==null)continue;const n=unit?(a.by_unit.find(u=>u.u===unit)||{}).n||0:a.n;
-    L.circleMarker([a.lat,a.lng],{radius:Math.min(34,7+Math.sqrt(n)*.9),color:'#fff',weight:1,fillColor:colorOf(v),fillOpacity:.8}).bindPopup(popup(a),{maxWidth:300}).bindTooltip(a.label+': '+(metric==='n'?fmt(v)+' contracts':metric==='yield'?v+'% yield':'AED '+fmt(v))).addTo(layer)}
+  POINTS=[];for(const a of shown){const v=areaValue(a,metric,unit);if(v==null)continue;const n=unit?(a.by_unit.find(u=>u.u===unit)||{}).n||0:a.n;POINTS.push({a,v,n})}
+  LABEL={metric,colorOf};renderLabels();viewStat();
   const unitName=metric==='n'?'contracts':metric==='median_sqm'?'AED/m²':metric==='yield'?'% gross yield':'AED/yr';
   const last=cuts.length,f=metric==='yield'?(v=>Number(v).toFixed(1)):fmt;
   $('legend').innerHTML=vals.length?pal.map((c,i)=>'<span><span class="dot" style="background:'+c+'"></span>'+(!last?'all':i===0?'≤ '+f(cuts[0]):i===last?'> '+f(cuts[last-1]):f(cuts[i-1])+'–'+f(cuts[i]))+'</span>').join('')+'<span class="muted">'+unitName+'</span>':'';
@@ -120,10 +161,8 @@ function draw(){
   $('n12').textContent=fmt(inArea.reduce((s,a)=>s+a.n,0));$('mapped').textContent=fmt(shown.reduce((s,a)=>s+a.n,0));
   view=ROWS.filter(r=>(!unit||r.u===unit)&&r.a>=min&&r.a<=max&&(!q||[r.c,r.ar,r.mp,r.p].filter(Boolean).join(' ').toLowerCase().includes(q)));
   const m=median(view.map(r=>r.a));
-  $('med').textContent=q&&inArea.length===1&&!unit?'AED '+fmt(inArea[0].median):m==null?'—':'AED '+fmt(m)+' (30 days)';
   const tb=$('rows');tb.replaceChildren();
   if(AGG){
-    $('med').textContent=q&&inArea.length===1&&!unit?'AED '+fmt(inArea[0].median):m==null?'—':'AED '+fmt(m)+' (typical row)';
     for(const r of view){const tr=document.createElement('tr');
       for(const v of [r.c,r.ar,r.u,fmt(r.a),fmt(r.n),r.y!=null?r.y+'%':'']){const td=document.createElement('td');td.textContent=v;tr.append(td)}
       const td=document.createElement('td');if(r.url){const a=document.createElement('a');a.href=r.url;a.target='_blank';a.rel='noopener';a.textContent='details';td.append(a)}tr.append(td);tb.append(tr)}
