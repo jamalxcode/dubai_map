@@ -8,7 +8,8 @@ Design rules (be a good citizen, never get blocked):
   * At most ONE pull per Dubai calendar day. A state file records the last
     pull; re-runs the same day exit without touching the API (FORCE=1 overrides).
   * One OAuth token per run, reused for every page.
-  * Small fixed window (default: the last 2 days of contract start dates).
+  * Small windows: contract start dates from 3 days back to 14 days ahead, plus one
+    6-day slice of the last 60 days per run (cycling) to catch late registrations.
   * Pause between pages; hard cap on pages per run.
   * On 429 / 503: honour Retry-After once or twice, then STOP and try tomorrow.
     Never hammer, never rotate identities, never touch CAPTCHA-protected pages.
@@ -21,9 +22,10 @@ Env:
                                         missing, the API step is skipped.
   EJARI_API_URL     dataset endpoint (confirm in your Dubai Pulse account)
   EJARI_FILTER      filter template, {from} and {to} are ISO dates
-  WINDOW_DAYS       default 2
+  WINDOW_DAYS       days back, default 3
+  AHEAD_DAYS        days ahead, default 14
   PAGE_SIZE         default 1000
-  MAX_PAGES         default 30
+  MAX_PAGES         default 60 (shared by both windows)
   PAUSE_SECONDS     default 4
   FORCE             "1" to pull even if already pulled today
 """
@@ -44,9 +46,14 @@ TOKEN_URL = os.environ.get("DUBAI_PULSE_TOKEN_URL") or \
     "https://api.dubaipulse.gov.ae/oauth/client_credential/accesstoken?grant_type=client_credentials"
 API_URL = os.environ.get("EJARI_API_URL") or "https://api.dubaipulse.gov.ae/open/dld/dld_rent_contracts-open"
 FILTER = os.environ.get("EJARI_FILTER") or "contract_start_date>='{from}' AND contract_start_date<='{to}'"
-WINDOW_DAYS = int(os.environ.get("WINDOW_DAYS") or 2)
+WINDOW_DAYS = int(os.environ.get("WINDOW_DAYS") or 3)    # start dates this many days back...
+AHEAD_DAYS = int(os.environ.get("AHEAD_DAYS") or 14)     # ...to this many days ahead (registered before they start)
+# Late registrations: contracts are often registered weeks after their start date, so
+# each run also re-pulls one 6-day slice of the last 60 days, cycling, so every recent
+# day is checked again about every 10 days (same idea as fetch_dld.py).
+REFRESH_DAYS, REFRESH_SLICES = 60, 10
 PAGE_SIZE = int(os.environ.get("PAGE_SIZE") or 1000)
-MAX_PAGES = int(os.environ.get("MAX_PAGES") or 30)
+MAX_PAGES = int(os.environ.get("MAX_PAGES") or 60)
 PAUSE = float(os.environ.get("PAUSE_SECONDS") or 4)
 UA = "dubai_map-daily/1.0 (+https://github.com/jamalxcode/dubai_map; once per day)"
 STATE = os.path.join(store.DATA, "state.json")
@@ -55,6 +62,10 @@ INBOX = os.path.join(store.DATA, "inbox")
 
 class StopForToday(Exception):
     """The API asked us to slow down or failed; do not retry until tomorrow."""
+
+
+class PageCap(Exception):
+    """This run's page cap is reached; the rest waits for tomorrow."""
 
 
 def log(msg):
@@ -127,35 +138,67 @@ def rows_from(payload):
     return []
 
 
-def pull_api(key, secret):
-    today = store.today_dubai()
-    frm = (today - timedelta(days=WINDOW_DAYS)).isoformat()
-    flt = FILTER.format(**{"from": frm, "to": today.isoformat()})
-    log(f"window {frm}..{today}  filter: {flt}")
-    token = get_token(key, secret)
-    out, refreshed = [], False
-    for page in range(MAX_PAGES):
-        q = urllib.parse.urlencode({
-            "filter": flt, "limit": PAGE_SIZE, "offset": page * PAGE_SIZE,
-            "order_by": "contract_id",
-        })
-        req = urllib.request.Request(f"{API_URL}?{q}")
-        req.add_header("Authorization", f"Bearer {token}")
-        try:
-            batch = rows_from(http(req))
-        except PermissionError:
-            if refreshed:
-                raise StopForToday("token rejected twice")
-            token, refreshed = get_token(key, secret), True
-            continue
-        out.extend(batch)
-        log(f"page {page + 1}: {len(batch)} rows (total {len(out)})")
-        if len(batch) < PAGE_SIZE:
-            break
-        time.sleep(PAUSE)
-    else:
-        log(f"stopped at MAX_PAGES={MAX_PAGES}; remaining rows wait for tomorrow")
-    return [store.normalize(r, "dubai_pulse_api") for r in out]
+def windows(today):
+    """Start-date ranges to pull today: the recent window, then one refresh slice."""
+    recent = (today - timedelta(days=WINDOW_DAYS), today + timedelta(days=AHEAD_DAYS))
+    k = today.toordinal() % REFRESH_SLICES
+    frm = today - timedelta(days=REFRESH_DAYS - 6 * k)
+    return [recent, (frm, frm + timedelta(days=5))]
+
+
+class Session:
+    """One token per run (refreshed at most once) and one page budget across all windows."""
+
+    def __init__(self, key, secret, max_pages=None):
+        self.key, self.secret, self.max_pages = key, secret, max_pages or MAX_PAGES
+        self.token, self.refreshed, self.pages = get_token(key, secret), False, 0
+        self.rows = []  # every row fetched so far, kept even if a later page fails
+
+    def window(self, frm, to):
+        flt = FILTER.format(**{"from": frm.isoformat(), "to": to.isoformat()})
+        log(f"window {frm}..{to}  filter: {flt}")
+        got, page = 0, 0
+        while True:
+            if self.pages >= self.max_pages:
+                raise PageCap()
+            if self.pages:
+                time.sleep(PAUSE)
+            self.pages += 1
+            q = urllib.parse.urlencode({"filter": flt, "limit": PAGE_SIZE, "offset": page * PAGE_SIZE,
+                                        "order_by": "contract_id"})
+            req = urllib.request.Request(f"{API_URL}?{q}")
+            req.add_header("Authorization", f"Bearer {self.token}")
+            try:
+                batch = rows_from(http(req))
+            except PermissionError:
+                if self.refreshed:
+                    raise StopForToday("token rejected twice")
+                self.token, self.refreshed = get_token(self.key, self.secret), True
+                continue  # the same page again with the new token
+            self.rows.extend(batch)
+            got, page = got + len(batch), page + 1
+            log(f"page {page}: {len(batch)} rows (window total {got})")
+            if len(batch) < PAGE_SIZE:
+                return
+
+
+def pull_api(key, secret, today=None):
+    """Returns (records, problem). Rows already fetched are kept even when the run stops
+    early; problem is None, a page-cap note, or why it stopped."""
+    today = today or store.today_dubai()
+    sess, problem = None, None
+    try:
+        sess = Session(key, secret)
+        for frm, to in windows(today):
+            sess.window(frm, to)
+    except PageCap:
+        problem = f"page cap ({MAX_PAGES}) reached; the rest continues tomorrow"
+        log(problem)
+    except PermissionError as e:
+        problem = f"stopped: credentials rejected ({e})"[:300]
+    except StopForToday as e:
+        problem = f"stopped: {e}"[:300]
+    return [store.normalize(r, "dubai_pulse_api") for r in (sess.rows if sess else [])], problem
 
 
 def ingest_inbox():
@@ -203,15 +246,15 @@ def main():
     else:
         # Record the attempt first: even a failed run counts as today's one try.
         state["last_api_pull_date"] = today
-        try:
-            recs = pull_api(key, secret)
-            a, u = store.merge(recs)
-            state.update(last_api_pull_at=now, last_api_status="ok",
-                         last_api_rows=len(recs), last_api_added=a, last_api_updated=u)
-            log(f"api: {len(recs)} rows, {a} new, {u} updated")
-        except (StopForToday, PermissionError) as e:
-            state.update(last_api_status=f"stopped: {e}"[:300])
-            log(f"stopping for today: {e}")
+        recs, problem = pull_api(key, secret)
+        a, u = store.merge(recs)  # keep whatever arrived, even if the run stopped early
+        state.update(last_api_rows=len(recs), last_api_added=a, last_api_updated=u)
+        if problem and problem.startswith("stopped"):
+            state["last_api_status"] = problem
+            log(f"stopping for today: {problem}")
+        else:
+            state.update(last_api_pull_at=now, last_api_status="ok" + (f" ({problem})" if problem else ""))
+        log(f"api: {len(recs)} rows, {a} new, {u} updated")
     save_state(state)
 
 

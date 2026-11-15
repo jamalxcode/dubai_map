@@ -136,6 +136,13 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - **Missing fields are not a home.** A row needs residential usage, or a flat/studio/villa sub type when usage is missing, to count in the homes median; otherwise it is "other".
 - **No shrinking.** `build.py` refuses to publish if contracts, mapped contracts or areas fall more than 30% versus the last build in the same mode, and keeps the previous files. Override: `ALLOW_SHRINK=1` (the "allow shrink" box on the daily workflow).
 
+## Decision on 2026-11-15 (eighth pass): remaining review items
+
+- **Dates:** slash dates are day first unless impossible or followed by an AM/PM time (the US form .NET services send); impossible dates (month 15, 31 February) are rejected instead of stored.
+- **Dubai Pulse window:** start dates from 3 days back to 14 ahead (contracts registered before they start), plus one 6-day slice of the last 60 days per run, cycling every 10 days, for late registrations. 60-page cap shared by both. An expired token retries the same page; rows fetched before a stop or the page cap are kept.
+- **No timestamp-only commits:** `build.py` writes nothing when the data is unchanged apart from `generated_at`, so quiet days make no commit and no redeploy. "Updated" on the page now means the data last changed.
+- **Bot pushes** rebase and retry up to three times if someone pushed meanwhile.
+
 ## Prioritized next work
 
 **Status on 2026-11-10:** P0 items 1–3 are done via the Dubai Data fallback and a live Pages deploy. P1 is built and waiting for the Dubai Pulse key. Next up: P2 item 6 (community polygons).
@@ -174,6 +181,8 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-15: US-date fix, wider Dubai Pulse window with late-registration slices, no timestamp-only commits, push retry.
 
 - 2026-11-15: Cross-source de-duplication, week-based coverage check, stricter homes rule, no-shrink guard.
 

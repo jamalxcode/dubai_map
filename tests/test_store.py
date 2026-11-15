@@ -22,6 +22,15 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(store.parse_date(""), "")
         self.assertEqual(store.parse_date("not a date"), "")
 
+    def test_us_dates_and_impossible_dates(self):
+        self.assertEqual(store.parse_date("11/15/2026 12:00:00 AM"), "2026-11-15", "US form with AM/PM time")
+        self.assertEqual(store.parse_date("05/11/2026 12:00:00 AM"), "2026-05-11", "AM/PM means month first")
+        self.assertEqual(store.parse_date("11/15/2026"), "2026-11-15", "15 can't be a month")
+        self.assertEqual(store.parse_date("15/11/2026"), "2026-11-15")
+        self.assertEqual(store.parse_date("31/02/2026"), "", "no 31 February")
+        self.assertEqual(store.parse_date("15/15/2026"), "")
+        self.assertEqual(store.parse_date("2026-15-01"), "", "no month 15 in ISO either")
+
     def test_numbers(self):
         self.assertEqual(store.parse_number("65,000"), 65000.0)
         self.assertEqual(store.parse_number("AED 1,200.50"), 1200.5)

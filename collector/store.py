@@ -61,23 +61,40 @@ _ALIAS_LOOKUP = {_canon(a): field for field, names in ALIASES.items() for a in n
 
 
 def parse_date(value):
-    """Return ISO yyyy-mm-dd or '' for the date formats DLD uses."""
+    """Return ISO yyyy-mm-dd, or '' if the value isn't a real date.
+
+    Slash and dash dates are day first (DLD's website export) unless that is
+    impossible (a first number over 12) or the value carries an AM/PM time, which
+    marks the US month-first form .NET services emit ("11/15/2026 12:00:00 AM").
+    Impossible dates such as month 15 return ''."""
     s = str(value or "").strip()
     if not s:
         return ""
-    m = re.match(r"^(\d{1,2})[-/](\d{1,2})[-/](\d{4})", s)
+    m = re.match(r"^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(.*)$", s)
     if m:
-        d, mo, y = m.groups()
-        return f"{y}-{int(mo):02d}-{int(d):02d}"
+        a, b, y, rest = int(m.group(1)), int(m.group(2)), int(m.group(3)), m.group(4)
+        us = bool(re.search(r"\b[AP]M\b", rest, re.I))
+        if a > 12 or (b <= 12 and not us):
+            d, mo = a, b
+        else:
+            mo, d = a, b
+        return _iso(y, mo, d)
     m = re.match(r"^(\d{4})-(\d{2})-(\d{2})", s)
     if m:
-        return "-".join(m.groups())
-    for fmt in ("%d %b %Y", "%d %B %Y", "%m/%d/%Y %I:%M:%S %p"):
+        return _iso(*map(int, m.groups()))
+    for fmt in ("%d %b %Y", "%d %B %Y"):
         try:
             return datetime.strptime(s, fmt).date().isoformat()
         except ValueError:
             pass
     return ""
+
+
+def _iso(y, mo, d):
+    try:
+        return date(y, mo, d).isoformat()
+    except ValueError:
+        return ""
 
 
 def parse_number(value):

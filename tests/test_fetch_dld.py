@@ -102,7 +102,7 @@ class DldTests(TempData):
         self.assertEqual(len(svc.calls), 1, "no hammering after a failure")
         keys = {"DUBAI_PULSE_KEY": "k", "DUBAI_PULSE_SECRET": "s", "FORCE": "0"}
         with mock.patch.object(store, "today_dubai", return_value=TODAY), mock.patch.dict(os.environ, keys), \
-             mock.patch.object(fetch_ejari, "pull_api", return_value=[]) as api, mock.patch("builtins.print"):
+             mock.patch.object(fetch_ejari, "pull_api", return_value=([], None)) as api, mock.patch("builtins.print"):
             fetch_ejari.main()
         api.assert_called_once()
 
@@ -110,7 +110,7 @@ class DldTests(TempData):
         self.run_day(FakeService([row("2026-03-09")]))
         keys = {"DUBAI_PULSE_KEY": "k", "DUBAI_PULSE_SECRET": "s", "FORCE": "0"}
         with mock.patch.object(store, "today_dubai", return_value=TODAY), mock.patch.dict(os.environ, keys), \
-             mock.patch.object(fetch_ejari, "pull_api", return_value=[]) as api, mock.patch("builtins.print"):
+             mock.patch.object(fetch_ejari, "pull_api", return_value=([], None)) as api, mock.patch("builtins.print"):
             fetch_ejari.main()
         api.assert_not_called()
 

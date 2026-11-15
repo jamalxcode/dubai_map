@@ -72,4 +72,6 @@ jobs:
           git add -A data
           if git diff --cached --quiet; then echo "no changes"; exit 0; fi
           git commit -m "data: Ejari update $(TZ=Asia/Kuwait date '+%Y-%m-%d %H:%M') Kuwait"
-          git push
+          # Someone may have pushed meanwhile: rebase on top and retry a few times.
+          for i in 1 2 3; do git push && exit 0; sleep $((i * 5)); git pull --rebase -q; done
+          exit 1

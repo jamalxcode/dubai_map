@@ -424,10 +424,31 @@ def publish(files):
     if problem and os.environ.get("ALLOW_SHRINK") != "1":
         sys.exit(f"not publishing: {problem}. The previous files are kept. "
                  "If the drop is real, re-run with ALLOW_SHRINK=1.")
+    # Only write what really changed: a run that brings nothing new must leave the files
+    # untouched, so the daily job makes no commit and no redeploy just for a new timestamp.
+    changed = [name for name, obj in files.items() if not same_data(name, obj)]
+    if not changed:
+        print("no data changes; nothing written")
+        return False
     meta = files.pop("meta.json")
     for name, obj in files.items():
-        write(name, obj)
+        if name in changed:
+            write(name, obj)
     write("meta.json", meta)  # last, so a crash mid-way never pairs new metadata with old files
+    return True
+
+
+def _without_time(obj):
+    return {k: v for k, v in obj.items() if k != "generated_at"} if isinstance(obj, dict) else obj
+
+
+def same_data(name, obj):
+    """True if the file on disk holds the same data, ignoring generated_at."""
+    try:
+        with open(os.path.join(store.DATA, name), encoding="utf-8") as f:
+            return _without_time(json.load(f)) == _without_time(obj)
+    except (OSError, ValueError):
+        return False
 
 
 def write(name, obj):

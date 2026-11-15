@@ -190,6 +190,25 @@ class ShrinkGuardTests(TempData):
         with open(os.path.join(self.tmp, "meta.json")) as f:
             self.assertEqual(json.load(f)["contracts_last_12m"], 1000)
 
+    def test_unchanged_data_writes_nothing(self):
+        """A run that brings nothing new leaves every file untouched, so the daily job makes no commit."""
+        self.run_build()
+        before = {n: open(os.path.join(self.tmp, n)).read() for n in ("meta.json", "areas.json", "latest.json")}
+        with mock.patch.object(build, "datetime") as dt:
+            dt.now.return_value.isoformat.return_value = "2030-01-01T00:00:00+00:00"
+            self.run_build()
+        after = {n: open(os.path.join(self.tmp, n)).read() for n in before}
+        self.assertEqual(before, after)
+        # A real change is written, and meta.json gets the new time.
+        self.write("datadubai/rents_by_community.csv", AGG_FILES["datadubai/rents_by_community.csv"].replace("60000", "61000"))
+        with mock.patch.object(build, "datetime") as dt:
+            dt.now.return_value.isoformat.return_value = "2030-01-01T00:00:00+00:00"
+            self.run_build()
+        with open(os.path.join(self.tmp, "meta.json")) as f:
+            self.assertEqual(json.load(f)["generated_at"], "2030-01-01T00:00:00+00:00")
+        with open(os.path.join(self.tmp, "areas.json")) as f:
+            self.assertEqual(json.load(f)["areas"][0]["median"], 61000)
+
     def test_override_publishes_a_real_drop(self):
         self.previous(contracts_last_12m=1000)
         self.run_build({"ALLOW_SHRINK": "1"})
