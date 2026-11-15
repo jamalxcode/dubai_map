@@ -143,6 +143,15 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - **No timestamp-only commits:** `build.py` writes nothing when the data is unchanged apart from `generated_at`, so quiet days make no commit and no redeploy. "Updated" on the page now means the data last changed.
 - **Bot pushes** rebase and retry up to three times if someone pushed meanwhile.
 
+## Decision on 2026-11-15 (ninth pass): structure
+
+- **Data on its own branch.** Generated data (contracts, the Dubai Data mirror, computed points, state, page JSON) moved from `main` to a `data` branch, like Flattery's catalog. `main` keeps code and hand-kept inputs, so its history is readable and the daily job no longer writes to it (except removing imported inbox files). `scripts/data-branch.sh` loads and saves; saves only add or update, and retry on top of a concurrent save.
+- **Deploy only on change.** Data jobs call the Pages workflow directly, only when the save changed something. (Before, Pages ran after every daily job through `workflow_run`, even on quiet days.) Pages now fails instead of deploying a page without its data.
+- **Shared plumbing.** `net.py` (one User-Agent, bounded retries, `StopForToday`, `AuthError`, `NotModified`) and `state.py` replace four copies. Paths are looked up when used, so tests only move `store.DATA`.
+- **Structured source state:** `ok`, `partial`, `failed`, `off`, `no_key`, `standby`, `not_run` next to the wording the page shows; code compares the state, never the wording. Old state files are read and converted.
+- **`build.py` split:** `kinds.py`, `places.py`, `output.py` (with one area-record layout for both modes).
+- **Left for later on purpose:** the front-end split (`index.html` into script, styles and a testable module), self-hosting Leaflet/GSAP/Lenis and faster label merging. Another collaborator was working on the page at the time.
+
 ## Prioritized next work
 
 **Status on 2026-11-10:** P0 items 1–3 are done via the Dubai Data fallback and a live Pages deploy. P1 is built and waiting for the Dubai Pulse key. Next up: P2 item 6 (community polygons).
@@ -181,6 +190,8 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-15: Data moved to the `data` branch; deploy only on change; shared net/state modules; build.py split; structured source state.
 
 - 2026-11-15: US-date fix, wider Dubai Pulse window with late-registration slices, no timestamp-only commits, push retry.
 

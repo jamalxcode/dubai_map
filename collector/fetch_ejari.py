@@ -30,17 +30,17 @@ Env:
   FORCE             "1" to pull even if already pulled today
 """
 import csv
-import json
 import os
 import sys
 import time
-import urllib.error
 import urllib.parse
-import urllib.request
 from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import net  # noqa: E402
+import state as st  # noqa: E402
 import store  # noqa: E402
+from net import AuthError, StopForToday  # noqa: E402,F401  (re-exported for callers and tests)
 
 TOKEN_URL = os.environ.get("DUBAI_PULSE_TOKEN_URL") or \
     "https://api.dubaipulse.gov.ae/oauth/client_credential/accesstoken?grant_type=client_credentials"
@@ -55,13 +55,7 @@ REFRESH_DAYS, REFRESH_SLICES = 60, 10
 PAGE_SIZE = int(os.environ.get("PAGE_SIZE") or 1000)
 MAX_PAGES = int(os.environ.get("MAX_PAGES") or 60)
 PAUSE = float(os.environ.get("PAUSE_SECONDS") or 4)
-UA = "dubai_map-daily/1.0 (+https://github.com/jamalxcode/dubai_map; once per day)"
-STATE = os.path.join(store.DATA, "state.json")
-INBOX = os.path.join(store.DATA, "inbox")
-
-
-class StopForToday(Exception):
-    """The API asked us to slow down or failed; do not retry until tomorrow."""
+SOURCE = "pulse"
 
 
 class PageCap(Exception):
@@ -69,54 +63,17 @@ class PageCap(Exception):
 
 
 def log(msg):
-    print(f"[{datetime.now(timezone.utc):%H:%M:%SZ}] {msg}", flush=True)
+    net.log(msg, SOURCE)
 
 
-def load_state():
-    try:
-        with open(STATE) as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return {}
-
-
-def save_state(state):
-    with open(STATE, "w") as f:
-        json.dump(state, f, indent=2, sort_keys=True)
-        f.write("\n")
-
-
-def http(req, attempts=3):
-    """One request with bounded, respectful retries."""
-    req.add_header("User-Agent", UA)
-    req.add_header("Accept", "application/json")
-    for attempt in range(1, attempts + 1):
-        try:
-            with urllib.request.urlopen(req, timeout=60) as res:
-                return json.loads(res.read().decode("utf-8") or "null")
-        except urllib.error.HTTPError as e:
-            body = e.read()[:300].decode("utf-8", "replace")
-            if e.code in (429, 502, 503, 504) and attempt < attempts:
-                wait = min(int(e.headers.get("Retry-After") or 0) or 30 * attempt, 180)
-                log(f"HTTP {e.code}; waiting {wait}s (attempt {attempt}/{attempts})")
-                time.sleep(wait)
-                continue
-            if e.code == 401:
-                raise PermissionError(body)
-            raise StopForToday(f"HTTP {e.code}: {body}")
-        except urllib.error.URLError as e:
-            if attempt < attempts:
-                time.sleep(30 * attempt)
-                continue
-            raise StopForToday(f"network: {e.reason}")
-    raise StopForToday("retries exhausted")
+def inbox_dir():
+    return os.path.join(store.DATA, "inbox")
 
 
 def get_token(key, secret):
     body = urllib.parse.urlencode({"client_id": key, "client_secret": secret}).encode()
-    req = urllib.request.Request(TOKEN_URL, data=body, method="POST")
-    req.add_header("Content-Type", "application/x-www-form-urlencoded")
-    data = http(req)
+    data = net.get_json(TOKEN_URL, data=body, method="POST", source=SOURCE,
+                        headers={"Content-Type": "application/x-www-form-urlencoded"})
     token = (data or {}).get("access_token")
     if not token:
         raise StopForToday("token response had no access_token")
@@ -166,11 +123,10 @@ class Session:
             self.pages += 1
             q = urllib.parse.urlencode({"filter": flt, "limit": PAGE_SIZE, "offset": page * PAGE_SIZE,
                                         "order_by": "contract_id"})
-            req = urllib.request.Request(f"{API_URL}?{q}")
-            req.add_header("Authorization", f"Bearer {self.token}")
             try:
-                batch = rows_from(http(req))
-            except PermissionError:
+                batch = rows_from(net.get_json(f"{API_URL}?{q}", source=SOURCE,
+                                               headers={"Authorization": f"Bearer {self.token}"}))
+            except AuthError:
                 if self.refreshed:
                     raise StopForToday("token rejected twice")
                 self.token, self.refreshed = get_token(self.key, self.secret), True
@@ -183,33 +139,34 @@ class Session:
 
 
 def pull_api(key, secret, today=None):
-    """Returns (records, problem). Rows already fetched are kept even when the run stops
-    early; problem is None, a page-cap note, or why it stopped."""
+    """Returns (records, state, detail): state is ok, partial (page cap) or failed. Rows
+    already fetched are kept even when the run stops early."""
     today = today or store.today_dubai()
-    sess, problem = None, None
+    sess, kind, detail = None, "ok", ""
     try:
         sess = Session(key, secret)
         for frm, to in windows(today):
             sess.window(frm, to)
     except PageCap:
-        problem = f"page cap ({MAX_PAGES}) reached; the rest continues tomorrow"
-        log(problem)
-    except PermissionError as e:
-        problem = f"stopped: credentials rejected ({e})"[:300]
+        kind, detail = "partial", f"page cap ({MAX_PAGES}) reached; the rest continues tomorrow"
+        log(detail)
+    except AuthError as e:
+        kind, detail = "failed", f"credentials rejected ({e})"
     except StopForToday as e:
-        problem = f"stopped: {e}"[:300]
-    return [store.normalize(r, "dubai_pulse_api") for r in (sess.rows if sess else [])], problem
+        kind, detail = "failed", str(e)
+    return [store.normalize(r, "dubai_pulse_api") for r in (sess.rows if sess else [])], kind, detail
 
 
 def ingest_inbox():
-    if not os.path.isdir(INBOX):
+    inbox = inbox_dir()
+    if not os.path.isdir(inbox):
         return 0, 0, []
     total_a = total_u = 0
     done = []
-    for name in sorted(os.listdir(INBOX)):
+    for name in sorted(os.listdir(inbox)):
         if not name.lower().endswith(".csv"):
             continue
-        path = os.path.join(INBOX, name)
+        path = os.path.join(inbox, name)
         with open(path, encoding="utf-8-sig", newline="") as f:
             recs = [store.normalize(r, f"manual:{name}") for r in csv.DictReader(f)]
         a, u = store.merge(recs)
@@ -222,40 +179,41 @@ def ingest_inbox():
 
 def main_source_ok(state, today):
     dld = state.get("dld") or {}
-    return dld.get("last_run_date") == today and str(dld.get("status", "")).startswith("ok")
+    return dld.get("last_run_date") == today and dld.get("state") in st.GOOD
 
 
 def main():
-    state = load_state()
+    state = st.load()
     today = store.today_dubai().isoformat()
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    force = os.environ.get("FORCE") == "1"
 
     a, u, files = ingest_inbox()
     if files:
-        state["last_manual_import"] = {"at": now, "files": files, "added": a, "updated": u}
+        state["inbox"] = {"at": now, "files": files, "added": a, "updated": u}
 
+    p = state.setdefault("pulse", {})
     key, secret = os.environ.get("DUBAI_PULSE_KEY"), os.environ.get("DUBAI_PULSE_SECRET")
     if not (key and secret):
         log("no Dubai Pulse credentials; API pull skipped")
-        state["last_api_status"] = "no credentials"
-    elif main_source_ok(state, today) and os.environ.get("FORCE") != "1":
+        st.set_status(p, "no_key")
+    elif main_source_ok(state, today) and not force:
         log("the DLD open-data service ran today; Dubai Pulse not needed")
-        state["last_api_status"] = "standby (DLD service ran today)"
-    elif state.get("last_api_pull_date") == today and os.environ.get("FORCE") != "1":
+        st.set_status(p, "standby", "DLD service ran today")
+    elif p.get("last_pull_date") == today and not force:
         log(f"already pulled today ({today}); not contacting the API again")
     else:
-        # Record the attempt first: even a failed run counts as today's one try.
-        state["last_api_pull_date"] = today
-        recs, problem = pull_api(key, secret)
+        p["last_pull_date"] = today  # recorded first: even a failed run counts as today's one try
+        recs, kind, detail = pull_api(key, secret)
         a, u = store.merge(recs)  # keep whatever arrived, even if the run stopped early
-        state.update(last_api_rows=len(recs), last_api_added=a, last_api_updated=u)
-        if problem and problem.startswith("stopped"):
-            state["last_api_status"] = problem
-            log(f"stopping for today: {problem}")
+        p.update(rows=len(recs), added=a, updated=u)
+        st.set_status(p, kind, detail)
+        if kind in st.GOOD:
+            p["last_ok_at"] = now
         else:
-            state.update(last_api_pull_at=now, last_api_status="ok" + (f" ({problem})" if problem else ""))
+            log(f"stopping for today: {detail}")
         log(f"api: {len(recs)} rows, {a} new, {u} updated")
-    save_state(state)
+    st.save(state)
 
 
 if __name__ == "__main__":

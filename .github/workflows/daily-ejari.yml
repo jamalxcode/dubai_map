@@ -7,7 +7,8 @@ name: Daily Ejari pull
 #   3. Dubai Data community medians (CC BY 4.0)             collector/fetch_datadubai.py
 #   4. Manual CSV in data/inbox/ (always imported)
 # Each collector refuses to contact its source more than once per Dubai
-# calendar day, so manual re-runs are safe.
+# calendar day, so manual re-runs are safe. The data lives on the `data` branch
+# (scripts/data-branch.sh); the site is redeployed only when the data changed.
 on:
   schedule:
     - cron: "17 2 * * *"
@@ -36,10 +37,14 @@ jobs:
   pull:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      changed: ${{ steps.save.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+      - name: Load the current data (data branch)
+        run: scripts/data-branch.sh load
       - name: "DLD open-data service (only if DLD_ENABLED=1, once per day)"
         continue-on-error: true  # a failing source must not stop the backups or the build
         env:
@@ -65,13 +70,25 @@ jobs:
         run: python3 collector/build.py
       - name: Check the data before publishing (stops the commit if it looks broken)
         run: python3 -m unittest discover -s tests -p "test_data.py" -v
-      - name: Commit data
+      - name: Save the data (data branch; nothing is saved if nothing changed)
+        id: save
         run: |
-          git config user.name "dubai_map bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A data
-          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "data: Ejari update $(TZ=Asia/Kuwait date '+%Y-%m-%d %H:%M') Kuwait"
-          # Someone may have pushed meanwhile: rebase on top and retry a few times.
-          for i in 1 2 3; do git push && exit 0; sleep $((i * 5)); git pull --rebase -q; done
+          set -o pipefail
+          scripts/data-branch.sh save "data: Ejari update $(TZ=Asia/Kuwait date '+%Y-%m-%d %H:%M') Kuwait" | tee -a "$GITHUB_OUTPUT"
+      - name: Remove imported inbox files from main
+        run: |
+          git add -A data/inbox
+          if git diff --cached --quiet; then echo "inbox empty"; exit 0; fi
+          git -c user.name="dubai_map bot" -c user.email="github-actions[bot]@users.noreply.github.com" \
+            commit -m "data: imported inbox file(s); contracts are on the data branch"
+          for i in 1 2 3; do git push origin HEAD:main && exit 0; sleep $((i * 5)); git pull --rebase -q origin main; done
           exit 1
+
+  deploy:
+    needs: pull
+    if: needs.pull.outputs.changed == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

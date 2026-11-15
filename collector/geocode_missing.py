@@ -25,12 +25,16 @@ import re
 import sys
 import time
 import urllib.parse
-import urllib.request
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA = os.path.join(ROOT, "data")
-OUT = os.path.join(DATA, "osm_area_points.csv")
-UA = "dubai_map-geocode/1.0 (+https://github.com/jamalxcode/dubai_map)"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import net  # noqa: E402
+import store  # noqa: E402
+
+
+def out_path():
+    return os.path.join(store.DATA, "osm_area_points.csv")
+
+
 VIEWBOX = "54.89,25.36,55.65,24.79"  # west,north,east,south
 LAT, LNG = (24.6, 25.45), (54.85, 55.7)
 PLACE_TYPES = {"suburb", "neighbourhood", "quarter", "village", "hamlet", "administrative",
@@ -66,19 +70,17 @@ def accept(area, hit):
 def search(q):
     url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode(
         {"q": q, "format": "jsonv2", "limit": 5, "viewbox": VIEWBOX, "bounded": 1})
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return json.load(r)
+    return net.get_json(url, timeout=30, attempts=2, source="osm")
 
 
 def main(search=search, sleep=time.sleep, today=None):
     try:
-        with open(os.path.join(DATA, "meta.json"), encoding="utf-8") as f:
+        with open(os.path.join(store.DATA, "meta.json"), encoding="utf-8") as f:
             unmatched = json.load(f).get("unmatched_areas", [])
     except (OSError, ValueError):
         unmatched = []
     try:
-        with open(OUT, encoding="utf-8") as f:
+        with open(out_path(), encoding="utf-8") as f:
             have = {r["dld_area"]: r for r in csv.DictReader(f)}
     except OSError:
         have = {}
@@ -106,7 +108,7 @@ def main(search=search, sleep=time.sleep, today=None):
                       f"score {score(area, h):.2f}")
             if not hits:
                 print(f"NONE {area}")
-    with open(OUT, "w", encoding="utf-8", newline="") as f:
+    with open(out_path(), "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, FIELDS, lineterminator="\n")
         w.writeheader()
         for k in sorted(have):

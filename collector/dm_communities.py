@@ -21,14 +21,17 @@ import math
 import os
 import re
 import sys
-import urllib.request
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import net  # noqa: E402
 import store  # noqa: E402
 
-OUT = os.path.join(store.DATA, "dm_communities.csv")
-UA = "dubai_map-geo/1.0 (+https://github.com/jamalxcode/dubai_map)"
+
+def out_path():
+    return os.path.join(store.DATA, "dm_communities.csv")
+
+
 SOURCES = [
     ("dubai_pulse_2025", "kml", "https://www.dubaipulse.gov.ae/dataset/86178b92-7d7a-4d2f-b13e-b16aedf53721/"
                                 "resource/d22b4dd2-dded-4666-bc0b-97bd11e8e0a5/download/community.kml"),
@@ -116,9 +119,7 @@ def load(kind, text):
 
 
 def fetch(url):
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        return r.read().decode("utf-8")
+    return net.request(url, timeout=120, attempts=2, source="dm").decode("utf-8")
 
 
 def build(sources):
@@ -138,7 +139,8 @@ def build(sources):
     return rows
 
 
-def write(rows, path=OUT):
+def write(rows, path=None):
+    path = path or out_path()
     with open(path, "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, ["community", "comm_num", "lat", "lng", "area_km2", "source"], lineterminator="\n")
         w.writeheader()
@@ -159,9 +161,9 @@ def main(local_files=None):
                 print(f"skip {name}: {e}")
     rows = build(got)
     if len(rows) < 150:
-        sys.exit(f"only {len(rows)} communities loaded; not overwriting {OUT}")
+        sys.exit(f"only {len(rows)} communities loaded; not overwriting {out_path()}")
     write(rows)
-    print(f"wrote {len(rows)} communities to {OUT}")
+    print(f"wrote {len(rows)} communities to {out_path()}")
 
 
 if __name__ == "__main__":

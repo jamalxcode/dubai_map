@@ -17,10 +17,9 @@ import json
 import os
 import re
 import sys
-import urllib.error
-import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import net  # noqa: E402
 import store  # noqa: E402
 
 MIRRORS = [
@@ -29,20 +28,27 @@ MIRRORS = [
 ]
 FILES = ["README.md", "data/rents_by_community.csv", "data/community_bedrooms.csv",
          "data/communities.csv", "data/areas.csv", "data/projects.csv"]
-OUT = os.path.join(store.DATA, "datadubai")
-ETAGS = os.path.join(OUT, "etags.json")
-UA = "dubai_map-daily/1.0 (+https://github.com/jamalxcode/dubai_map)"
+
+
+def out_dir():
+    return os.path.join(store.DATA, "datadubai")
+
+
+def etags_path():
+    return os.path.join(out_dir(), "etags.json")
 
 
 def main():
-    os.makedirs(OUT, exist_ok=True)
+    out = out_dir()
+    os.makedirs(out, exist_ok=True)
     try:
-        etags = json.load(open(ETAGS))
+        with open(etags_path()) as fh:
+            etags = json.load(fh)
     except (OSError, ValueError):
         etags = {}
     changed = 0
     for f in FILES:
-        dest = os.path.join(OUT, os.path.basename(f))
+        dest = os.path.join(out, os.path.basename(f))
         for name, base in MIRRORS:
             result = fetch(base + f, dest, etags, f"{name}:{f}")
             if result in ("updated", "unchanged"):
@@ -52,37 +58,34 @@ def main():
             print(f"{name} failed for {f}: {result}; trying next copy")
         else:
             print(f"skip {f}: every copy failed, keeping the previous file")
-    with open(ETAGS, "w") as fh:
+    with open(etags_path(), "w") as fh:
         json.dump(etags, fh, indent=2, sort_keys=True)
         fh.write("\n")
     print(f"datadubai: {changed} file(s) updated")
 
 
 def fetch(url, dest, etags, key):
-    """Conditional GET. Returns 'updated', 'unchanged' or an error string."""
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    if etags.get(key) and os.path.exists(dest):
-        req.add_header("If-None-Match", etags[key])
+    """Conditional GET, one try (the other mirror is the retry). Returns 'updated',
+    'unchanged' or an error string."""
+    headers = {"If-None-Match": etags[key]} if etags.get(key) and os.path.exists(dest) else {}
     try:
-        with urllib.request.urlopen(req, timeout=60) as res:
-            body = res.read()
-            etag = res.headers.get("ETag", "")
-    except urllib.error.HTTPError as e:
-        return "unchanged" if e.code == 304 else f"HTTP {e.code}"
-    except (urllib.error.URLError, TimeoutError) as e:
-        return str(getattr(e, "reason", e))
+        body, res_headers = net.request(url, headers=headers, attempts=1, with_headers=True, source="datadubai")
+    except net.NotModified:
+        return "unchanged"
+    except (net.StopForToday, net.AuthError) as e:
+        return str(e) or "unauthorised"
     if not body.strip():
         return "empty file"
     with open(dest, "wb") as out:
         out.write(body)
-    etags[key] = etag
+    etags[key] = res_headers.get("ETag", "")
     return "updated"
 
 
 def data_through():
     try:
         m = re.search(r"Data through:\*\*\s*(\d{4}-\d{2}-\d{2})",
-                      open(os.path.join(OUT, "README.md"), encoding="utf-8").read())
+                      open(os.path.join(out_dir(), "README.md"), encoding="utf-8").read())
         return m.group(1) if m else None
     except OSError:
         return None

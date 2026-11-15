@@ -79,14 +79,8 @@ class BuildPlacementTests(TempData):
 class OsmFallbackTests(TempData):
     def setUp(self):
         super().setUp()
-        self._saved_geo = (geocode_missing.DATA, geocode_missing.OUT)
-        geocode_missing.DATA, geocode_missing.OUT = self.tmp, os.path.join(self.tmp, "osm_area_points.csv")
         self.write("meta.json", json.dumps({"unmatched_areas": [
             {"area": "AL TWAR FIFTH", "n": 2000}, {"area": "Fake Mall", "n": 50}, {"area": "Far Away", "n": 5}]}))
-
-    def tearDown(self):
-        geocode_missing.DATA, geocode_missing.OUT = self._saved_geo
-        super().tearDown()
 
     def fake(self, q):
         if q.startswith("AL TWAR FIFTH"):
@@ -98,7 +92,7 @@ class OsmFallbackTests(TempData):
     def test_only_checked_places_are_accepted_and_cached(self):
         with mock.patch("builtins.print"):
             self.assertEqual(geocode_missing.main(search=self.fake, sleep=lambda s: None, today="2026-11-15"), 1)
-        with open(geocode_missing.OUT) as f:
+        with open(geocode_missing.out_path()) as f:
             got = list(csv.DictReader(f))
         self.assertEqual([r["dld_area"] for r in got], ["AL TWAR FIFTH"])
         calls = []

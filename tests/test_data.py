@@ -15,12 +15,24 @@ def in_dubai(lat, lng):
     return any(la[0] <= lat <= la[1] and ln[0] <= lng <= ln[1] for la, ln in ((LAT, LNG), HATTA))
 
 
+def need(name):
+    """The published data lives on the data branch: load it with scripts/data-branch.sh load.
+    Locally a missing file skips these checks; in CI (where it is always loaded) it fails."""
+    if not os.path.exists(os.path.join(DATA, name)):
+        msg = f"data/{name} missing: run scripts/data-branch.sh load first"
+        if os.environ.get("CI"):
+            raise AssertionError(msg)
+        raise unittest.SkipTest(msg)
+
+
 def load(name):
+    need(name)
     with open(os.path.join(DATA, name), encoding="utf-8") as f:
         return json.load(f)
 
 
 def rows(name):
+    need(name)
     with open(os.path.join(DATA, name), encoding="utf-8") as f:
         return list(csv.DictReader(f))
 

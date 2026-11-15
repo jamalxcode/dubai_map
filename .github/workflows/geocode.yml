@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write   # pushes to the data branch
 
 concurrency:
   group: ejari-pull   # never runs at the same time as the daily data job
@@ -21,10 +21,14 @@ jobs:
   place:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      changed: ${{ steps.save.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
+      - name: Load the current data (data branch)
+        run: scripts/data-branch.sh load
       - name: Official community points (Dubai Municipality)
         continue-on-error: true
         run: python3 collector/dm_communities.py
@@ -35,13 +39,17 @@ jobs:
         run: |
           python3 collector/build.py
           python3 -m unittest discover -s tests -p "test_data.py"
-      - name: Commit
+      - name: Save the data (data branch)
+        id: save
         run: |
-          git config user.name "dubai_map bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/dm_communities.csv data/osm_area_points.csv data/*.json
-          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
-          git commit -m "data: place unplaced areas $(TZ=Asia/Kuwait date '+%Y-%m-%d')"
-          # Someone may have pushed meanwhile: rebase on top and retry a few times.
-          for i in 1 2 3; do git push && exit 0; sleep $((i * 5)); git pull --rebase -q; done
-          exit 1
+          set -o pipefail
+          scripts/data-branch.sh save "data: place unplaced areas $(TZ=Asia/Kuwait date '+%Y-%m-%d')" | tee -a "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: place
+    if: needs.place.outputs.changed == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

@@ -77,12 +77,6 @@ class OwnContractsTests(TempData):
         for rel, text in AGG_FILES.items():
             self.write(rel, text)
         self.write("area_locations.csv", "match,label,lat,lng,field\narea a,Alpha,25.05,55.20,area\n")
-        self._out = fetch_datadubai.OUT
-        fetch_datadubai.OUT = os.path.join(self.tmp, "datadubai")
-
-    def tearDown(self):
-        fetch_datadubai.OUT = self._out
-        super().tearDown()
 
     def add(self, n, reg, start, sub="Flat", usage="Residential", rent=50000):
         import store
@@ -147,12 +141,6 @@ class ShrinkGuardTests(TempData):
         super().setUp()
         for rel, text in AGG_FILES.items():
             self.write(rel, text)
-        self._out = fetch_datadubai.OUT
-        fetch_datadubai.OUT = os.path.join(self.tmp, "datadubai")
-
-    def tearDown(self):
-        fetch_datadubai.OUT = self._out
-        super().tearDown()
 
     def previous(self, **over):
         meta = {"mode": "aggregate", "contracts_last_12m": 150, "mapped_last_12m": 100, "n_areas": 2, **over}
@@ -221,12 +209,6 @@ class AggregateBuildTests(TempData):
         super().setUp()
         for rel, text in AGG_FILES.items():
             self.write(rel, text)
-        self._out = fetch_datadubai.OUT
-        fetch_datadubai.OUT = os.path.join(self.tmp, "datadubai")
-
-    def tearDown(self):
-        fetch_datadubai.OUT = self._out
-        super().tearDown()
 
     def load(self, name):
         with open(os.path.join(self.tmp, name), encoding="utf-8") as f:

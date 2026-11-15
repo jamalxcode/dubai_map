@@ -45,16 +45,6 @@ class FakeService:
 
 
 class DldTests(TempData):
-    def setUp(self):
-        super().setUp()
-        self._paths = (fetch_dld.STATE, fetch_ejari.STATE, fetch_ejari.INBOX)
-        fetch_dld.STATE = fetch_ejari.STATE = os.path.join(self.tmp, "state.json")
-        fetch_ejari.INBOX = os.path.join(self.tmp, "inbox")
-
-    def tearDown(self):
-        fetch_dld.STATE, fetch_ejari.STATE, fetch_ejari.INBOX = self._paths
-        super().tearDown()
-
     def run_day(self, svc, today=TODAY, env=None, max_pages=70):
         client = fetch_dld.Client(max_pages=max_pages, pause=0, sleep=lambda s: None)
         client.post = lambda cmd, p: svc.post(client, cmd, p)
@@ -63,14 +53,14 @@ class DldTests(TempData):
              mock.patch.dict(os.environ, {"DLD_ENABLED": "1", "DLD_DISABLED": "", "FORCE": "0", **(env or {})}), \
              mock.patch("builtins.print"):
             fetch_dld.main()
-        with open(fetch_dld.STATE) as f:
+        with open(os.path.join(self.tmp, "state.json")) as f:
             return json.load(f)["dld"]
 
     def test_backfills_one_month_per_day_newest_first_then_stops(self):
         rows = [row(f"2026-{m:02d}-{d:02d}") for m in (1, 2, 3) for d in (2, 9, 20)]
         svc = FakeService(rows)
         st = self.run_day(svc)
-        self.assertEqual(st["status"], "ok")
+        self.assertEqual((st["state"], st["status"]), ("ok", "ok"))
         self.assertEqual(st["months_done"], ["2026-03"])
         self.assertFalse(st["backfill_complete"])
         days = [TODAY.replace(day=11), TODAY.replace(day=12)]
@@ -92,17 +82,18 @@ class DldTests(TempData):
     def test_page_cap_stops_politely_and_resumes_tomorrow(self):
         svc = FakeService([row("2026-03-09")])
         st = self.run_day(svc, max_pages=1)
+        self.assertEqual(st["state"], "partial")
         self.assertTrue(st["status"].startswith("ok (page cap"))
         self.assertEqual(st["pages"], 1)
 
     def test_failure_is_recorded_and_backup_api_takes_over(self):
         svc = FakeService([], fail=True)
         st = self.run_day(svc)
-        self.assertEqual(st["status"], "stopped: HTTP 503")
+        self.assertEqual((st["state"], st["status"]), ("failed", "stopped: HTTP 503"))
         self.assertEqual(len(svc.calls), 1, "no hammering after a failure")
         keys = {"DUBAI_PULSE_KEY": "k", "DUBAI_PULSE_SECRET": "s", "FORCE": "0"}
         with mock.patch.object(store, "today_dubai", return_value=TODAY), mock.patch.dict(os.environ, keys), \
-             mock.patch.object(fetch_ejari, "pull_api", return_value=([], None)) as api, mock.patch("builtins.print"):
+             mock.patch.object(fetch_ejari, "pull_api", return_value=([], "ok", "")) as api, mock.patch("builtins.print"):
             fetch_ejari.main()
         api.assert_called_once()
 
@@ -110,16 +101,16 @@ class DldTests(TempData):
         self.run_day(FakeService([row("2026-03-09")]))
         keys = {"DUBAI_PULSE_KEY": "k", "DUBAI_PULSE_SECRET": "s", "FORCE": "0"}
         with mock.patch.object(store, "today_dubai", return_value=TODAY), mock.patch.dict(os.environ, keys), \
-             mock.patch.object(fetch_ejari, "pull_api", return_value=([], None)) as api, mock.patch("builtins.print"):
+             mock.patch.object(fetch_ejari, "pull_api", return_value=([], "ok", "")) as api, mock.patch("builtins.print"):
             fetch_ejari.main()
         api.assert_not_called()
 
     def test_off_unless_enabled_and_emergency_stop(self):
         svc = FakeService([row("2026-03-09")])
         st = self.run_day(svc, env={"DLD_ENABLED": ""})
-        self.assertTrue(st["status"].startswith("off"), "off by default: needs DLD's written permission")
+        self.assertEqual(st["state"], "off", "off by default: needs DLD's written permission")
         st = self.run_day(svc, env={"DLD_DISABLED": "1"})
-        self.assertTrue(st["status"].startswith("off"))
+        self.assertEqual(st["state"], "off")
         self.assertEqual(svc.calls, [])
 
 
@@ -155,8 +146,7 @@ class MirrorTests(TempData):
                 f.write("x")
             return "updated"
 
-        with mock.patch.object(fetch_datadubai, "OUT", out), mock.patch.object(fetch_datadubai, "ETAGS", out + "/e.json"), \
-             mock.patch.object(fetch_datadubai, "fetch", side_effect=fake), mock.patch("builtins.print"):
+        with mock.patch.object(fetch_datadubai, "fetch", side_effect=fake), mock.patch("builtins.print"):
             fetch_datadubai.main()
         self.assertEqual(tried[:2], ["huggingface", "github"])
         self.assertTrue(os.path.exists(os.path.join(out, "rents_by_community.csv")))

@@ -49,7 +49,7 @@ Dubai Data attribution: *Dubai Data (datadubai.ae), Continental Club Property �
 4. `collector/fetch_datadubai.py` (backup) refreshes the Dubai Data files with conditional requests (Hugging Face first, GitHub if that fails).
 5. `collector/build.py` writes the small files the page loads: `data/areas.json`, `data/latest.json`, `data/meta.json`. Only homes count (flats, studios, villas): shops, offices, labour camps and whole-building leases would skew the medians.
 6. If contracts, mapped contracts or areas fell by more than 30% since the last build (same source), `build.py` refuses to publish and keeps the previous files; re-run with "allow shrink" ticked if the drop is real. Then the data checks in `tests/test_data.py` run; if they fail, nothing is committed.
-7. The data commit triggers the Pages deploy. Only the page and those JSON files are published, not the raw archive.
+7. The data is saved to the **`data` branch** (only if something changed), and only then is the site redeployed. Only the page and those JSON files are published, not the raw archive.
 
 ### Daily data: add the free Dubai Pulse key
 
@@ -58,7 +58,7 @@ Dubai Data attribution: *Dubai Data (datadubai.ae), Continental Club Property �
    - Secrets: `DUBAI_PULSE_KEY`, `DUBAI_PULSE_SECRET`
    - Variable `EJARI_API_URL`, only if the endpoint in your Dubai Pulse account differs from the default `https://api.dubaipulse.gov.ae/open/dld/dld_rent_contracts-open`
    - Variable `EJARI_FILTER`, only if the date filter syntax needs adjusting (default `contract_start_date>='{from}' AND contract_start_date<='{to}'`)
-3. Run **Actions → Daily Ejari pull → Run workflow** once to check. `data/meta.json` → `state.last_api_status` shows `ok` or the reason it stopped.
+3. Run **Actions → Daily Ejari pull → Run workflow** once to check. `data/meta.json` (on the `data` branch) → `sources` shows each source's `state` (`ok`, `partial`, `failed`, `off`, `no_key`, `standby`, `not_run`) and the reason it stopped.
 
 ### No API key yet? Manual import
 
@@ -75,13 +75,23 @@ In order, the first match wins:
 
 **Actions → Place unplaced areas** runs steps 3 and 4 every Sunday (and by hand). Tested on all of 2026's contracts: 99.6% of home contracts land on the map; the rest are listed under "Areas not on the map yet".
 
+## Where things live
+
+- **`main`**: code, the page, workflows, and the hand-kept inputs (`data/area_locations.csv`, `data/community_locations.csv`, `data/dld_dm_aliases.csv`, `data/inbox/`).
+- **`data`**: everything the jobs generate: the contract archive (`data/contracts/`), the Dubai Data mirror (`data/datadubai/`), computed map points (`dm_communities.csv`, `osm_area_points.csv`), source state (`state.json`) and the files the page loads (`areas*.json`, `latest.json`, `meta.json`). Code history stays readable; data history stays on its own branch.
+
+`scripts/data-branch.sh load` copies the data branch into `./data` (plain files, git's index is untouched; they are in `.gitignore`). `scripts/data-branch.sh save "message"` commits the generated files back, adding and updating only, and retries if another job saved meanwhile. The workflows do both; you only need `load` locally.
+
 ## Run locally
 
 ```sh
+scripts/data-branch.sh load        # the current published data
 python3 collector/fetch_ejari.py   # imports data/inbox/*.csv; API pull if keys are in env
 python3 collector/build.py
 python3 -m http.server 8080        # open http://localhost:8080
 ```
+
+The collectors share `collector/net.py` (User-Agent, bounded retries, stop for today) and `collector/state.py` (each source's state); `build.py` uses `kinds.py` (property types), `places.py` (map points) and `output.py` (the no-shrink guard and writing).
 
 Standard-library Python only; nothing to install.
 

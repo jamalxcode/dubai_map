@@ -35,15 +35,15 @@ import json
 import os
 import sys
 import time
-import urllib.error
-import urllib.request
 from datetime import date, datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import net  # noqa: E402
+import state as st  # noqa: E402
 import store  # noqa: E402
+from net import StopForToday  # noqa: E402,F401  (re-exported for callers and tests)
 
 BASE = os.environ.get("DLD_BASE_URL") or "https://gateway.dubailand.gov.ae/open-data/"
-UA = "dubai_map-daily/1.0 (+https://github.com/jamalxcode/dubai_map; once per day)"
 REFERER = "https://dubailand.gov.ae/en/open-data/real-estate-data/"
 HISTORY_START = date(2026, 1, 1)  # earliest contracts the service returns
 REFRESH_DAYS, REFRESH_SLICES = 60, 10
@@ -51,11 +51,7 @@ PAGE = 2000
 WINDOW_DAYS = int(os.environ.get("DLD_WINDOW_DAYS") or 3)
 MAX_PAGES = int(os.environ.get("DLD_MAX_PAGES") or 70)
 PAUSE = float(os.environ.get("DLD_PAUSE") or 2)
-STATE = os.path.join(store.DATA, "state.json")
-
-
-class StopForToday(Exception):
-    """The service failed or asked us to slow down; try again tomorrow."""
+SOURCE = "dld"
 
 
 class PageCap(Exception):
@@ -63,58 +59,26 @@ class PageCap(Exception):
 
 
 def log(msg):
-    print(f"[{datetime.now(timezone.utc):%H:%M:%SZ}] dld: {msg}", flush=True)
-
-
-def load_state():
-    try:
-        with open(STATE) as f:
-            return json.load(f)
-    except (OSError, ValueError):
-        return {}
-
-
-def save_state(state):
-    with open(STATE, "w") as f:
-        json.dump(state, f, indent=2, sort_keys=True)
-        f.write("\n")
+    net.log(msg, SOURCE)
 
 
 class Client:
-    def __init__(self, max_pages=MAX_PAGES, pause=PAUSE, sleep=time.sleep):
-        self.pages, self.max_pages, self.pause, self.sleep = 0, max_pages, pause, sleep
+    def __init__(self, max_pages=None, pause=PAUSE, sleep=time.sleep):
+        self.pages, self.max_pages, self.pause, self.sleep = 0, max_pages or MAX_PAGES, pause, sleep
 
-    def post(self, cmd, payload, attempts=3):
+    def post(self, cmd, payload):
         if self.pages >= self.max_pages:
             raise PageCap()
         if self.pages:
             self.sleep(self.pause)
         self.pages += 1
-        body = json.dumps(payload).encode()
-        for attempt in range(1, attempts + 1):
-            req = urllib.request.Request(BASE + cmd, data=body, method="POST", headers={
-                "Content-Type": "application/json", "Accept": "application/json",
-                "User-Agent": UA, "Referer": REFERER})
-            try:
-                with urllib.request.urlopen(req, timeout=90) as res:
-                    data = json.loads(res.read().decode("utf-8") or "null")
-                result = ((data or {}).get("response") or {}).get("result")
-                if result is None:
-                    raise StopForToday("unexpected response shape (no response.result)")
-                return result
-            except urllib.error.HTTPError as e:
-                if e.code in (429, 500, 502, 503, 504) and attempt < attempts:
-                    wait = min(int(e.headers.get("Retry-After") or 0) or 20 * attempt, 120)
-                    log(f"HTTP {e.code}; waiting {wait}s ({attempt}/{attempts})")
-                    self.sleep(wait)
-                    continue
-                raise StopForToday(f"HTTP {e.code}")
-            except (urllib.error.URLError, TimeoutError, ValueError) as e:
-                if attempt < attempts:
-                    self.sleep(20 * attempt)
-                    continue
-                raise StopForToday(f"network: {getattr(e, 'reason', e)}")
-        raise StopForToday("retries exhausted")
+        data = net.get_json(BASE + cmd, data=json.dumps(payload).encode(), method="POST", timeout=90,
+                            max_wait=120, sleep=self.sleep, source=SOURCE,
+                            headers={"Content-Type": "application/json", "Referer": REFERER})
+        result = ((data or {}).get("response") or {}).get("result")
+        if result is None:
+            raise StopForToday("unexpected response shape (no response.result)")
+        return result
 
 
 def payload(frm, to, take, skip):
@@ -162,8 +126,8 @@ def merge(rows):
 
 def run(state, today, client):
     """One day's work. Returns the updated 'dld' state block."""
-    st = dict(state.get("dld") or {})
-    st["last_run_date"] = today.isoformat()  # even a failed run counts as today's one try
+    block = dict(state.get("dld") or {})
+    block["last_run_date"] = today.isoformat()  # even a failed run counts as today's one try
     added = updated = 0
     try:
         # 1. Recent registrations (overlapping window catches late entries and corrections).
@@ -182,7 +146,7 @@ def run(state, today, client):
         # 2. Back-fill: at most one missing month per day, newest first (the current
         #    month too, so its earlier days arrive straight away). After that the daily
         #    window keeps every month current.
-        done = set(st.get("months_done") or [])
+        done = set(block.get("months_done") or [])
         todo = [m.isoformat()[:7] for m in months_since(HISTORY_START, today)
                 if m.isoformat()[:7] not in done][::-1]
         if todo:
@@ -195,33 +159,33 @@ def run(state, today, client):
                 added, updated = added + a, updated + u
             done.add(month)
             log(f"back-filled {month}: {got} rows")
-        st["months_done"] = sorted(done)
-        st["backfill_complete"] = not [m for m in todo if m not in done]
-        st["status"] = "ok"
-        st["last_ok_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        block["months_done"] = sorted(done)
+        block["backfill_complete"] = not [m for m in todo if m not in done]
+        st.set_status(block, "ok")
+        block["last_ok_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     except PageCap:
-        st["status"] = "ok (page cap reached; rest continues tomorrow)"
-        st["last_ok_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        st.set_status(block, "partial", "page cap reached; rest continues tomorrow")
+        block["last_ok_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
         log("page cap reached; stopping politely")
-    except StopForToday as e:
-        st["status"] = f"stopped: {e}"[:200]
+    except (StopForToday, net.AuthError) as e:
+        st.set_status(block, "failed", str(e))
         log(f"stopping for today: {e}")
-    st.update(last_added=added, last_updated=updated, pages=client.pages)
-    return st
+    block.update(last_added=added, last_updated=updated, pages=client.pages)
+    return block
 
 
 def main():
-    state = load_state()
+    state = st.load()
     today = store.today_dubai()
     if os.environ.get("DLD_ENABLED") != "1" or os.environ.get("DLD_DISABLED") == "1":
         log("off: needs DLD's written permission, then DLD_ENABLED=1 (see README)")
-        state.setdefault("dld", {})["status"] = "off (waiting for DLD's permission)"
+        st.set_status(state.setdefault("dld", {}), "off", "waiting for DLD's permission")
     elif (state.get("dld") or {}).get("last_run_date") == today.isoformat() and os.environ.get("FORCE") != "1":
         log(f"already ran today ({today}); not contacting DLD again")
         return
     else:
         state["dld"] = run(state, today, Client())
-    save_state(state)
+    st.save(state)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ name: Tests
 # job runs the data checks itself before it commits; see daily-ejari.yml.)
 on:
   push:
+    branches-ignore: [data]   # the data branch holds no code
   pull_request:
   workflow_dispatch:
 
@@ -21,7 +22,9 @@ jobs:
         with: { python-version: "3.12" }
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
-      - name: Python tests (collector, build, committed data)
+      - name: Load the published data (data branch) for the data checks
+        run: scripts/data-branch.sh load
+      - name: Python tests (collector, build, published data)
         run: python3 -m unittest discover -s tests -v
       - name: Page tests (stale-data rule, script integrity)
         run: node --test tests/page.test.mjs

@@ -1,2 +1,13 @@
 __pycache__/
 *.pyc
+
+# Generated data lives on the `data` branch (scripts/data-branch.sh load / save).
+/data/areas.json
+/data/areas_*.json
+/data/latest.json
+/data/meta.json
+/data/state.json
+/data/contracts/
+/data/datadubai/
+/data/osm_area_points.csv
+/data/dm_communities.csv
