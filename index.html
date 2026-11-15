@@ -175,17 +175,25 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .wrap{padding:0 16px}
   .band::after{inset:6px}
   .theme{top:14px;right:16px;font-size:15px;padding:5px 10px 5px 8px}
-  .band .wrap{grid-template-columns:1fr;gap:16px;padding-top:58px;padding-bottom:22px}
-  .band p{font-size:15px;margin-top:8px}
+  /* Phone: keep the sign compact so the map starts high on the first screen. */
+  .band .wrap{grid-template-columns:1fr;gap:8px;padding-top:50px;padding-bottom:16px}
+  .band h1{font-size:clamp(34px,10vw,44px)}
+  .band p{font-size:14px;margin-top:6px;line-height:1.4}
+  .big .num{font-size:46px}
+  .big .cap{font-size:13px;margin-top:4px}
+  .stale{padding:10px 36px 10px 46px;font-size:14px;margin-bottom:10px}
+  .stale::before{left:12px;top:10px;width:22px;height:22px}.stale::after{left:12px;top:15px;width:22px;font-size:14px}
+  .stale .more{display:none}
+  .mapArea{padding-top:12px}
   .big{text-align:left}
-  .controls .wrap{padding-top:12px;padding-bottom:12px}
+  .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
   .controls .seg{width:100%;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
   .legend .t{display:none}.legend{font-size:11px}
   .controls .field{display:none}
-  .typesNote{font-size:12.5px;margin-top:-4px}
+  .typesNote{font-size:12px;margin-top:-2px;line-height:1.35}
   .controls{position:static;z-index:auto}
   .mapWrap{height:62svh;min-height:340px}
-  .legend{left:auto;right:8px;bottom:auto;top:8px;padding:6px 8px}.legend .ramp i{width:26px}
+  .legend{left:8px;bottom:8px;padding:6px 8px}.legend .ramp i{width:26px}
   .facts{grid-template-columns:1fr 1fr}
   .facts dd{font-size:26px}
   .about .wrap{grid-template-columns:1fr;gap:28px}
@@ -395,8 +403,8 @@ async function init(){
   $('tableTitle').textContent=AGG?'Rents by area':'Newest contracts';
   if(AGG){const o=$('metric').querySelector('option[value=median_sqm]');o.value='yield';o.textContent='Gross rental yield'}
   if(age&&age.stale){
-    $('staleText').innerHTML='<b>This data is '+age.days+' days old.</b> Rents run through '+safe(niceDate(age.through))+'. '+
-      (AGG?'Dubai Data has not published a newer update yet, so changes since then are not shown.':'The daily update has not brought in newer contracts, so changes since then are not shown.');
+    $('staleText').innerHTML='<b>This data is '+age.days+' days old</b> (to '+safe(niceDate(age.through))+').<span class="more"> '+
+      (AGG?'Dubai Data has not published a newer update yet, so changes since then are not shown.':'The daily update has not brought in newer contracts, so changes since then are not shown.')+'</span>';
     let hidden=false;try{hidden=sessionStorage.getItem('staleHidden')===age.through}catch(e){}
     if(!hidden){$('stale').classList.add('on');setTimeout(()=>map.invalidateSize(),0)}
   }
