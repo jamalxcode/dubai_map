@@ -62,7 +62,7 @@ class MergeTests(TempData):
         rows = list(store.iter_all())
         self.assertEqual(len(rows), 2)
         self.assertEqual({r["key"]: r["annual"] for r in rows}["C1#1"], "66000")
-        self.assertTrue(os.path.exists(os.path.join(store.CONTRACTS, "2026-11.csv.gz")))
+        self.assertTrue(os.path.exists(os.path.join(store.CONTRACTS, "2026-11", "05.csv.gz")))
 
     def test_invalid_rows_are_dropped(self):
         self.assertEqual(store.merge([store.normalize(raw(annual_amount=""), "t")]), (0, 0))

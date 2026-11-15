@@ -19,31 +19,40 @@ Labels sit at an **approximate reference point per community**, not on a buildin
 
 ## Data sources
 
-The map uses whichever is richer, automatically:
+One main source and several backups. If one fails, the next one keeps the map going, and `data/meta.json` → `sources` shows the status of each.
 
-1. **Per-contract Ejari data (once a Dubai Pulse key is added).** [Ejari rent contracts on Dubai Pulse](https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open), published by DLD. Gives contract-level detail: 12-month trend, AED/m², new vs renewal, top buildings, last-30-days table. Used once at least 1,000 contracts from the last 12 months are stored.
-2. **Community medians from Dubai Data (works today, no key).** [Dubai Data](https://datadubai.ae/) imports the same Ejari feed daily and publishes trailing-12-month median annual rent per community and per bedroom count, plus gross yield and median sale price, under **CC BY 4.0** ([GitHub mirror](https://github.com/datadubai/dubai-real-estate-dld), updated weekly). Covers ~300,000 contracts across ~100 master communities. Older non-master-planned districts (Deira, Bur Dubai, Karama…) are not in it.
+| # | Source | Role | Key? | Freshness |
+|---|---|---|---|---|
+| 1 | **DLD open data** (`gateway.dubailand.gov.ae/open-data`, the service behind DLD's [Real Estate Data](https://dubailand.gov.ae/en/open-data/real-estate-data/) page) | **Main.** Every Ejari contract, homes only on the map | No | Daily |
+| 2 | [Ejari on Dubai Pulse](https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open) API | Backup, only on days the main source failed | Yes (`DUBAI_PULSE_KEY` / `_SECRET`) | Daily |
+| 3 | [Dubai Data](https://datadubai.ae/) community medians, from [Hugging Face](https://huggingface.co/datasets/datadubai/dubai-real-estate-dld), then the [GitHub mirror](https://github.com/datadubai/dubai-real-estate-dld) | Backup for the map until our own history covers a year; also maps DLD area names to communities | No | Weekly |
+| 4 | Manual CSV in `data/inbox/` | Always imported | No | When added |
 
-   Attribution: *Dubai Data (datadubai.ae), Continental Club Property — based on Dubai Land Department open data. Not an official DLD product.*
+**Which one the map shows:** our own contracts (1 and 2) once they cover at least 300 days and 1,000 contracts; Dubai Data (3) before that. The DLD service only returns contracts from January 2026 onward, so the switch happens by itself after the back-fill finishes (about 11 days after the first run).
 
-Neither source includes tenant or unit details.
+Dubai Data attribution: *Dubai Data (datadubai.ae), Continental Club Property — based on Dubai Land Department open data. Not an official DLD product.* (CC BY 4.0)
+
+**About source 1:** DLD offers this service through its public website rather than as a documented API with written terms, so this repo treats it carefully (see below). If DLD ever asks us to stop, set the repo variable `DLD_DISABLED=1` and the backups carry on. No source includes tenant or unit details.
 
 ## How the daily update works (and why it won't get us blocked)
 
-`.github/workflows/daily-ejari.yml` runs once a day at **05:17 Kuwait time**:
+`.github/workflows/daily-ejari.yml` runs once a day at **05:17 Kuwait time**. Each step may fail without stopping the others:
 
-1. `collector/fetch_ejari.py` pulls contracts from the Dubai Pulse API, **politely**:
-   - at most **one pull per Dubai calendar day** (a state file records it; re-runs the same day don't call the API, even manual ones, unless "force" is ticked);
-   - one access token per run, a small window (last 2 days of contract start dates);
-   - pages of 1,000 rows with a 4-second pause between pages, capped at 30 pages;
-   - on "slow down" (429/503) it waits as asked at most twice, then **stops until tomorrow**;
-   - an honest User-Agent pointing at this repo; no scraping of CAPTCHA-protected pages.
-2. New contracts are merged into monthly files under `data/contracts/` (deduplicated on contract id + line, so overlaps and corrections are safe).
-3. `collector/fetch_datadubai.py` refreshes the Dubai Data files from GitHub (conditional requests, so unchanged files cost nothing; DLD is not contacted).
-4. `collector/build.py` writes the small files the page loads: `data/areas.json`, `data/latest.json`, `data/meta.json`.
-5. The data commit triggers the Pages deploy. Only the page and those JSON files are published, not the raw archive.
+1. `collector/fetch_dld.py` (main):
+   - at most **one run per Dubai calendar day** (re-runs the same day don't contact DLD unless "force" is ticked);
+   - pulls the last 3 days, plus one 6-day slice of the last 60 days (cycling, so late registrations are caught within about 10 days);
+   - back-fills **one missing month per day**, newest first, until January 2026 onward is complete;
+   - requests are **sequential**, 2,000 rows per page, a 2-second pause between pages, at most 70 pages per run;
+   - on errors or "slow down" it waits briefly at most twice, then **stops until tomorrow**;
+   - an honest User-Agent pointing at this repo; no CAPTCHA pages are touched.
+2. `collector/fetch_ejari.py` (backup): calls the Dubai Pulse API only if keys are set **and** the main source failed today, with the same politeness rules. Also imports any CSV in `data/inbox/`.
+3. New contracts are merged into small daily files under `data/contracts/YYYY-MM/DD.csv.gz` (de-duplicated, so overlaps and corrections are safe; daily files keep each commit small).
+4. `collector/fetch_datadubai.py` (backup) refreshes the Dubai Data files with conditional requests (Hugging Face first, GitHub if that fails).
+5. `collector/build.py` writes the small files the page loads: `data/areas.json`, `data/latest.json`, `data/meta.json`. Only homes count (flats, studios, villas): shops, offices, labour camps and whole-building leases would skew the medians.
+6. The data checks in `tests/test_data.py` run; if they fail, nothing is committed.
+7. The data commit triggers the Pages deploy. Only the page and those JSON files are published, not the raw archive.
 
-### Setup (one time)
+### Optional: Dubai Pulse key for backup source 2
 
 1. Register at [Dubai Pulse](https://www.dubaipulse.gov.ae/) and request API access to `dld_rent_contracts-open`. You get an API key and secret by email.
 2. In this repo: **Settings → Secrets and variables → Actions**
@@ -63,7 +72,7 @@ Download a Rents CSV from [DLD open data](https://dubailand.gov.ae/en/open-data/
 - `field=area` rows match the official DLD area name exactly (e.g. Marsa Dubai → Dubai Marina, Al Barsha South Fourth → JVC, Al Warsan First → International City).
 - `field=any` rows match a marketing name anywhere in the master project, project or area (e.g. "damac hills 2").
 
-After real data arrives, `data/meta.json` → `unmatched_areas` lists the busiest unplaced areas. Add rows for them.
+Names are also matched through Dubai Data's DLD-area → community table. Once the map runs on DLD contracts, `data/meta.json` → `unmatched_areas` lists the busiest unplaced areas (mostly older districts such as Al Murqabat, Mankhool or Al Qusais). **Actions → Geocode missing communities** suggests OpenStreetMap points for them; check each one, then add it to `area_locations.csv`.
 
 ## Run locally
 

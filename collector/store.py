@@ -1,7 +1,8 @@
 """Shared storage for Ejari rent contracts.
 
-Contracts are kept as monthly gzip CSV partitions under data/contracts/,
-keyed by contract start month, deduplicated on a stable key.
+Contracts are kept as small daily gzip CSV files under data/contracts/YYYY-MM/DD.csv.gz,
+keyed by contract start date, deduplicated on a stable key. Daily files keep each
+day's git commit small: only the days that actually changed are rewritten.
 Standard library only.
 """
 import csv
@@ -20,32 +21,34 @@ FIELDS = [
     "key", "contract_id", "line_number", "reg_type", "start", "end",
     "annual", "contract_amount", "size_sqm", "prop_type", "sub_type",
     "usage", "rooms", "area_id", "area", "master_project", "project",
-    "metro", "mall", "landmark", "tenant_type", "is_free_hold", "source",
+    "metro", "mall", "landmark", "tenant_type", "is_free_hold", "reg_date", "source",
 ]
 
-# Header aliases: Dubai Pulse API / CSV names and DLD website export names.
+# Header aliases: Dubai Pulse API / CSV names, DLD website export names and the
+# DLD open-data API (gateway.dubailand.gov.ae) field names.
 ALIASES = {
-    "contract_id": ["contract_id"],
+    "contract_id": ["contract_id", "contract_number"],
     "line_number": ["line_number"],
-    "reg_type": ["contract_reg_type_en", "version", "registration type"],
+    "reg_type": ["contract_reg_type_en", "version", "registration type", "version_en"],
     "start": ["contract_start_date", "start date"],
     "end": ["contract_end_date", "end date"],
     "annual": ["annual_amount", "annual amount"],
     "contract_amount": ["contract_amount", "contract amount"],
     "size_sqm": ["actual_area", "property size (sq.m)", "property size"],
-    "prop_type": ["ejari_property_type_en", "property type"],
-    "sub_type": ["ejari_property_sub_type_en", "property sub type"],
-    "usage": ["property_usage_en", "usage"],
+    "prop_type": ["ejari_property_type_en", "property type", "prop_type_en"],
+    "sub_type": ["ejari_property_sub_type_en", "property sub type", "prop_sub_type_en"],
+    "usage": ["property_usage_en", "usage", "usage_en"],
     "rooms": ["number of rooms", "rooms"],
     "area_id": ["area_id"],
-    "area": ["area_name_en", "area"],
+    "area": ["area_name_en", "area", "area_en"],
     "master_project": ["master_project_en", "master project"],
-    "project": ["project_name_en", "project"],
+    "project": ["project_name_en", "project", "project_en"],
     "metro": ["nearest_metro_en", "nearest metro"],
     "mall": ["nearest_mall_en", "nearest mall"],
     "landmark": ["nearest_landmark_en", "nearest landmark"],
     "tenant_type": ["tenant_type_en"],
     "is_free_hold": ["is_free_hold", "is free hold?"],
+    "reg_date": ["registration_date", "registration date", "contract_reg_date"],
 }
 
 
@@ -91,6 +94,8 @@ def normalize(raw, source):
         field = _ALIAS_LOOKUP.get(_canon(k))
         if field and v is not None and str(v).strip() and not rec[field]:
             rec[field] = str(v).strip()
+    reg_raw = rec["reg_date"]  # full timestamp when the source has one; helps tell twin contracts apart
+    rec["reg_date"] = parse_date(rec["reg_date"])
     rec["start"] = parse_date(rec["start"])
     rec["end"] = parse_date(rec["end"])
     for f in ("annual", "contract_amount", "size_sqm"):
@@ -100,9 +105,9 @@ def normalize(raw, source):
     if rec["contract_id"]:
         rec["key"] = f"{rec['contract_id']}#{rec['line_number'] or '1'}"
     else:
-        # Website exports carry no contract id: hash the descriptive fields.
-        basis = "|".join(rec[f] for f in ("start", "end", "annual", "area", "project",
-                                          "sub_type", "size_sqm", "reg_type", "rooms"))
+        # Website exports and the DLD open-data API carry no contract id: hash the descriptive fields.
+        basis = "|".join([rec[f] for f in ("start", "end", "annual", "area", "project",
+                                           "sub_type", "size_sqm", "reg_type", "rooms")] + [reg_raw])
         rec["key"] = "h:" + hashlib.sha1(basis.encode()).hexdigest()[:16]
     return rec
 
@@ -112,7 +117,7 @@ def valid(rec):
 
 
 def _partition(rec):
-    return os.path.join(CONTRACTS, rec["start"][:7] + ".csv.gz")
+    return os.path.join(CONTRACTS, rec["start"][:7], rec["start"][8:10] + ".csv.gz")
 
 
 def read_partition(path):
@@ -163,9 +168,11 @@ def merge(records):
 def iter_all():
     if not os.path.isdir(CONTRACTS):
         return
-    for name in sorted(os.listdir(CONTRACTS)):
-        if name.endswith(".csv.gz"):
-            yield from read_partition(os.path.join(CONTRACTS, name)).values()
+    for root, dirs, files in os.walk(CONTRACTS):
+        dirs.sort()
+        for name in sorted(files):
+            if name.endswith(".csv.gz"):
+                yield from read_partition(os.path.join(root, name)).values()
 
 
 def today_dubai():

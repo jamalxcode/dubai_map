@@ -104,6 +104,20 @@ The DLD website export is CAPTCHA-gated and the Dubai Pulse API needs a key, so 
 
 The owner found the sized/coloured circles confusing. Replaced with **text labels** showing the rent. Labels that would overlap at the current zoom merge into **one label with a single number**: the contract-weighted average of the group, marked "avg" with the community count. Merging is iterative (merge any overlapping pair, recompute the position, repeat), so no labels overlap; verified at zoom 9–15 on 1350 px and 390 px widths. Clicking a group fits its bounds; at max zoom it lists the members. The side panel's confusing "typical row" median was replaced by **Average rent in view**, recomputed on pan/zoom. Rejected: Leaflet.markercluster (count bubbles, not rent averages) and size-scaled markers.
 
+## Decision on 2026-11-15 (fifth pass): DLD open data as the main source, with backups
+
+Proposed by a collaborator, for the owner to review on the `mobile-redesign` branch.
+
+- **Main source: DLD's open-data service** (`gateway.dubailand.gov.ae/open-data/rents`), the service behind DLD's public Real Estate Data page. Free, no key, updated daily, contract level. Another public project ([dubai-property-monitor](https://github.com/GusCurrie/dubai-property-monitor)) has pulled it daily since early 2026. It serves contracts from January 2026 onward, so history is back-filled one month per day.
+- **This revisits decision 1 above** ("an undocumented data endpoint is not sufficient evidence of a licensed automation right"). Reasons: the data is DLD open data; the service is not CAPTCHA-gated (the CAPTCHA is on the website's file export, which we still never touch); and we keep the same rules as for Dubai Pulse: one run a day, sequential requests, page cap, honest User-Agent, stop on errors. A `DLD_DISABLED` switch turns it off at once if DLD objects.
+- **Backups:** Dubai Pulse API (only on days the main source fails, if keys exist); Dubai Data medians from Hugging Face, then GitHub; manual inbox CSV.
+- **Map switches to own contracts** only after 300 days and 1,000 contracts of history, so a few weeks of data is never shown as "last 12 months".
+- **Homes only:** labour camps, shops, offices and whole buildings are excluded from map statistics.
+- **Storage:** daily files instead of monthly ones, so each daily commit stays small.
+- **Rejected:** listing portals (asking prices, terms of use), paid scrapers, CAPTCHA workarounds, and the multi-GB Dubai Pulse full CSV (last updated January 2026).
+- **Tested offline only:** against a mock of the service loaded with real rows that service returned (saved in the public project above). The first live run happens in GitHub Actions; `meta.json` → `sources` reports how it went.
+- **Follow-up:** about 45% of contracts are in DLD areas with no map point yet (older districts). Run the geocode job, review, add to `area_locations.csv`.
+
 ## Prioritized next work
 
 **Status on 2026-11-10:** P0 items 1–3 are done via the Dubai Data fallback and a live Pages deploy. P1 is built and waiting for the Dubai Pulse key. Next up: P2 item 6 (community polygons).
@@ -142,6 +156,8 @@ The owner found the sized/coloured circles confusing. Replaced with **text label
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-15: DLD open data as main daily source with backups; mobile-first redesign; stale-data warning; tests.
 
 - 2026-11-10: Text rent labels with overlap-free merging into average labels; "Average rent in view" stat; added DESIGN_GOALS.md and CONVERSATION.md.
 - 2026-11-09: All 102 Dubai Data communities placed (11 via manual OSM geocoding job).

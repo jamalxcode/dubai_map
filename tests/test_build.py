@@ -46,6 +46,53 @@ AGG_FILES = {
 }
 
 
+class OwnContractsTests(TempData):
+    """Our own contracts take over from Dubai Data only once they cover most of a year."""
+
+    def setUp(self):
+        super().setUp()
+        for rel, text in AGG_FILES.items():
+            self.write(rel, text)
+        self.write("area_locations.csv", "match,label,lat,lng,field\narea a,Alpha,25.05,55.20,area\n")
+        self._out = fetch_datadubai.OUT
+        fetch_datadubai.OUT = os.path.join(self.tmp, "datadubai")
+
+    def tearDown(self):
+        fetch_datadubai.OUT = self._out
+        super().tearDown()
+
+    def add(self, n, reg, start, sub="Flat", usage="Residential", rent=50000):
+        import store
+        store.merge([store.normalize({"registration_date": f"{reg}T10:{i % 60:02d}:{i // 60 % 60:02d}",
+                                      "contract_start_date": start, "annual_amount": rent + i,
+                                      "area_name_en": "Area A", "prop_sub_type_en": sub, "property_usage_en": usage},
+                                     "test") for i in range(n)])
+
+    def build(self, today):
+        import store
+        with mock.patch.object(store, "today_dubai", return_value=today), mock.patch("builtins.print"):
+            build.main()
+        with open(os.path.join(self.tmp, "meta.json")) as f:
+            return json.load(f)
+
+    def test_short_history_stays_on_dubai_data(self):
+        from datetime import date
+        self.add(1200, "2026-10-01", "2026-10-01")
+        meta = self.build(date(2026, 11, 15))
+        self.assertEqual(meta["mode"], "aggregate")
+        self.assertEqual(meta["sources"][0]["history"], {"contracts": 1200, "days": 45})
+
+    def test_full_year_switches_to_own_contracts_homes_only(self):
+        from datetime import date
+        self.add(1200, "2026-01-05", "2026-01-05")
+        self.add(50, "2026-02-01", "2026-02-01", sub="Labor Camps", rent=2000000)
+        self.add(50, "2026-02-01", "2026-02-01", sub="Shop", usage="Commercial")
+        meta = self.build(date(2026, 11, 15))
+        self.assertEqual(meta["mode"], "contracts")
+        self.assertEqual(meta["contracts_last_12m"], 1200, "camps and shops are left out")
+        self.assertEqual(meta["mapped_last_12m"], 1200, "Area A is placed via area_locations")
+
+
 class AggregateBuildTests(TempData):
     def setUp(self):
         super().setUp()

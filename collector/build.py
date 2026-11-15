@@ -10,7 +10,7 @@ import os
 import statistics
 import sys
 from collections import Counter, defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import store  # noqa: E402
@@ -19,14 +19,50 @@ LATEST_DAYS = 30
 STATS_DAYS = 365
 LATEST_CAP = 15000
 MIN_OWN_CONTRACTS = 1000  # below this, fall back to Dubai Data community aggregates
+# Our own contract stats are only shown once they cover enough of the year: a few
+# weeks of contracts presented as "last 12 months" would mislead.
+MIN_HISTORY_DAYS = 300
+# The map is about homes. Shops, offices, labour camps and whole buildings are left
+# out: one bulk camp or building lease can be worth millions and would skew medians.
+RESIDENTIAL = {"residential", ""}
+HOMES = {"flat", "studio", "villa", "complex villas", "penthouse", "arabian house", "villa addendum", ""}
+
+
+def is_home(rec):
+    return (rec.get("usage", "").lower() in RESIDENTIAL
+            and rec.get("sub_type", "").lower() in HOMES)
 
 
 def load_locations():
     with open(os.path.join(store.DATA, "area_locations.csv"), encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     exact = {r["match"]: r for r in rows if r["field"] == "area"}
+    # Second chance for official DLD area names: Dubai Data's area -> community table,
+    # placed at our checked community points. Hand-written rows above win.
+    for area, row in datadubai_area_points().items():
+        exact.setdefault(area, row)
     fuzzy = sorted((r for r in rows if r["field"] == "any"), key=lambda r: -len(r["match"]))
     return exact, fuzzy
+
+
+def datadubai_area_points():
+    import fetch_datadubai
+    d = fetch_datadubai.OUT
+    try:
+        with open(os.path.join(d, "communities.csv"), encoding="utf-8") as f:
+            by_url = {c["url"]: c["name"] for c in csv.DictReader(f)}
+        with open(os.path.join(d, "areas.csv"), encoding="utf-8") as f:
+            areas = list(csv.DictReader(f))
+        with open(os.path.join(store.DATA, "community_locations.csv"), encoding="utf-8") as f:
+            pts = {r["community"]: r for r in csv.DictReader(f)}
+    except (OSError, KeyError):
+        return {}
+    out = {}
+    for a in areas:
+        name = by_url.get(a.get("url", ""))
+        if name in pts:
+            out[a["name"].lower().strip()] = {"label": name, "lat": pts[name]["lat"], "lng": pts[name]["lng"]}
+    return out
 
 
 def locate(rec, exact, fuzzy):
@@ -68,11 +104,17 @@ def main():
     latest = []
     total = 0
     newest = ""
+    earliest = first_reg = ""
     for rec in store.iter_all():
         total += 1
+        if rec.get("reg_date"):
+            first_reg = min(first_reg, rec["reg_date"]) if first_reg else rec["reg_date"]
         s = rec["start"]
         if s > to or s < stats_from:
             continue
+        if not is_home(rec):
+            continue
+        earliest = min(earliest, s) if earliest else s
         newest = max(newest, s)
         loc = locate(rec, exact, fuzzy)
         label = loc["label"] if loc else rec["area"]
@@ -129,7 +171,12 @@ def main():
 
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     in_window = sum(a["n"] for a in areas)
-    if in_window < MIN_OWN_CONTRACTS and build_aggregate(now, state):
+    # How much of the year our own data really covers: by registration date when we
+    # have it (start dates of renewals reach back before our history began).
+    since = first_reg or earliest
+    covered = (today - date.fromisoformat(since)).days if since else 0
+    ready = in_window >= MIN_OWN_CONTRACTS and covered >= MIN_HISTORY_DAYS
+    if not ready and build_aggregate(now, state, own={"contracts": in_window, "days": covered}):
         return
     write("areas.json", {"generated_at": now, "from": stats_from, "to": to, "areas": areas})
     write("latest.json", {"generated_at": now, "from": latest_from, "to": to,
@@ -141,8 +188,8 @@ def main():
         "contracts_last_12m": in_window, "mapped_last_12m": mapped,
         "newest_start_date": newest or None,
         "unmatched_areas": [{"area": k, "n": v} for k, v in unmatched.most_common(60)],
-        "state": state,
-        "source": "Dubai Land Department Ejari rent contracts via Dubai Pulse open data",
+        "state": state, "sources": source_status(state),
+        "source": "Dubai Land Department Ejari rent contracts (DLD open data); homes only (flats, studios, villas)",
     })
     print(f"built: {total} stored, {in_window} in 12m window, {mapped} mapped, "
           f"{len(areas)} groups, {len(latest)} latest rows")
@@ -155,7 +202,19 @@ def _num(s):
         return None
 
 
-def build_aggregate(now, state):
+def source_status(state, own=None):
+    """One line per source for meta.json, so a failing source is visible."""
+    dld = state.get("dld") or {}
+    out = [{"name": "DLD open data (main)", "status": dld.get("status", "not run yet"),
+            "last_ok_at": dld.get("last_ok_at"), "backfill_complete": dld.get("backfill_complete", False)},
+           {"name": "Dubai Pulse API (backup)", "status": state.get("last_api_status", "not run yet")},
+           {"name": "Dubai Data community medians (backup)", "status": "in use" if own is not None else "standby"}]
+    if own is not None:
+        out[0]["history"] = own
+    return out
+
+
+def build_aggregate(now, state, own=None):
     """Community medians from Dubai Data (CC BY 4.0) when we have no own contracts."""
     import fetch_datadubai
     d = fetch_datadubai.OUT
@@ -214,6 +273,7 @@ def build_aggregate(now, state):
         "contracts_last_12m": total, "mapped_last_12m": sum(a["n"] for a in areas if a["lat"] is not None),
         "newest_start_date": through, "data_through": through,
         "unmatched_areas": sorted(unplaced, key=lambda x: -x["n"]), "state": state,
+        "sources": source_status(state, own or {}),
         "source": "Dubai Data (datadubai.ae), Continental Club Property, based on Dubai Land "
                   "Department open data (Ejari)" + (f", data through {through}" if through else "") +
                   ". CC BY 4.0. Not an official DLD product.",

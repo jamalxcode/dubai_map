@@ -1,8 +1,12 @@
 name: Daily Ejari pull
 
-# Once a day at 05:17 Kuwait time (02:17 UTC). The collector itself also refuses
-# to contact the API more than once per Dubai calendar day, so manual re-runs
-# are safe. Pushing a CSV into data/inbox/ imports it without touching the API.
+# Once a day at 05:17 Kuwait time (02:17 UTC). Sources, in order:
+#   1. DLD open data (main, no key)            collector/fetch_dld.py
+#   2. Dubai Pulse API (backup, needs keys)    collector/fetch_ejari.py
+#   3. Dubai Data community medians (backup)   collector/fetch_datadubai.py
+#   4. Manual CSV in data/inbox/ (always imported)
+# Each collector refuses to contact its source more than once per Dubai
+# calendar day, so manual re-runs are safe.
 on:
   schedule:
     - cron: "17 2 * * *"
@@ -31,7 +35,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - name: Pull Ejari contracts (once per day) and import inbox
+      - name: "Main source: DLD open data (once per day, no key)"
+        continue-on-error: true  # a failing source must not stop the backups or the build
+        env:
+          DLD_DISABLED: ${{ vars.DLD_DISABLED }}
+          FORCE: ${{ inputs.force && '1' || '0' }}
+        run: python3 collector/fetch_dld.py
+      - name: "Backup: Dubai Pulse API (only if the main source failed today) + inbox import"
+        continue-on-error: true  # a failing source must not stop the backups or the build
         env:
           DUBAI_PULSE_KEY: ${{ secrets.DUBAI_PULSE_KEY }}
           DUBAI_PULSE_SECRET: ${{ secrets.DUBAI_PULSE_SECRET }}
@@ -39,7 +50,8 @@ jobs:
           EJARI_FILTER: ${{ vars.EJARI_FILTER }}
           FORCE: ${{ inputs.force && '1' || '0' }}
         run: python3 collector/fetch_ejari.py
-      - name: Refresh Dubai Data community rents (GitHub, conditional requests)
+      - name: "Backup: Dubai Data community medians (Hugging Face, then GitHub)"
+        continue-on-error: true  # a failing source must not stop the backups or the build
         run: python3 collector/fetch_datadubai.py
       - name: Build map data
         run: python3 collector/build.py

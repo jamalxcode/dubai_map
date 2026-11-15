@@ -1,10 +1,16 @@
-"""Suggest map points for communities that have none, using OpenStreetMap Nominatim.
+"""Suggest map points for communities and DLD areas that have none, using OpenStreetMap Nominatim.
+
+Also looks up the busiest unplaced DLD areas listed in data/meta.json
+(unmatched_areas), e.g. older districts like Al Murqabat or Mankhool that only
+appear once the per-contract DLD feed is in use. Accepted points go into
+data/area_locations.csv as field=area rows.
 
 Run manually (Actions -> Geocode missing communities). Follows the Nominatim
 usage policy: identifying User-Agent, max 1 request per second, results limited
 to Dubai. Prints candidates for human review; it does not edit any file.
 """
 import json
+import os
 import time
 import urllib.parse
 import urllib.request
@@ -34,6 +40,14 @@ def search(q):
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.load(r)
 
+
+META = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "meta.json")
+try:
+    with open(META, encoding="utf-8") as f:
+        for u in json.load(f).get("unmatched_areas", [])[:int(os.environ.get("GEOCODE_TOP") or 40)]:
+            QUERIES.setdefault(u["area"], [f"{u['area']}, Dubai"])
+except (OSError, ValueError, KeyError):
+    pass
 
 for community, qs in QUERIES.items():
     for q in qs:

@@ -283,9 +283,10 @@ async function init(){
     $('thead').innerHTML='<tr><th>Community</th><th>DLD area</th><th>Unit</th><th>Median annual AED</th><th>Contracts</th><th>Gross yield</th><th></th></tr>';
     const o=$('metric').querySelector('option[value=median_sqm]');o.value='yield';o.textContent='Gross rental yield %';
     $('newest').parentElement.querySelector('span').textContent='Data through';
-  }else setStatus(META.contracts_last_12m?fmt(META.contracts_last_12m)+' contracts loaded':'No contracts yet',
-    'Last data build: '+kuwait(META.generated_at)+'<br>Last Ejari pull: '+(st.last_api_pull_at?kuwait(st.last_api_pull_at):'never')+(st.last_api_status&&!ok?' ('+safe(st.last_api_status)+')':''),
-    !META.contracts_last_12m||(st.last_api_status&&!ok));
+  }else{const d=st.dld||{},dok=String(d.status||'').startsWith('ok');
+    setStatus(META.contracts_last_12m?fmt(META.contracts_last_12m)+' Ejari contracts, last 12 months':'No contracts yet',
+    'Homes only (flats, studios, villas), from <a href="https://dubailand.gov.ae/en/open-data/real-estate-data/" target="_blank" rel="noopener">DLD open data</a>, updated daily.<br>Last update: '+(d.last_ok_at?kuwait(d.last_ok_at):'—')+(d.status&&!dok?'<br><small>Latest pull: '+safe(d.status)+'. Backups keep the map going.</small>':''),
+    !META.contracts_last_12m||(d.status&&!dok));}
   $('updated').textContent='Updated '+kuwait(META.generated_at);
   const age=staleness(META,Date.now());
   if(age)$('mUpdated').textContent='Data through '+niceDate(age.through)+' · AED/yr';
