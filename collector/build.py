@@ -294,7 +294,7 @@ def main():
         "property_types": [{"key": t, "label": lbl, "n": counts.get(t, 0)} for t, lbl in PROPERTY_TYPES],
         "unmatched_areas": [{"area": k, "n": v} for k, v in unmatched.most_common(60)],
         "state": state, "sources": source_status(state),
-        "source": "Dubai Land Department Ejari rent contracts (DLD open data)",
+        "source": "Dubai Land Department Ejari rent contracts (open data)",
     })
     print(f"built: {total} stored, {in_window} homes in 12m window, {mapped} mapped, "
           f"{len(areas)} groups, {len(rows)} latest rows, types {counts}")
@@ -310,10 +310,10 @@ def _num(s):
 def source_status(state, own=None):
     """One line per source for meta.json, so a failing source is visible."""
     dld = state.get("dld") or {}
-    out = [{"name": "DLD open data (main)", "status": dld.get("status", "not run yet"),
+    out = [{"name": "DLD open-data service", "status": dld.get("status", "not run yet"),
             "last_ok_at": dld.get("last_ok_at"), "backfill_complete": dld.get("backfill_complete", False)},
-           {"name": "Dubai Pulse API (backup)", "status": state.get("last_api_status", "not run yet")},
-           {"name": "Dubai Data community medians (backup)", "status": "in use" if own is not None else "standby"}]
+           {"name": "Dubai Pulse API", "status": state.get("last_api_status", "not run yet")},
+           {"name": "Dubai Data community medians (CC BY 4.0)", "status": "in use" if own is not None else "standby"}]
     if own is not None:
         out[0]["history"] = own
     return out

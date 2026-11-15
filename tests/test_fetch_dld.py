@@ -60,7 +60,7 @@ class DldTests(TempData):
         client.post = lambda cmd, p: svc.post(client, cmd, p)
         with mock.patch.object(store, "today_dubai", return_value=today), \
              mock.patch.object(fetch_dld, "Client", return_value=client), \
-             mock.patch.dict(os.environ, env or {"FORCE": "0", "DLD_DISABLED": ""}), \
+             mock.patch.dict(os.environ, {"DLD_ENABLED": "1", "DLD_DISABLED": "", "FORCE": "0", **(env or {})}), \
              mock.patch("builtins.print"):
             fetch_dld.main()
         with open(fetch_dld.STATE) as f:
@@ -114,10 +114,12 @@ class DldTests(TempData):
             fetch_ejari.main()
         api.assert_not_called()
 
-    def test_disabled_switch(self):
+    def test_off_unless_enabled_and_emergency_stop(self):
         svc = FakeService([row("2026-03-09")])
+        st = self.run_day(svc, env={"DLD_ENABLED": ""})
+        self.assertTrue(st["status"].startswith("off"), "off by default: needs DLD's written permission")
         st = self.run_day(svc, env={"DLD_DISABLED": "1"})
-        self.assertEqual(st["status"], "disabled")
+        self.assertTrue(st["status"].startswith("off"))
         self.assertEqual(svc.calls, [])
 
 

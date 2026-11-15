@@ -32,6 +32,7 @@ jobs:
           mkdir -p _site/data
           cp index.html .nojekyll _site/ 2>/dev/null || cp index.html _site/
           cp data/areas*.json data/latest.json data/meta.json _site/data/ 2>/dev/null || true
+          mkdir -p _site/assets && cp -r assets/fonts _site/assets/
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload site

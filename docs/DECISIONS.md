@@ -116,9 +116,18 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - **Storage:** daily files instead of monthly ones, so each daily commit stays small.
 - **Rejected:** listing portals (asking prices, terms of use), paid scrapers, CAPTCHA workarounds, and the multi-GB Dubai Pulse full CSV (last updated January 2026).
 - **Tested offline only:** against a mock of the service loaded with real rows that service returned (saved in the public project above). The first live run happens in GitHub Actions; `meta.json` → `sources` reports how it went.
-- **Placing areas (same day, later):** DLD area names are Dubai Municipality communities, so every area is placed at a point inside its official DM boundary (`dm_communities.csv`, from two copies of DM's open data that agree), with 70 reviewed spelling aliases, and OpenStreetMap for brand-new areas (accepted only after automatic checks). Placed share of 2026 home contracts went from 53% to 99.6%.
+- **Placing areas (same day, later):** DLD area names are Dubai Municipality communities, so every area is placed at a point inside its official DM boundary (`dm_communities.csv`, from two copies of DM's open data that agree), with 68 reviewed spelling aliases, and OpenStreetMap for brand-new areas (accepted only after automatic checks). Placed share of 2026 home contracts went from 53% to 99.6%.
 - **Property types:** homes (default), flats, studios, villas, commercial, everything. Land and bulk leases (over 10,000 AED per m² a year, e.g. 18 m² units each carrying a 3 million AED staff-housing contract) count only under "everything".
 - **Design:** rebuilt around Dubai road signs (sign blue, condensed lettering, yellow warning sign) instead of a generic dark dashboard. GSAP, Lenis, and React Bits Counter/SplitText ported to plain JS, so still no build step.
+
+## Decision on 2026-11-15 (sixth pass): licences checked; DLD service off until DLD agrees
+
+- **DLD open-data service is now off by default.** DLD's website terms allow its materials only for personal, noncommercial use unless DLD agrees in writing, and no separate open-data licence covers the service behind its Real Estate Data page. Republishing that data publicly needs DLD's written permission. Code stays (tested); set `DLD_ENABLED=1` once permission is in hand.
+- **Recommended daily source: Dubai Pulse API**, published under Dubai's open-data licence (free key). Dubai Data (CC BY 4.0) stays the fallback.
+- **Fonts self-hosted** (SIL OFL), so visitors' addresses aren't sent to a font service.
+- **OSM tile policy:** exact HTTPS tile URL, linked attribution, "Report a map problem" link.
+- **Credits** for every source and library on the page and in the README's "Licences and terms" table.
+- **Dark mode:** follows the device setting until the visitor picks one; all text meets WCAG AA contrast in both themes.
 
 ## Prioritized next work
 

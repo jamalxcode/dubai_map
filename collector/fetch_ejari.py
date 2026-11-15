@@ -1,7 +1,8 @@
-"""BACKUP SOURCE: once-a-day, polite pull of Ejari rent contracts from the Dubai Pulse API.
+"""Once-a-day, polite pull of Ejari rent contracts from the Dubai Pulse API.
 
-The main source is DLD's open-data service (fetch_dld.py). This keyed API is
-only called on days when the main source failed, and only if keys are set.
+Dubai Pulse publishes this dataset under Dubai's open-data licence, so this is
+the legally clean daily source: register for a free key and add it as repo
+secrets. It is skipped on days the optional DLD service (fetch_dld.py) ran.
 
 Design rules (be a good citizen, never get blocked):
   * At most ONE pull per Dubai calendar day. A state file records the last
@@ -195,8 +196,8 @@ def main():
         log("no Dubai Pulse credentials; API pull skipped")
         state["last_api_status"] = "no credentials"
     elif main_source_ok(state, today) and os.environ.get("FORCE") != "1":
-        log("main source (DLD open data) worked today; backup API not needed")
-        state["last_api_status"] = "standby (main source ok)"
+        log("the DLD open-data service ran today; Dubai Pulse not needed")
+        state["last_api_status"] = "standby (DLD service ran today)"
     elif state.get("last_api_pull_date") == today and os.environ.get("FORCE") != "1":
         log(f"already pulled today ({today}); not contacting the API again")
     else:

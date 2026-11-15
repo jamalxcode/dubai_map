@@ -1,9 +1,10 @@
 name: Daily Ejari pull
 
 # Once a day at 05:17 Kuwait time (02:17 UTC). Sources, in order:
-#   1. DLD open data (main, no key)            collector/fetch_dld.py
-#   2. Dubai Pulse API (backup, needs keys)    collector/fetch_ejari.py
-#   3. Dubai Data community medians (backup)   collector/fetch_datadubai.py
+#   1. DLD open-data service (OFF until DLD gives written permission;
+#      then set repo variable DLD_ENABLED=1)  collector/fetch_dld.py
+#   2. Dubai Pulse API (Dubai open-data licence, free key)  collector/fetch_ejari.py
+#   3. Dubai Data community medians (CC BY 4.0)             collector/fetch_datadubai.py
 #   4. Manual CSV in data/inbox/ (always imported)
 # Each collector refuses to contact its source more than once per Dubai
 # calendar day, so manual re-runs are safe.
@@ -35,13 +36,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - name: "Main source: DLD open data (once per day, no key)"
+      - name: "DLD open-data service (only if DLD_ENABLED=1, once per day)"
         continue-on-error: true  # a failing source must not stop the backups or the build
         env:
+          DLD_ENABLED: ${{ vars.DLD_ENABLED }}
           DLD_DISABLED: ${{ vars.DLD_DISABLED }}
           FORCE: ${{ inputs.force && '1' || '0' }}
         run: python3 collector/fetch_dld.py
-      - name: "Backup: Dubai Pulse API (only if the main source failed today) + inbox import"
+      - name: "Dubai Pulse API (if keys are set and the DLD service didn't run today) + inbox import"
         continue-on-error: true  # a failing source must not stop the backups or the build
         env:
           DUBAI_PULSE_KEY: ${{ secrets.DUBAI_PULSE_KEY }}

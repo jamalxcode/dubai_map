@@ -1,8 +1,17 @@
-"""MAIN SOURCE: once-a-day, polite pull of Ejari rent contracts from the
-Dubai Land Department's own open-data service (gateway.dubailand.gov.ae).
+"""OPTIONAL SOURCE (off by default): once-a-day, polite pull of Ejari rent
+contracts from the Dubai Land Department's own open-data service
+(gateway.dubailand.gov.ae).
 
-This is the service behind DLD's public "Real Estate Data" page. It needs no
-key. It only serves contracts registered from January 2026 onward, so history
+OFF UNTIL DLD SAYS YES. This is the service behind DLD's public "Real Estate
+Data" page. DLD's website terms (dubailand.gov.ae/en/terms-conditions) allow
+its materials only for personal, noncommercial use unless DLD agrees in
+writing, and no separate open-data licence covers this service. Republishing
+its data on a public site therefore needs DLD's written permission. Once the
+owner has it, set the repo variable DLD_ENABLED=1. Until then the licensed
+sources are used: Dubai Pulse (Dubai's open-data licence) and Dubai Data
+(CC BY 4.0).
+
+It needs no key. It only serves contracts registered from January 2026 onward, so history
 is built up here: each run pulls the last few days, and back-fills ONE missing
 month per day (newest first) until January 2026 onward is complete.
 
@@ -14,12 +23,9 @@ Being a good citizen (same rules as fetch_ejari.py):
     tomorrow. The backup sources take over for the map in the meantime.
   * Honest User-Agent pointing at this repo. No CAPTCHA pages are touched.
 
-Note: DLD documents this service only through its website, not as a public
-API with written terms. If DLD asks us to stop, set DLD_DISABLED=1 (repo
-variable) and the backups carry on.
-
 Env:
-  DLD_DISABLED     "1" to skip this source entirely
+  DLD_ENABLED      "1" to use this source (only with DLD's written permission)
+  DLD_DISABLED     "1" to skip it even if enabled (emergency stop)
   DLD_WINDOW_DAYS  days of registrations to re-pull each run (default 3)
   DLD_MAX_PAGES    page cap per run (default 70, 2,000 rows each)
   DLD_PAUSE        seconds between pages (default 2)
@@ -207,9 +213,9 @@ def run(state, today, client):
 def main():
     state = load_state()
     today = store.today_dubai()
-    if os.environ.get("DLD_DISABLED") == "1":
-        log("disabled by DLD_DISABLED=1")
-        state.setdefault("dld", {})["status"] = "disabled"
+    if os.environ.get("DLD_ENABLED") != "1" or os.environ.get("DLD_DISABLED") == "1":
+        log("off: needs DLD's written permission, then DLD_ENABLED=1 (see README)")
+        state.setdefault("dld", {})["status"] = "off (waiting for DLD's permission)"
     elif (state.get("dld") or {}).get("last_run_date") == today.isoformat() and os.environ.get("FORCE") != "1":
         log(f"already ran today ({today}); not contacting DLD again")
         return

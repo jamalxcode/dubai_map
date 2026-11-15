@@ -3,13 +3,13 @@
 Dubai Data imports the DLD Ejari feed daily and publishes trailing-12-month
 medians per community and per bedroom count under CC BY 4.0, exported weekly
 to Hugging Face and mirrored to GitHub. The map uses these until our own
-contract history (fetch_dld.py) covers a full year. The area -> community
+contract history (Dubai Pulse API, or the DLD service if enabled) covers most of a year. The area -> community
 table is also used to place DLD areas on the map.
 
 Two copies are tried in order: Hugging Face (where the export is published
 first), then the GitHub mirror if Hugging Face fails.
 
-Polite by design: a few small files from GitHub, conditional requests (ETag),
+Polite by design: a few small files, conditional requests (ETag),
 so an unchanged file costs a 304 and nothing more. The DLD/Ejari systems are
 never contacted by this script.
 """
