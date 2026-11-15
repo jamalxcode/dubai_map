@@ -1,3 +1,10 @@
 {
-  "last_api_status": "no credentials"
+  "dld": {
+    "state": "off",
+    "status": "off (waiting for DLD's permission)"
+  },
+  "pulse": {
+    "state": "no_key",
+    "status": "no credentials"
+  }
 }
