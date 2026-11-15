@@ -247,6 +247,24 @@ class AggregateBuildTests(TempData):
         self.assertEqual(alpha["dld_areas"], ["Area A"])
         self.assertEqual(len(table), 3, "Alpha by bedroom (2) + Beta all units (1)")
         self.assertIn("CC BY 4.0", meta["source"])
+        # Flats and Studios come from the per-bedroom rows; no villa/commercial split exists.
+        self.assertEqual({t["key"]: t["n"] for t in meta["property_types"]}, {"homes": 150, "flat": 40, "studio": 60})
+        with open(os.path.join(self.tmp, "areas_flat.json")) as f:
+            flat = json.load(f)["areas"]
+        self.assertEqual([(a["label"], a["median"], a["median_kind"]) for a in flat], [("Alpha", 70000, "median")])
+        with open(os.path.join(self.tmp, "areas_studio.json")) as f:
+            self.assertEqual(json.load(f)["areas"][0]["median"], 45000)
+
+    def test_flats_typical_is_contract_weighted(self):
+        area = {"label": "X", "n": 100, "median": 1, "by_unit": [
+            {"u": "1-bedroom apartments", "n": 30, "median": 60000, "yield": 7.0},
+            {"u": "2-bedroom apartments", "n": 10, "median": 100000, "yield": 6.0},
+            {"u": "Studios", "n": 60, "median": 40000, "yield": 8.0}]}
+        got = build.aggregate_type(area, "flat")
+        self.assertEqual((got["n"], got["median"], got["median_kind"]), (40, 70000, "typical"))
+        self.assertEqual(got["yield_pct"], 6.75)
+        self.assertEqual([u["u"] for u in got["by_unit"]], ["1-bedroom apartments", "2-bedroom apartments"])
+        self.assertIsNone(build.aggregate_type(dict(area, by_unit=[]), "studio"))
 
 
 if __name__ == "__main__":

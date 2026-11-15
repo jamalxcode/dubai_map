@@ -378,8 +378,16 @@ def build_aggregate(now, state, own=None):
     areas.sort(key=lambda a: -a["n"])
     through = fetch_datadubai.data_through()
     total = sum(a["n"] for a in areas)
-    files = {"areas.json": {"generated_at": now, "from": None, "to": through, "areas": areas},
+    files = {"areas.json": {"generated_at": now, "from": None, "to": through, "type": "homes", "areas": areas},
              "latest.json": {"generated_at": now, "mode": "aggregate", "rows": table}}
+    # Flats and Studios from Dubai Data's per-bedroom figures. Dubai Data has no villa
+    # or commercial split, so those types are only offered once our own contracts are in use.
+    counts = {"homes": total}
+    for t in ("flat", "studio"):
+        sub = [x for x in (aggregate_type(a, t) for a in areas) if x]
+        sub.sort(key=lambda a: -a["n"])
+        counts[t] = sum(a["n"] for a in sub)
+        files[f"areas_{t}.json"] = {"generated_at": now, "from": None, "to": through, "type": t, "areas": sub}
     files["meta.json"] = {
         "mode": "aggregate", "generated_at": now,
         "contracts_last_12m": total, "mapped_last_12m": sum(a["n"] for a in areas if a["lat"] is not None),
@@ -387,7 +395,7 @@ def build_aggregate(now, state, own=None):
         "newest_start_date": through, "data_through": through,
         "unmatched_areas": sorted(unplaced, key=lambda x: -x["n"]), "state": state,
         "sources": source_status(state, own or {}),
-        "property_types": [{"key": "homes", "label": PROPERTY_TYPES[0][1], "n": total}],
+        "property_types": [{"key": t, "label": lbl, "n": counts[t]} for t, lbl in PROPERTY_TYPES if t in counts],
         "source": "Dubai Data (datadubai.ae), Continental Club Property, based on Dubai Land "
                   "Department open data (Ejari)" + (f", data through {through}" if through else "") +
                   ". CC BY 4.0. Not an official DLD product.",
@@ -396,6 +404,29 @@ def build_aggregate(now, state, own=None):
     print(f"built (aggregate): {len(areas)} communities, {total} contracts in 12m, "
           f"{len(unplaced)} unplaced")
     return True
+
+
+def agg_kind(label):
+    """Dubai Data unit label -> our type: "Studios" -> studio, "2-bedroom apartments" -> flat."""
+    lab = label.lower()
+    return "studio" if lab.startswith("studio") else "flat" if "apartment" in lab else None
+
+
+def aggregate_type(area, t):
+    """One area's Dubai Data figures for flats or studios. Dubai Data publishes a median
+    per bedroom count, not one for all flats together, so the Flats figure is the
+    contract-weighted average of those medians and is labelled "typical", not "median"."""
+    units = [u for u in area["by_unit"] if agg_kind(u["u"]) == t and u["n"] and u["median"]]
+    if not units:
+        return None
+    n = sum(u["n"] for u in units)
+    if len(units) == 1:
+        value, kind = units[0]["median"], "median"
+    else:
+        value, kind = round(sum(u["median"] * u["n"] for u in units) / n / 500) * 500, "typical"
+    ys = [(u["yield"], u["n"]) for u in units if u.get("yield") is not None]
+    return dict(area, n=n, median=value, median_kind=kind, by_unit=units,
+                yield_pct=round(sum(y * k for y, k in ys) / sum(k for _, k in ys), 2) if ys else None)
 
 
 def shrink_problem(old, new):
