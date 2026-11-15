@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   workflow_run:
-    workflows: ["Daily Ejari pull"]
+    workflows: ["Daily Ejari pull", "Place unplaced areas"]
     types: [completed]
   workflow_dispatch:
 
@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p _site/data
           cp index.html .nojekyll _site/ 2>/dev/null || cp index.html _site/
-          cp data/areas.json data/latest.json data/meta.json data/area_locations.csv _site/data/ 2>/dev/null || true
+          cp data/areas*.json data/latest.json data/meta.json _site/data/ 2>/dev/null || true
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload site

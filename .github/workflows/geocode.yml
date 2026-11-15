@@ -1,19 +1,45 @@
-name: Geocode missing communities
+name: Place unplaced areas
 
-# Manual only. Prints OpenStreetMap candidates for communities without a map
-# point; results are reviewed by hand before going into community_locations.csv.
+# Weekly (and by hand). Two steps:
+#   1. Refresh official Dubai Municipality community points (dm_communities.csv).
+#      Keeps the current file if the sources can't be reached.
+#   2. Look up whatever DLD areas are still unplaced on OpenStreetMap, accept only
+#      results that pass the checks in geocode_missing.py, list the rest for review.
 on:
+  schedule:
+    - cron: "41 3 * * 0"   # Sundays 06:41 Kuwait time
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: ejari-pull   # never runs at the same time as the daily data job
+  cancel-in-progress: false
 
 jobs:
-  geocode:
+  place:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
-      - run: python3 collector/geocode_missing.py
+      - name: Official community points (Dubai Municipality)
+        continue-on-error: true
+        run: python3 collector/dm_communities.py
+      - name: OpenStreetMap for what is left
+        continue-on-error: true
+        run: python3 collector/geocode_missing.py
+      - name: Rebuild and check
+        run: |
+          python3 collector/build.py
+          python3 -m unittest discover -s tests -p "test_data.py"
+      - name: Commit
+        run: |
+          git config user.name "dubai_map bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/dm_communities.csv data/osm_area_points.csv data/*.json
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          git commit -m "data: place unplaced areas $(TZ=Asia/Kuwait date '+%Y-%m-%d')"
+          git push

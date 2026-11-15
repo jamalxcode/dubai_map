@@ -11,6 +11,22 @@ import fetch_datadubai  # noqa: E402
 
 
 class HelperTests(unittest.TestCase):
+    def test_property_kinds(self):
+        k = lambda **r: build.kind({"usage": "Residential", "sub_type": "", "rooms": "", **r})  # noqa: E731
+        self.assertEqual(k(sub_type="Flat"), "flat")
+        self.assertEqual(k(sub_type="Studio"), "studio")
+        self.assertEqual(k(sub_type="Flat", rooms="Studio"), "studio")
+        self.assertEqual(k(sub_type="Complex Villas"), "villa")
+        self.assertEqual(k(sub_type="Labor Camps"), "other")
+        self.assertEqual(k(sub_type="Building"), "other")
+        self.assertEqual(k(sub_type="Shop"), "commercial")
+        self.assertEqual(k(usage="Commercial", sub_type="Flat"), "commercial")
+        self.assertEqual(k(sub_type="", prop_type="Land", annual="352000"), "other")
+        self.assertEqual(k(sub_type="Flat", annual="3084480", size_sqm="18"), "other", "bulk lease on a tiny unit")
+        self.assertEqual(k(sub_type="Flat", annual="300000", size_sqm="110"), "flat", "luxury, but believable")
+        self.assertTrue(build.in_type("villa", "homes") and not build.in_type("commercial", "homes"))
+        self.assertTrue(build.in_type("other", "all"))
+
     def test_median_and_percentiles(self):
         self.assertEqual(build.med([1, 3, 2]), 2)
         self.assertIsNone(build.med([]))
@@ -91,6 +107,13 @@ class OwnContractsTests(TempData):
         self.assertEqual(meta["mode"], "contracts")
         self.assertEqual(meta["contracts_last_12m"], 1200, "camps and shops are left out")
         self.assertEqual(meta["mapped_last_12m"], 1200, "Area A is placed via area_locations")
+        types = {t["key"]: t["n"] for t in meta["property_types"]}
+        self.assertEqual(types, {"homes": 1200, "flat": 1200, "studio": 0, "villa": 0, "commercial": 50, "all": 1300})
+        with open(os.path.join(self.tmp, "areas_commercial.json")) as f:
+            self.assertEqual(json.load(f)["areas"][0]["n"], 50)
+        with open(os.path.join(self.tmp, "latest.json")) as f:
+            kinds = {r["k"] for r in json.load(f)["rows"]}
+        self.assertTrue(kinds <= {"flat", "commercial", "other"})
 
 
 class AggregateBuildTests(TempData):

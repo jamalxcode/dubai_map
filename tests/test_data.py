@@ -8,6 +8,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 # Generous box around Dubai (Hatta excluded); a point outside it is almost certainly a typo.
 LAT, LNG = (24.6, 25.45), (54.85, 55.7)
+HATTA = ((24.7, 24.95), (56.0, 56.3))  # Dubai's exclave
+
+
+def in_dubai(lat, lng):
+    return any(la[0] <= lat <= la[1] and ln[0] <= lng <= ln[1] for la, ln in ((LAT, LNG), HATTA))
 
 
 def load(name):
@@ -46,7 +51,7 @@ class PublishedDataTests(unittest.TestCase):
                 self.assertGreater(a["n"], 0)
                 self.assertTrue(5_000 <= a["median"] <= 5_000_000, f"median rent {a['median']} looks wrong")
                 if a["lat"] is not None:
-                    self.assertTrue(LAT[0] <= a["lat"] <= LAT[1] and LNG[0] <= a["lng"] <= LNG[1],
+                    self.assertTrue(in_dubai(a["lat"], a["lng"]),
                                     f"point {a['lat']},{a['lng']} is outside Dubai")
                 for u in a["by_unit"]:
                     if u["median"] is not None:
@@ -68,10 +73,27 @@ class LocationFileTests(unittest.TestCase):
                 self.assertNotIn(r[key], seen, "duplicate row")
                 seen.add(r[key])
                 lat, lng = float(r["lat"]), float(r["lng"])
-                self.assertTrue(LAT[0] <= lat <= LAT[1] and LNG[0] <= lng <= LNG[1], "outside Dubai")
+                self.assertTrue(in_dubai(lat, lng), "outside Dubai")
 
     def test_community_locations(self):
         self.check_points("community_locations.csv", "community")
+
+    def test_official_community_points(self):
+        rows_ = rows("dm_communities.csv")
+        self.assertGreaterEqual(len(rows_), 200, "Dubai Municipality has over 200 communities")
+        self.check_points("dm_communities.csv", "community")
+
+    def test_aliases_point_at_real_communities(self):
+        import re
+        norm = lambda s: re.sub(r"\s+", " ", s.upper().replace("IND.", "INDUSTRIAL ").replace("'", "")
+                                .replace("-", " ").replace(".", " ")).strip()  # same as build.norm_area
+        dm = {norm(r["community"]) for r in rows("dm_communities.csv")}
+        for a in rows("dld_dm_aliases.csv"):
+            self.assertIn(norm(a["dm_community"]), dm, a["dld_area"])
+
+    def test_osm_points_if_any(self):
+        if os.path.exists(os.path.join(DATA, "osm_area_points.csv")):
+            self.check_points("osm_area_points.csv", "dld_area")
 
     def test_area_locations(self):
         for r in rows("area_locations.csv"):

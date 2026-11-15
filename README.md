@@ -7,15 +7,18 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 
 ## What you see
 
-- **Rent as text on the map:** each community shows its median annual rent, e.g. "AED 67k · Jumeirah Village Circle".
-- **One number per group:** communities too close to read apart merge into one dark label with the average rent (weighted by contracts), e.g. "AED 75k avg · 22 communities". Click to zoom in and split it. Labels never overlap.
-- **Average rent in view:** one headline number for whatever is on screen, updating as you pan and zoom.
-- **Filters:** unit type (studio, 1-bed…), and show rent, gross yield or contract count.
-- **Popup per community:** medians by unit type, gross yield and median sale price (plus trend, AED/m² and top buildings once per-contract data is available).
-- **Table:** community × unit type with median rent, contracts and yield, exportable to CSV.
-- **Freshness:** data-through date and last refresh, in Kuwait time.
+- **Rent as text on the map:** each area shows its median yearly rent, e.g. "AED 65k · Jumeirah Village Circle". Areas too close to read apart merge into one blue label with the contract-weighted average; tap to zoom in. Labels never overlap.
+- **Property type:** Homes (flats, studios and villas together, the default), Flats, Studios, Villas, Commercial, or Everything. Labour camps, land and bulk leases (one contract worth millions spread over tiny units) only appear under Everything, so they never skew home rents.
+- **Average rent in view:** one big number for whatever is on screen, rolling to the new value as you pan and zoom.
+- **Filters:** search, unit (studio, 1 bed, 2 bed… where DLD records rooms), rent range, and what the labels show (median rent, rent per m², contract count).
+- **Popup per area:** median and middle-half range, rent per m², new vs renewal, monthly trend, unit breakdown and busiest buildings.
+- **Table:** the newest contracts, downloadable as CSV.
+- **Warning:** a yellow sign appears if the data is older than it should be.
+- **Phone:** map first; filters slide up from a button.
 
-Labels sit at an **approximate reference point per community**, not on a building. Areas without a reference point still appear in the table and are listed under "Areas not yet placed on the map".
+Every DLD area is placed at a reference point **inside its official Dubai Municipality community** (not on a building); see "Placing areas on the map".
+
+Built as one static page: [Leaflet](https://leafletjs.com/) for the map, [GSAP](https://gsap.com/) for motion, [Lenis](https://lenis.darkroom.engineering/) for smooth scrolling, and two [React Bits](https://reactbits.dev/) components (Counter and SplitText) ported to plain JavaScript so the site still needs no build step.
 
 ## Data sources
 
@@ -65,14 +68,16 @@ Dubai Data attribution: *Dubai Data (datadubai.ae), Continental Club Property �
 
 Download a Rents CSV from [DLD open data](https://dubailand.gov.ae/en/open-data/real-estate-data/) yourself and upload it into `data/inbox/` on GitHub (Add file → Upload files). The workflow imports it, deletes it from the inbox and rebuilds the map. The API isn't touched.
 
-## Placing communities on the map
+## Placing areas on the map
 
-`data/community_locations.csv` holds an approximate point per Dubai Data community (cross-checked against project coordinates in the same dataset). `data/area_locations.csv` maps names to approximate reference points:
+In order, the first match wins:
 
-- `field=area` rows match the official DLD area name exactly (e.g. Marsa Dubai → Dubai Marina, Al Barsha South Fourth → JVC, Al Warsan First → International City).
-- `field=any` rows match a marketing name anywhere in the master project, project or area (e.g. "damac hills 2").
+1. `data/area_locations.csv`: hand-checked points (`field=area` matches the official DLD area name, `field=any` a marketing name anywhere in the project).
+2. Dubai Data's DLD-area → community table, placed at the hand-checked points in `data/community_locations.csv`.
+3. **Official Dubai Municipality communities** (`data/dm_communities.csv`): one point per community, guaranteed to lie inside its official boundary. Made by `collector/dm_communities.py` from DM's open data. DLD spellings that differ from DM's (e.g. "Al Murqabat" vs "Al Muraqqabat") are in `data/dld_dm_aliases.csv`, each one reviewed.
+4. **OpenStreetMap** (`data/osm_area_points.csv`): for brand-new areas DM hasn't published yet. `collector/geocode_missing.py` accepts a result only if it is inside Dubai, is a place (not a shop or road) and its name matches.
 
-Names are also matched through Dubai Data's DLD-area → community table. Once the map runs on DLD contracts, `data/meta.json` → `unmatched_areas` lists the busiest unplaced areas (mostly older districts such as Al Murqabat, Mankhool or Al Qusais). **Actions → Geocode missing communities** suggests OpenStreetMap points for them; check each one, then add it to `area_locations.csv`.
+**Actions → Place unplaced areas** runs steps 3 and 4 every Sunday (and by hand). Tested on all of 2026's contracts: 99.6% of home contracts land on the map; the rest are listed under "Areas not on the map yet".
 
 ## Run locally
 

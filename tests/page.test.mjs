@@ -30,14 +30,15 @@ test('missing or malformed date shows no warning instead of breaking', () => {
   assert.equal(staleness(null, Date.now()), null);
 });
 
-test('every external script and stylesheet is pinned with an integrity hash', () => {
-  const tags = html.match(/<(script|link)\b[^>]*\b(src|href)="https?:\/\/[^"]+"[^>]*>/g) || [];
-  assert.ok(tags.length >= 3);
+test('every external script and library stylesheet is pinned with an integrity hash', () => {
+  const tags = [...(html.match(/<script\b[^>]*\bsrc="https?:\/\/[^"]+"[^>]*>/g) || []),
+                ...(html.match(/<link\b[^>]*rel="stylesheet"[^>]*>/g) || []).filter(t => !t.includes('fonts.googleapis.com'))];
+  assert.ok(tags.length >= 4);
   for (const t of tags) assert.match(t, /integrity="sha(256|384)-[A-Za-z0-9+/=]+"/, t);
 });
 
 test('elements the script relies on exist', () => {
-  for (const id of ['map', 'stale', 'staleText', 'side', 'openSheet', 'closeSheet', 'pillVal', 'med', 'n12', 'mapped',
-                    'search', 'unit', 'metric', 'min', 'max', 'rows', 'export'])
+  for (const id of ['map', 'stale', 'staleText', 'side', 'openSheet', 'closeSheet', 'med', 'n12', 'mapped', 'types',
+                    'plate', 'search', 'unit', 'metric', 'min', 'max', 'rows', 'thead', 'export', 'sources', 'legend'])
     assert.match(html, new RegExp(`id="${id}"`), id);
 });

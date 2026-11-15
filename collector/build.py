@@ -7,6 +7,7 @@
 import csv
 import json
 import os
+import re
 import statistics
 import sys
 from collections import Counter, defaultdict
@@ -17,20 +18,58 @@ import store  # noqa: E402
 
 LATEST_DAYS = 30
 STATS_DAYS = 365
-LATEST_CAP = 15000
+LATEST_CAP = 8000  # newest homes rows in the table (plus a third as many others); keeps latest.json phone-sized
 MIN_OWN_CONTRACTS = 1000  # below this, fall back to Dubai Data community aggregates
 # Our own contract stats are only shown once they cover enough of the year: a few
 # weeks of contracts presented as "last 12 months" would mislead.
 MIN_HISTORY_DAYS = 300
-# The map is about homes. Shops, offices, labour camps and whole buildings are left
-# out: one bulk camp or building lease can be worth millions and would skew medians.
+# Property types. "homes" (flats, studios, villas) is the default view: shops,
+# offices, labour camps and whole-building leases can be worth millions each and
+# would skew a homes median. The other types get their own files and filter.
 RESIDENTIAL = {"residential", ""}
-HOMES = {"flat", "studio", "villa", "complex villas", "penthouse", "arabian house", "villa addendum", ""}
+FLATS = {"flat", "penthouse", "apartment", ""}
+STUDIOS = {"studio"}
+VILLAS = {"villa", "complex villas", "villa addendum", "arabian house", "townhouse"}
+COMMERCIAL_SUB = {"shop", "office", "showroom", "warehouse", "warehouse complex", "complex warehouse", "workshop",
+                  "store", "kiosk", "restaurant", "clinic", "mezzanine", "parking", "hotel", "hotel apartment"}
+PROPERTY_TYPES = [  # (key, label) in the order the page shows them
+    ("homes", "Homes (flats, studios, villas)"), ("flat", "Flats"), ("studio", "Studios"),
+    ("villa", "Villas"), ("commercial", "Commercial"), ("all", "Everything"),
+]
+
+
+BULK_AED_PER_SQM = 10000  # far above Dubai's dearest homes (~5k/m²/yr): the row carries a whole bulk lease
+
+
+def kind(rec):
+    """flat | studio | villa | commercial | other"""
+    usage, sub = rec.get("usage", "").lower(), rec.get("sub_type", "").lower()
+    rooms = rec.get("rooms", "").lower()
+    if rec.get("prop_type", "").lower() == "land":
+        return "other"
+    try:
+        if float(rec["annual"]) / float(rec["size_sqm"]) > BULK_AED_PER_SQM:
+            return "other"  # e.g. 18 m² "flats" each carrying a 3 million AED staff-housing contract
+    except (KeyError, ValueError, ZeroDivisionError):
+        pass
+    if usage in RESIDENTIAL:
+        if sub in STUDIOS or rooms == "studio":
+            return "studio"
+        if sub in VILLAS:
+            return "villa"
+        if sub in FLATS:
+            return "flat"
+    if usage == "commercial" or sub in COMMERCIAL_SUB:
+        return "commercial"
+    return "other"  # labour camps, staff accommodation, whole buildings, land…
+
+
+def in_type(k, t):
+    return t == "all" or k == t or (t == "homes" and k in ("flat", "studio", "villa"))
 
 
 def is_home(rec):
-    return (rec.get("usage", "").lower() in RESIDENTIAL
-            and rec.get("sub_type", "").lower() in HOMES)
+    return in_type(kind(rec), "homes")
 
 
 def load_locations():
@@ -43,6 +82,41 @@ def load_locations():
         exact.setdefault(area, row)
     fuzzy = sorted((r for r in rows if r["field"] == "any"), key=lambda r: -len(r["match"]))
     return exact, fuzzy
+
+
+def norm_area(name):
+    """Normalise a DLD / Dubai Municipality community name for matching."""
+    s = name.upper().replace("IND.", "INDUSTRIAL ").replace("'", "").replace("-", " ").replace(".", " ")
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def load_dm_points():
+    """Official Dubai Municipality community points (dm_communities.csv), keyed by normalised
+    name, plus the reviewed DLD-spelling aliases (dld_dm_aliases.csv)."""
+    try:
+        with open(os.path.join(store.DATA, "dm_communities.csv"), encoding="utf-8") as f:
+            dm = {norm_area(r["community"]): r for r in csv.DictReader(f)}
+    except OSError:
+        return {}
+    try:
+        with open(os.path.join(store.DATA, "dld_dm_aliases.csv"), encoding="utf-8") as f:
+            for a in csv.DictReader(f):
+                target = dm.get(norm_area(a["dm_community"]))
+                if target:
+                    dm[norm_area(a["dld_area"])] = target
+    except OSError:
+        pass
+    try:  # last resort: OpenStreetMap points that passed the geocode job's checks
+        with open(os.path.join(store.DATA, "osm_area_points.csv"), encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                dm.setdefault(norm_area(r["dld_area"]), dict(r, source="openstreetmap"))
+    except OSError:
+        pass
+    return dm
+
+
+def nice(name):
+    return name if any(c.islower() for c in name) else name.title()
 
 
 def datadubai_area_points():
@@ -65,7 +139,9 @@ def datadubai_area_points():
     return out
 
 
-def locate(rec, exact, fuzzy):
+def locate(rec, exact, fuzzy, dm=None):
+    """Hand-checked area rows first, then marketing names, then the official
+    Dubai Municipality community the DLD area belongs to."""
     area = rec["area"].lower().strip()
     if area in exact:
         return exact[area]
@@ -73,6 +149,9 @@ def locate(rec, exact, fuzzy):
     for r in fuzzy:
         if r["match"] in text:
             return r
+    p = (dm or {}).get(norm_area(rec["area"]))
+    if p:
+        return {"label": nice(rec["area"]), "lat": p["lat"], "lng": p["lng"], "geo": p.get("source", "dm")}
     return None
 
 
@@ -88,50 +167,14 @@ def pct(xs, q):
 
 
 def unit(rec):
-    return rec["rooms"] or rec["sub_type"] or rec["prop_type"] or "Unknown"
+    """Readable unit: "2 bed" when DLD records rooms, else the property sub type (Flat, Villa…)."""
+    rooms = (rec["rooms"] or "").strip()
+    if rooms.isdigit():
+        return f"{rooms} bed"
+    return rooms or rec["sub_type"] or rec["prop_type"] or "Unknown"
 
 
-def main():
-    exact, fuzzy = load_locations()
-    today = store.today_dubai()
-    stats_from = (today - timedelta(days=STATS_DAYS)).isoformat()
-    latest_from = (today - timedelta(days=LATEST_DAYS)).isoformat()
-    to = today.isoformat()
-
-    groups = defaultdict(list)
-    places = {}
-    unmatched = Counter()
-    latest = []
-    total = 0
-    newest = ""
-    earliest = first_reg = ""
-    for rec in store.iter_all():
-        total += 1
-        if rec.get("reg_date"):
-            first_reg = min(first_reg, rec["reg_date"]) if first_reg else rec["reg_date"]
-        s = rec["start"]
-        if s > to or s < stats_from:
-            continue
-        if not is_home(rec):
-            continue
-        earliest = min(earliest, s) if earliest else s
-        newest = max(newest, s)
-        loc = locate(rec, exact, fuzzy)
-        label = loc["label"] if loc else rec["area"]
-        if loc:
-            places[label] = (float(loc["lat"]), float(loc["lng"]))
-        else:
-            unmatched[rec["area"]] += 1
-        groups[label].append(rec)
-        if s >= latest_from:
-            latest.append({
-                "s": s, "e": rec["end"], "a": int(float(rec["annual"])),
-                "sq": float(rec["size_sqm"]) if rec["size_sqm"] else None,
-                "u": unit(rec), "t": rec["reg_type"], "ar": rec["area"],
-                "c": label, "mp": rec["master_project"], "p": rec["project"],
-                "m": 1 if loc else 0,
-            })
-
+def summarize(groups, places):
     areas = []
     for label, recs in groups.items():
         annual = [float(r["annual"]) for r in recs]
@@ -161,6 +204,58 @@ def main():
                                    key=lambda x: -x["n"])[:15],
         })
     areas.sort(key=lambda a: -a["n"])
+    return areas
+
+
+def main():
+    exact, fuzzy = load_locations()
+    dm = load_dm_points()
+    today = store.today_dubai()
+    stats_from = (today - timedelta(days=STATS_DAYS)).isoformat()
+    latest_from = (today - timedelta(days=LATEST_DAYS)).isoformat()
+    to = today.isoformat()
+
+    groups = {t: defaultdict(list) for t, _ in PROPERTY_TYPES}
+    places = {}
+    unmatched = Counter()
+    latest = []
+    total = 0
+    newest = ""
+    earliest = first_reg = ""
+    located = {}
+    for rec in store.iter_all():
+        total += 1
+        if rec.get("reg_date"):
+            first_reg = min(first_reg, rec["reg_date"]) if first_reg else rec["reg_date"]
+        s = rec["start"]
+        if s > to or s < stats_from:
+            continue
+        k = kind(rec)
+        key = (rec["area"], rec["master_project"], rec["project"])
+        if key not in located:
+            located[key] = locate(rec, exact, fuzzy, dm)
+        loc = located[key]
+        label = loc["label"] if loc else rec["area"]
+        if loc:
+            places[label] = (float(loc["lat"]), float(loc["lng"]))
+        for t, _ in PROPERTY_TYPES:
+            if in_type(k, t):
+                groups[t][label].append(rec)
+        if k in ("flat", "studio", "villa"):
+            earliest = min(earliest, s) if earliest else s
+            newest = max(newest, s)
+            if not loc:
+                unmatched[rec["area"]] += 1
+        if s >= latest_from:
+            latest.append({
+                "s": s, "e": rec["end"], "a": int(float(rec["annual"])),
+                "sq": float(rec["size_sqm"]) if rec["size_sqm"] else None,
+                "u": unit(rec), "t": rec["reg_type"], "ar": rec["area"],
+                "c": label, "mp": rec["master_project"], "p": rec["project"],
+                "m": 1 if loc else 0, "k": k,
+            })
+
+    areas = summarize(groups["homes"], places)
     latest.sort(key=lambda r: r["s"], reverse=True)
 
     try:
@@ -178,21 +273,31 @@ def main():
     ready = in_window >= MIN_OWN_CONTRACTS and covered >= MIN_HISTORY_DAYS
     if not ready and build_aggregate(now, state, own={"contracts": in_window, "days": covered}):
         return
-    write("areas.json", {"generated_at": now, "from": stats_from, "to": to, "areas": areas})
+    write("areas.json", {"generated_at": now, "from": stats_from, "to": to, "type": "homes", "areas": areas})
+    counts = {"homes": in_window}
+    for t, _ in PROPERTY_TYPES[1:]:
+        extra = summarize(groups[t], places)
+        counts[t] = sum(a["n"] for a in extra)
+        write(f"areas_{t}.json", {"generated_at": now, "from": stats_from, "to": to, "type": t, "areas": extra})
+    # Newest contracts for the table: homes first, then a share for commercial/other.
+    homes_rows = [r for r in latest if r["k"] in ("flat", "studio", "villa")][:LATEST_CAP]
+    other_rows = [r for r in latest if r["k"] not in ("flat", "studio", "villa")][:LATEST_CAP // 3]
+    rows = sorted(homes_rows + other_rows, key=lambda r: r["s"], reverse=True)
     write("latest.json", {"generated_at": now, "from": latest_from, "to": to,
-                          "truncated": len(latest) > LATEST_CAP, "rows": latest[:LATEST_CAP]})
+                          "truncated": len(latest) > len(rows), "rows": rows})
     mapped = sum(a["n"] for a in areas if a["lat"] is not None)
     write("meta.json", {
         "mode": "contracts",
         "generated_at": now, "total_contracts_stored": total,
         "contracts_last_12m": in_window, "mapped_last_12m": mapped,
         "newest_start_date": newest or None,
+        "property_types": [{"key": t, "label": lbl, "n": counts.get(t, 0)} for t, lbl in PROPERTY_TYPES],
         "unmatched_areas": [{"area": k, "n": v} for k, v in unmatched.most_common(60)],
         "state": state, "sources": source_status(state),
-        "source": "Dubai Land Department Ejari rent contracts (DLD open data); homes only (flats, studios, villas)",
+        "source": "Dubai Land Department Ejari rent contracts (DLD open data)",
     })
-    print(f"built: {total} stored, {in_window} in 12m window, {mapped} mapped, "
-          f"{len(areas)} groups, {len(latest)} latest rows")
+    print(f"built: {total} stored, {in_window} homes in 12m window, {mapped} mapped, "
+          f"{len(areas)} groups, {len(rows)} latest rows, types {counts}")
 
 
 def _num(s):
@@ -274,6 +379,7 @@ def build_aggregate(now, state, own=None):
         "newest_start_date": through, "data_through": through,
         "unmatched_areas": sorted(unplaced, key=lambda x: -x["n"]), "state": state,
         "sources": source_status(state, own or {}),
+        "property_types": [{"key": "homes", "label": PROPERTY_TYPES[0][1], "n": total}],
         "source": "Dubai Data (datadubai.ae), Continental Club Property, based on Dubai Land "
                   "Department open data (Ejari)" + (f", data through {through}" if through else "") +
                   ". CC BY 4.0. Not an official DLD product.",
