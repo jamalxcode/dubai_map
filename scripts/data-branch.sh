@@ -4,7 +4,8 @@
 #   scripts/data-branch.sh load            copy the data branch's files into ./data
 #                                          (plain files: git's index is not touched)
 #   scripts/data-branch.sh save "message"  commit ./data's generated files to the data
-#                                          branch and push; prints changed=true|false
+#                                          branch and push; reports changed=true|false
+#                                          (also as a step output under GitHub Actions)
 #
 # Generated (data branch): build output, source state, the contract archive, the
 # Dubai Data mirror and the computed map points. Hand-kept (main): area_locations.csv,
@@ -16,6 +17,12 @@ cd "$(git rev-parse --show-toplevel)"
 BRANCH=${DATA_BRANCH:-data}
 GENERATED=(data/areas.json data/areas_*.json data/latest.json data/meta.json data/state.json
            data/contracts data/datadubai data/osm_area_points.csv data/dm_communities.csv)
+
+# Tell the workflow whether anything changed (step output `changed`), and say it in the log.
+result() {
+  echo "changed=$1"
+  if [ -n "${GITHUB_OUTPUT:-}" ]; then echo "changed=$1" >> "$GITHUB_OUTPUT"; fi
+}
 
 load() {
   if git fetch -q --depth=1 origin "$BRANCH" 2>/dev/null; then
@@ -49,7 +56,7 @@ save() {
     export GIT_COMMITTER_EMAIL=${GIT_COMMITTER_EMAIL:-github-actions[bot]@users.noreply.github.com}
     git add -A
     if git diff --cached --quiet; then
-      echo "no data changes"; echo "changed=false"; exit 0
+      echo "no data changes"; result false; exit 0
     fi
     git commit -qm "$msg"
     # Another job may have saved meanwhile: put our commit on top of theirs and retry.
@@ -57,7 +64,7 @@ save() {
     mine=$(git rev-parse HEAD)
     for i in 1 2 3; do
       if git push -q origin "HEAD:refs/heads/$BRANCH"; then
-        echo "saved to $BRANCH @ $(git rev-parse --short HEAD)"; echo "changed=true"; exit 0
+        echo "saved to $BRANCH @ $(git rev-parse --short HEAD)"; result true; exit 0
       fi
       sleep $((i * 5))
       git fetch -q --depth=1 origin "$BRANCH" && git reset -q --hard FETCH_HEAD && git cherry-pick "$mine" >/dev/null

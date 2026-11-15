@@ -42,8 +42,7 @@ jobs:
       - name: Save the data (data branch)
         id: save
         run: |
-          set -o pipefail
-          scripts/data-branch.sh save "data: place unplaced areas $(TZ=Asia/Kuwait date '+%Y-%m-%d')" | tee -a "$GITHUB_OUTPUT"
+          scripts/data-branch.sh save "data: place unplaced areas $(TZ=Asia/Kuwait date '+%Y-%m-%d')"
 
   deploy:
     needs: place

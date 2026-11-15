@@ -73,8 +73,7 @@ jobs:
       - name: Save the data (data branch; nothing is saved if nothing changed)
         id: save
         run: |
-          set -o pipefail
-          scripts/data-branch.sh save "data: Ejari update $(TZ=Asia/Kuwait date '+%Y-%m-%d %H:%M') Kuwait" | tee -a "$GITHUB_OUTPUT"
+          scripts/data-branch.sh save "data: Ejari update $(TZ=Asia/Kuwait date '+%Y-%m-%d %H:%M') Kuwait"
       - name: Remove imported inbox files from main
         run: |
           git add -A data/inbox
