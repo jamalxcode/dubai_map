@@ -22,6 +22,13 @@ class HelperTests(unittest.TestCase):
         self.assertEqual(k(sub_type="Shop"), "commercial")
         self.assertEqual(k(usage="Commercial", sub_type="Flat"), "commercial")
         self.assertEqual(k(sub_type="", prop_type="Land", annual="352000"), "other")
+        # Missing fields are not evidence of a home.
+        self.assertEqual(k(usage="", sub_type=""), "other", "no usage, no sub type")
+        self.assertEqual(k(sub_type=""), "other", "residential but no sub type")
+        self.assertEqual(k(sub_type="", rooms="Studio"), "studio", "rooms say studio")
+        self.assertEqual(k(usage="", sub_type="Flat"), "flat", "usage missing, sub type says flat")
+        self.assertEqual(k(usage="", sub_type="Villa"), "villa")
+        self.assertEqual(k(usage="", sub_type="Shop"), "commercial")
         self.assertEqual(k(sub_type="Flat", annual="3084480", size_sqm="18"), "other", "bulk lease on a tiny unit")
         self.assertEqual(k(sub_type="Flat", annual="300000", size_sqm="110"), "flat", "luxury, but believable")
         self.assertTrue(build.in_type("villa", "homes") and not build.in_type("commercial", "homes"))
@@ -96,24 +103,98 @@ class OwnContractsTests(TempData):
         self.add(1200, "2026-10-01", "2026-10-01")
         meta = self.build(date(2026, 11, 15))
         self.assertEqual(meta["mode"], "aggregate")
-        self.assertEqual(meta["sources"][0]["history"], {"contracts": 1200, "days": 45})
+        self.assertEqual(meta["sources"][0]["history"], {"contracts": 1200, "weeks": 1})
+
+    def test_one_old_record_does_not_count_as_a_full_year(self):
+        """The span from the oldest record is not coverage: an old import plus three weeks stays on Dubai Data."""
+        from datetime import date
+        self.add(1, "2025-11-20", "2025-11-20")
+        for day in ("2026-10-26", "2026-11-02", "2026-11-09"):
+            self.add(400, day, day)
+        meta = self.build(date(2026, 11, 15))
+        self.assertEqual(meta["mode"], "aggregate")
+        self.assertEqual(meta["sources"][0]["history"], {"contracts": 1201, "weeks": 4})
+
+    def add_weeks(self, weeks, per_week, first="2026-01-05"):
+        from datetime import date, timedelta
+        for w in range(weeks):
+            d = (date.fromisoformat(first) + timedelta(weeks=w)).isoformat()
+            self.add(per_week, d, d)
 
     def test_full_year_switches_to_own_contracts_homes_only(self):
         from datetime import date
-        self.add(1200, "2026-01-05", "2026-01-05")
+        self.add_weeks(44, 30)  # 1,320 home contracts spread over 44 weeks
         self.add(50, "2026-02-01", "2026-02-01", sub="Labor Camps", rent=2000000)
         self.add(50, "2026-02-01", "2026-02-01", sub="Shop", usage="Commercial")
         meta = self.build(date(2026, 11, 15))
         self.assertEqual(meta["mode"], "contracts")
-        self.assertEqual(meta["contracts_last_12m"], 1200, "camps and shops are left out")
-        self.assertEqual(meta["mapped_last_12m"], 1200, "Area A is placed via area_locations")
+        self.assertEqual(meta["contracts_last_12m"], 1320, "camps and shops are left out")
+        self.assertEqual(meta["mapped_last_12m"], 1320, "Area A is placed via area_locations")
+        self.assertEqual(meta["weeks_covered"], 44)
         types = {t["key"]: t["n"] for t in meta["property_types"]}
-        self.assertEqual(types, {"homes": 1200, "flat": 1200, "studio": 0, "villa": 0, "commercial": 50, "all": 1300})
+        self.assertEqual(types, {"homes": 1320, "flat": 1320, "studio": 0, "villa": 0, "commercial": 50, "all": 1420})
         with open(os.path.join(self.tmp, "areas_commercial.json")) as f:
             self.assertEqual(json.load(f)["areas"][0]["n"], 50)
         with open(os.path.join(self.tmp, "latest.json")) as f:
             kinds = {r["k"] for r in json.load(f)["rows"]}
         self.assertTrue(kinds <= {"flat", "commercial", "other"})
+
+
+class ShrinkGuardTests(TempData):
+    """A build that suddenly shrinks is not published; the previous files stay."""
+
+    def setUp(self):
+        super().setUp()
+        for rel, text in AGG_FILES.items():
+            self.write(rel, text)
+        self._out = fetch_datadubai.OUT
+        fetch_datadubai.OUT = os.path.join(self.tmp, "datadubai")
+
+    def tearDown(self):
+        fetch_datadubai.OUT = self._out
+        super().tearDown()
+
+    def previous(self, **over):
+        meta = {"mode": "aggregate", "contracts_last_12m": 150, "mapped_last_12m": 100, "n_areas": 2, **over}
+        self.write("meta.json", json.dumps(meta))
+        self.write("areas.json", '{"old": true}')
+        return meta
+
+    def run_build(self, env=None):
+        with mock.patch.dict(os.environ, {"ALLOW_SHRINK": "", **(env or {})}), mock.patch("builtins.print"):
+            build.main()
+
+    def test_rule(self):
+        old = {"mode": "aggregate", "contracts_last_12m": 1000, "mapped_last_12m": 900, "n_areas": 100}
+        self.assertIsNone(build.shrink_problem(old, dict(old, contracts_last_12m=750)), "25% drop is fine")
+        self.assertIn("contracts fell", build.shrink_problem(old, dict(old, contracts_last_12m=600)))
+        self.assertIn("areas fell", build.shrink_problem(old, dict(old, n_areas=60)))
+        self.assertIsNone(build.shrink_problem(old, dict(old, mode="contracts", contracts_last_12m=10)),
+                          "a change of source is not a shrink")
+        self.assertIsNone(build.shrink_problem(None, old), "first build")
+        self.assertIsNone(build.shrink_problem({"mode": "aggregate"}, old), "old meta without counts")
+
+    def test_normal_build_publishes(self):
+        self.previous()
+        self.run_build()
+        with open(os.path.join(self.tmp, "areas.json")) as f:
+            self.assertIn("areas", json.load(f))
+
+    def test_big_drop_is_refused_and_old_files_kept(self):
+        self.previous(contracts_last_12m=1000)
+        with self.assertRaises(SystemExit) as cm:
+            self.run_build()
+        self.assertIn("not publishing", str(cm.exception))
+        with open(os.path.join(self.tmp, "areas.json")) as f:
+            self.assertEqual(json.load(f), {"old": True})
+        with open(os.path.join(self.tmp, "meta.json")) as f:
+            self.assertEqual(json.load(f)["contracts_last_12m"], 1000)
+
+    def test_override_publishes_a_real_drop(self):
+        self.previous(contracts_last_12m=1000)
+        self.run_build({"ALLOW_SHRINK": "1"})
+        with open(os.path.join(self.tmp, "meta.json")) as f:
+            self.assertEqual(json.load(f)["contracts_last_12m"], 150)
 
 
 class AggregateBuildTests(TempData):

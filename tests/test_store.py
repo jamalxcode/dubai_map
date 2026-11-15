@@ -69,5 +69,76 @@ class MergeTests(TempData):
         self.assertEqual(list(store.iter_all()), [])
 
 
+def pulse(cid, **over):
+    """A contract as Dubai Pulse sends it: with a contract id."""
+    r = {"contract_id": cid, "line_number": "1", "contract_start_date": "05-11-2026",
+         "contract_end_date": "04-11-2027", "annual_amount": "65000", "area_name_en": "Al Barsha South Fourth",
+         "actual_area": "70.5", "project_name_en": "Bloom Towers"}
+    r.update(over)
+    return store.normalize(r, "dubai_pulse_api")
+
+
+def dld(reg="2026-11-05T09:00:00", **over):
+    """The same contract as the DLD service sends it: no id, different headers, a registration timestamp."""
+    r = {"START_DATE": "2026-11-05T00:00:00", "END_DATE": "2027-11-04T00:00:00", "ANNUAL_AMOUNT": 65000,
+         "AREA_EN": "AL BARSHA SOUTH FOURTH", "ACTUAL_AREA": 70.5, "REGISTRATION_DATE": reg, "PROJECT_EN": None}
+    r.update(over)
+    return store.normalize(r, "dld_open_data")
+
+
+class CrossSourceTests(TempData):
+    """One contract reaching us from two sources (with and without an id) is stored once."""
+
+    def keys(self):
+        return sorted(r["key"] for r in store.iter_all())
+
+    def test_id_first_then_idless_copy(self):
+        self.assertEqual(store.merge([pulse("C1")]), (1, 0))
+        self.assertEqual(store.merge([dld()]), (0, 0), "the id-less copy is recognised, not added")
+        self.assertEqual(self.keys(), ["C1#1"])
+        self.assertEqual(store.merge([dld()]), (0, 0), "and stays recognised on the next pull")
+        self.assertEqual(self.keys(), ["C1#1"])
+
+    def test_idless_first_then_id_copy_replaces_it(self):
+        h = dld()["key"]
+        self.assertEqual(store.merge([dld()]), (1, 0))
+        self.assertEqual(store.merge([pulse("C1")]), (0, 1), "the id row replaces the hashed one")
+        self.assertEqual(self.keys(), ["C1#1"])
+        self.assertEqual(next(store.iter_all())["alias"], h)
+        self.assertEqual(store.merge([dld()]), (0, 0), "a re-pull of the id-less copy is not re-added")
+        self.assertEqual(store.merge([pulse("C1")]), (0, 0))
+        self.assertEqual(self.keys(), ["C1#1"])
+
+    def test_twin_contracts_stay_separate(self):
+        """Two identical units leased the same day are two contracts in every source."""
+        store.merge([pulse("C1"), pulse("C2")])
+        store.merge([dld(reg="2026-11-05T09:00:00"), dld(reg="2026-11-05T09:05:00")])
+        self.assertEqual(self.keys(), ["C1#1", "C2#1"])
+        store.merge([dld(reg="2026-11-05T09:10:00")])  # a third twin only the DLD service has
+        self.assertEqual(len(self.keys()), 3)
+
+    def test_twins_idless_first(self):
+        store.merge([dld(reg="2026-11-05T09:00:00"), dld(reg="2026-11-05T09:05:00")])
+        store.merge([pulse("C1")])
+        self.assertEqual(len(self.keys()), 2, "one hashed twin replaced, the other kept")
+        store.merge([pulse("C2")])
+        self.assertEqual(self.keys(), ["C1#1", "C2#1"])
+        store.merge([dld(reg="2026-11-05T09:00:00"), dld(reg="2026-11-05T09:05:00")])
+        self.assertEqual(self.keys(), ["C1#1", "C2#1"])
+
+    def test_different_contracts_are_not_merged(self):
+        store.merge([pulse("C1")])
+        store.merge([dld(ANNUAL_AMOUNT=70000)])
+        self.assertEqual(len(self.keys()), 2)
+
+    def test_correction_keeps_the_pairing(self):
+        store.merge([pulse("C1")])
+        store.merge([dld()])
+        self.assertEqual(store.merge([pulse("C1", project_name_en="Bloom Towers B")]), (0, 1))
+        self.assertTrue(next(store.iter_all())["alias"].startswith("h:"), "alias survives an update")
+        self.assertEqual(store.merge([dld()]), (0, 0))
+        self.assertEqual(self.keys(), ["C1#1"])
+
+
 if __name__ == "__main__":
     unittest.main()

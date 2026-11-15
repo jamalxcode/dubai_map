@@ -29,7 +29,7 @@ Built as one static page: [Leaflet](https://leafletjs.com/) for the map, [GSAP](
 | DLD's open-data service (`gateway.dubailand.gov.ae/open-data`, behind DLD's [Real Estate Data](https://dubailand.gov.ae/en/open-data/real-estate-data/) page) | Only DLD's [website terms](https://dubailand.gov.ae/en/terms-conditions) apply: personal, noncommercial use unless DLD agrees in writing | No | Daily | **Off.** Built and tested, but only switched on (`DLD_ENABLED=1`) once DLD gives written permission. |
 | Manual CSV in `data/inbox/` | Whatever licence the file came with | No | When added | Always imported. |
 
-**Which one the map shows:** our own contracts once they cover at least 300 days and 1,000 home contracts; Dubai Data before that. The Dubai Pulse pull only fetches the last 2 days each run, so on its own it takes about 10 months to build up that history; importing a year of contracts once gets there straight away: download Dubai Pulse's full Ejari CSV ([dld_rent_contracts-open](https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open), open-data licence), cut it to the last 12 months, and drop it in `data/inbox/`. `data/meta.json` → `sources` shows the status of each source, and the page lists it under "Where the numbers come from".
+**Which one the map shows:** our own contracts once they hold at least 1,000 home contracts and contracts in at least 43 of the last 52 weeks (about 300 days; counted week by week, so one old import doesn't count as a full year); Dubai Data before that. The Dubai Pulse pull only fetches the last 2 days each run, so on its own it takes about 10 months to build up that history; importing a year of contracts once gets there straight away: download Dubai Pulse's full Ejari CSV ([dld_rent_contracts-open](https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open), open-data licence), cut it to the last 12 months, and drop it in `data/inbox/`. `data/meta.json` → `sources` shows the status of each source, and the page lists it under "Where the numbers come from".
 
 Dubai Data attribution: *Dubai Data (datadubai.ae), Continental Club Property — based on Dubai Land Department open data. Not an official DLD product.* (CC BY 4.0). No source includes tenant or unit details.
 
@@ -48,7 +48,7 @@ Dubai Data attribution: *Dubai Data (datadubai.ae), Continental Club Property �
 3. New contracts are merged into small daily files under `data/contracts/YYYY-MM/DD.csv.gz` (de-duplicated, so overlaps and corrections are safe; daily files keep each commit small).
 4. `collector/fetch_datadubai.py` (backup) refreshes the Dubai Data files with conditional requests (Hugging Face first, GitHub if that fails).
 5. `collector/build.py` writes the small files the page loads: `data/areas.json`, `data/latest.json`, `data/meta.json`. Only homes count (flats, studios, villas): shops, offices, labour camps and whole-building leases would skew the medians.
-6. The data checks in `tests/test_data.py` run; if they fail, nothing is committed.
+6. If contracts, mapped contracts or areas fell by more than 30% since the last build (same source), `build.py` refuses to publish and keeps the previous files; re-run with "allow shrink" ticked if the drop is real. Then the data checks in `tests/test_data.py` run; if they fail, nothing is committed.
 7. The data commit triggers the Pages deploy. Only the page and those JSON files are published, not the raw archive.
 
 ### Daily data: add the free Dubai Pulse key

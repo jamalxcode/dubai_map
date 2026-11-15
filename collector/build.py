@@ -21,15 +21,21 @@ STATS_DAYS = 365
 LATEST_CAP = 8000  # newest homes rows in the table (plus a third as many others); keeps latest.json phone-sized
 MIN_OWN_CONTRACTS = 1000  # below this, fall back to Dubai Data community aggregates
 # Our own contract stats are only shown once they cover enough of the year: a few
-# weeks of contracts presented as "last 12 months" would mislead.
-MIN_HISTORY_DAYS = 300
+# weeks of contracts presented as "last 12 months" would mislead. Coverage is the
+# number of distinct weeks in the last 52 that hold contracts (not the span from the
+# oldest record, which one old import would stretch). 43 weeks is about 300 days.
+MIN_HISTORY_WEEKS = 43
+# Refuse to publish if the headline counts drop by more than this versus the last
+# build in the same mode (a truncated or broken source file). ALLOW_SHRINK=1 overrides.
+MAX_DROP = 0.30
 # Property types. "homes" (flats, studios, villas) is the default view: shops,
 # offices, labour camps and whole-building leases can be worth millions each and
 # would skew a homes median. The other types get their own files and filter.
-RESIDENTIAL = {"residential", ""}
-FLATS = {"flat", "penthouse", "apartment", ""}
+RESIDENTIAL = {"residential"}
+FLATS = {"flat", "penthouse", "apartment"}
 STUDIOS = {"studio"}
 VILLAS = {"villa", "complex villas", "villa addendum", "arabian house", "townhouse"}
+HOME_SUBS = FLATS | STUDIOS | VILLAS
 COMMERCIAL_SUB = {"shop", "office", "showroom", "warehouse", "warehouse complex", "complex warehouse", "workshop",
                   "store", "kiosk", "restaurant", "clinic", "mezzanine", "parking", "hotel", "hotel apartment"}
 PROPERTY_TYPES = [  # (key, label) in the order the page shows them
@@ -52,7 +58,9 @@ def kind(rec):
             return "other"  # e.g. 18 m² "flats" each carrying a 3 million AED staff-housing contract
     except (KeyError, ValueError, ZeroDivisionError):
         pass
-    if usage in RESIDENTIAL:
+    # A home needs evidence: residential usage, or a home sub type when usage is missing.
+    # A row with neither is "other", so incomplete rows never skew the homes median.
+    if usage in RESIDENTIAL or (not usage and sub in HOME_SUBS):
         if sub in STUDIOS or rooms == "studio":
             return "studio"
         if sub in VILLAS:
@@ -221,12 +229,14 @@ def main():
     latest = []
     total = 0
     newest = ""
-    earliest = first_reg = ""
+    weeks = set()  # (year, week) pairs in the last 12 months that hold at least one contract
     located = {}
     for rec in store.iter_all():
         total += 1
-        if rec.get("reg_date"):
-            first_reg = min(first_reg, rec["reg_date"]) if first_reg else rec["reg_date"]
+        # Registration date when we have it: renewals' start dates reach back before our history began.
+        d = rec.get("reg_date") or rec["start"]
+        if stats_from <= d <= to:
+            weeks.add(date.fromisoformat(d).isocalendar()[:2])
         s = rec["start"]
         if s > to or s < stats_from:
             continue
@@ -242,7 +252,6 @@ def main():
             if in_type(k, t):
                 groups[t][label].append(rec)
         if k in ("flat", "studio", "villa"):
-            earliest = min(earliest, s) if earliest else s
             newest = max(newest, s)
             if not loc:
                 unmatched[rec["area"]] += 1
@@ -266,36 +275,34 @@ def main():
 
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     in_window = sum(a["n"] for a in areas)
-    # How much of the year our own data really covers: by registration date when we
-    # have it (start dates of renewals reach back before our history began).
-    since = first_reg or earliest
-    covered = (today - date.fromisoformat(since)).days if since else 0
-    ready = in_window >= MIN_OWN_CONTRACTS and covered >= MIN_HISTORY_DAYS
-    if not ready and build_aggregate(now, state, own={"contracts": in_window, "days": covered}):
+    ready = in_window >= MIN_OWN_CONTRACTS and len(weeks) >= MIN_HISTORY_WEEKS
+    if not ready and build_aggregate(now, state, own={"contracts": in_window, "weeks": len(weeks)}):
         return
-    write("areas.json", {"generated_at": now, "from": stats_from, "to": to, "type": "homes", "areas": areas})
+    files = {"areas.json": {"generated_at": now, "from": stats_from, "to": to, "type": "homes", "areas": areas}}
     counts = {"homes": in_window}
     for t, _ in PROPERTY_TYPES[1:]:
         extra = summarize(groups[t], places)
         counts[t] = sum(a["n"] for a in extra)
-        write(f"areas_{t}.json", {"generated_at": now, "from": stats_from, "to": to, "type": t, "areas": extra})
+        files[f"areas_{t}.json"] = {"generated_at": now, "from": stats_from, "to": to, "type": t, "areas": extra}
     # Newest contracts for the table: homes first, then a share for commercial/other.
     homes_rows = [r for r in latest if r["k"] in ("flat", "studio", "villa")][:LATEST_CAP]
     other_rows = [r for r in latest if r["k"] not in ("flat", "studio", "villa")][:LATEST_CAP // 3]
     rows = sorted(homes_rows + other_rows, key=lambda r: r["s"], reverse=True)
-    write("latest.json", {"generated_at": now, "from": latest_from, "to": to,
-                          "truncated": len(latest) > len(rows), "rows": rows})
+    files["latest.json"] = {"generated_at": now, "from": latest_from, "to": to,
+                            "truncated": len(latest) > len(rows), "rows": rows}
     mapped = sum(a["n"] for a in areas if a["lat"] is not None)
-    write("meta.json", {
+    files["meta.json"] = {
         "mode": "contracts",
         "generated_at": now, "total_contracts_stored": total,
-        "contracts_last_12m": in_window, "mapped_last_12m": mapped,
+        "contracts_last_12m": in_window, "mapped_last_12m": mapped, "n_areas": len(areas),
+        "weeks_covered": len(weeks),
         "newest_start_date": newest or None,
         "property_types": [{"key": t, "label": lbl, "n": counts.get(t, 0)} for t, lbl in PROPERTY_TYPES],
         "unmatched_areas": [{"area": k, "n": v} for k, v in unmatched.most_common(60)],
         "state": state, "sources": source_status(state),
         "source": "Dubai Land Department Ejari rent contracts (open data)",
-    })
+    }
+    publish(files)
     print(f"built: {total} stored, {in_window} homes in 12m window, {mapped} mapped, "
           f"{len(areas)} groups, {len(rows)} latest rows, types {counts}")
 
@@ -370,12 +377,13 @@ def build_aggregate(now, state, own=None):
                           "ar": ", ".join(areas[-1]["dld_areas"]), "url": r["url"], "m": 1 if pt else 0})
     areas.sort(key=lambda a: -a["n"])
     through = fetch_datadubai.data_through()
-    write("areas.json", {"generated_at": now, "from": None, "to": through, "areas": areas})
-    write("latest.json", {"generated_at": now, "mode": "aggregate", "rows": table})
     total = sum(a["n"] for a in areas)
-    write("meta.json", {
+    files = {"areas.json": {"generated_at": now, "from": None, "to": through, "areas": areas},
+             "latest.json": {"generated_at": now, "mode": "aggregate", "rows": table}}
+    files["meta.json"] = {
         "mode": "aggregate", "generated_at": now,
         "contracts_last_12m": total, "mapped_last_12m": sum(a["n"] for a in areas if a["lat"] is not None),
+        "n_areas": len(areas),
         "newest_start_date": through, "data_through": through,
         "unmatched_areas": sorted(unplaced, key=lambda x: -x["n"]), "state": state,
         "sources": source_status(state, own or {}),
@@ -383,10 +391,43 @@ def build_aggregate(now, state, own=None):
         "source": "Dubai Data (datadubai.ae), Continental Club Property, based on Dubai Land "
                   "Department open data (Ejari)" + (f", data through {through}" if through else "") +
                   ". CC BY 4.0. Not an official DLD product.",
-    })
+    }
+    publish(files)
     print(f"built (aggregate): {len(areas)} communities, {total} contracts in 12m, "
           f"{len(unplaced)} unplaced")
     return True
+
+
+def shrink_problem(old, new):
+    """Why the new build looks broken compared with the last one, or None if it is fine.
+    Only compares builds in the same mode: switching source legitimately changes the counts."""
+    if not old or old.get("mode") != new.get("mode"):
+        return None
+    for key, what in (("contracts_last_12m", "contracts"), ("mapped_last_12m", "contracts on the map"),
+                      ("n_areas", "areas")):
+        before, after = old.get(key), new.get(key)
+        if isinstance(before, (int, float)) and before > 0 and isinstance(after, (int, float)) \
+                and after < before * (1 - MAX_DROP):
+            return f"{what} fell from {before:,} to {after:,} (more than {MAX_DROP:.0%})"
+    return None
+
+
+def publish(files):
+    """Write the page's files, unless the new data has shrunk suspiciously. Then nothing is
+    written, the previous files stay published, and the run fails so someone looks."""
+    try:
+        with open(os.path.join(store.DATA, "meta.json"), encoding="utf-8") as f:
+            old = json.load(f)
+    except (OSError, ValueError):
+        old = None
+    problem = shrink_problem(old, files["meta.json"])
+    if problem and os.environ.get("ALLOW_SHRINK") != "1":
+        sys.exit(f"not publishing: {problem}. The previous files are kept. "
+                 "If the drop is real, re-run with ALLOW_SHRINK=1.")
+    meta = files.pop("meta.json")
+    for name, obj in files.items():
+        write(name, obj)
+    write("meta.json", meta)  # last, so a crash mid-way never pairs new metadata with old files
 
 
 def write(name, obj):

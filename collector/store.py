@@ -22,6 +22,7 @@ FIELDS = [
     "annual", "contract_amount", "size_sqm", "prop_type", "sub_type",
     "usage", "rooms", "area_id", "area", "master_project", "project",
     "metro", "mall", "landmark", "tenant_type", "is_free_hold", "reg_date", "source",
+    "alias",  # hash key of the id-less copy of this contract from another source, if one was seen
 ]
 
 # Header aliases: Dubai Pulse API / CSV names, DLD website export names and the
@@ -140,8 +141,25 @@ def write_partition(path, rows):
             gz.write(buf.getvalue().encode("utf-8"))
 
 
+def fingerprint(rec):
+    """Fields every source carries, used to recognise one contract arriving from two
+    sources under different keys (an id from Dubai Pulse, a hash from the DLD service
+    or a website export)."""
+    return "|".join((rec.get("start", ""), rec.get("end", ""), rec.get("annual", ""),
+                     rec.get("area", "").lower().strip(), rec.get("size_sqm", "")))
+
+
+def is_hash(key):
+    return key.startswith("h:")
+
+
 def merge(records):
-    """Merge canonical records into partitions. Returns (added, updated)."""
+    """Merge canonical records into partitions. Returns (added, updated).
+
+    Contracts with an id and id-less (hashed) contracts are paired one to one by
+    fingerprint, so the same contract from two sources is stored once: the id row
+    wins and remembers the hash key it replaced in `alias`. Twin contracts (same
+    building, rent and dates) stay separate because each pairs at most once."""
     by_part = {}
     for r in records:
         if valid(r):
@@ -149,16 +167,42 @@ def merge(records):
     added = updated = 0
     for path, recs in by_part.items():
         rows = read_partition(path)
+        aliases = {row.get("alias"): k for k, row in rows.items() if row.get("alias")}
+        by_fp = {}
+        for k, row in rows.items():
+            by_fp.setdefault(fingerprint(row), []).append(k)
         changed = False
         for r in recs:
-            old = rows.get(r["key"])
-            if old is None:
-                added += 1
-            elif any(old.get(f, "") != r[f] for f in FIELDS if f != "source"):
+            key, fp = r["key"], fingerprint(r)
+            old = rows.get(key)
+            if old is not None:
+                r["alias"] = old.get("alias", "")
+                if not any(old.get(f, "") != r[f] for f in FIELDS if f not in ("source", "alias")):
+                    continue
                 updated += 1
+            elif is_hash(key):
+                if key in aliases:
+                    continue  # this id-less copy is already stored under its contract id
+                twin = next((k for k in by_fp.get(fp, []) if not is_hash(k) and not rows[k].get("alias")), None)
+                if twin:  # first time we see the id-less copy of a stored contract: pair, don't add
+                    rows[twin]["alias"] = key
+                    aliases[key] = twin
+                    changed = True
+                    continue
+                added += 1
             else:
-                continue
-            rows[r["key"]] = r
+                h = next((k for k in by_fp.get(fp, []) if is_hash(k)), None)
+                if h:  # the id-carrying copy of a stored id-less contract: replace it
+                    del rows[h]
+                    by_fp[fp].remove(h)
+                    r["alias"] = h
+                    aliases[h] = key
+                    updated += 1
+                else:
+                    added += 1
+            rows[key] = r
+            if key not in by_fp.setdefault(fp, []):
+                by_fp[fp].append(key)
             changed = True
         if changed:
             write_partition(path, rows)

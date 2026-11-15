@@ -17,6 +17,10 @@ on:
         description: "Pull again even if already pulled today (use sparingly)"
         type: boolean
         default: false
+      allow_shrink:
+        description: "Publish even if contracts or areas dropped by more than 30% (only if the drop is real)"
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths: ["data/inbox/**"]
@@ -55,7 +59,9 @@ jobs:
       - name: "Backup: Dubai Data community medians (Hugging Face, then GitHub)"
         continue-on-error: true  # a failing source must not stop the backups or the build
         run: python3 collector/fetch_datadubai.py
-      - name: Build map data
+      - name: Build map data (refuses to publish a much smaller catalog than the last one)
+        env:
+          ALLOW_SHRINK: ${{ inputs.allow_shrink && '1' || '0' }}
         run: python3 collector/build.py
       - name: Check the data before publishing (stops the commit if it looks broken)
         run: python3 -m unittest discover -s tests -p "test_data.py" -v

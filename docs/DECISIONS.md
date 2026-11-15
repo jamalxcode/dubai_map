@@ -129,6 +129,13 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - **Credits** for every source and library on the page and in the README's "Licences and terms" table.
 - **Dark mode:** follows the device setting until the visitor picks one; all text meets WCAG AA contrast in both themes.
 
+## Decision on 2026-11-15 (seventh pass): data integrity fixes
+
+- **One contract, two sources, stored once.** Dubai Pulse rows carry a contract id; DLD-service and website rows don't, so the same contract got two keys. `store.merge` now pairs id rows and id-less rows one to one on fields every source has (start, end, yearly rent, area, size). The id row wins and remembers the hash key it replaced (`alias`), so later re-pulls of the id-less copy are recognised. Twin contracts (identical units, same day) stay separate because each row pairs at most once.
+- **Coverage is counted week by week.** The switch to own contracts needs contracts in at least 43 of the last 52 weeks, not 300 days since the oldest record (one old import used to count as a full year).
+- **Missing fields are not a home.** A row needs residential usage, or a flat/studio/villa sub type when usage is missing, to count in the homes median; otherwise it is "other".
+- **No shrinking.** `build.py` refuses to publish if contracts, mapped contracts or areas fall more than 30% versus the last build in the same mode, and keeps the previous files. Override: `ALLOW_SHRINK=1` (the "allow shrink" box on the daily workflow).
+
 ## Prioritized next work
 
 **Status on 2026-11-10:** P0 items 1–3 are done via the Dubai Data fallback and a live Pages deploy. P1 is built and waiting for the Dubai Pulse key. Next up: P2 item 6 (community polygons).
@@ -167,6 +174,8 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-15: Cross-source de-duplication, week-based coverage check, stricter homes rule, no-shrink guard.
 
 - 2026-11-15: DLD open data as main daily source with backups; mobile-first redesign; stale-data warning; tests.
 
