@@ -1,0 +1,27 @@
+name: Tests
+
+# Runs on every push and pull request, so a code change that breaks the
+# collector, the build or the page shows up as a red check. (The daily data
+# job runs the data checks itself before it commits; see daily-ejari.yml.)
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - name: Python tests (collector, build, committed data)
+        run: python3 -m unittest discover -s tests -v
+      - name: Page tests (stale-data rule, script integrity)
+        run: node --test tests/page.test.mjs

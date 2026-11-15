@@ -43,6 +43,8 @@ jobs:
         run: python3 collector/fetch_datadubai.py
       - name: Build map data
         run: python3 collector/build.py
+      - name: Check the data before publishing (stops the commit if it looks broken)
+        run: python3 -m unittest discover -s tests -p "test_data.py" -v
       - name: Commit data
         run: |
           git config user.name "dubai_map bot"

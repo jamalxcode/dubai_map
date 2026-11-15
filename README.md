@@ -75,6 +75,15 @@ python3 -m http.server 8080        # open http://localhost:8080
 
 Standard-library Python only; nothing to install.
 
+### Tests
+
+```sh
+python3 -m unittest discover -s tests -v   # collector, build, and sanity checks on the committed data
+node --test tests/page.test.mjs            # stale-data rule and pinned script hashes in index.html
+```
+
+`.github/workflows/tests.yml` runs both on every push and pull request. The daily data job also runs the data checks before it commits, so a broken source file is not published.
+
 ## Roadmap
 
 1. First real pull: confirm endpoint, filter syntax and field values; tune `area_locations.csv` from `unmatched_areas`.
