@@ -121,11 +121,16 @@ The owner's browser was blocked by the portal's web firewall. A probe from GitHu
 
 The owner wrote to help@digitaldubai.ae with the firewall's support ID: asked how to register for the open rental data and its API, said they're based in Kuwait, and asked whether developers outside the UAE can register. Waiting for an answer. When access comes: request `dld_rent_contracts-open-api`, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets, then run a forced pull and check the first real contracts.
 
+### ~15:35 · "critique what we have so far, how can it be made better" → "yes, do 1, 3 and 5 and merge to main"
+
+Critique, ranked: (1) the map mixed two measures after the older districts arrived; (2) no alert when something breaks; (3) GitHub may switch off the schedule after 60 quiet days, now that data commits skip `main`; (4) no browser check in CI; (5) map labels not usable by keyboard; (6) every figure comes from one publisher; plus search pages, measurement, the front-end split, Continental Club's terms and leftover branches. Done: 1 (map starts on 1-bedroom; "All units" shows only areas with an all-homes median), 3 (workflows re-enable themselves), 5 (labels are keyboard buttons). Next: 2 and 4.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.
-2. **Front-end split** (once the page is quiet): `index.html` into script, styles and a testable module; self-host Leaflet, GSAP and Lenis; faster label merging.
-3. **cron-job.org jobs** (owner): a fine-grained token with Actions read/write on this repo, and three dispatch jobs (README, "The timer").
-4. **Old branches** `fix-tabs`, `mobile-redesign`, `engagement`, `compact-phone`, `three-a-day` and the collaborator's working branches can be deleted once merged.
-5. Community outlines (shaded areas) from Dubai Municipality data.
-6. Expansion to other cities in the region (new source adapter per registry).
+2. **Freshness alert and a browser check in CI** (critique items 2 and 4).
+3. **Front-end split** (once the page is quiet): `index.html` into script, styles and a testable module; self-host Leaflet, GSAP and Lenis; faster label merging.
+4. **cron-job.org jobs** (owner): a fine-grained token with Actions read/write on this repo, and three dispatch jobs (README, "The timer").
+5. **Old branches** `fix-tabs`, `mobile-redesign`, `engagement`, `compact-phone`, `three-a-day` and the collaborator's working branches can be deleted once merged.
+6. Community outlines (shaded areas) from Dubai Municipality data.
+7. Expansion to other cities in the region (new source adapter per registry).

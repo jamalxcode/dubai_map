@@ -61,3 +61,10 @@ test('rent check hooks stay in place (assets/app/companion.js depends on them)',
   assert.match(html, /dispatchEvent\(new Event\('atlas:error'\)\)/);
   assert.match(html, /href="assets\/app\/companion\.css"/);
 });
+
+test('one measure on the map: older districts only with a unit; starts on 1 bed; labels work by keyboard', () => {
+  assert.match(html, /if\(!u&&a\.median_kind==='unit'\)return null;/, 'no all-homes value for per-unit-only areas');
+  assert.match(html, /\['1-bedroom apartments','1 bed'\]\.find/, 'default unit is 1 bedroom');
+  assert.match(html, /el\.setAttribute\('role','button'\)/);
+  assert.match(html, /e\.key==='Enter'\|\|e\.key===' '/);
+});

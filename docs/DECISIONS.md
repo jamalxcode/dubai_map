@@ -214,6 +214,13 @@ The owner pointed to [MCP-Dubai](https://github.com/mahdi-salmanzade/MCP-Dubai) 
 - **Rejected:** a VPN to look like a UAE visitor. The block is deliberate on a government portal, and access obtained that way could later count against the key.
 - **Meanwhile:** the site runs on Dubai Data (communities) and Continental Club (older districts), three pulls a day, cross-checked against dubairealestatedata.com.
 
+## Decision on 2026-11-16 (sixteenth pass): one measure on the map, a schedule that stays on, keyboard labels
+
+From the second critique:
+- **One measure.** Adding the older districts put two measures side by side: Dubai Data's all-homes medians (typical ~100k) and Continental Club's 1-bedroom medians (typical ~50k), in the same colours, merged labels and "Average in view". Now the map **starts on 1-bedroom**, which nearly every area has from both sources; "All units" shows only areas with an all-homes median and the legend says how to see the others. In averages, an area whose source gives no count per unit is weighted by its area total divided by its number of units (stated in the code). Rejected: a mixed view with different label styles (merged labels would still average different measures).
+- **Schedule kept on.** GitHub disables scheduled workflows after 60 days without repository activity; with data commits on the `data` branch, `main` can be quiet that long, and a disabled workflow can't be dispatched by cron-job.org. Both scheduled workflows now re-enable themselves on every run (Flattery's approach).
+- **Keyboard.** Map labels are buttons with a spoken name; Enter or Space opens a breakdown or zooms into a group. (Open since the first critique.)
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -252,6 +259,8 @@ The owner pointed to [MCP-Dubai](https://github.com/mahdi-salmanzade/MCP-Dubai) 
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Map starts on 1-bedroom (one measure across sources); workflows keep their schedule on; keyboard-usable map labels.
 
 - 2026-11-16: data.dubai sign-up blocked from outside the UAE; Digital Dubai support contacted; docs updated.
 

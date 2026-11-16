@@ -32,6 +32,7 @@ on:
     paths: ["data/inbox/**"]
 
 permissions:
+  actions: write    # to keep this workflow's schedule switched on (step below)
   contents: write
 
 concurrency:
@@ -46,6 +47,12 @@ jobs:
       changed: ${{ steps.save.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
+      - name: Keep this schedule switched on (GitHub turns off quiet scheduled workflows after 60 days)
+        # Data commits go to the data branch, so main can be quiet for weeks. A disabled workflow can't be
+        # started by cron-job.org either. Same call as Flattery's scan.
+        continue-on-error: true
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/daily-ejari.yml/enable" && echo "schedule kept on"
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Load the current data (data branch)

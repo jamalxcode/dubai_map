@@ -80,3 +80,6 @@
   .ck-form .btn{grid-column:1/-1}
   .ck-remind,.set-grid{grid-template-columns:1fr}
 }
+
+/* Map legend note (index.html): areas left out of the All units view */
+.legend .note{font-size:11px;color:var(--muted);margin-top:4px;max-width:230px}

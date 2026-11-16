@@ -368,6 +368,11 @@ function renderLabels(){
     const html='<div class="rl'+(c.single?'':' grp')+'" style="--c:'+colorOf(c.val)+'" tabindex="0"><b>'+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">avg</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
     const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
+    // Keyboard: the label is a button. Enter or Space opens its breakdown, or zooms into a group.
+    const el=m.getElement()&&m.getElement().firstChild;
+    if(el){el.setAttribute('role','button');
+      el.setAttribute('aria-label',c.single?g[0].a.label+', '+labelText(c.val,metric)+'. Show breakdown':g.length+' areas, '+labelText(c.val,metric)+' average: '+g.map(o=>o.a.label).join(', ')+'. Zoom in');
+      el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(c.single)m.openPopup();else m.fire('click')}})}
     if(c.single)m.bindPopup(popup(g[0].a),{maxWidth:320});
     else m.on('click',()=>{const b=L.latLngBounds(g.map(o=>[o.a.lat,o.a.lng])),z=map.getBoundsZoom(b,false,L.point(140,140));
       if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<span class="t">'+g.length+' areas</span>'+safe(labelText(c.val,metric))+(metric==='n'?'':' average')+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(o.a.label)+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
@@ -384,8 +389,10 @@ map.on('zoomend',renderLabels);
 function viewStat(){
   const metric=LABEL.metric,b=map.getBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0);
   const what=metric==='n'?'Contracts':metric==='median_sqm'?'Average rent per m² ':metric==='yield'?'Average gross yield':'Average yearly rent';
-  $('medLabel').textContent=what+' in view'+(vis.length?' · '+vis.length+' areas, '+TYPENAME().toLowerCase():'');
-  if(!vis.length||!N){odometer($('med'),null);$('medLabel').textContent='Nothing to show here for '+TYPENAME().toLowerCase()+'. Zoom out to see more.';return}
+  $('medLabel').textContent=what+' in view'+(vis.length?' · '+vis.length+' areas, '+($('unit').value||TYPENAME()).toLowerCase():'');
+  if(!vis.length||!N){odometer($('med'),null);
+    const perUnitOnly=!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'&&a.lat!=null&&b.contains([a.lat,a.lng]));
+    $('medLabel').textContent=perUnitOnly?'Areas here have figures per unit only: pick a unit (e.g. 1 bed) to see them.':'Nothing to show here for '+TYPENAME().toLowerCase()+'. Zoom out to see more.';return}
   const v=metric==='n'?N:vis.reduce((s,p)=>s+p.v*p.n,0)/N;
   if(metric==='yield'){$('med').textContent=v.toFixed(1)+'%';$('med')._sig=null;return}
   odometer($('med'),metric==='n'?v:Math.round(v/(metric==='median_sqm'?1:100))*(metric==='median_sqm'?1:100),metric==='n'?'':'AED ');
@@ -453,15 +460,21 @@ async function setType(k){
   try{AREAS=CACHE[k]||(CACHE[k]=(await getJSON('data/areas_'+k+'.json')).areas)}catch(e){AREAS=[]}
   fillUnits();animateLabels=true;draw();
 }
+let unitChosen=false; // until the visitor picks a unit, the map starts on 1-bedroom: the one measure every area has
 function fillUnits(){
   const keep=$('unit').value,units=new Map();
-  AREAS.forEach(a=>a.by_unit.forEach(u=>units.set(u.u,(units.get(u.u)||0)+u.n)));
+  AREAS.forEach(a=>a.by_unit.forEach(u=>units.set(u.u,(units.get(u.u)||0)+(u.n||0))));
   $('unit').innerHTML='<option value="">All units</option>'+[...units].sort((a,b)=>b[1]-a[1]).map(([u])=>'<option>'+safe(u)+'</option>').join('');
   if(units.has(keep))$('unit').value=keep;
+  else if(!unitChosen){const d=['1-bedroom apartments','1 bed'].find(x=>units.has(x));if(d)$('unit').value=d}
 }
 
 function areaValue(a,metric,unit){
   const u=unit?(a.by_unit.find(x=>x.u===unit)||{}):null;
+  // Areas with no all-homes median (Continental Club's older districts) only appear when a unit is
+  // picked: their headline is a 1-bedroom median, which must not be coloured or averaged with
+  // other areas' all-homes medians.
+  if(!u&&a.median_kind==='unit')return null;
   if(metric==='n')return u?u.n:a.n;
   if(metric==='median_sqm')return u?null:a.median_sqm;
   if(metric==='yield')return u?u.yield:a.yield_pct;
@@ -491,7 +504,9 @@ function draw(){
   const q=$('search').value.trim().toLowerCase(),unit=$('unit').value,metric=$('metric').value,min=+$('min').value||0,max=+$('max').value||Infinity;
   const match=a=>!q||(a.label+' '+a.dld_areas.join(' ')+' '+(a.top_projects||[]).map(p=>p.p).join(' ')).toLowerCase().includes(q);
   const shown=AREAS.filter(a=>a.lat!=null&&match(a));
-  POINTS=[];for(const a of shown){const v=areaValue(a,metric,unit);if(v==null)continue;const n=unit?(a.by_unit.find(u=>u.u===unit)||{}).n||0:a.n;POINTS.push({a,v,n})}
+  POINTS=[];for(const a of shown){const v=areaValue(a,metric,unit);if(v==null)continue;const bu=unit?(a.by_unit.find(u=>u.u===unit)||{}):null;
+    // Weight for averages: the unit's contracts; where a source gives none per unit, a rough share of the area total.
+    const n=bu?(bu.n!=null?bu.n:Math.round(a.n/Math.max(1,a.by_unit.length)))||0:a.n;POINTS.push({a,v,n})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
   const cuts=[...new Set([.2,.4,.6,.8].map(p=>vals[Math.floor(p*(vals.length-1))]))].filter(v=>v!=null);
   const colorOf=v=>BANDS[Math.min(4,Math.round(cuts.filter(c=>v>c).length*4/Math.max(1,cuts.length)))];
@@ -499,6 +514,7 @@ function draw(){
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
   $('legend').innerHTML='<div class="t">'+(metric==='n'?'Contracts':metric==='yield'?'Gross yield':metric==='median_sqm'?'Rent per m²':AREAS.some(a=>a.median_kind==='typical')?'Typical yearly rent':'Median yearly rent')+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?f(vals[0]):'')+'</span><span>'+(vals.length?f(vals.at(-1)):'')+'</span></div>';
+  if(!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">Older districts (no all-homes median): pick a unit to see them</div>');
   const inArea=AREAS.filter(match);
   odometer($('n12'),inArea.reduce((s,a)=>s+a.n,0));odometer($('mapped'),shown.reduce((s,a)=>s+a.n,0));
   const kinds=KIND_IN[TYPE];
@@ -524,7 +540,7 @@ function table(){
 
 let typing;
 ['search','min','max'].forEach(id=>$(id).addEventListener('input',()=>{clearTimeout(typing);typing=setTimeout(()=>{animateLabels=true;draw()},150)}));
-['unit','metric'].forEach(id=>$(id).addEventListener('change',()=>{animateLabels=true;draw()}));
+['unit','metric'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='unit')unitChosen=true;animateLabels=true;draw()}));
 const csvCell=x=>{const s=String(x??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
 $('export').onclick=()=>{
   const [head,keys,name]=AGG?[['area','dld_area','unit','median_yearly_rent_aed','contracts_12m','gross_yield_pct'],['c','ar','u','a','n','y'],'dubai-rents-by-area.csv']

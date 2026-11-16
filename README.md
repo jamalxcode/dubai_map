@@ -13,7 +13,8 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 - **Rent as text on the map:** each area shows its median yearly rent, e.g. "AED 65k · Jumeirah Village Circle". Areas too close to read apart merge into one blue label with the contract-weighted average; tap to zoom in. Labels never overlap.
 - **Property type:** Homes (flats, studios and villas together, the default), Flats, Studios, Villas, Commercial, or Everything. Labour camps, land and bulk leases (one contract worth millions spread over tiny units) only appear under Everything, so they never skew home rents.
 - **Average rent in view:** one big number for whatever is on screen, rolling to the new value as you pan and zoom.
-- **Filters:** search, unit (studio, 1 bed, 2 bed… where DLD records rooms), rent range, and what the labels show (median rent, rent per m², contract count).
+- **Filters:** search, unit (studio, 1 bed, 2 bed… where DLD records rooms), rent range, and what the labels show (median rent, rent per m², contract count). The map **starts on 1-bedroom**, the one measure every area has (the older districts publish no all-homes median); "All units" shows only areas with an all-homes median, so two different measures are never coloured or averaged together.
+- **Keyboard:** map labels are buttons: Tab to one, Enter or Space opens its breakdown (or zooms into a group).
 - **Popup per area:** median and middle-half range, rent per m², new vs renewal, monthly trend, unit breakdown and busiest buildings.
 - **Table:** the newest contracts, downloadable as CSV.
 - **Warning:** a yellow sign appears if the data is older than it should be.
@@ -72,6 +73,7 @@ GitHub's schedules run late (this repo's daily job started about 7 hours late on
 - Token: a fine-grained GitHub token for **jamalxcode/dubai_map only**, permission **Actions: read and write** (or add this repo to the token the Flattery jobs already use).
 - Three jobs (or one job with three times): `POST https://api.github.com/repos/jamalxcode/dubai_map/actions/workflows/daily-ejari.yml/dispatches`, body `{"ref":"main"}`, headers `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `Content-Type: application/json`; at **02:17, 10:17 and 18:17 UTC**. GitHub answers `204` when it worked.
 - GitHub's schedule stays on as a backup. The token expires; renew it in the cron-job.org jobs before it does.
+- GitHub switches off scheduled workflows after 60 days without repository activity, and data commits now go to the `data` branch, so `main` can stay quiet. Each run of the pull (and of the weekly placing job) switches its own schedule back on (`actions: write`), as Flattery's scan does; a switched-off workflow couldn't be started by cron-job.org either.
 
 ### Daily data: add the free Dubai Pulse key
 
