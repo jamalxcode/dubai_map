@@ -43,7 +43,7 @@ they serve are in [DESIGN_GOALS.md](DESIGN_GOALS.md).
 | Dubai Pulse paging | 500 rows a page, 4 s apart, at most 120 pages; stops at the reported total or a repeated page | `fetch_ejari.py` |
 | Dubai Data | Conditional requests (unchanged files cost nothing), 1 s between pages; fewer than 50 communities means the source is broken | `fetch_datadubai.py` |
 | OpenStreetMap | At most 1 request a second, at most 10 look-ups per daily pull (40 weekly), results cached; a failed look-up is retried after 7 days | `collector/geocode_missing.py` |
-| Map tiles | OpenStreetMap's policy URL with visible attribution; no bulk or offline use | `assets/app/atlas.js` |
+| Base map | Vector tiles from OpenFreeMap (free, no key, attribution shown), loaded after the page; fallback when there is no WebGL or the style can't load within 12 s: OpenStreetMap's tiles at their policy URL with visible attribution, no bulk or offline use | `assets/app/atlas.js` |
 
 ## 4. Placing areas on the map
 
@@ -69,6 +69,7 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Never overlap | No two labels overlap at any zoom (browser-checked at the start, zoom 13 and zoom 14) | `tests/ui-check.mjs` |
 | Rent dial and shading | Fill = rent ÷ AED 100,000, full at 100k or more | `atlas.js PIE_MAX` |
 | Colour bands | Five bands at the 20/40/60/80th percentiles of what is shown | `atlas.js draw` |
+| Base map names | English: `name:en`, else `name_en`, else Latin, else the local name. Arabic: `name:ar`, else the local name. Both: the map style's own (Latin and local script). Starts in the page's language; the visitor's choice is remembered (`mapLang`). Road numbers are left alone | `atlas.js NAME_FIELD` |
 | Rent check moves the map | Wide screens (1,100 px and up): fly to the area at zoom 14 and open its breakdown. Not on narrower screens, not for a resumed check | `companion.js` |
 
 ## 6. The rent check
@@ -111,7 +112,7 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Names in Arabic | Area names stay as registered in Ejari (English); home types are translated for display but stored in English | `i18n.js T.unit` |
 | Numbers | Western digits in both languages, as on Ejari contracts; AED kept as "AED" | `i18n.js` |
 | Counting visits | GoatCounter: no cookies, nothing stored in the browser, skipped on localhost. Events: rent check, save, share, with the area name. Nothing personal | `index.html`, `companion.js count` |
-| Third parties | Fonts and libraries served from this site; only map tiles and the counter load from elsewhere | `assets/vendor/`, `assets/fonts/` |
+| Third parties | Fonts and libraries served from this site; only the base map (OpenFreeMap, or OpenStreetMap as fallback) and the counter load from elsewhere | `assets/vendor/`, `assets/fonts/` |
 | Secrets | GitHub Secrets only. No personal, tenant or owner data in the public repo | — |
 
 ## 9. Accessibility and layout

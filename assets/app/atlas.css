@@ -100,6 +100,13 @@ button,input,select{font:inherit;color:inherit}
 .mapWrap{position:relative;height:72vh;height:72svh;min-height:420px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 #map{position:absolute;inset:0;background:var(--map-bg)}
 .leaflet-tile-pane{filter:var(--tiles)}
+/* Map language button (atlas.js): English, Arabic or both for place names on the base map. */
+.maplang{display:flex;background:var(--legend);overflow:hidden}
+.maplang[hidden]{display:none}
+.maplang button{border:0;border-inline-end:1px solid var(--line);background:none;color:var(--text);font:600 13px/1 var(--body);padding:0 10px;height:34px;cursor:pointer}
+.maplang button:last-child{border-inline-end:0}
+.maplang button[aria-pressed="true"]{background:var(--sign);color:var(--on-sign)}
+.maplang button:focus-visible{outline:2px solid var(--sign);outline-offset:-2px}
 .legend{position:absolute;z-index:500;left:12px;bottom:12px;background:var(--legend);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
 .legend .t{font-weight:600;margin-bottom:5px}
 .legend .ramp{display:flex;gap:2px}
@@ -228,7 +235,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   /* Compact left pane: big and bold, but the title, rent check and filters fit the first screen. */
   .band::after{inset:6px}
   .band .wrap{gap:6px;padding-top:18px;padding-bottom:16px}
-  .band h1{font-size:38px;padding-inline-end:180px}
+  .band h1{font-size:38px;padding-inline-end:150px}
   .band p{font-size:13.5px;line-height:1.4;margin-top:6px;max-width:none}
   .big .num{font-size:46px}
   .big .cap{font-size:12.5px;margin-top:2px}
@@ -294,5 +301,5 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 [dir="rtl"] .mapWrap{direction:ltr}
 [dir="rtl"] .legend,[dir="rtl"] .leaflet-popup-content{direction:rtl;text-align:right}
 [dir="rtl"] .big .num{direction:ltr}
-@media (min-width:1100px){:root[lang="ar"] .band h1{font-size:34px;padding-inline-end:165px}}
+@media (min-width:1100px){:root[lang="ar"] .band h1{font-size:34px;padding-inline-end:160px}}
 @media (max-width:860px){[dir="rtl"] .controls .seg{-webkit-mask-image:linear-gradient(270deg,#000 85%,transparent);mask-image:linear-gradient(270deg,#000 85%,transparent)}}

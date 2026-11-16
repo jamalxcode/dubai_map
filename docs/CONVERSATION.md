@@ -155,6 +155,10 @@ Critique, ranked: three busy areas off the map; labels still merged when zoomed 
 
 Added `docs/BUSINESS_RULES.md` (every rule and threshold, read from the code, with where it lives) and `CLAUDE.md` (guidance for future coding sessions). Brought `DESIGN_GOALS.md` up to date, with a new goal 10 on reach (Arabic, sharing, accessibility). Logged the twenty-third pass in DECISIONS.md and linked everything from the README.
 
+### ~18:30 · "the map is a mix of arabic and english, lets have a localization button on the map to choose the language of the different map landmarks"
+
+The base map is now vector tiles (OpenFreeMap) so its place and street names can be shown in English, Arabic or both, from a button on the map that starts in the page's language and is remembered. The classic tiles remain as the fallback. Arabic is properly joined and right to left on the map.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

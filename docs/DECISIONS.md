@@ -270,6 +270,18 @@ The owner asked for the conversation, design decisions, business rules "and anyt
 - **`CLAUDE.md` (new):** what a future coding session needs first: commands, layout, and the rules that bite. These include the data branch, deploy on push to main, the parallel editor on `index.html`, translations, logical CSS, no guessed coordinates, DLD permission, and keeping personal details out.
 - **`docs/DESIGN_GOALS.md`:** brought up to date (158 areas, about 534k contracts; daily OpenStreetMap look-ups; self-hosted libraries; visit counting; honest ranges) and a goal 10, "Reach the people who need it" (Arabic, sharing, accessibility, phones).
 
+## Decision on 2026-11-16 (twenty-fourth pass): one language on the base map
+
+The owner: "the map is a mix of arabic and english, lets have a localization button on the map to choose the language of the different map landmarks". The OpenStreetMap tiles are finished pictures with each name printed as tagged locally (in Dubai, Arabic, English or both), so they can't change language.
+
+- **Chosen:** vector tiles from OpenFreeMap (OpenStreetMap data in the OpenMapTiles schema; free, no key, no usage limits, commercial use allowed), drawn with MapLibre GL through its Leaflet plugin, so the rent labels, controls and tests stay on Leaflet. A tile over Dubai Marina showed English names on every place and Arabic on 10 of 11 places and about half the streets; shops are mostly English only and fall back to their own name.
+- **Button:** English · عربي · Both, top right on the map. It starts in the page's language and is remembered; Both is the style's own Latin-plus-local names.
+- **Arabic on the map** needs the right-to-left text plugin (shaping and order); served from the site with the other libraries.
+- **Weight:** MapLibre is 1 MB, so it loads after the rent data; the labels never wait for it. Without WebGL, or when the style can't load within 12 seconds, the classic OpenStreetMap tiles come back and the button hides.
+- **Rejected:** Wikimedia's tiles (a `lang` parameter, but only for Wikimedia sites); CARTO and Esri (English-leaning labels, no Arabic, usage terms); keyed services (MapTiler, Stadia, Thunderforest) for a free public site.
+- **Tests:** the browser check serves a tiny local map style (no dependency on OpenFreeMap) and checks the button switches the names, is remembered, starts in Arabic on the Arabic page, the fallback hides it, and no rent label sits under it.
+- To check the result, the session's network was allowed to reach tiles.openfreemap.org (owner approved).
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -308,6 +320,8 @@ The owner asked for the conversation, design decisions, business rules "and anyt
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Base map in vector tiles (OpenFreeMap) with a map language button: English, Arabic or both.
 
 - 2026-11-16: docs/BUSINESS_RULES.md and CLAUDE.md added; design goals brought up to date (goal 10: reach).
 

@@ -56,8 +56,51 @@ L.Control.Fit=L.Control.extend({options:{position:'topleft'},onAdd(){
 new L.Control.Fit().addTo(map);
 const groupName=g=>{if(g.length>3)return T.count(g.length,'area');const top=g.reduce((a,b)=>b.n>a.n?b:a,g[0]).a.label;
   return (top.length>22?top.slice(0,21)+'…':top)+' +'+(g.length-1)};
+// Base map. Vector tiles (OpenFreeMap: OpenStreetMap data, free, no key) so place and street names can be
+// shown in English, Arabic or both, chosen with the map's language button. MapLibre (1 MB) loads after the
+// page is up; the rent labels don't wait for it. Without WebGL, or if the vector map can't load, the classic
+// OpenStreetMap tiles are used instead (names as tagged locally, a mix) and the language button is hidden.
+const OSM_ATTR='© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>';
+const BASE_STYLE='https://tiles.openfreemap.org/styles/positron';
+const MAP_LANGS=['en','ar','both'];
+const NAME_FIELD={ // OpenMapTiles name fields; 'both' keeps the style's own (Latin and local script)
+  en:['coalesce',['get','name:en'],['get','name_en'],['get','name:latin'],['get','name']],
+  ar:['coalesce',['get','name:ar'],['get','name']]};
+let mapLang=(()=>{let v;try{v=localStorage.getItem('mapLang')}catch(e){}return MAP_LANGS.includes(v)?v:T.lang==='ar'?'ar':'en'})();
+let gl=null,glNames=[];
+function applyMapLang(){
+  if(gl)for(const [id,orig] of glNames)gl.setLayoutProperty(id,'text-field',NAME_FIELD[mapLang]||orig);
+  document.querySelectorAll('.maplang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===mapLang));
+}
+L.Control.MapLang=L.Control.extend({options:{position:'topright'},onAdd(){
+  const d=L.DomUtil.create('div','leaflet-bar maplang');d.setAttribute('role','group');d.setAttribute('aria-label',T('Map labels'));
+  d.title=T('Language of place names on the map');d.hidden=true;
+  for(const [l,txt,lang] of [['en','English','en'],['ar','عربي','ar'],['both',T('Both'),T.lang]]){
+    const b=L.DomUtil.create('button','',d);b.type='button';b.dataset.l=l;b.textContent=txt;b.lang=lang;
+    L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e);mapLang=l;try{localStorage.setItem('mapLang',l)}catch(_){}applyMapLang()})}
+  L.DomEvent.disableClickPropagation(d);return d}});
+const langCtl=new L.Control.MapLang().addTo(map);
 // OpenStreetMap tile usage policy: this exact HTTPS URL, visible attribution, no bulk or offline use.
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);
+function rasterBase(){if(map._osm)return;map._osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:OSM_ATTR}).addTo(map);langCtl.getContainer().hidden=true}
+const loadScript=src=>new Promise((ok,fail)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=fail;document.head.append(s)});
+async function vectorBase(){
+  try{
+    const css=document.createElement('link');css.rel='stylesheet';css.href='assets/vendor/maplibre/maplibre-gl.css';document.head.append(css);
+    await loadScript('assets/vendor/maplibre/maplibre-gl.js');await loadScript('assets/vendor/maplibre/leaflet-maplibre-gl.js');
+    if(!window.maplibregl||(maplibregl.supported&&!maplibregl.supported()))throw Error('no WebGL');
+    // Arabic needs shaping and right-to-left order, which MapLibre leaves to this plugin.
+    try{maplibregl.setRTLTextPlugin('assets/vendor/maplibre/mapbox-gl-rtl-text.js',true)}catch(e){}
+    const layer=L.maplibreGL({style:BASE_STYLE,interactive:false,attribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> '+OSM_ATTR}).addTo(map);
+    const m=layer.getMaplibreMap();
+    const fail=setTimeout(()=>{map.removeLayer(layer);rasterBase()},12000); // style or tiles unreachable
+    m.on('error',e=>{if(!gl&&!e.sourceId){clearTimeout(fail);map.removeLayer(layer);rasterBase()}}); // the style itself, not one tile
+    m.once('load',()=>{clearTimeout(fail);gl=m;
+      glNames=m.getStyle().layers.filter(l=>l.type==='symbol'&&l.layout&&/"name/.test(JSON.stringify(l.layout['text-field']||''))).map(l=>[l.id,l.layout['text-field']]);
+      langCtl.getContainer().hidden=false;applyMapLang();
+      if(LABEL.metric)renderLabels()}); // rent labels step out from under the button that just appeared
+  }catch(e){rasterBase()}
+}
+
 const layer=L.layerGroup().addTo(map);
 let POINTS=[],LABEL={},animateLabels=true;
 const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
@@ -310,4 +353,4 @@ function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{l
 $('theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark',true);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let saved;try{saved=localStorage.getItem('theme')}catch(_){}if(!saved)setTheme(e.matches?'dark':'light',false)});
 paintToggle();
-init();
+init().finally(vectorBase); // the base map comes after the rent data, whatever happened to it

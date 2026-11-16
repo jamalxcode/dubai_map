@@ -62,7 +62,7 @@ These are the goals the owner set while building the project (see [CONVERSATION.
 - ✅ Times are shown in Kuwait time.
 - ✅ Secrets live only in GitHub Secrets. No personal, tenant or owner data in the public repo.
 - ✅ What visitors save (areas, checks, settings) stays in their own browser and can be downloaded or deleted.
-- ✅ Fonts and libraries are served from this site (`assets/vendor/`, `assets/fonts/`); only map tiles and the visit counter load from elsewhere.
+- ✅ Fonts and libraries are served from this site (`assets/vendor/`, `assets/fonts/`); only the base map tiles (OpenFreeMap, free and keyless) and the visit counter load from elsewhere.
 - ✅ Visits and feature use are counted with GoatCounter (no cookies, nothing personal), so the owner can tell what earns its place.
 
 ## 8. Useful outputs
@@ -93,4 +93,5 @@ Set on 16 Nov after the third critique.
 - ✅ **Sharing that works where rents are discussed:** each area has its own link whose preview (WhatsApp, X, iMessage) shows its rent; "Share" on a result opens the phone's share sheet or copies the link.
 - ✅ **Accessible:** WCAG 2.1 AA in light, dark and Arabic, checked on every push; labels work by keyboard.
 - ✅ **Phones first:** the map stays high on the first screen; no sideways scrolling.
-- ⏳ Arabic area names; other cities (goal 6).
+- ✅ **One language on the map:** a button on the map (English · عربي · Both) sets the language of the base map's place and street names, instead of the mix the classic tiles print. Starts in the page's language, remembered.
+- ⏳ Arabic area names for the rent labels; other cities (goal 6).

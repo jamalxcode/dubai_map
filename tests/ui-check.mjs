@@ -36,6 +36,12 @@ async function open(browser, viewport, colorScheme = 'light', query = '') {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.route(/tile\.openstreetmap\.org/, r => r.abort()); // no tile load on every test run
+  // The vector base map: a tiny local style instead of OpenFreeMap, so the language button is tested
+  // without depending on that service (its tiles, fonts and sprites are not fetched).
+  await page.route(/tiles\.openfreemap\.org/, r => /\/styles\//.test(r.request().url()) ? r.fulfill({ contentType: 'application/json', body: JSON.stringify({
+    version: 8, sources: { p: { type: 'geojson', data: { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [55.27, 25.2] },
+      properties: { name: 'برج خليفة', 'name:en': 'Burj Khalifa', 'name:ar': 'برج خليفة', name_en: 'Burj Khalifa' } }] } } },
+    layers: [{ id: 'place_label', type: 'symbol', source: 'p', layout: { 'text-field': ['coalesce', ['get', 'name_en'], ['get', 'name']] } }] }) }) : r.abort());
   await page.goto(BASE + query, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 });
   await page.waitForTimeout(600);
@@ -79,6 +85,26 @@ try {
       check(Math.abs(still) <= 1, 'desktop: the map pane stays in place while the left pane scrolls');
       await page.evaluate(() => scrollTo(0, 0));
     }
+    // Base map language: English, Arabic or both for the base map's place names.
+    const base = await page.waitForFunction(() => gl || map._osm, null, { timeout: 15000 }).then(() => page.evaluate(() => gl ? 'vector' : 'raster')).catch(() => 'none');
+    check(base !== 'none', `${name}: the base map loads (${base})`);
+    if (base === 'vector') {
+      const field = () => page.evaluate(() => JSON.stringify(gl.getLayoutProperty('place_label', 'text-field')));
+      check(await page.isVisible('.maplang') && /name:en/.test(await field()), `${name}: map names start in English, with a language button on the map`);
+      await page.click('.maplang button[data-l="ar"]');
+      check(/name:ar/.test(await field()) && await page.evaluate(() => localStorage.getItem('mapLang') === 'ar'), `${name}: "عربي" switches the map's place names to Arabic, and is remembered`);
+      await page.click('.maplang button[data-l="both"]');
+      check(/name_en/.test(await field()) && !/name:ar/.test(await field()), `${name}: "Both" restores the style's own names`);
+      await page.click('.maplang button[data-l="en"]');
+    }
+    const view0 = await page.evaluate(() => ({ c: map.getCenter(), z: map.getZoom() }));
+    await page.evaluate(() => fitDubai(false));
+    await page.waitForTimeout(300);
+    const underLang = await page.evaluate(() => { const b = document.querySelector('.maplang'); if (!b || b.hidden) return 0; const r = b.getBoundingClientRect();
+      return [...document.querySelectorAll('.rl')].filter(e => { const a = e.getBoundingClientRect(); return a.left < r.right && r.left < a.right && a.top < r.bottom && r.top < a.bottom; }).length; });
+    check(underLang === 0, `${name}: no rent label sits under the map language button (${underLang})`);
+    await page.evaluate(v => map.setView(v.c, v.z, { animate: false }), view0);
+    await page.waitForTimeout(300);
     const pies = await page.evaluate(() => document.querySelectorAll('.rl .pie').length);
     check(pies >= 10, `${name}: rent labels show the AED 100k dial (${pies})`);
     const fills = await page.evaluate(() => [...document.querySelectorAll('.rl.rent')].map(e => parseFloat(e.style.getPropertyValue('--f'))));
@@ -154,6 +180,8 @@ try {
   for (const [name, viewport] of [['Arabic desktop', { width: 1350, height: 900 }], ['Arabic phone', { width: 390, height: 844 }]]) {
     const { page, errors } = await open(browser, viewport, 'light', '?lang=ar');
     check(await page.evaluate(() => document.documentElement.dir === 'rtl' && document.documentElement.lang === 'ar'), `${name}: the page reads right to left`);
+    await page.waitForFunction(() => gl || map._osm, null, { timeout: 15000 }).catch(() => {});
+    check(await page.evaluate(() => !gl || /name:ar/.test(JSON.stringify(gl.getLayoutProperty('place_label', 'text-field')))), `${name}: map place names start in Arabic`);
     check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${name}: no sideways scrolling`);
     await page.click('#ckArea');
     await page.fill('#ckArea', 'jvc');

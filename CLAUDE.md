@@ -43,6 +43,7 @@ Standard-library Python only (3.12 in CI). Node 22 for tests.
 - Asset links carry `?v=__BUILD__`; deploy replaces it. Keep the placeholder on new asset links.
 - **Every visible string goes through `T()`** (`assets/app/i18n.js`) with an Arabic entry; fixed markup text gets a `data-t` key. `tests/i18n.test.mjs` fails on a missing key. Area names stay in English (Ejari names, what search matches); home types are stored in English and shown with `T.unit()`.
 - CSS uses logical properties (`margin-inline-end`, `inset-inline-start`, `text-align:start`) so Arabic mirrors; the map container stays left to right.
+- The base map is MapLibre vector tiles (OpenFreeMap) under Leaflet, loaded after the data; `NAME_FIELD` in `atlas.js` sets the language of its names. The classic OSM raster is the fallback; keep both paths working. Tests serve a local stub style, never the real service.
 - Label rules go in `labels.js` (no DOM) with a test in `tests/labels.test.mjs`; no two labels may overlap.
 - Shaded label text was contrast-checked by hand (axe can't measure gradients): keep those colours or recheck 4.5:1.
 - Keep the GoatCounter snippet in `index.html` (endpoint `https://salacompany.goatcounter.com/count`, shared with Flattery). Count features only, nothing personal.
