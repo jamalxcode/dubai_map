@@ -75,12 +75,13 @@ GitHub's schedules run late (this repo's daily job started about 7 hours late on
 
 ### Daily data: add the free Dubai Pulse key
 
-1. Register at [Dubai Pulse](https://www.dubaipulse.gov.ae/) and request API access to `dld_rent_contracts-open`. You get an API key and secret by email.
+1. Sign up at **[data.dubai](https://data.dubai)** (the Dubai Pulse portal moved there in Dec 2025 to Jan 2026; www.dubaipulse.gov.ae now redirects). Find the DLD rent contracts dataset and request access to **`dld_rent_contracts-open-api`**. Access is granted per dataset; approval time varies. You receive an **API key** (the client id) and an **API secret** (the client secret). Help: help@digitaldubai.ae, 600 56 0000.
 2. In this repo: **Settings → Secrets and variables → Actions**
    - Secrets: `DUBAI_PULSE_KEY`, `DUBAI_PULSE_SECRET`
    - Variable `EJARI_API_URL`, only to pin one endpoint (by default `https://apis.data.dubai/open/dld/dld_rent_contracts-open-api` is tried first, then `https://api.dubaipulse.gov.ae/open/dld/dld_rent_contracts-open`)
    - Variable `EJARI_FILTER`, only if the date filter syntax needs adjusting (default `contract_start_date>='{from}' AND contract_start_date<='{to}'`)
-3. Run **Actions → Daily Ejari pull → Run workflow** once to check. `data/meta.json` (on the `data` branch) → `sources` shows each source's `state` (`ok`, `partial`, `failed`, `off`, `no_key`, `standby`, `not_run`) and the reason it stopped.
+3. Run **Actions → Daily Ejari pull → Run workflow** (tick "force") once to check. A `403` in the status means the key works but that dataset hasn't been granted yet.
+   The collector gets a token from `apis.data.dubai/oauth/client_credential/accesstoken` (old host as fallback), reads 500-row pages (the gateway's maximum), stops at the reported total or if a page repeats, and if the gateway refuses the date-range filter it reads newest first instead. `data/meta.json` (on the `data` branch) → `sources` shows each source's `state` (`ok`, `partial`, `failed`, `off`, `no_key`, `standby`, `not_run`) and the reason it stopped.
 
 ### No API key yet? Manual import
 

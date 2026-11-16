@@ -122,13 +122,13 @@ class PullTests(unittest.TestCase):
 
     def test_page_cap_keeps_what_arrived(self):
         recs, kind, detail = self.pull(FakePulse(), max_pages=2)
-        self.assertEqual(len(recs), 2000)
+        self.assertEqual(len(recs), 2 * fetch_ejari.PAGE_SIZE)
         self.assertEqual(kind, "partial")
         self.assertIn("page cap", detail)
 
     def test_stop_keeps_what_arrived(self):
         recs, kind, detail = self.pull(FakePulse(fail_at=3))
-        self.assertEqual(len(recs), 2000)
+        self.assertEqual(len(recs), 2 * fetch_ejari.PAGE_SIZE)
         self.assertEqual((kind, detail), ("failed", "HTTP 503"))
 
 
@@ -167,6 +167,64 @@ class HostFallbackTests(unittest.TestCase):
         seen, _, kind, detail = self.run_pull({"apis.data.dubai": fetch_ejari.StopForToday("HTTP 429")})
         self.assertEqual(seen, ["apis.data.dubai"])
         self.assertEqual((kind, detail), ("failed", "HTTP 429"))
+
+
+class GatewayBehaviourTests(unittest.TestCase):
+    """What MCP-Dubai's client (MIT) documents about the data.dubai gateway: 500-row pages,
+    a total count, pages that can repeat, per-dataset access (403)."""
+    TODAY = __import__("datetime").date(2026, 11, 16)
+
+    def pull_with(self, responder):
+        calls = []
+
+        def fake(url, headers=None, **kw):
+            from urllib.parse import parse_qs, urlparse
+            q = {k: v[0] for k, v in parse_qs(urlparse(url).query).items()}
+            calls.append(q)
+            return responder(q, len(calls))
+        with mock.patch.object(fetch_ejari.net, "get_json", fake), mock.patch.object(fetch_ejari, "get_token", lambda k, s: "t"), \
+             mock.patch.object(fetch_ejari, "windows", lambda today, refresh=True: [(self.TODAY.replace(day=13), self.TODAY)]), \
+             mock.patch.object(fetch_ejari.time, "sleep"), mock.patch("builtins.print"):
+            recs, kind, detail = fetch_ejari.pull_api("k", "s", today=self.TODAY)
+        return calls, recs, kind, detail
+
+    @staticmethod
+    def rows(start, n, day="2026-11-15"):
+        return [{"contract_id": f"C{start + i}", "contract_start_date": day, "annual_amount": 50000,
+                 "area_name_en": "Al Barsha South Fourth"} for i in range(n)]
+
+    def test_pages_of_500_and_stop_at_total(self):
+        self.assertEqual(fetch_ejari.PAGE_SIZE, 500)
+        calls, recs, kind, _ = self.pull_with(lambda q, i: {"data": self.rows(int(q["offset"]), 500), "total": 1000})
+        self.assertEqual(int(calls[0]["limit"]), 500)
+        self.assertEqual(len(calls), 2, "total reached after two full pages: no third request")
+        self.assertEqual((len(recs), kind), (1000, "ok"))
+
+    def test_a_repeated_page_stops_the_window(self):
+        calls, recs, _, _ = self.pull_with(lambda q, i: {"data": self.rows(0, 500)})
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(len(recs), 500, "the repeat is not stored twice")
+
+    def test_refused_date_filter_falls_back_to_newest_first(self):
+        def gw(q, i):
+            if "filter" in q:
+                raise fetch_ejari.StopForToday("HTTP 400")
+            self.assertEqual(q["order_by"], "contract_start_date DESC")
+            if q["offset"] == "0":
+                return {"data": self.rows(0, 498, "2026-11-15") + self.rows(900, 2, "2026-11-20")}
+            return {"data": self.rows(1000, 500, "2026-11-12")}  # all older than the window: stop
+        calls, recs, kind, _ = self.pull_with(gw)
+        self.assertEqual(len(calls), 3, "refused filter, then two newest-first pages")
+        self.assertEqual((len(recs), kind), (498, "ok"), "only rows inside the window are kept")
+
+    def test_403_explains_dataset_access(self):
+        _, _, kind, detail = self.pull_with(lambda q, i: (_ for _ in ()).throw(fetch_ejari.StopForToday("HTTP 403")))
+        self.assertEqual(kind, "failed")
+        self.assertIn("request access to that dataset on data.dubai", detail)
+
+    def test_token_from_the_new_host_first(self):
+        self.assertTrue(fetch_ejari.TOKEN_URLS[0].startswith("https://apis.data.dubai/oauth/"))
+        self.assertTrue(fetch_ejari.API_URLS[0].endswith("/open/dld/dld_rent_contracts-open-api"))
 
 
 class ResponseShapeTests(unittest.TestCase):

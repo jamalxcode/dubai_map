@@ -39,7 +39,7 @@ ALIASES = {
     "prop_type": ["ejari_property_type_en", "property type", "prop_type_en"],
     "sub_type": ["ejari_property_sub_type_en", "property sub type", "prop_sub_type_en"],
     "usage": ["property_usage_en", "usage", "usage_en"],
-    "rooms": ["number of rooms", "rooms"],
+    "rooms": ["number of rooms", "rooms", "no_of_rooms"],
     "area_id": ["area_id"],
     "area": ["area_name_en", "area", "area_en"],
     "master_project": ["master_project_en", "master project"],

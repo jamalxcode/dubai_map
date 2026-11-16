@@ -33,6 +33,7 @@ Env:
   FORCE             "1" to pull even if pulled less than 6 hours ago
 """
 import csv
+import json
 import os
 import sys
 import time
@@ -50,8 +51,8 @@ from net import AuthError, StopForToday  # noqa: E402,F401  (re-exported for cal
 # answers is used for the whole run; a repo variable (EJARI_API_URL / DUBAI_PULSE_TOKEN_URL)
 # pins one instead.
 TOKEN_URLS = [os.environ["DUBAI_PULSE_TOKEN_URL"]] if os.environ.get("DUBAI_PULSE_TOKEN_URL") else [
-    "https://api.dubaipulse.gov.ae/oauth/client_credential/accesstoken?grant_type=client_credentials",
     "https://apis.data.dubai/oauth/client_credential/accesstoken?grant_type=client_credentials",
+    "https://api.dubaipulse.gov.ae/oauth/client_credential/accesstoken?grant_type=client_credentials",
 ]
 API_URLS = [os.environ["EJARI_API_URL"]] if os.environ.get("EJARI_API_URL") else [
     "https://apis.data.dubai/open/dld/dld_rent_contracts-open-api",
@@ -71,8 +72,11 @@ AHEAD_DAYS = int(os.environ.get("AHEAD_DAYS") or 14)     # ...to this many days 
 # each run also re-pulls one 6-day slice of the last 60 days, cycling, so every recent
 # day is checked again about every 10 days (same idea as fetch_dld.py).
 REFRESH_DAYS, REFRESH_SLICES = 60, 10
-PAGE_SIZE = int(os.environ.get("PAGE_SIZE") or 1000)
-MAX_PAGES = int(os.environ.get("MAX_PAGES") or 60)
+# The gateway serves at most 500 rows a page (MCP-Dubai's client, MIT, validates 1-500). A larger
+# request would come back short and look like the last page, silently dropping the rest.
+PAGE_SIZE = min(int(os.environ.get("PAGE_SIZE") or 500), 500)
+MAX_PAGES = int(os.environ.get("MAX_PAGES") or 120)
+DATASET = "dld_rent_contracts-open-api"
 PAUSE = float(os.environ.get("PAUSE_SECONDS") or 4)
 SOURCE = "pulse"
 
@@ -141,28 +145,59 @@ class Session:
         self.api_url = None  # the data host that answered first; used for the rest of the run
 
     def window(self, frm, to):
+        """All rows with a start date in frm..to. Uses the date-range filter; if the gateway
+        rejects it (HTTP 400; only equality filters are documented), reads newest first instead
+        and stops once past the window."""
         flt = FILTER.format(**{"from": frm.isoformat(), "to": to.isoformat()})
         log(f"window {frm}..{to}  filter: {flt}")
-        got, page = 0, 0
+        newest_first = getattr(self, "newest_first", False)
+        got, page, seen = 0, 0, set()
         while True:
             if self.pages >= self.max_pages:
                 raise PageCap()
             if self.pages:
                 time.sleep(PAUSE)
             self.pages += 1
-            q = urllib.parse.urlencode({"filter": flt, "limit": PAGE_SIZE, "offset": page * PAGE_SIZE,
-                                        "order_by": "contract_id"})
+            params = {"limit": PAGE_SIZE, "offset": page * PAGE_SIZE}
+            if newest_first:
+                params["order_by"] = "contract_start_date DESC"
+            else:
+                params.update(filter=flt, order_by="contract_id")
             try:
-                batch = rows_from(self._get(q))
+                payload = self._get(urllib.parse.urlencode(params))
             except AuthError:
                 if self.refreshed:
                     raise StopForToday("token rejected twice")
                 self.token, self.refreshed = get_token(self.key, self.secret), True
                 continue  # the same page again with the new token
+            except StopForToday as e:
+                if str(e) == "HTTP 400" and not newest_first and page == 0:
+                    log("the gateway refused the date filter; reading newest first instead")
+                    self.newest_first = newest_first = True
+                    continue
+                raise
+            batch = rows_from(payload)
+            mark = json.dumps(batch[:3], sort_keys=True, default=str) + str(len(batch))
+            if batch and mark in seen:
+                log("the gateway repeated a page (offset ignored?); stopping this window")
+                return
+            seen.add(mark)
+            page += 1
+            if newest_first:
+                starts = [store.parse_date((r.get("contract_start_date") or r.get("CONTRACT_START_DATE") or "")) for r in batch]
+                keep = [r for r, d in zip(batch, starts) if d and frm.isoformat() <= d <= to.isoformat()]
+                self.rows.extend(keep)
+                got += len(keep)
+                log(f"page {page}: {len(keep)} of {len(batch)} rows in the window (window total {got})")
+                dated = [d for d in starts if d]
+                if len(batch) < PAGE_SIZE or (dated and min(dated) < frm.isoformat()):
+                    return
+                continue
             self.rows.extend(batch)
-            got, page = got + len(batch), page + 1
-            log(f"page {page}: {len(batch)} rows (window total {got})")
-            if len(batch) < PAGE_SIZE:
+            got += len(batch)
+            total = payload.get("total") if isinstance(payload, dict) else None
+            log(f"page {page}: {len(batch)} rows (window total {got}{f' of {total}' if isinstance(total, int) else ''})")
+            if len(batch) < PAGE_SIZE or (isinstance(total, int) and got >= total):
                 return
 
 
@@ -195,6 +230,8 @@ def pull_api(key, secret, today=None, refresh=True):
         kind, detail = "failed", f"credentials rejected ({e})"
     except StopForToday as e:
         kind, detail = "failed", str(e)
+        if detail == "HTTP 403":  # each dataset is granted separately on data.dubai
+            detail = f"HTTP 403: this key has no access to {DATASET}; request access to that dataset on data.dubai"
     return [store.normalize(r, "dubai_pulse_api") for r in (sess.rows if sess else [])], kind, detail
 
 

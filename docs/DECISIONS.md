@@ -196,6 +196,17 @@ The owner asked to use continentalclub.ae to add the districts Dubai Data doesn'
 - **Credit:** on the page's source list, in the footer line and in each popup (CC BY 4.0). These areas are never compared with the same source's cross-check.
 - Result on 16 Nov: 158 areas (was 102), ~534k contracts, 3 not yet placed.
 
+## Decision on 2026-11-16 (fourteenth pass): what MCP-Dubai taught us about the gateway
+
+The owner pointed to [MCP-Dubai](https://github.com/mahdi-salmanzade/MCP-Dubai) (MIT), an open-source client for the same data.dubai gateway. Read, not copied; adopted:
+
+- Sign-up is at **data.dubai** (Dubai Pulse's portal was retired in Dec 2025 to Jan 2026); the dataset to request is `dld_rent_contracts-open-api`, granted per dataset (403 otherwise). README updated; a 403 now says exactly that.
+- **Token from `apis.data.dubai` first**, the old host as fallback.
+- **Pages of 500 rows**, the gateway's maximum. Our 1,000-row requests would have come back short and been taken for the last page, silently dropping the rest of every window. Also stop at the reported `total`, and stop if a page repeats (offset ignored).
+- The rooms field is `no_of_rooms` (alias added).
+- Only equality filters are documented, so our date-range filter is unconfirmed: if the gateway refuses it (400), the collector reads `order_by=contract_start_date DESC` and stops once past the window.
+- Not adopted: everything else (air quality, prayer times, etc.) is unrelated to rents.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -234,6 +245,8 @@ The owner asked to use continentalclub.ae to add the districts Dubai Data doesn'
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Dubai Pulse client fixes from MCP-Dubai's documentation: data.dubai sign-up, 500-row pages, total/repeat guards, date-filter fallback, 403 message.
 
 - 2026-11-16: Older districts (56 DLD areas) from Continental Club Property; small merged labels name their busiest area.
 

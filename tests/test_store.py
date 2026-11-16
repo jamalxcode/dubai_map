@@ -48,6 +48,10 @@ class NormalizeTests(unittest.TestCase):
         self.assertEqual(r["area"], "Al Barsha South Fourth")
         self.assertTrue(store.valid(r))
 
+    def test_data_dubai_room_field(self):
+        r = store.normalize(raw(no_of_rooms="2"), "t")
+        self.assertEqual(r["rooms"], "2")
+
     def test_website_export_headers_get_a_stable_hash_key(self):
         row = {"Start Date": "05-11-2026", "End Date": "04-11-2027", "Annual Amount": "65000",
                "Area": "Al Barsha South Fourth", "Project": "Bloom Towers"}
