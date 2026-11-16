@@ -1,4 +1,26 @@
 {
+  "crosscheck": {
+    "ccp": {
+      "last_ok_at": "2026-11-16T11:17:48+00:00",
+      "last_try_at": "2026-11-16T11:17:47+00:00",
+      "state": "ok",
+      "status": "ok",
+      "through": "2026-11-14"
+    },
+    "dred": {
+      "last_ok_at": "2026-11-16T11:17:47+00:00",
+      "last_try_at": "2026-11-16T11:17:47+00:00",
+      "state": "ok",
+      "status": "ok",
+      "through": "2026-11-16"
+    }
+  },
+  "datadubai": {
+    "last_ok_at": "2026-11-16T11:17:47+00:00",
+    "live_checked_at": "2026-11-16T11:17:47+00:00",
+    "state": "ok",
+    "status": "ok"
+  },
   "dld": {
     "state": "off",
     "status": "off (waiting for DLD's permission)"
