@@ -303,7 +303,7 @@ Running "Place unplaced areas" by hand showed two things.
 
 ## Prioritized next work
 
-**Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
+**Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
 
 **P0: working verified data**
 1. Download one DLD Rents CSV through official allowed flow and test every column.
@@ -325,6 +325,10 @@ Running "Place unplaced areas" by hand showed two things.
 
 ## Explicit constraints
 
+- Do not guess map coordinates: points come from Dubai Municipality, Dubai Data, reviewed aliases or OpenStreetMap results that pass the checks.
+- Do not copy or embed images from Google Images or Google Maps; link out instead, and show only freely licensed photos with their author and licence.
+- Every visible text needs an Arabic translation; area names stay as registered in Ejari.
+- Count visits and features only (GoatCounter, no cookies); never anything personal.
 - Do not conflate DLD open transaction records with the RERA Rental Index.
 - Do not publish invented dates, prices, listings or exact locations.
 - Do not promise API service reliability or permission without verification.

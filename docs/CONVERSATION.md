@@ -167,6 +167,10 @@ Copying from Google Images isn't allowed (the photos belong to their photographe
 
 Ran "Place unplaced areas" by hand. It exposed a bug from earlier today (the data check rejected recorded failed look-ups, which would have stopped the daily pull from publishing), now fixed. Al Aryam and Al Waha Villas are placed at the official points of the DLD areas they lie in; Al Twar Fifth has no source for a point yet.
 
+### ~19:40 · "update repo with convo, design ideas, and business decisions made"
+
+Brought the records up to date: this log; DESIGN_GOALS.md gains "Ideas on the table" (each idea not yet built and what it needs); DECISIONS.md's status and constraints reflect today's work (no guessed coordinates, no copying from Google, Arabic for every text, counting nothing personal); BUSINESS_RULES.md already carries each rule decided today (map language, photos, links out, placing communities by their DLD area).
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

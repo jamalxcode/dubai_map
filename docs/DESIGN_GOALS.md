@@ -96,3 +96,19 @@ Set on 16 Nov after the third critique.
 - ✅ **See the place:** an area's breakdown links to Google Maps, Street View and Google photos, and shows freely licensed photos taken nearby (Wikimedia Commons), each credited. Nothing is copied from Google; where no free photo exists, only the links show.
 - ✅ **One language on the map:** a button on the map (English · عربي · Both) sets the language of the base map's place and street names, instead of the mix the classic tiles print. Starts in the page's language, remembered.
 - ⏳ Arabic area names for the rent labels; other cities (goal 6).
+
+## Ideas on the table
+
+Discussed with the owner, not built yet. What each needs:
+
+| Idea | Needs | Status |
+|---|---|---|
+| Contract-level data: ranges, trends, AED/m², new vs renewal, busiest buildings | Dubai Pulse API key (owner asked Digital Dubai support on 16 Nov) | ⏳ waiting; the code is ready |
+| Street View inside an area's breakdown | Owner's Google Maps Embed API key (free, billing switched on, restricted to the site) | ⏳ waiting for the key |
+| Building-level drill-down (photos and Street View at a project) | Dubai Data's project coordinates (105 of 723 projects have a real point) | ⏳ planned |
+| Arabic area names on the rent labels | DLD's own Arabic names (contract-level data) | ⏳ planned |
+| Community outlines shaded under the labels | Dubai Municipality community polygons | ⏳ planned |
+| Al Twar Fifth on the map | A reviewed point or alias (not in Municipality data or OpenStreetMap) | ⏳ flagged by the freshness check |
+| Other cities in the region | A source adapter and location file per registry | ⏳ later |
+| Private comparison of the owner's own units | Kept outside this public repo | ⏳ later |
+
