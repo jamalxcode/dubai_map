@@ -184,7 +184,7 @@
         ${finds.length ? `<ul class="ck-finds">${finds.join('')}</ul>` : ''}
         <div class="ck-actions">
           <button type="button" class="btn primary" data-act="${step.id}">${step.label}</button>
-          ${secondary.join('<span class="sep" aria-hidden="true">·</span>')}
+          ${secondary.length ? `<span class="ck-links">${secondary.join('<span class="sep" aria-hidden="true">·</span>')}</span>` : ''}
         </div>
         <div id="ckRemindHere"></div>
       </div>`;

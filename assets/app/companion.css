@@ -92,24 +92,29 @@
 .ck-big .pie{width:.6em;height:.6em;vertical-align:.02em;margin-right:.2em}
 @media (min-width:1100px){
   /* Compact in the left pane: two rows (area + home, rent + Check), smaller type, less padding. */
-  #companion{padding-top:12px}
-  .ck{padding:14px 16px}
-  .ck-head h2{font-size:26px;margin:0 0 8px}
+  #companion{padding-top:10px}
+  .ck{padding:10px 14px 12px}
+  .ck-head h2{font-size:22px;margin:0 0 6px}
   .ck-head p{display:none}
-  .ck-form{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:8px 10px}
-  .ck-form .field{font-size:12px;gap:3px}
-  .ck-form .field input,.ck-form .field select{padding:7px 10px;font-size:14px}
-  .ck-form .btn{padding:8px 16px;font-size:17px}
-  .ck-result{margin-top:10px;padding-top:10px}
-  .ck-what{font-size:14px}
-  .ck-big{font-size:38px}
-  .ck-answer>.muted{font-size:12.5px}
-  .ck-verdict{font-size:15px;margin-top:8px}
-  .ck-finds{font-size:13.5px;margin-top:8px}
-  .ck-finds li{margin-bottom:3px}
-  .ck-actions{margin-top:10px}
-  .ck-actions .btn{padding:7px 12px;font-size:15px}
-  .ck-mine{margin-top:10px}
+  .ck-form{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:6px 8px}
+  .ck-form .field{font-size:11.5px;gap:2px}
+  .ck-form .field input,.ck-form .field select{padding:6px 9px;font-size:13.5px}
+  .ck-form .btn{padding:6px 14px;font-size:16px}
+  .ck-result{margin-top:8px;padding-top:8px}
+  .ck-what{font-size:13px}
+  .ck-big{font-size:32px;margin:1px 0}
+  .ck-big span{font-size:15px}
+  .ck-answer>.muted{font-size:12px;margin-top:2px}
+  .ck-verdict{font-size:14px;margin-top:6px}
+  .ck-finds{font-size:12.5px;line-height:1.35;margin-top:6px}
+  .ck-finds li{margin-bottom:2px}
+  .ck-actions{margin-top:8px;font-size:13.5px}
+  .ck-actions .btn{padding:5px 10px;font-size:14px;margin-right:10px}
+  .ck-actions .sep{margin:0 5px}
+  .ck-mine{margin-top:8px}
+  .ck-mine h3{font-size:19px;margin-bottom:6px}
+  .mine-main{padding:7px 32px 7px 10px}
+  .mine-fig{font-size:17px}
   .ck-remind,.set-grid{grid-template-columns:1fr}
   .mine-list{grid-template-columns:1fr}
 }

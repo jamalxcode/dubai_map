@@ -251,6 +251,29 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .tableHead{margin:24px 0 8px}
   .tableHead h2{font-size:26px}
   .about{margin-top:28px;padding:24px 0 32px}
+  /* Tighter still: header in less height, filters in two rows, smaller table rows. */
+  .band .wrap{gap:4px;padding-top:14px;padding-bottom:12px}
+  .band h1{font-size:34px}
+  .band p{font-size:13px;line-height:1.35;margin-top:4px}
+  .big .num{font-size:42px}
+  .big .cap{font-size:12px;margin-top:0}
+  .theme{top:12px}
+  .controls .wrap{padding-top:8px;padding-bottom:10px;gap:6px 10px;align-items:center}
+  .seg{padding:3px}.seg .plate{top:3px;bottom:3px}
+  .seg button{padding:6px 11px;font-size:15px}
+  .typesNote{flex:1 1 160px;font-size:11.5px;line-height:1.3}
+  .pane .sheet{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px 8px}
+  .pane .sheet .f-search,.pane .sheet .f-unit{grid-column:span 2}
+  .pane .sheet .f-metric{grid-column:span 2}
+  .pane .field{font-size:11.5px;gap:2px}
+  .pane .field input,.pane .field select{padding:6px 9px;font-size:13.5px}
+  .facts{margin-top:10px;border-top-width:2px}.facts div{padding:6px 10px 0 0}.facts dt{font-size:12px}.facts dd{font-size:21px}
+  .facts dd small{font-size:11.5px;margin-top:1px}
+  .tableHead{margin:18px 0 6px}.tableHead h2{font-size:23px}.tableHead p{font-size:12.5px;margin-top:2px}
+  .tableHead .btn{padding:5px 10px;font-size:14px}
+  th,td{padding:7px 10px;font-size:13px}th{font-size:12px}
+  .about{margin-top:20px;padding:18px 0 24px}.about .wrap{gap:18px}.about h3{font-size:20px;margin-bottom:6px}
+  .about p,.about li{font-size:13.5px;line-height:1.45}.about li{margin-bottom:4px}
   .mapPane{position:sticky;top:0;height:100vh;height:100svh;padding:0}
   .mapPane .wrap{max-width:none;padding:0;height:100%}
   .mapPane .mapWrap{height:100%;min-height:0;border-radius:0;border:0;border-left:1px solid var(--line)}
@@ -296,7 +319,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
     <p class="typesNote" id="typesNote" hidden></p>
     <div class="sheet" id="side">
       <div class="sheetHead"><b>Filters</b><button class="btn" id="closeSheet" type="button">Done</button></div>
-      <label class="field f-search">Community or building<input id="search" type="search" placeholder="Search, e.g. JVC, Marina, Al Qusais" autocomplete="off"></label>
+      <label class="field f-search">Community or building<input id="search" type="search" placeholder="e.g. JVC, Marina, Karama" autocomplete="off"></label>
       <label class="field f-unit">Unit<select id="unit"><option value="">All units</option></select></label>
       <label class="field f-metric">Labels show<select id="metric"><option value="median">Median yearly rent</option><option value="median_sqm">Rent per m² per year</option><option value="n">Number of contracts</option></select></label>
       <label class="field f-num">Min rent (AED)<input id="min" type="number" min="0" inputmode="numeric" placeholder="0"></label>

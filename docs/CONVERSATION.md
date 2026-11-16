@@ -143,6 +143,10 @@ Rent label boxes now fill from the left by rent / AED 100k. The left pane was ti
 
 In the two-pane layout a check now flies the map to the area and opens its breakdown (even when its label is merged with neighbours at that zoom).
 
+### ~17:00 · "squeeze the left pane a little more, make it more space conservative without losing neatness and info"
+
+Same content in less space on wide screens: a smaller header, rent check, facts and table, with the filters in two rows. The filters now end at 504 px on a 900 px screen (682 before). Phones are unchanged.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

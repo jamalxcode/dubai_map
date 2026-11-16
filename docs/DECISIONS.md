@@ -246,6 +246,10 @@ The owner found the map reads better tall than wide.
 
 The owner checked "marina" and expected the map to go there. In the two-pane layout (map always beside the check) a check now flies the map to the area (zoom 14) and opens its breakdown, also when its label is merged with neighbours at that zoom. Not on narrower screens, where the map is further down the page and jumping there would interrupt reading the result ("Show on the map" does it), and not for a check restored from a previous visit (the saved map view wins). Reduced-motion users get a jump instead of a flight. The browser check covers it.
 
+## Decision on 2026-11-16 (twenty-first pass): a tighter left pane
+
+The owner asked for a left pane that is "more space conservative without losing neatness and info". Nothing was removed, only made smaller on wide screens (1100 px and up): a shorter header, a smaller rent-check result, and filters in two rows instead of three (search and unit; labels, min and max). The facts, the table and the about text also got smaller. The result's secondary links ("Save to My areas · Show on the map · Dubai Data page") now wrap as one group, so a separator dot is never left dangling at the end of a line. On a 1440 × 900 screen the filters end at 504 px instead of 682, or 716 instead of 975 with a rent-check result. Phones are unchanged. Small labels stay at 11.5 px or more, in the same colours that already pass WCAG AA.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
