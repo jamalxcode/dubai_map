@@ -4,7 +4,6 @@
 // off the first phone screen, keyboard labels, and WCAG A/AA problems (axe-core).
 //
 //   node tests/ui-check.mjs            (needs: npm i --no-save playwright axe-core; data loaded)
-// Env: LIBS_DIR serves Leaflet/GSAP/Lenis from local npm packages instead of the CDNs (offline use).
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -37,15 +36,6 @@ async function open(browser, viewport, colorScheme = 'light') {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.route(/tile\.openstreetmap\.org/, r => r.abort()); // no tile load on every test run
-  if (process.env.LIBS_DIR) {
-    const L = process.env.LIBS_DIR.replace(/\/?$/, '/');
-    await page.route(/unpkg\.com|cdn\.jsdelivr\.net/, r => {
-      const u = r.request().url();
-      const f = u.includes('leaflet.css') ? 'x-leaflet-1.9.4/package/dist/leaflet.css' : u.includes('leaflet.js') ? 'x-leaflet-1.9.4/package/dist/leaflet.js'
-        : u.includes('gsap') ? 'x-gsap-3.15.1/package/dist/gsap.min.js' : 'x-lenis-1.3.27/package/dist/lenis.min.js';
-      r.fulfill({ path: L + f, headers: { 'access-control-allow-origin': '*', 'content-type': f.endsWith('css') ? 'text/css' : 'application/javascript' } });
-    });
-  }
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 });
   await page.waitForTimeout(600);

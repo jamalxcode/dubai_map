@@ -27,7 +27,7 @@ jobs:
       - name: Python tests (collector, build, published data)
         run: python3 -m unittest discover -s tests -v
       - name: Page tests (stale-data rule, script integrity)
-        run: node --test tests/page.test.mjs tests/insights.test.mjs
+        run: node --test tests/page.test.mjs tests/insights.test.mjs tests/labels.test.mjs
       - name: Browser check (Chromium + axe-core, real data)
         # Labels, overlaps, International City named when zoomed in, the rent check, the phone
         # layout, keyboard labels, and WCAG 2.1 AA (light and dark). See tests/ui-check.mjs.

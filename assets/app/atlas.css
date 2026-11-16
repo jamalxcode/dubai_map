@@ -1,0 +1,281 @@
+/* Barlow and Barlow Condensed (SIL Open Font License 1.1, assets/fonts/OFL.txt), served from this site:
+   no request to a font service, so visitors' addresses are not shared with one. */
+@font-face{font-family:"Barlow";font-weight:400;font-display:swap;src:url(../fonts/barlow-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-weight:500;font-display:swap;src:url(../fonts/barlow-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow";font-weight:600;font-display:swap;src:url(../fonts/barlow-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:500;font-display:swap;src:url(../fonts/barlow-condensed-latin-500-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:600;font-display:swap;src:url(../fonts/barlow-condensed-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Barlow Condensed";font-weight:700;font-display:swap;src:url(../fonts/barlow-condensed-latin-700-normal.woff2) format("woff2")}
+/* Lenis (smooth scrolling) base styles, inlined */
+html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}
+.lenis [data-lenis-prevent]{overscroll-behavior:contain}.lenis.lenis-smooth iframe{pointer-events:none}
+
+/* Tokens: Dubai road-sign palette */
+:root{
+  --sign:#1546A0;        /* road-sign blue: band, dearest price band, primary actions */
+  --sign-ink:#0E3478;
+  --caution:#F2B705;     /* warning-sign yellow */
+  --on-sign:#fff;        /* anything printed on the blue sign */
+  /* Light theme (default): daylight */
+  --bg:#fff;--text:#1F252B;--panel:#E8ECEF;--line:#C9D1D8;--muted:#5B6670;--hover:#F4F7FB;
+  --label:#fff;--legend:rgba(255,255,255,.94);--map-bg:#EEF1F3;--disabled:#98A2AB;--ok:#1C6B3A;--bad:#9A3B00;
+  --tiles:grayscale(.85) contrast(.95) brightness(1.04);
+  --b1:#D6E3F5;--b2:#9DBDE6;--b3:#5E91D3;--b4:#2E68BD;--b5:#1546A0; /* price bands, light to dear */
+  color-scheme:light;
+  --cond:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  font:400 16px/1.5 var(--body);color:var(--text);background:var(--bg);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+/* Dark theme: Dubai road signs at night. The sign stays blue; the city goes dark. */
+:root[data-theme="dark"]{
+  --bg:#171C21;--text:#E4E9EE;--panel:#222A31;--line:#36414B;--muted:#9AA6B1;--hover:#1F262D;
+  --label:#222A31;--legend:rgba(23,28,33,.92);--map-bg:#1B2127;--disabled:#5D6A75;--ok:#7FD39B;--bad:#FFB27A;
+  --tiles:invert(1) hue-rotate(180deg) grayscale(.8) brightness(.82) contrast(.9);
+  --b1:#2E4462;--b2:#3D6599;--b3:#5287D1;--b4:#80AAE6;--b5:#B4CFF5; /* dearer = brighter at night */
+  color-scheme:dark;
+}
+:root[data-theme="dark"] a{color:#8EB6F0}
+:root[data-theme="dark"] .rl.grp small,:root[data-theme="dark"] .band p,:root[data-theme="dark"] .big .cap{color:#DCE6F6}
+:root[data-theme="dark"] .leaflet-popup-content-wrapper,:root[data-theme="dark"] .leaflet-popup-tip{background:var(--panel);color:var(--text)}
+:root[data-theme="dark"] .leaflet-bar a,:root[data-theme="dark"] .leaflet-control-attribution{background:var(--panel);color:var(--text)!important;border-color:var(--line)}
+:root[data-theme="dark"] .leaflet-control-attribution a{color:#8EB6F0}
+:root[data-theme="dark"] .field input:focus,:root[data-theme="dark"] .field select:focus{box-shadow:0 0 0 3px rgba(128,170,230,.3)}
+.theme{position:absolute;z-index:2;top:22px;right:26px;display:inline-flex;align-items:center;gap:7px;border:2px solid rgba(255,255,255,.85);background:transparent;color:var(--on-sign);border-radius:999px;padding:6px 12px 6px 9px;font:600 16px/1 var(--cond);cursor:pointer}
+.theme:hover{background:rgba(255,255,255,.14)}
+.theme svg{width:16px;height:16px}
+*{box-sizing:border-box}body{margin:0}
+a{color:var(--sign);text-underline-offset:3px;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--caution);outline-offset:2px}
+.wrap{max-width:1440px;margin:0 auto;padding:0 32px}
+
+/* Band: the sign */
+.band{background:var(--sign);color:var(--on-sign);position:relative;overflow:hidden}
+.band::after{content:"";position:absolute;inset:10px;border:2px solid rgba(255,255,255,.85);border-radius:10px;pointer-events:none}
+.band .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:end;padding-top:40px;padding-bottom:34px}
+.band h1{font:700 clamp(44px,6.4vw,92px)/.9 var(--cond);letter-spacing:-.01em;margin:0}
+.band h1 .ch{display:inline-block}
+.band p{margin:14px 0 0;max-width:46ch;font-size:17px;color:#DCE6F6}
+.band p b{color:var(--on-sign);font-weight:600}
+.big{text-align:right}
+.big .num{font:700 clamp(52px,7.2vw,104px)/1 var(--cond);font-variant-numeric:tabular-nums;white-space:nowrap;display:inline-flex;align-items:flex-end}
+.big .cap{display:block;margin-top:8px;font-size:15px;color:#DCE6F6}
+/* Counter (React Bits port): each digit is a rolling column */
+.odo{display:inline-flex;align-items:flex-start;overflow:hidden;height:1em;line-height:1}
+.odo .col{display:block;height:1em;overflow:hidden}
+.odo .strip{display:flex;flex-direction:column;will-change:transform}
+.odo .strip span,.odo .fix{display:block;height:1em;line-height:1}
+.cur{margin-right:.2em;font-weight:600}
+
+/* Type selector: segmented, with a sliding plate (moves only when you choose) */
+.controls{border-bottom:1px solid var(--line);background:var(--bg);position:relative;z-index:5}
+.controls .wrap{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 20px;padding-top:18px;padding-bottom:18px}
+.seg{position:relative;display:inline-flex;background:var(--panel);border-radius:10px;padding:4px;gap:2px;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{position:relative;z-index:1;border:0;background:none;padding:9px 14px;border-radius:7px;font:600 17px/1 var(--cond);letter-spacing:.01em;cursor:pointer;white-space:nowrap;color:var(--text)}
+.seg button[aria-pressed="true"]{color:var(--on-sign)}
+.seg button:disabled{color:var(--disabled);cursor:not-allowed}
+.seg .plate{position:absolute;z-index:0;top:4px;bottom:4px;left:0;width:0;border-radius:7px;background:var(--sign);transition:none}
+.field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;color:var(--muted)}
+.field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;font-size:15px;min-width:0;color:var(--text)}
+.field input:focus,.field select:focus{border-color:var(--sign);outline:none;box-shadow:0 0 0 3px rgba(21,70,160,.18)}
+.controls .seg{flex:0 0 auto}
+.sheet-fields{display:contents}
+@media (min-width:861px){.sheet{display:grid!important;grid-template-columns:minmax(200px,1.6fr) minmax(140px,1fr) minmax(160px,1fr) minmax(100px,.7fr) minmax(100px,.7fr);gap:14px;flex:1 1 100%}}
+.typesNote{margin:0;font-size:13px;color:var(--muted);align-self:center;max-width:52ch}
+
+/* Warning sign */
+.stale{display:none;margin:0 0 16px;background:var(--caution);color:#1d1600;border-radius:10px;padding:14px 16px 14px 56px;position:relative;max-width:900px;box-shadow:inset 0 0 0 2px #1d1600,inset 0 0 0 5px var(--caution)}
+.stale.on{display:block}
+.stale::before{content:"";position:absolute;left:16px;top:14px;width:26px;height:26px;background:#1d1600;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.stale::after{content:"!";position:absolute;left:16px;top:20px;width:26px;text-align:center;color:var(--caution);font:700 16px/1 var(--cond)}
+.stale b{font-weight:600}
+.stale .x{position:absolute;right:10px;top:8px;border:0;background:none;font-size:22px;line-height:1;cursor:pointer;padding:4px 6px}
+
+/* Map */
+.mapWrap{position:relative;height:72vh;height:72svh;min-height:420px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+#map{position:absolute;inset:0;background:var(--map-bg)}
+.leaflet-tile-pane{filter:var(--tiles)}
+.legend{position:absolute;z-index:500;left:12px;bottom:12px;background:var(--legend);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
+.legend .t{font-weight:600;margin-bottom:5px}
+.legend .ramp{display:flex;gap:2px}
+.legend .ramp i{display:block;width:44px;height:8px}
+.legend .ramp i:first-child{border-radius:4px 0 0 4px}.legend .ramp i:last-child{border-radius:0 4px 4px 0}
+.legend .ends{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:3px;font-variant-numeric:tabular-nums}
+.leaflet-control-zoom a{color:var(--text)!important}
+.leaflet-popup-content-wrapper{border-radius:10px}
+.leaflet-popup-content{font:400 13px/1.45 var(--body);color:var(--text);min-width:240px;margin:12px 14px}
+.leaflet-popup-content .t{font:700 22px/1 var(--cond);display:block;margin-bottom:4px}
+.leaflet-popup-content table{border-collapse:collapse;margin-top:6px;width:100%}
+.leaflet-popup-content td,.leaflet-popup-content th{padding:2px 8px 2px 0;font-size:12px;text-align:left;border:0}
+.leaflet-popup-content th{color:var(--muted);font-weight:500;position:static;background:none}
+.leaflet-popup-content small{color:var(--muted)}
+/* Rent labels on the map */
+.rl-wrap{background:none;border:0}
+.leader{stroke:var(--text);stroke-opacity:.55;fill:var(--label);fill-opacity:1}
+.rl{position:absolute;transform:translate(-50%,-50%);background:var(--label);color:var(--text);border-radius:6px;padding:3px 9px 4px 8px;white-space:nowrap;cursor:pointer;
+  box-shadow:0 0 0 1px rgba(31,37,43,.18),0 2px 6px rgba(31,37,43,.18);border-left:5px solid var(--c,var(--b3));text-align:left}
+.rl b{display:block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums}
+.rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--sign),0 4px 10px rgba(31,37,43,.25)}
+.rl.rent{background:linear-gradient(90deg,var(--fillc,#D3DEF0) var(--f),var(--label) var(--f))}
+:root[data-theme="dark"] .rl.rent{--fillc:#34475E}
+/* Small area names on shaded labels: stronger colours keep them above 4.5:1 on the fill. */
+.rl.rent small{color:#46515B}
+.rl.grp.rent small{color:#fff}
+:root[data-theme="dark"] .rl.rent:not(.grp) small{color:#C5CED8}
+.rl.grp.rent{background:linear-gradient(90deg,#0E3478 var(--f),#3D6FBF var(--f))}
+.rl.grp{background:var(--sign);color:var(--on-sign);border-left-color:var(--c,var(--b3));box-shadow:0 0 0 2px var(--bg),0 2px 8px rgba(31,37,43,.3)}
+.rl.grp small{color:#DCE6F6}
+.rl .avg{font:600 13px/1 var(--cond);margin-left:3px;opacity:.85}
+
+/* Facts under the map */
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:22px 0 0;border-top:3px solid var(--text)}
+.facts div{padding:12px 16px 4px 0}
+.facts dt{font-size:13px;color:var(--muted)}
+.facts dd{margin:2px 0 0;font:700 30px/1.05 var(--cond);font-variant-numeric:tabular-nums}
+.facts dd small{display:block;font:400 13px/1.4 var(--body);color:var(--muted);margin-top:3px}
+
+/* Table */
+.tableHead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:44px 0 12px}
+h2{font:700 34px/1 var(--cond);margin:0}
+.tableHead p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.btn{border:2px solid var(--sign);background:var(--bg);color:var(--sign);border-radius:8px;padding:8px 14px;font:600 17px/1 var(--cond);cursor:pointer}
+.btn:hover{background:var(--sign);color:var(--on-sign)}
+.tableWrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;max-height:560px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:10px 14px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--panel)}
+th{position:sticky;top:0;background:var(--panel);font-weight:600;font-size:13px;color:var(--text);z-index:1}
+td.r,th.r{text-align:right}
+tbody tr:hover td{background:var(--hover)}
+.muted{color:var(--muted)}
+
+/* About */
+.about{margin:56px 0 0;padding:40px 0 64px;background:var(--panel)}
+.about .wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px}
+.about h3{font:700 24px/1.1 var(--cond);margin:0 0 10px}
+.about p,.about li{font-size:15px;max-width:60ch}
+.about ul{padding-left:18px;margin:0}
+.about li{margin-bottom:6px}
+.status-ok{color:var(--ok);font-weight:600}.status-bad{color:var(--bad);font-weight:600}
+details summary{cursor:pointer;font-weight:600}
+code{font-size:13px;background:var(--bg);padding:1px 5px;border-radius:4px}
+footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
+
+/* Phone: map first, filters in a sheet */
+.sheet{display:contents}
+.fab,.sheetHead,.scrim{display:none}
+@media (max-width:860px){
+  .wrap{padding:0 16px}
+  .band::after{inset:6px}
+  .theme{top:14px;right:16px;font-size:15px;padding:5px 10px 5px 8px}
+  /* Phone: keep the sign compact so the map starts high on the first screen. */
+  .band .wrap{grid-template-columns:1fr;gap:8px;padding-top:50px;padding-bottom:16px}
+  .band h1{font-size:clamp(34px,10vw,44px)}
+  .band p{font-size:14px;margin-top:6px;line-height:1.4}
+  .big .num{font-size:46px}
+  .big .cap{font-size:13px;margin-top:4px}
+  .stale{padding:10px 36px 10px 46px;font-size:14px;margin-bottom:10px}
+  .stale::before{left:12px;top:10px;width:22px;height:22px}.stale::after{left:12px;top:15px;width:22px;font-size:14px}
+  .stale .more{display:none}
+  .big{text-align:left}
+  .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
+  .controls .seg{width:100%;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+  .legend .t{display:none}.legend{font-size:11px}
+  .controls .field{display:none}
+  .typesNote{font-size:12px;margin-top:-2px;line-height:1.35}
+  .controls{position:static;z-index:auto}
+  .mapWrap{height:62svh;min-height:340px}
+  .legend{left:8px;bottom:8px;padding:6px 8px}.legend .ramp i{width:26px}
+  .facts{grid-template-columns:1fr 1fr}
+  .facts dd{font-size:26px}
+  .about .wrap{grid-template-columns:1fr;gap:28px}
+  .tableHead{margin-top:32px}
+  .fab{display:flex;position:fixed;z-index:1001;right:16px;bottom:max(16px,env(safe-area-inset-bottom));align-items:center;gap:8px;border:0;border-radius:999px;background:var(--sign);color:var(--on-sign);padding:14px 20px;font:600 19px/1 var(--cond);box-shadow:0 0 0 2px var(--bg),0 8px 22px rgba(14,52,120,.4);cursor:pointer}
+  .sheet{display:block;position:fixed;z-index:1003;left:0;right:0;bottom:0;background:var(--bg);border-radius:16px 16px 0 0;padding:0 16px max(20px,env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(31,37,43,.3);transform:translateY(105%);visibility:hidden;max-height:86svh;overflow:auto}
+  .sheet.open{visibility:visible;transform:none}
+  .sheet .field{display:flex;margin-bottom:14px}
+  .sheetHead{display:flex;justify-content:space-between;align-items:center;padding:16px 0 12px;position:sticky;top:0;background:var(--bg)}
+  .sheetHead b{font:700 26px/1 var(--cond)}
+  .scrim{display:block;position:fixed;inset:0;z-index:1002;background:rgba(31,37,43,.45);opacity:0;pointer-events:none}
+  .scrim.on{pointer-events:auto}
+}
+/* Layout. Narrower than 1100px: one column, in this order (the map right after the filters).
+   1100px and wider: two panes, everything else scrolls on the left, the map fills the window height on the right. */
+.layout{display:flex;flex-direction:column}
+.pane{display:contents}
+.pane>.band{order:1}.pane>#companion{order:2}.pane>.controls{order:3}.pane>.staleWrap{order:4}.mapPane{order:5}.pane>main{order:6}
+.staleWrap .stale{margin-top:16px}
+.mapPane{padding-top:12px}
+@media (min-width:1100px){
+  .layout{display:grid;grid-template-columns:minmax(420px,34vw) minmax(0,1fr);align-items:start}
+  .pane{display:block;min-width:0}
+  .pane .wrap{max-width:none;padding-left:24px;padding-right:24px}
+  .band .wrap{grid-template-columns:1fr;gap:14px;padding-top:58px;padding-bottom:24px}
+  .band h1{font-size:48px}
+  .big{text-align:left}
+  .big .num{font-size:58px}
+  .controls .wrap{gap:12px}
+  .pane .sheet{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  .pane .sheet .f-search{grid-column:1/-1}
+  .facts{grid-template-columns:1fr 1fr}
+  .about .wrap{grid-template-columns:1fr;gap:28px}
+  /* Compact left pane: big and bold, but the title, rent check and filters fit the first screen. */
+  .band::after{inset:6px}
+  .band .wrap{gap:6px;padding-top:18px;padding-bottom:16px}
+  .band h1{font-size:38px;padding-right:90px}
+  .band p{font-size:13.5px;line-height:1.4;margin-top:6px;max-width:none}
+  .big .num{font-size:46px}
+  .big .cap{font-size:12.5px;margin-top:2px}
+  .theme{top:14px;right:16px;font-size:14px;padding:4px 10px 4px 8px}
+  .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
+  .seg button{padding:7px 12px;font-size:16px}
+  .typesNote{font-size:12px}
+  .pane .sheet{gap:8px 10px}
+  .pane .field{font-size:12px;gap:3px}
+  .pane .field input,.pane .field select{padding:7px 10px;font-size:14px}
+  .staleWrap .stale{margin-top:10px}
+  .facts{margin-top:12px}.facts div{padding:8px 12px 2px 0}.facts dd{font-size:24px}
+  .tableHead{margin:24px 0 8px}
+  .tableHead h2{font-size:26px}
+  .about{margin-top:28px;padding:24px 0 32px}
+  /* Tighter still: header in less height, filters in two rows, smaller table rows. */
+  .band .wrap{gap:4px;padding-top:14px;padding-bottom:12px}
+  .band h1{font-size:34px}
+  .band p{font-size:13px;line-height:1.35;margin-top:4px}
+  .big .num{font-size:42px}
+  .big .cap{font-size:12px;margin-top:0}
+  .theme{top:12px}
+  .controls .wrap{padding-top:8px;padding-bottom:10px;gap:6px 10px;align-items:center}
+  .seg{padding:3px}.seg .plate{top:3px;bottom:3px}
+  .seg button{padding:6px 11px;font-size:15px}
+  .typesNote{flex:1 1 160px;font-size:11.5px;line-height:1.3}
+  .pane .sheet{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px 8px}
+  .pane .sheet .f-search,.pane .sheet .f-unit{grid-column:span 2}
+  .pane .sheet .f-metric{grid-column:span 2}
+  .pane .field{font-size:11.5px;gap:2px}
+  .pane .field input,.pane .field select{padding:6px 9px;font-size:13.5px}
+  .facts{margin-top:10px;border-top-width:2px}.facts div{padding:6px 10px 0 0}.facts dt{font-size:12px}.facts dd{font-size:21px}
+  .facts dd small{font-size:11.5px;margin-top:1px}
+  .tableHead{margin:18px 0 6px}.tableHead h2{font-size:23px}.tableHead p{font-size:12.5px;margin-top:2px}
+  .tableHead .btn{padding:5px 10px;font-size:14px}
+  th,td{padding:7px 10px;font-size:13px}th{font-size:12px}
+  .about{margin-top:20px;padding:18px 0 24px}.about .wrap{gap:18px}.about h3{font-size:20px;margin-bottom:6px}
+  .about p,.about li{font-size:13.5px;line-height:1.45}.about li{margin-bottom:4px}
+  .mapPane{position:sticky;top:0;height:100vh;height:100svh;padding:0}
+  .mapPane .wrap{max-width:none;padding:0;height:100%}
+  .mapPane .mapWrap{height:100%;min-height:0;border-radius:0;border:0;border-left:1px solid var(--line)}
+}
+/* Zoom controls: larger targets, plus "All Dubai" to get back to the whole city. */
+.leaflet-control-zoom a,.leaflet-bar a.fit{width:40px!important;height:40px!important;line-height:40px!important;font-size:22px!important}
+.leaflet-bar a.fit{font:600 13px/40px var(--body)!important;width:auto!important;padding:0 10px;white-space:nowrap}
+/* Rent dial: fills as the rent approaches AED 100k (full at 100k or more), for a quick read at a glance. */
+.pie{display:inline-block;width:.78em;height:.78em;border-radius:50%;margin-right:.32em;vertical-align:-.06em;flex:none;
+  background:conic-gradient(var(--pie,var(--sign)) var(--p,0%),var(--pie-track,rgba(31,37,43,.16)) 0)}
+.rl.grp .pie,.band .pie{--pie:#fff;--pie-track:rgba(255,255,255,.32)}
+:root[data-theme="dark"] .rl:not(.grp) .pie{--pie:#80AAE6;--pie-track:rgba(255,255,255,.18)}
+.pie[hidden]{display:none}
+.big .pie{width:.62em;height:.62em;align-self:center;margin-right:.18em}
+.legend .note .pie{font-size:13px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

@@ -4,7 +4,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const page = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const js = readFileSync(new URL('../assets/app/atlas.js', import.meta.url), 'utf8');
+const html = page + '\n' + js; // markup + the page's script (split out of index.html)
 
 // Pull the pure staleness() function out of the page and run it here.
 const src = html.split('/*<staleness>*/')[1].split('/*</staleness>*/')[0];
@@ -30,11 +32,15 @@ test('missing or malformed date shows no warning instead of breaking', () => {
   assert.equal(staleness(null, Date.now()), null);
 });
 
-test('every external script and library stylesheet is pinned with an integrity hash', () => {
-  const tags = [...(html.match(/<script\b[^>]*\bsrc="https?:\/\/[^"]+"[^>]*>/g) || []),
-                ...(html.match(/<link\b[^>]*rel="stylesheet"[^>]*href="https?:[^"]*"[^>]*>/g) || [])];
-  assert.ok(tags.length >= 4);
-  for (const t of tags) assert.match(t, /integrity="sha(256|384)-[A-Za-z0-9+/=]+"/, t);
+test('libraries are served from this site, never a CDN, and load before the page script', () => {
+  assert.doesNotMatch(page, /<script\b[^>]*\bsrc="https?:\/\//, 'no third-party script tags (the counter is added at run time, off localhost)');
+  assert.doesNotMatch(page, /<link\b[^>]*rel="stylesheet"[^>]*href="https?:/);
+  const order = ['assets/vendor/leaflet/leaflet.js', 'assets/vendor/gsap/gsap.min.js', 'assets/vendor/lenis/lenis.min.js',
+                 'assets/app/labels.js', 'assets/app/atlas.js', 'assets/app/insights.js', 'assets/app/companion.js'].map(f => page.indexOf(f));
+  assert.ok(order.every(i => i > 0), 'all scripts present');
+  assert.deepEqual([...order].sort((a, b) => a - b), order, 'in dependency order');
+  for (const f of ['leaflet/leaflet.js', 'leaflet/leaflet.css', 'gsap/gsap.min.js', 'lenis/lenis.min.js', 'leaflet/LICENSE', 'lenis/LICENSE'])
+    assert.ok(readFileSync(new URL('../assets/vendor/' + f, import.meta.url)).length > 0, f);
 });
 
 test('no third-party font service, OSM tiles use the policy URL', () => {
@@ -56,7 +62,7 @@ test('property type buttons are never rendered disabled', () => {
 
 test('rent check hooks stay in place (assets/app/companion.js depends on them)', () => {
   assert.match(html, /<section[^>]*id="companion"/);
-  assert.match(html, /<script src="assets\/app\/insights\.js\?v=__BUILD__"><\/script>\s*<script src="assets\/app\/companion\.js\?v=__BUILD__"><\/script>/);
+  assert.match(page, /<script src="assets\/app\/insights\.js\?v=__BUILD__"><\/script>\s*<script src="assets\/app\/companion\.js\?v=__BUILD__"><\/script>/);
   assert.match(html, /dispatchEvent\(new Event\('atlas:ready'\)\)/);
   assert.match(html, /dispatchEvent\(new Event\('atlas:error'\)\)/);
   assert.match(html, /href="assets\/app\/companion\.css\?v=__BUILD__"/);
