@@ -10,7 +10,7 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 - **Check a rent (the main action):** type an area (nicknames like JVC work, so do official DLD names and typos), pick the home, optionally add your rent. You get the median, how your rent compares, cheaper areas nearby for the same home, and where the area ranks. One recommended next step: compare, save, set a renewal reminder, or see it on the map. Links like `?area=Arjan&unit=Studios` open a check directly. On phones the card is one line until tapped, so the map stays high on the first screen.
 - **My areas:** save areas to see how their rent moves since you saved them; recent checks and the map view come back on your next visit; a short "new figures since your last visit" note appears only when the data has moved on (can be switched off). Everything is kept in your browser only, never sent anywhere, and can be downloaded, imported or deleted.
 - **Reminders in your own calendar:** a renewal reminder (30, 60 or 90 days before your lease renews) and an optional "check the market" reminder every 3, 6 or 12 months, as calendar files. No accounts or push messages; delete the event to stop it.
-- **Rent as text on the map:** each area shows its median yearly rent, e.g. "AED 65k · Jumeirah Village Circle". Areas too close to read apart merge into one blue label with the contract-weighted average; tap to zoom in. Labels never overlap.
+- **Rent as text on the map:** each area shows its median yearly rent, e.g. "AED 65k · Jumeirah Village Circle". Areas too close to read apart merge into one blue label with the contract-weighted average; tap to zoom in. Two or three areas that only just collide get their own labels, one moved beside its point with a thin line to it. Labels never overlap and keep clear of the zoom buttons and legend.
 - **Property type:** Homes (flats, studios and villas together, the default), Flats, Studios, Villas, Commercial, or Everything. Labour camps, land and bulk leases (one contract worth millions spread over tiny units) only appear under Everything, so they never skew home rents.
 - **Average rent in view:** one big number for whatever is on screen, rolling to the new value as you pan and zoom.
 - **Filters:** search, unit (studio, 1 bed, 2 bed… where DLD records rooms), rent range, and what the labels show (median rent, rent per m², contract count). The map **starts on 1-bedroom**, the one measure every area has (the older districts publish no all-homes median); "All units" shows only areas with an all-homes median, so two different measures are never coloured or averaged together.
@@ -22,11 +22,14 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 - **Wide screens (1100 px and up):** two panes: the map fills the window height on the right and stays put; the title, rent check, filters, figures and table scroll in a pane on the left. Below 1100 px the page is one column with the map right after the filters.
 - **Zoom:** larger + and − buttons and an **All Dubai** button that brings the whole city back.
 - **Rent check moves the map** (two-pane layout): checking an area flies the map there and opens its breakdown. On narrower screens, where the map is further down, "Show on the map" does it.
+- **Arabic:** the whole interface in Arabic, reading right to left, from the **عربي** button (remembered on the device), a `?lang=ar` link, or a phone set to Arabic. Area names stay as registered in Ejari, which is also what the search matches.
+- **Share:** "Share" on a rent check opens the phone's share sheet (WhatsApp and the rest) or copies the link. Each area has its own link (`a/<area>/`) whose preview shows that area's rent.
+- **Ranges when known:** the rent check shows what the middle half of tenants pay once contract-level data is in; until then it says plainly that the open sources publish only the median.
 - **Rent dial and shaded labels:** a small pie next to every rent (map labels, the headline, the rent check) fills as the rent approaches AED 100k (full at 100k or more), and each rent label's box is shaded from the left by the same share (AED 52k shades about half the box), for a reading at a glance.
 
 Every DLD area is placed at a reference point **inside its official Dubai Municipality community** (not on a building); see "Placing areas on the map".
 
-Built as one static page: [Leaflet](https://leafletjs.com/) for the map, [GSAP](https://gsap.com/) for motion, [Lenis](https://lenis.darkroom.engineering/) for smooth scrolling, and two [React Bits](https://reactbits.dev/) components (Counter and SplitText) ported to plain JavaScript so the site still needs no build step.
+Built as a static page with no build step (markup in `index.html`; `assets/app/`: `atlas.js` + `atlas.css` the page, `labels.js` label placement, `insights.js` + `companion.js` the rent check, `i18n.js` Arabic; libraries in `assets/vendor/`): [Leaflet](https://leafletjs.com/) for the map, [GSAP](https://gsap.com/) for motion, [Lenis](https://lenis.darkroom.engineering/) for smooth scrolling, and two [React Bits](https://reactbits.dev/) components (Counter and SplitText) ported to plain JavaScript so the site still needs no build step.
 
 ## Data sources
 
@@ -104,7 +107,7 @@ In order, the first match wins:
 3. **Official Dubai Municipality communities** (`data/dm_communities.csv`): one point per community, guaranteed to lie inside its official boundary. Made by `collector/dm_communities.py` from DM's open data. DLD spellings that differ from DM's (e.g. "Al Murqabat" vs "Al Muraqqabat") are in `data/dld_dm_aliases.csv`, each one reviewed.
 4. **OpenStreetMap** (`data/osm_area_points.csv`): for brand-new areas DM hasn't published yet. `collector/geocode_missing.py` accepts a result only if it is inside Dubai, is a place (not a shop or road) and its name matches.
 
-**Actions → Place unplaced areas** runs steps 3 and 4 every Sunday (and by hand). Tested on all of 2026's contracts: 99.6% of home contracts land on the map; the rest are listed under "Areas not on the map yet".
+**Actions → Place unplaced areas** runs steps 3 and 4 every Sunday (and by hand); the daily pull also looks up newly unplaced areas on OpenStreetMap (at most 10, a failed look-up retried after a week). The freshness check flags any area with 1,000+ contracts that stays off the map. Tested on all of 2026's contracts: 99.6% of home contracts land on the map; the rest are listed under "Areas not on the map yet".
 
 ## Where things live
 
@@ -130,12 +133,12 @@ Standard-library Python only; nothing to install.
 
 ```sh
 python3 -m unittest discover -s tests -v   # collector, build, and sanity checks on the committed data
-node --test tests/page.test.mjs            # stale-data rule and pinned script hashes in index.html
+node --test tests/*.test.mjs               # page wiring, rent-check logic, label placement, Arabic translations
 ```
 
 ```sh
 npm install --no-save playwright axe-core && npx playwright install chromium
-node tests/ui-check.mjs                    # the page in Chromium with the real data: labels, overlaps, rent check, phone layout, keyboard, WCAG 2.1 AA (axe-core)
+node tests/ui-check.mjs                    # the page in Chromium with the real data: labels, overlaps, rent check, sharing, phone layout, keyboard, Arabic, WCAG 2.1 AA (axe-core)
 ```
 
 `.github/workflows/tests.yml` runs all three on every push and pull request. The daily data job also runs the data checks before it commits, so a broken source file is not published.
