@@ -79,6 +79,10 @@ jobs:
       - name: "Cross-check: dubairealestatedata.com and continentalclub.ae rent pages (at most once a day)"
         continue-on-error: true  # a check, never a reason to stop the build
         run: python3 collector/fetch_crosscheck.py
+      - name: Place new areas on the map (OpenStreetMap; only names not tried in the last week)
+        continue-on-error: true  # an unplaced area is listed, never a reason to stop the build
+        env: { GEOCODE_TOP: "10" }
+        run: python3 collector/geocode_missing.py
       - name: Build map data (refuses to publish a much smaller catalog than the last one)
         env:
           ALLOW_SHRINK: ${{ inputs.allow_shrink && '1' || '0' }}

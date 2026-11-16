@@ -25,6 +25,7 @@ import re
 import sys
 import time
 import urllib.parse
+from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import net  # noqa: E402
@@ -42,13 +43,14 @@ PLACE_TYPES = {"suburb", "neighbourhood", "quarter", "village", "hamlet", "admin
 FIELDS = ["dld_area", "lat", "lng", "osm_name", "osm_type", "score", "checked_at"]
 
 
+RETRY_DAYS = 7
 ORDINALS = {"first": "1", "second": "2", "third": "3", "fourth": "4", "fifth": "5", "sixth": "6"}
 
 
 def simplify(s):
     s = s.lower().replace("'", "").replace("-", " ")
     s = " ".join(ORDINALS.get(w, w) for w in s.split())
-    s = re.sub(r"\b(dubai|united arab emirates|al)\b", " ", s)
+    s = re.sub(r"\b(dubai|united arab emirates|al|villas?|community|area)\b", " ", s)
     return re.sub(r"\s+", " ", s).strip()
 
 
@@ -84,7 +86,21 @@ def main(search=search, sleep=time.sleep, today=None):
             have = {r["dld_area"]: r for r in csv.DictReader(f)}
     except OSError:
         have = {}
-    todo = [u["area"] for u in unmatched if u["area"] not in have][:int(os.environ.get("GEOCODE_TOP") or 40)]
+    today = today or time.strftime("%Y-%m-%d")
+
+    def tried_recently(area):
+        # A placed area is never looked up again; one with no believable result is retried after a week.
+        r = have.get(area)
+        if not r:
+            return False
+        if r.get("lat"):
+            return True
+        try:
+            return (date.fromisoformat(today) - date.fromisoformat(r.get("checked_at") or "")).days < RETRY_DAYS
+        except ValueError:
+            return False
+
+    todo = [u["area"] for u in unmatched if not tried_recently(u["area"])][:int(os.environ.get("GEOCODE_TOP") or 40)]
     added = 0
     for i, area in enumerate(todo):
         if i:
@@ -99,7 +115,7 @@ def main(search=search, sleep=time.sleep, today=None):
             h = max(good, key=lambda h: score(area, h))
             have[area] = {"dld_area": area, "lat": f"{float(h['lat']):.5f}", "lng": f"{float(h['lon']):.5f}",
                           "osm_name": h.get("name", ""), "osm_type": h.get("type", ""),
-                          "score": f"{score(area, h):.2f}", "checked_at": today or time.strftime("%Y-%m-%d")}
+                          "score": f"{score(area, h):.2f}", "checked_at": today}
             added += 1
             print(f"OK   {area} -> {h.get('name')} ({h.get('type')}) {h['lat']},{h['lon']}")
         else:
@@ -108,12 +124,16 @@ def main(search=search, sleep=time.sleep, today=None):
                       f"score {score(area, h):.2f}")
             if not hits:
                 print(f"NONE {area}")
+            best = max(hits, key=lambda h: score(area, h)) if hits else {}
+            have[area] = {"dld_area": area, "lat": "", "lng": "", "osm_name": best.get("name", ""),
+                          "osm_type": best.get("type", ""), "score": f"{score(area, best):.2f}" if best else "",
+                          "checked_at": today}
     with open(out_path(), "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, FIELDS, lineterminator="\n")
         w.writeheader()
         for k in sorted(have):
             w.writerow(have[k])
-    print(f"{added} new OSM points accepted, {len(have)} in total")
+    print(f"{added} new OSM points accepted, {sum(1 for r in have.values() if r.get('lat'))} in total")
     return added
 
 

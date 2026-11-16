@@ -50,12 +50,19 @@ class RuleTests(unittest.TestCase):
         few = [dict(META["sources"][1], matched=3, agree=0)]
         self.assertEqual(cf.problems(dict(META, sources=few), SITE, RUN, NOW), [], "too few matches to judge")
 
+    def test_unplaced_area(self):
+        meta = dict(META, unmatched_areas=[{"area": "Al Twar Fifth", "n": 2480}, {"area": "Al Aryam", "n": 169}])
+        p = cf.problems(meta, SITE, RUN, NOW)
+        self.assertEqual(len(p), 1, "only busy areas count")
+        self.assertIn("Al Twar Fifth (2,480 contracts) is not on the map", p[0])
+
     def test_todays_real_meta_passes(self):
         import json
         path = os.path.join(cf.ROOT, "data", "meta.json")
         if not os.path.exists(path):
             self.skipTest("data/meta.json not loaded")
         meta = json.load(open(path))
+        meta.pop("unmatched_areas", None)  # an unplaced area is the data's state, covered by test_unplaced_area
         live = {"generated_at": meta["generated_at"]}
         today = datetime.fromisoformat(meta["data_through"] + "T12:00:00+00:00")
         run = dict(RUN, created_at=today.isoformat())

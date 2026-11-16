@@ -10,6 +10,7 @@ from helpers import TempData, ROOT
 import build  # noqa: E402
 import dm_communities  # noqa: E402
 import geocode_missing  # noqa: E402
+import places  # noqa: E402
 
 SQUARE = {"type": "FeatureCollection", "features": [
     {"properties": {"CNAME_E": "AL  MURAQQABAT", "COMM_NUM": 128},
@@ -94,13 +95,24 @@ class OsmFallbackTests(TempData):
             self.assertEqual(geocode_missing.main(search=self.fake, sleep=lambda s: None, today="2026-11-15"), 1)
         with open(geocode_missing.out_path()) as f:
             got = list(csv.DictReader(f))
-        self.assertEqual([r["dld_area"] for r in got], ["AL TWAR FIFTH"])
+        placed = [r["dld_area"] for r in got if r["lat"]]
+        self.assertEqual(placed, ["AL TWAR FIFTH"])
+        self.assertEqual(sorted(r["dld_area"] for r in got if not r["lat"]), ["Fake Mall", "Far Away"],
+                         "a look-up with no believable result is recorded too")
         calls = []
         with mock.patch("builtins.print"):
-            geocode_missing.main(search=lambda q: calls.append(q) or [], sleep=lambda s: None)
-        self.assertNotIn("AL TWAR FIFTH, Dubai", calls, "accepted areas are never looked up again")
+            geocode_missing.main(search=lambda q: calls.append(q) or [], sleep=lambda s: None, today="2026-11-16")
+        self.assertEqual(calls, [], "placed areas are never looked up again, failed ones not for a week")
+        with mock.patch("builtins.print"):
+            geocode_missing.main(search=lambda q: calls.append(q) or [], sleep=lambda s: None, today="2026-11-22")
+        self.assertEqual(sorted(calls), ["Fake Mall, Dubai", "Far Away, Dubai"], "retried after a week")
+        dm = places.load_dm_points()
+        self.assertIn("AL TWAR FIFTH", dm)
+        self.assertNotIn("FAKE MALL", dm, "a failed look-up is not a map point")
 
     def test_name_check(self):
+        self.assertTrue(geocode_missing.accept("Al Waha Villas", {"name": "Al Waha", "type": "residential",
+                                                                   "lat": "25.0", "lon": "55.3"}))
         self.assertTrue(geocode_missing.accept("Al Twar Fifth", {"name": "Al Twar Fifth", "type": "suburb",
                                                                   "lat": "25.27", "lon": "55.39"}))
         self.assertFalse(geocode_missing.accept("Al Twar Fifth", {"name": "Mirdif", "type": "suburb",

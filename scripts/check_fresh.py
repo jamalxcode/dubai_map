@@ -5,7 +5,8 @@ Run by .github/workflows/freshness.yml every 6 hours, after loading the data bra
   * the pull hasn't completed successfully recently (it runs three times a day);
   * the live site doesn't show the latest saved data (a failed deploy) or is down;
   * a source that should be working reports a failure;
-  * a cross-check source suddenly disagrees with our figures (a broken import or page).
+  * a cross-check source suddenly disagrees with our figures (a broken import or page);
+  * a busy area can't be placed on the map.
 Standard library only. `problems()` is pure, so the rules are unit-tested.
 """
 import json
@@ -22,6 +23,7 @@ MAX_PULL_HOURS = 14          # three pulls a day, plus slack for GitHub's delays
 MAX_SITE_LAG_HOURS = 2       # saved data not yet on the site
 CROSSCHECK_FLOOR = {"Dubai Real Estate Data": 0.5, "Continental Club Property": 0.7}
 MIN_MATCHED = 5
+MAX_UNPLACED = 1000          # contracts in an area the map can't place
 
 
 def _when(s):
@@ -62,6 +64,11 @@ def problems(meta, site_meta, last_run, now):
         saved, live = _when(meta.get("generated_at")), _when(site_meta.get("generated_at"))
         if saved and live and (saved - live).total_seconds() / 3600 > MAX_SITE_LAG_HOURS:
             out.append(f"The live site shows data built {live:%d %b %H:%M}, the saved data is from {saved:%d %b %H:%M} UTC: a deploy failed.")
+
+    for u in meta.get("unmatched_areas") or []:
+        if (u.get("n") or 0) >= MAX_UNPLACED:
+            out.append(f"{u.get('area')} ({u['n']:,} contracts) is not on the map: the daily OpenStreetMap look-up found "
+                       "no believable point. Add it to data/area_locations.csv or data/dld_dm_aliases.csv.")
 
     for s in meta.get("sources") or []:
         name, state = s.get("name", ""), s.get("state")

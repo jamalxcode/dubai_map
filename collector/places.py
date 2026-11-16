@@ -40,7 +40,7 @@ def load_dm_points():
         with open(os.path.join(store.DATA, "dm_communities.csv"), encoding="utf-8") as f:
             dm = {norm_area(r["community"]): r for r in csv.DictReader(f)}
     except OSError:
-        return {}
+        dm = {}  # still use the OpenStreetMap points below
     try:
         with open(os.path.join(store.DATA, "dld_dm_aliases.csv"), encoding="utf-8") as f:
             for a in csv.DictReader(f):
@@ -52,7 +52,8 @@ def load_dm_points():
     try:  # last resort: OpenStreetMap points that passed the geocode job's checks
         with open(os.path.join(store.DATA, "osm_area_points.csv"), encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                dm.setdefault(norm_area(r["dld_area"]), dict(r, source="openstreetmap"))
+                if r.get("lat"):  # rows without a point record a look-up that found nothing believable
+                    dm.setdefault(norm_area(r["dld_area"]), dict(r, source="openstreetmap"))
     except OSError:
         pass
     return dm
