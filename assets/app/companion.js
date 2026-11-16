@@ -13,6 +13,17 @@
   const plural = (n, w) => n.toLocaleString('en-AE') + ' ' + w + (n === 1 ? '' : 's');
 
   let store = RI.emptyStore(), AREAS_ALL = [], BY_LABEL = {}, THROUGH = null, current = null;
+  // Phones: the card starts as one line (area + Check) so the map stays near the top of the
+  // first screen; it opens when the visitor taps it and folds back with "Close".
+  const PHONE = matchMedia('(max-width:860px)');
+  const compact = on => {
+    const c = el('companion'), folded = !!on && PHONE.matches;
+    if (!c) return;
+    c.classList.toggle('compact', folded);
+    const input = el('ckArea');
+    if (input) input.placeholder = folded ? 'Check a rent: type an area' : 'e.g. JVC, Business Bay, Al Qusais';
+  };
+  const isCompact = () => el('companion').classList.contains('compact');
 
   // ---- storage (a private window or blocked storage just means nothing is remembered) ----
   function load() { try { store = RI.cleanStore(JSON.parse(localStorage.getItem(KEY) || 'null')); } catch (e) { store = RI.emptyStore(); } }
@@ -27,11 +38,12 @@
       <div class="ck">
         <div class="ck-head">
           <h2 id="ckTitle">Check a rent</h2>
+          <button type="button" class="link ck-close" data-act="close">Close</button>
           <p>What tenants actually pay for a home like yours, from registered contracts.</p>
         </div>
         <form class="ck-form" id="ckForm" autocomplete="off" novalidate>
-          <label class="field ck-area">Area
-            <input id="ckArea" list="ckAreas" placeholder="e.g. JVC, Business Bay, Al Qusais" enterkeyhint="search" required>
+          <label class="field ck-area"><span class="lbl">Area</span>
+            <input id="ckArea" list="ckAreas" placeholder="e.g. JVC, Business Bay, Al Qusais" enterkeyhint="search" required aria-describedby="ckTitle">
           </label>
           <datalist id="ckAreas"></datalist>
           <label class="field ck-unit">Home<select id="ckUnit" disabled><option value="">Pick an area first</option></select></label>
@@ -95,7 +107,8 @@
     store = RI.remember(store, { area: area.label, unit: u, rent: current.rent, at: new Date().toISOString() });
     save();
     renderMine();
-    if (!quiet && matchMedia('(max-width:860px)').matches) el('ckResult').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    if (!quiet) compact(false);
+    if (!quiet && PHONE.matches) el('ckResult').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   function showNoMatch(text, hits) {
@@ -314,12 +327,16 @@
     map.closePopup();
     el('companion').scrollIntoView({ behavior: 'smooth', block: 'start' });
     check({ areaText: b.dataset.check, quiet: true });
+    compact(false);
     setTimeout(() => el('ckRent').focus({ preventScroll: true }), 400);
   }
 
   // ---- events ----
   function wire() {
     const form = el('ckForm');
+    // Tapping the one-line card opens it; nothing else changes until the visitor acts.
+    el('ckArea').addEventListener('focus', () => { if (isCompact()) compact(false); });
+    PHONE.addEventListener('change', () => compact(PHONE.matches && !current));
     form.addEventListener('submit', e => { e.preventDefault(); check(); });
     el('ckArea').addEventListener('change', () => check());
     el('ckUnit').addEventListener('change', () => check());
@@ -334,6 +351,7 @@
       if (b.dataset.unit != null && current) { check({ areaText: current.area.label, unit: b.dataset.unit }); return; }
       if (b.dataset.del != null) { store.saved.splice(+b.dataset.del, 1); save(); renderMine(); if (current) render(); return; }
       switch (b.dataset.act) {
+        case 'close': compact(true); el('companion').scrollIntoView({ block: 'start' }); break;
         case 'rent': el('ckRent').focus(); el('ckRent').scrollIntoView({ block: 'center', behavior: 'smooth' }); break;
         case 'save': saveCurrent(); break;
         case 'remind': remindForm(); break;
@@ -383,6 +401,7 @@
   // ---- start ----
   function ready() {
     if (!RI || !mount()) return;
+    compact(true);
     AREAS_ALL = (typeof CACHE !== 'undefined' && CACHE.homes) || [];
     BY_LABEL = Object.fromEntries(AREAS_ALL.map(a => [a.label, a]));
     THROUGH = (META && (META.data_through || META.newest_start_date)) || null;

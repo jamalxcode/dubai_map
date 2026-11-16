@@ -172,9 +172,13 @@ The recurring need is "what do people actually pay for a home like mine?", which
 - **Empty results and errors:** suggestions for unknown areas, units with figures when a unit has too few contracts, a retry button when data fails to load.
 - **Code:** `assets/app/insights.js` (pure logic, tested in Node), `assets/app/companion.js` + `.css`; `index.html` only gains a placeholder, two script tags, a stylesheet and the ready/error events.
 
+## Decision on 2026-11-16 (eleventh pass): the rent check is one line on phones
+
+The rent check card above the map pushed the map from 43% to 84% of the first phone screen, undoing a same-day change that brought it up. On phones (≤ 860 px) the card now starts as one line (area + Check, placeholder "Check a rent: type an area"), opens when tapped or when a check runs, and folds back with "Close". A resumed check stays folded with its area filled in. Map now starts at 51% of the first screen. Desktop unchanged. Rejected: hiding the check on phones (it is the main action) and moving it below the map (out of sight).
+
 ## Prioritized next work
 
-**Status on 2026-11-10:** P0 items 1–3 are done via the Dubai Data fallback and a live Pages deploy. P1 is built and waiting for the Dubai Pulse key. Next up: P2 item 6 (community polygons).
+**Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
 
 **P0: working verified data**
 1. Download one DLD Rents CSV through official allowed flow and test every column.
@@ -210,6 +214,8 @@ The recurring need is "what do people actually pay for a home like mine?", which
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Rent check folds to one line on phones; design goals, decision log and conversation log brought up to date.
 
 - 2026-11-16: Check a rent, My areas, calendar reminders, what's new on return, resume.
 

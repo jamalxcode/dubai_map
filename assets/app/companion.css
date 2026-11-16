@@ -59,7 +59,20 @@
 .ck-popact{margin:10px 0 0}
 .ck-popact .btn{font-size:15px;padding:6px 12px}
 
+.ck-close{display:none}
+.ck-head{position:relative}
 @media (max-width:860px){
+  .ck-close{display:inline;position:absolute;top:2px;right:0;font-size:15px}
+  /* Compact (default on phones): one line, area + Check; the map stays high on the first screen. */
+  #companion.compact{padding-top:10px}
+  #companion.compact .ck{padding:10px 12px}
+  #companion.compact .ck-head{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  #companion.compact .ck-form{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+  #companion.compact .ck-area{grid-column:auto}
+  #companion.compact .ck-area .lbl,#companion.compact .ck-unit,#companion.compact .ck-rent,
+  #companion.compact .ck-result,#companion.compact .ck-mine{display:none}
+  #companion.compact .ck-form .btn{grid-column:auto;padding:9px 16px;font-size:17px}
+
   #companion{padding-top:14px}
   .ck{padding:16px}
   .ck-form{grid-template-columns:1fr 1fr}
