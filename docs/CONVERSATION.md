@@ -135,6 +135,10 @@ A freshness check every 6 hours that fails (so GitHub emails) when data, pulls, 
 
 Wide screens now have two panes: the map full height on the right (it stays put), the rest scrolling on the left; phones keep their order. Larger zoom buttons plus "All Dubai". A small dial next to every rent fills up to AED 100k. Fitting the whole city on first load was tried and dropped (labels merged into too few groups).
 
+### ~16:35 · "lets have the price box also shaded based on the price … as a double indicator" and "make more fit on the left pane, big and bold is good, but lets reduce unneeded scrolling"
+
+Rent label boxes now fill from the left by rent / AED 100k. The left pane was tightened (filters end at 682 px on a 900-px screen instead of 1,050). The squashed rent check in the owner's screenshot was a cached old stylesheet; page assets are now versioned per deploy.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

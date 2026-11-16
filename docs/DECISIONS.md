@@ -236,6 +236,12 @@ The owner found the map reads better tall than wide.
 - **Rent dial:** a CSS conic-gradient pie next to every rent figure, filling to 100% at AED 100k (most medians sit below that; higher rents show a full dial). Decorative (`aria-hidden`); the number stays the information. Only for rents, not counts, yields or AED/m².
 - The browser check now also covers: the map pane is full height on the right and stays put while the left pane scrolls, labels show the dial, + zooms in, "All Dubai" brings the city back.
 
+## Decision on 2026-11-16 (nineteenth pass): shaded labels, a compact left pane, versioned assets
+
+- **Shaded labels:** each rent label's box fills from the left by rent / AED 100k (capped), a second cue next to the dial. Light fill on white labels, a darker blue on group labels. axe skips gradient backgrounds, so contrast was computed by hand: the small area names get stronger colours on rent labels (light 5.98:1, groups 4.97:1, dark 5.97:1).
+- **Compact left pane (from 1100 px):** smaller band, the rent check without its explanation line and in two rows, compact filters, tighter spacing. At 1440 × 900 the filters end at 682 px instead of 1,050 (975 instead of 1,404 with a result shown); the left pane is 16% shorter.
+- **Versioned assets:** the owner's browser mixed the new page with a cached old `companion.css`, squashing the rent check. Page assets now carry `?v=__BUILD__`, replaced with the commit by the Pages job (as in Flattery).
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -274,6 +280,8 @@ The owner found the map reads better tall than wide.
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Label boxes shaded by rent; compact left pane; versioned page assets.
 
 - 2026-11-16: Two-pane layout on wide screens (map full height on the right), zoom controls with All Dubai, AED 100k rent dial.
 

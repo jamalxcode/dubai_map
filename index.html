@@ -130,6 +130,13 @@ button,input,select{font:inherit;color:inherit}
 .rl b{display:block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums}
 .rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--sign),0 4px 10px rgba(31,37,43,.25)}
+.rl.rent{background:linear-gradient(90deg,var(--fillc,#D3DEF0) var(--f),var(--label) var(--f))}
+:root[data-theme="dark"] .rl.rent{--fillc:#34475E}
+/* Small area names on shaded labels: stronger colours keep them above 4.5:1 on the fill. */
+.rl.rent small{color:#46515B}
+.rl.grp.rent small{color:#fff}
+:root[data-theme="dark"] .rl.rent:not(.grp) small{color:#C5CED8}
+.rl.grp.rent{background:linear-gradient(90deg,#0E3478 var(--f),#3D6FBF var(--f))}
 .rl.grp{background:var(--sign);color:var(--on-sign);border-left-color:var(--c,var(--b3));box-shadow:0 0 0 2px var(--bg),0 2px 8px rgba(31,37,43,.3)}
 .rl.grp small{color:#DCE6F6}
 .rl .avg{font:600 13px/1 var(--cond);margin-left:3px;opacity:.85}
@@ -225,6 +232,25 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .pane .sheet .f-search{grid-column:1/-1}
   .facts{grid-template-columns:1fr 1fr}
   .about .wrap{grid-template-columns:1fr;gap:28px}
+  /* Compact left pane: big and bold, but the title, rent check and filters fit the first screen. */
+  .band::after{inset:6px}
+  .band .wrap{gap:6px;padding-top:18px;padding-bottom:16px}
+  .band h1{font-size:38px;padding-right:90px}
+  .band p{font-size:13.5px;line-height:1.4;margin-top:6px;max-width:none}
+  .big .num{font-size:46px}
+  .big .cap{font-size:12.5px;margin-top:2px}
+  .theme{top:14px;right:16px;font-size:14px;padding:4px 10px 4px 8px}
+  .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
+  .seg button{padding:7px 12px;font-size:16px}
+  .typesNote{font-size:12px}
+  .pane .sheet{gap:8px 10px}
+  .pane .field{font-size:12px;gap:3px}
+  .pane .field input,.pane .field select{padding:7px 10px;font-size:14px}
+  .staleWrap .stale{margin-top:10px}
+  .facts{margin-top:12px}.facts div{padding:8px 12px 2px 0}.facts dd{font-size:24px}
+  .tableHead{margin:24px 0 8px}
+  .tableHead h2{font-size:26px}
+  .about{margin-top:28px;padding:24px 0 32px}
   .mapPane{position:sticky;top:0;height:100vh;height:100svh;padding:0}
   .mapPane .wrap{max-width:none;padding:0;height:100%}
   .mapPane .mapWrap{height:100%;min-height:0;border-radius:0;border:0;border-left:1px solid var(--line)}
@@ -242,7 +268,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 .legend .note .pie{font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
-<link rel="stylesheet" href="assets/app/companion.css">
+<link rel="stylesheet" href="assets/app/companion.css?v=__BUILD__">
 </head>
 <body>
 <div class="layout">
@@ -420,7 +446,9 @@ function renderLabels(){
     outer:for(let i=0;i<cl.length;i++)for(let k=i+1;k<cl.length;k++)if(hit(cl[i],cl[k])){cl[i]=make(cl[i].members.concat(cl[k].members));cl.splice(k,1);again=true;break outer}}
   const added=[];
   for(const c of cl){const g=c.members;
-    const html='<div class="rl'+(c.single?'':' grp')+'" style="--c:'+colorOf(c.val)+'" tabindex="0"><b>'+pie(c.val,metric)+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">avg</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
+    // Rent labels fill from the left in proportion to the rent (AED 100k = full), a second cue next to the dial.
+    const fill=metric==='median'&&c.val>0?';--f:'+Math.min(100,Math.round(c.val/PIE_MAX*100))+'%':'';
+    const html='<div class="rl'+(c.single?'':' grp')+(fill?' rent':'')+'" style="--c:'+colorOf(c.val)+fill+'" tabindex="0"><b>'+pie(c.val,metric)+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">avg</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
     const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
     // Keyboard: the label is a button. Enter or Space opens its breakdown, or zooms into a group.
@@ -648,6 +676,6 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let sav
 paintToggle();
 init();
 </script>
-<script src="assets/app/insights.js"></script>
-<script src="assets/app/companion.js"></script>
+<script src="assets/app/insights.js?v=__BUILD__"></script>
+<script src="assets/app/companion.js?v=__BUILD__"></script>
 </body></html>

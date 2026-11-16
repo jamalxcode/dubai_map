@@ -31,7 +31,8 @@ jobs:
       - name: Assemble site (page + small JSON only, not the raw contract archive)
         run: |
           mkdir -p _site/data _site/assets
-          cp index.html _site/
+          # Version the page's own scripts and styles so browsers never mix a new page with old cached files.
+          sed "s/__BUILD__/${GITHUB_SHA::7}/g" index.html > _site/index.html
           [ -f .nojekyll ] && cp .nojekyll _site/ || true
           # No "|| true" here: a site without its data must fail, not deploy an empty map.
           cp data/areas*.json data/latest.json data/meta.json _site/data/

@@ -91,6 +91,8 @@ try {
     }
     const pies = await page.evaluate(() => document.querySelectorAll('.rl .pie').length);
     check(pies >= 10, `${name}: rent labels show the AED 100k dial (${pies})`);
+    const fills = await page.evaluate(() => [...document.querySelectorAll('.rl.rent')].map(e => parseFloat(e.style.getPropertyValue('--f'))));
+    check(fills.length >= 10 && fills.every(f => f > 0 && f <= 100), `${name}: rent labels are shaded in proportion to the rent (${fills.slice(0, 4).join('%, ')}%…)`);
     const z0 = await page.evaluate(() => map.getZoom());
     await page.click('.leaflet-control-zoom-in');
     await page.waitForTimeout(400);

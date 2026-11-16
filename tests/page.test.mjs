@@ -56,10 +56,10 @@ test('property type buttons are never rendered disabled', () => {
 
 test('rent check hooks stay in place (assets/app/companion.js depends on them)', () => {
   assert.match(html, /<section[^>]*id="companion"/);
-  assert.match(html, /<script src="assets\/app\/insights\.js"><\/script>\s*<script src="assets\/app\/companion\.js"><\/script>/);
+  assert.match(html, /<script src="assets\/app\/insights\.js\?v=__BUILD__"><\/script>\s*<script src="assets\/app\/companion\.js\?v=__BUILD__"><\/script>/);
   assert.match(html, /dispatchEvent\(new Event\('atlas:ready'\)\)/);
   assert.match(html, /dispatchEvent\(new Event\('atlas:error'\)\)/);
-  assert.match(html, /href="assets\/app\/companion\.css"/);
+  assert.match(html, /href="assets\/app\/companion\.css\?v=__BUILD__"/);
 });
 
 test('one measure on the map: older districts only with a unit; starts on 1 bed; labels work by keyboard', () => {
