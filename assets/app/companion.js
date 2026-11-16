@@ -188,6 +188,7 @@
         <p class="muted">${f.n == null
           ? `Median for this home type, ${area.through ? 'to ' + dateText(area.through) : period}. Source: Continental Club Property (CC BY 4.0), which gives ${plural(area.n, 'contract')} for the whole area but no count per home type.`
           : `${isTypical ? 'Typical' : 'Median'} of ${plural(f.n, 'contract')}, ${period}.`}${savedIdx >= 0 ? ' <span class="tag">Saved</span>' : ''}</p>
+        ${AGG && /^[3-9]-bedroom/.test(unit) ? '<p class="muted">Dubai Data groups homes by bedrooms: in villa communities this figure may include villas and townhouses.</p>' : ''}
         <p class="muted ck-range">${f.p25 != null && f.p75 != null
           ? `The middle half of these tenants pay <b>${aed(f.p25)}</b> to <b>${aed(f.p75)}</b>.`
           : 'No range yet: the open sources publish only the middle figure (half pay more, half less). Ranges arrive with contract-level data.'}</p>

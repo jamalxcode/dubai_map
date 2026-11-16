@@ -36,7 +36,8 @@ AREAS = [
     {"label": "Jumeirah Village Circle", "median": 66000, "dld_areas": ["Al Barsha South Fourth"],
      "by_unit": [{"u": "Studios", "n": 7735, "median": 48000}, {"u": "1-bedroom apartments", "n": 15726, "median": 70000}]},
     {"label": "Business Bay", "median": 110000, "dld_areas": ["Business Bay"],
-     "by_unit": [{"u": "1-bedroom apartments", "n": 9000, "median": 95000}]},
+     "by_unit": [{"u": "1-bedroom apartments", "n": 9000, "median": 110000},
+                 {"u": "4-bedroom apartments", "n": 3000, "median": 400000}]},
     {"label": "Bay Square", "median": 90000, "dld_areas": ["Business Bay"], "by_unit": []},
 ]
 
@@ -74,6 +75,8 @@ class CompareTests(TempData):
         self.assertEqual((dred["matched"], dred["agree"]), (2, 1), "JVC agrees; Business Bay is 25% above")
         self.assertEqual(dred["largest_gaps"][0]["area"], "Business Bay")
         self.assertTrue(dred["status"].startswith("ok: 1 of 2"))
+        self.assertEqual(dred["largest_gaps"][0]["ours"], 110000, "compared on studios to 2 beds, not 4-bed villas")
+        self.assertEqual(dred["largest_gaps"][0]["unit"], "studios to 2 beds")
         # ccp: Al Barsha South Fourth -> JVC (1 bed and studio); "Business Bay" DLD area is split between
         # two of our areas, so it is not compared; Al Ttay is not one of ours.
         self.assertEqual(sorted((g["area"], g["unit"]) for g in ccp["largest_gaps"]),
