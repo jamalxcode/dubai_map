@@ -125,6 +125,7 @@ button,input,select{font:inherit;color:inherit}
 .leaflet-popup-content small{color:var(--muted)}
 /* Rent labels on the map */
 .rl-wrap{background:none;border:0}
+.leader{stroke:var(--text);stroke-opacity:.55;fill:var(--label);fill-opacity:1}
 .rl{position:absolute;transform:translate(-50%,-50%);background:var(--label);color:var(--text);border-radius:6px;padding:3px 9px 4px 8px;white-space:nowrap;cursor:pointer;
   box-shadow:0 0 0 1px rgba(31,37,43,.18),0 2px 6px rgba(31,37,43,.18);border-left:5px solid var(--c,var(--b3));text-align:left}
 .rl b{display:block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums}
@@ -462,17 +463,34 @@ function renderLabels(){
     const val=metric==='n'?N:members.reduce((s,o)=>s+o.v*w(o),0);
     const lat=members.reduce((s,o)=>s+o.a.lat*w(o),0),lng=members.reduce((s,o)=>s+o.a.lng*w(o),0);
     const single=members.length===1,top=labelText(val,metric)+(single||metric==='n'?'':' avg'),sub=single?members[0].a.label:groupName(members);
-    return {members,N,val,lat,lng,single,px:map.latLngToLayerPoint([lat,lng]),w:Math.max(top.length*8.4+(metric==='median'?14:0),Math.min(sub.length,26)*5.8)+26,h:38};};
+    const at=map.latLngToLayerPoint([lat,lng]);
+    return {members,N,val,lat,lng,single,at,px:at,w:Math.max(top.length*8.4+(metric==='median'?14:0),Math.min(sub.length,26)*5.8)+26,h:38};};
   const hit=(a,b)=>Math.abs(a.px.x-b.px.x)*2<a.w+b.w+PAD&&Math.abs(a.px.y-b.px.y)*2<a.h+b.h+PAD;
   let cl=POINTS.map(p=>make([p])),again=true;
   while(again){again=false;cl.sort((x,y)=>y.N-x.N);
     outer:for(let i=0;i<cl.length;i++)for(let k=i+1;k<cl.length;k++)if(hit(cl[i],cl[k])){cl[i]=make(cl[i].members.concat(cl[k].members));cl.splice(k,1);again=true;break outer}}
+  // Small groups come apart when each label fits at its own point or just beside it (a thin line then
+  // joins the label to its point). Labels also step aside from the map's buttons and legend.
+  const box=map.getContainer().getBoundingClientRect();
+  const blocks=[...map.getContainer().parentNode.querySelectorAll('.leaflet-control,.legend')].map(e=>e.getBoundingClientRect())
+    .filter(r=>r.width&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top)
+    .map(r=>({px:map.containerPointToLayerPoint([r.left-box.left+r.width/2,r.top-box.top+r.height/2]),w:r.width,h:r.height}));
+  const spots=c=>[[0,0],[0,-(c.h+PAD)],[0,c.h+PAD],[c.w/2+10,0],[-(c.w/2+10),0],[c.w/2,-(c.h+PAD)],[-c.w/2,-(c.h+PAD)],[c.w/2,c.h+PAD],[-c.w/2,c.h+PAD]];
+  const place=(c,others)=>{for(const [dx,dy] of spots(c)){const t=Object.assign({},c,{px:L.point(c.at.x+dx,c.at.y+dy)});
+    if(!others.some(o=>hit(t,o))&&!blocks.some(o=>hit(t,o)))return t}return null};
+  for(let i=0;i<cl.length;i++){const c=cl[i];if(c.single||c.members.length>3)continue;
+    const rest=cl.filter((_,j)=>j!==i),parts=[];
+    for(const m of [...c.members].sort((x,y)=>y.n-x.n)){const t=place(make([m]),rest.concat(parts));if(!t)break;parts.push(t)}
+    if(parts.length===c.members.length){cl.splice(i,1,...parts);i+=parts.length-1}}
+  for(let i=0;i<cl.length;i++)if(blocks.some(o=>hit(cl[i],o))){const t=place(cl[i],cl.filter((_,j)=>j!==i));if(t)cl[i]=t}
   const added=[];
-  for(const c of cl){const g=c.members;
+  for(const c of cl){const g=c.members,moved=c.px.x!==c.at.x||c.px.y!==c.at.y,pos=moved?map.layerPointToLatLng(c.px):L.latLng(c.lat,c.lng);
+    if(moved){L.polyline([[c.lat,c.lng],pos],{className:'leader',weight:1.5,interactive:false}).addTo(layer);
+      L.circleMarker([c.lat,c.lng],{className:'leader dot',radius:3,weight:1.5,interactive:false}).addTo(layer)}
     // Rent labels fill from the left in proportion to the rent (AED 100k = full), a second cue next to the dial.
     const fill=metric==='median'&&c.val>0?';--f:'+Math.min(100,Math.round(c.val/PIE_MAX*100))+'%':'';
     const html='<div class="rl'+(c.single?'':' grp')+(fill?' rent':'')+'" style="--c:'+colorOf(c.val)+fill+'" tabindex="0"><b>'+pie(c.val,metric)+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">avg</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
-    const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
+    const m=L.marker(pos,{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
     // Keyboard: the label is a button. Enter or Space opens its breakdown, or zooms into a group.
     const el=m.getElement()&&m.getElement().firstChild;

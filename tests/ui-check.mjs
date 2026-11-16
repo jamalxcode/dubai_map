@@ -113,6 +113,19 @@ try {
     check(/International City/.test(names), `${name}: International City is named at zoom 13`);
     const z13 = await overlaps(page);
     check(z13.overlaps === 0, `${name}: no labels overlap at zoom 13`);
+    await page.evaluate(() => map.setView([25.16, 55.38], 14, { animate: false }));
+    await page.waitForTimeout(300);
+    const z14 = await page.evaluate(() => ({ groups: document.querySelectorAll('.rl.grp').length, leaders: document.querySelectorAll('path.leader').length }));
+    check(z14.groups <= 3, `${name}: at zoom 14 nearly every area has its own label (${z14.groups} merged, ${z14.leaders / 2} moved beside their point)`);
+    check((await overlaps(page)).overlaps === 0, `${name}: no labels overlap at zoom 14`);
+    await page.evaluate(() => fitDubai(false));
+    await page.waitForTimeout(300);
+    const hidden = await page.evaluate(() => {
+      const blocks = [...document.querySelectorAll('.leaflet-control,.legend')].map(e => e.getBoundingClientRect()).filter(r => r.width);
+      return [...document.querySelectorAll('.rl')].filter(e => { const a = e.getBoundingClientRect();
+        return blocks.some(b => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom); }).map(e => e.textContent);
+    });
+    check(!hidden.length, `${name}: no label sits under the zoom buttons or the legend${hidden.length ? ': ' + hidden.join(', ') : ''}`);
     // Keyboard: Enter on a single label opens its breakdown.
     await page.evaluate(() => map.closePopup());
     const focused = await page.evaluate(() => { const el = [...document.querySelectorAll('.rl:not(.grp)')][0]; if (el) el.focus(); return !!el; });
