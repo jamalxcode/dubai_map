@@ -4,7 +4,7 @@
 **Site:** https://jamalxcode.github.io/dubai_map/
 **Status key:** ✅ done · 🔶 partly done · ⏳ planned
 
-These are the goals the owner set while building the project (see [CONVERSATION.md](CONVERSATION.md)). The exact rules and thresholds that implement them are in [BUSINESS_RULES.md](BUSINESS_RULES.md). When a change conflicts with a goal here, the goal wins unless this file is updated first.
+These are the goals the owner set while building the project (see [CONVERSATION.md](CONVERSATION.md)). The exact rules and thresholds that implement them are in [BUSINESS_RULES.md](BUSINESS_RULES.md) (data) and [INTERFACE_RULES.md](INTERFACE_RULES.md) (the page); what we learned on the way is in [LESSONS_LEARNED.md](LESSONS_LEARNED.md). When a change conflicts with a goal here, the goal wins unless this file is updated first.
 
 ## 1. Show real rents, not asking prices
 

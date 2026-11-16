@@ -347,7 +347,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .leaflet-bar a.fit{font-size:12px!important;width:auto!important}
 }
 @media (max-width:400px){
-  .maplang button{padding:0 7px;font-size:12px;height:30px}
+  .maplang button{padding:0 7px;font-size:12px;height:32px}
   .leaflet-control-zoom a,.leaflet-bar a.fit{width:32px!important;height:32px!important;line-height:32px!important;font-size:18px!important}
   .leaflet-bar a.fit{font-size:11px!important;padding:0 7px}
   .leaflet-touch .leaflet-bar,.leaflet-touch .leaflet-control-layers{border-width:1px}

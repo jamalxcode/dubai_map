@@ -120,6 +120,9 @@ A point is a reference for the area, never a building; the page says so. Coordin
 
 ## 9. Accessibility and layout
 
+The full interface rules (layout, colour, type, labels, controls, sheets, motion) are in [INTERFACE_RULES.md](INTERFACE_RULES.md); the essentials:
+
+
 - WCAG 2.1 AA in light, dark and Arabic, checked with axe-core on every push (`tests/ui-check.mjs`).
 - Text on shaded labels uses colours checked by hand for 4.5:1, because axe can't measure text on a gradient.
 - Map labels are keyboard buttons; their spoken name is their visible text.

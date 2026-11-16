@@ -175,6 +175,10 @@ Brought the records up to date: this log; DESIGN_GOALS.md gains "Ideas on the ta
 
 On narrow screens the area pop-up ran off the screen. Now, at 860 px and below, tapping an area opens a sheet from the bottom with its photos first (swipeable, larger), the Google links as big buttons, then the figures; tapping a photo opens a full-screen viewer with its credit (on every screen). Map buttons shrink on narrow screens. Checked from 320 px (small phones, fold covers) to fold-open and sideways, in English and Arabic.
 
+### ~20:20 · "save to repo design ideas, lessons learned, convo and business rules and interface rules"
+
+Added `docs/INTERFACE_RULES.md` (how the page looks and behaves, with values) and `docs/LESSONS_LEARNED.md` (problems hit and the rule each left). Design ideas are in DESIGN_GOALS.md ("Ideas on the table"), data rules in BUSINESS_RULES.md, decisions in DECISIONS.md (twenty-eighth pass), all linked from the README and CLAUDE.md.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

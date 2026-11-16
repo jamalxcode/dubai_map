@@ -8,6 +8,8 @@ Dubai Rent Atlas (https://jamalxcode.github.io/dubai_map/) maps what tenants act
 
 Read before changing behaviour:
 - `docs/BUSINESS_RULES.md`: every rule and threshold, with the file that applies it. Keep it in step with the code.
+- `docs/INTERFACE_RULES.md`: how the page looks and behaves (breakpoints, colours, labels, sheets, motion). Keep it in step with the CSS and JS.
+- `docs/LESSONS_LEARNED.md`: problems already hit and the rule each one left; read before repeating them, add new ones.
 - `docs/DESIGN_GOALS.md`: the owner's goals; a change that conflicts with a goal needs the goal updated first.
 - `docs/DECISIONS.md`: why things are the way they are (numbered passes); add a pass for each piece of work.
 - `docs/CONVERSATION.md`: the owner's requests, in order, and the open items.
