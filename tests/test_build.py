@@ -132,6 +132,10 @@ class OwnContractsTests(TempData):
         with open(os.path.join(self.tmp, "latest.json")) as f:
             kinds = {r["k"] for r in json.load(f)["rows"]}
         self.assertTrue(kinds <= {"flat", "commercial", "other"})
+        with open(os.path.join(self.tmp, "areas.json")) as f:
+            top = json.load(f)["areas"][0]
+        self.assertIsNotNone(top["p25"], "contract-level data gives a range per area")
+        self.assertTrue(all(u["p25"] <= u["median"] <= u["p75"] for u in top["by_unit"]), "and per home type")
 
 
 class ShrinkGuardTests(TempData):

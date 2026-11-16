@@ -160,7 +160,9 @@
       const words = { below: `${Math.abs(v.pct)}% below`, above: `${v.pct}% above`, about: 'about the same as' };
       verdictHtml = `<p class="ck-verdict ck-${v.word}">You pay <b>${aed(rent)}</b>: <b>${words[v.word]}</b> the median` +
         (v.word === 'about' ? '.' : ` (${aed(Math.abs(v.diff))} a year ${v.word === 'below' ? 'less' : 'more'}).`) +
-        `<br><small>Half of these tenants pay more and half less. Size, floor, view and building all move the price.</small></p>`;
+        `<br><small>${f.p25 != null && f.p75 != null
+          ? (rent < f.p25 ? 'That is in the cheapest quarter.' : rent > f.p75 ? 'That is in the dearest quarter.' : 'That is within the middle half.')
+          : 'Half of these tenants pay more and half less.'} Size, floor, view and building all move the price.</small></p>`;
     }
     const cheaper = facts.find(x => x.kind === 'cheaper'), rank = facts.find(x => x.kind === 'rank'), tr = facts.find(x => x.kind === 'trend');
     const finds = [];
@@ -180,6 +182,9 @@
         <p class="muted">${f.n == null
           ? `Median for this home type, ${area.through ? 'to ' + dateText(area.through) : period}. Source: Continental Club Property (CC BY 4.0), which gives ${plural(area.n, 'contract')} for the whole area but no count per home type.`
           : `${isTypical ? 'Typical' : 'Median'} of ${plural(f.n, 'contract')}, ${period}.`}${savedIdx >= 0 ? ' <span class="tag">Saved</span>' : ''}</p>
+        <p class="muted ck-range">${f.p25 != null && f.p75 != null
+          ? `The middle half of these tenants pay <b>${aed(f.p25)}</b> to <b>${aed(f.p75)}</b>.`
+          : 'No range yet: the open sources publish only the middle figure (half pay more, half less). Ranges arrive with contract-level data.'}</p>
         ${verdictHtml}
         ${finds.length ? `<ul class="ck-finds">${finds.join('')}</ul>` : ''}
         <div class="ck-actions">

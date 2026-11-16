@@ -65,7 +65,8 @@ def summarize(groups, places):
             p25=pct(annual, .25), p75=pct(annual, .75),
             median_sqm=med(per_sqm),
             reg_types=dict(types.most_common()),
-            by_unit=sorted(({"u": k, "n": len(v), "median": med(v)} for k, v in by_unit.items()),
+            by_unit=sorted(({"u": k, "n": len(v), "median": med(v), "p25": pct(v, .25), "p75": pct(v, .75)}
+                            for k, v in by_unit.items()),
                            key=lambda x: -x["n"])[:12],
             monthly=[{"m": k, "n": len(v), "median": med(v)} for k, v in sorted(by_month.items())],
             top_projects=sorted(({"p": k, "n": len(v), "median": med(v)} for k, v in by_proj.items()),

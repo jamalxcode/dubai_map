@@ -71,7 +71,7 @@
 
   function unitFigure(area, unit) {
     if (!area) return null;
-    if (!unit) return area.median && area.median_kind !== 'unit' ? { u: 'All homes', n: area.n, median: area.median, yield: area.yield_pct } : null;
+    if (!unit) return area.median && area.median_kind !== 'unit' ? { u: 'All homes', n: area.n, median: area.median, yield: area.yield_pct, p25: area.p25, p75: area.p75 } : null;
     return unitOptions(area).find(u => u.u === unit) || null;
   }
 

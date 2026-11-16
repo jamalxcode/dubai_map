@@ -122,3 +122,11 @@ test('areas with no count per home type (older districts): no all-homes figure, 
   assert.deepEqual(cheaper.map(c => [c.area.label, c.n]), [['Al Karama', 12391]], 'the area total stands in for trust');
 });
 
+
+test('ranges travel with the figure when a source has them, and are absent otherwise', () => {
+  const a = { label: 'A', n: 400, median: 70000, p25: 60000, p75: 82000,
+              by_unit: [{ u: 'Studios', n: 100, median: 45000, p25: 40000, p75: 50000 }, { u: '1-bedroom apartments', n: 80, median: 65000 }] };
+  assert.deepEqual([RI.unitFigure(a, '').p25, RI.unitFigure(a, '').p75], [60000, 82000]);
+  assert.equal(RI.unitFigure(a, 'Studios').p75, 50000);
+  assert.equal(RI.unitFigure(a, '1-bedroom apartments').p25, undefined);
+});
