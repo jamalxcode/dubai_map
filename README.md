@@ -18,7 +18,7 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 - **Popup per area:** median and middle-half range, rent per m², new vs renewal, monthly trend, unit breakdown and busiest buildings; links to **Google Maps, Street View and photos on Google** (new tab), and up to four **photos taken nearby** from Wikimedia Commons, each credited with its author and licence.
 - **Table:** the newest contracts, downloadable as CSV.
 - **Warning:** a yellow sign appears if the data is older than it should be.
-- **Phone:** map first; filters slide up from a button.
+- **Phone (and fold phones, down to 320 px):** map first; filters slide up from a button; tapping an area opens a sheet from the bottom with its photos first (swipe, tap for full screen), Google links as large buttons, then the figures.
 - **Wide screens (1100 px and up):** two panes: the map fills the window height on the right and stays put; the title, rent check, filters, figures and table scroll in a pane on the left. Below 1100 px the page is one column with the map right after the filters.
 - **Zoom:** larger + and − buttons and an **All Dubai** button that brings the whole city back.
 - **Map language:** a button on the map (English · عربي · Both) sets the language of the base map's place and street names; it starts in the page's language and is remembered. The base map is vector tiles from [OpenFreeMap](https://openfreemap.org) (OpenStreetMap data); where a browser can't draw it, the classic OpenStreetMap tiles appear instead (names as tagged locally) and the button is hidden.

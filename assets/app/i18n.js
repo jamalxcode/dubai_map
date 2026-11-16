@@ -45,8 +45,14 @@
 
   // Text the scripts build (atlas.js, companion.js), keyed by its English.
   const AR = {
+    'Photos taken near this point, from Wikimedia Commons. Tap one to see it large, with its author and licence.': 'صور التُقطت قرب هذه النقطة، من ويكيميديا كومنز. اضغط على صورة لعرضها بحجم كبير مع مصوّرها وترخيصها.',
+    'Photo {i} of {n}': 'الصورة {i} من {n}',
+    'View on Wikimedia Commons': 'عرضها على ويكيميديا كومنز',
+    'Next photo': 'الصورة التالية',
+    'Previous photo': 'الصورة السابقة',
+    'Photo': 'صورة',
+    'Area details': 'تفاصيل المنطقة',
     'unknown author': 'مصوّر غير معروف',
-    'Photos taken near this point, from Wikimedia Commons. Tap one for its author and licence.': 'صور التُقطت قرب هذه النقطة، من ويكيميديا كومنز. اضغط على صورة لمعرفة مصوّرها وترخيصها.',
     'Photos on Google': 'صور على Google',
     'Street View': 'التجوّل الافتراضي',
     'Google Maps': 'خرائط Google',

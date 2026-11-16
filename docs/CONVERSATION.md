@@ -171,6 +171,10 @@ Ran "Place unplaced areas" by hand. It exposed a bug from earlier today (the dat
 
 Brought the records up to date: this log; DESIGN_GOALS.md gains "Ideas on the table" (each idea not yet built and what it needs); DECISIONS.md's status and constraints reflect today's work (no guessed coordinates, no copying from Google, Arabic for every text, counting nothing personal); BUSINESS_RULES.md already carries each rule decided today (map language, photos, links out, placing communities by their DLD area).
 
+### ~20:00 · "on a mobile screen make the presentation more mobile friendly including the wallet sized screen like the samsung fold 8 and iphone duo, especially when drilling down a price and seeing the property related photos"
+
+On narrow screens the area pop-up ran off the screen. Now, at 860 px and below, tapping an area opens a sheet from the bottom with its photos first (swipeable, larger), the Google links as big buttons, then the figures; tapping a photo opens a full-screen viewer with its credit (on every screen). Map buttons shrink on narrow screens. Checked from 320 px (small phones, fold covers) to fold-open and sideways, in English and Arabic.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

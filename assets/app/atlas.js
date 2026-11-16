@@ -280,7 +280,7 @@ function commonsPhotos(json,max=4){
   const out=[];
   for(const p of pages){const ii=p.imageinfo&&p.imageinfo[0];if(!ii||ii.mime!=='image/jpeg'||!ii.thumburl||NOT_PHOTO.test(p.title))continue;
     const m=ii.extmetadata||{},author=stripTags(m.Artist&&m.Artist.value).slice(0,40)||T('unknown author'),lic=stripTags(m.LicenseShortName&&m.LicenseShortName.value)||'';
-    out.push({src:ii.thumburl,page:ii.descriptionurl,title:p.title.replace(/^File:/,'').replace(/\.[a-z]+$/i,''),author,lic});
+    out.push({src:ii.thumburl,big:ii.thumburl.replace(/\/\d+px-/,'/960px-'),page:ii.descriptionurl,title:p.title.replace(/^File:/,'').replace(/\.[a-z]+$/i,''),author,lic});
     if(out.length>=max)break}
   return out;
 }
@@ -288,7 +288,7 @@ function photosFor(lat,lng){
   const k=(+lat).toFixed(4)+','+(+lng).toFixed(4);
   if(!PHOTOS[k])PHOTOS[k]=fetch('https://commons.wikimedia.org/w/api.php?'+new URLSearchParams({action:'query',format:'json',origin:'*',
       generator:'geosearch',ggscoord:lat+'|'+lng,ggsradius:'1000',ggslimit:'20',ggsnamespace:'6',prop:'imageinfo',
-      iiprop:'url|mime|extmetadata',iiurlwidth:'320',iiextmetadatafilter:'Artist|LicenseShortName'}))
+      iiprop:'url|mime|extmetadata',iiurlwidth:'330',iiextmetadatafilter:'Artist|LicenseShortName'}))
     .then(r=>r.ok?r.json():null).then(j=>commonsPhotos(j)).catch(()=>[]);
   return PHOTOS[k];
 }
@@ -297,14 +297,95 @@ async function loadPhotos(e){
   const box=e.popup.getElement()&&e.popup.getElement().querySelector('.pics:not([data-done])');if(!box)return;
   box.dataset.done='1';box.classList.add('loading');
   const ph=await photosFor(box.dataset.lat,box.dataset.lng);
-  const live=e.popup.getElement()&&e.popup.getElement().querySelector('.pics');if(!live)return; // closed meanwhile
-  live.classList.remove('loading');
-  if(!ph.length){live.remove();return}
-  live.innerHTML='<div class="strip">'+ph.map(p=>'<a href="'+safe(p.page)+'" target="_blank" rel="noopener" title="'+safe(p.title+' · '+p.author+(p.lic?' · '+p.lic:''))+'">'+
+  if(!box.isConnected)return; // closed meanwhile (the box may have moved into the phone sheet: same element)
+  box.classList.remove('loading');
+  if(!ph.length){box.remove();return}
+  box.innerHTML='<div class="strip">'+ph.map((p,i)=>'<a href="'+safe(p.page)+'" target="_blank" rel="noopener" data-i="'+i+'" data-big="'+safe(p.big)+'" data-title="'+safe(p.title)+'" data-credit="'+safe(p.author+(p.lic?', '+p.lic:''))+'" title="'+safe(p.title+' · '+p.author+(p.lic?' · '+p.lic:''))+'">'+
     '<img src="'+safe(p.src)+'" alt="'+safe(p.title)+'" loading="lazy" onerror="this.parentNode.remove()"><span>'+safe(p.author)+(p.lic?', '+safe(p.lic):'')+'</span></a>').join('')+'</div>'+
-    '<small>'+T('Photos taken near this point, from Wikimedia Commons. Tap one for its author and licence.')+'</small>';
+    '<small>'+T('Photos taken near this point, from Wikimedia Commons. Tap one to see it large, with its author and licence.')+'</small>';
 }
 map.on('popupopen',loadPhotos);
+
+// Phones and fold phones (860 px and narrower): an area's breakdown slides up from the bottom of the
+// screen, full width and scrollable, instead of a small pop-up on the map. The Leaflet pop-up stays
+// open but hidden (CSS) and its content moves into the sheet, so everything that hooks into pop-ups
+// (photos, "Check a rent here") keeps working; closing either one closes both.
+const SHEET_MQ=matchMedia('(max-width:860px)');
+let sheetEl=null,sheetPopup=null,sheetReturn=null;
+function sheet_(){
+  if(sheetEl)return sheetEl;
+  sheetEl=document.createElement('div');sheetEl.className='areaSheet';sheetEl.hidden=true;
+  sheetEl.setAttribute('role','dialog');sheetEl.setAttribute('aria-label',T('Area details'));sheetEl.tabIndex=-1;
+  sheetEl.innerHTML='<div class="grip" aria-hidden="true"></div><button type="button" class="sheetX" aria-label="'+T('Close')+'">×</button><div class="body leaflet-popup-content"></div>';
+  document.body.append(sheetEl);
+  sheetEl.querySelector('.sheetX').onclick=()=>closeSheet();
+  // Swipe down on the top of the sheet to close it.
+  let y0=null;
+  sheetEl.addEventListener('touchstart',e=>{y0=sheetEl.scrollTop<=0?e.touches[0].clientY:null},{passive:true});
+  sheetEl.addEventListener('touchmove',e=>{if(y0==null)return;const dy=e.touches[0].clientY-y0;if(dy>0)sheetEl.style.transform='translateY('+dy+'px)'},{passive:true});
+  sheetEl.addEventListener('touchend',e=>{if(y0==null)return;const dy=e.changedTouches[0].clientY-y0;y0=null;sheetEl.style.transform='';if(dy>80)closeSheet()});
+  return sheetEl;
+}
+function closeSheet(fromMap){
+  if(!sheetEl||sheetEl.hidden)return;
+  sheetEl.hidden=true;document.documentElement.classList.remove('sheetOpen');
+  const p=sheetPopup;sheetPopup=null;if(!fromMap&&p&&map.hasLayer(p))map.closePopup(p);
+  if(sheetReturn&&sheetReturn.isConnected)sheetReturn.focus({preventScroll:true});sheetReturn=null;
+}
+map.on('popupopen',async e=>{
+  if(!SHEET_MQ.matches)return;
+  await null;await null; // after loadPhotos has taken hold of its box, and the content is final
+  const src=e.popup.getElement()&&e.popup.getElement().querySelector('.leaflet-popup-content');if(!src||!map.hasLayer(e.popup))return;
+  const el=sheet_(),body=el.querySelector('.body');
+  sheetReturn=document.activeElement&&document.activeElement.closest('.rl')?document.activeElement:null;
+  body.replaceChildren(...src.childNodes);body.scrollTop=0;el.scrollTop=0;sheetPopup=e.popup;
+  // On a phone the pictures come first: photos and the Google links right under the area's name.
+  const head=body.querySelector('.t'),see=body.querySelector('.see'),pics=body.querySelector('.pics');
+  if(head){if(see)head.after(see);if(pics)head.after(pics)}
+  el.hidden=false;document.documentElement.classList.add('sheetOpen');
+  el.focus({preventScroll:true});
+});
+map.on('popupclose',e=>{if(e.popup===sheetPopup)closeSheet(true)});
+map.on('click',()=>closeSheet());
+SHEET_MQ.addEventListener('change',()=>closeSheet());
+
+// Photo viewer: a photo from an area's breakdown, large, with its author and licence and a link to its
+// Commons page; swipe or use the arrows for the others; Escape or × closes it. Phones and desktop.
+let viewer=null,vList=[],vAt=0,vReturn=null;
+function showPhoto(i){
+  vAt=(i+vList.length)%vList.length;const p=vList[vAt];
+  const img=viewer.querySelector('img');img.src=p.big;img.alt=p.title;
+  viewer.querySelector('.vCap').innerHTML='<b>'+safe(p.title)+'</b><br>'+safe(p.credit)+' · <a href="'+safe(p.page)+'" target="_blank" rel="noopener">'+T('View on Wikimedia Commons')+'</a>';
+  viewer.querySelector('.vCount').textContent=vList.length>1?T('Photo {i} of {n}',{i:vAt+1,n:vList.length}):'';
+  viewer.querySelectorAll('.vPrev,.vNext').forEach(b=>b.hidden=vList.length<2);
+}
+function closeViewer(){if(!viewer||viewer.hidden)return;viewer.hidden=true;document.documentElement.classList.remove('viewerOpen');if(vReturn&&vReturn.isConnected)vReturn.focus({preventScroll:true})}
+function openViewer(list,i,from){
+  if(!viewer){
+    viewer=document.createElement('div');viewer.className='viewer';viewer.hidden=true;viewer.setAttribute('role','dialog');viewer.setAttribute('aria-modal','true');viewer.setAttribute('aria-label',T('Photo'));
+    viewer.innerHTML='<button type="button" class="vX" aria-label="'+T('Close')+'">×</button><button type="button" class="vPrev" aria-label="'+T('Previous photo')+'">‹</button>'+
+      '<figure><img alt=""><figcaption><span class="vCount"></span><span class="vCap"></span></figcaption></figure><button type="button" class="vNext" aria-label="'+T('Next photo')+'">›</button>';
+    document.body.append(viewer);
+    viewer.querySelector('.vX').onclick=closeViewer;
+    viewer.querySelector('.vPrev').onclick=()=>showPhoto(vAt-1);
+    viewer.querySelector('.vNext').onclick=()=>showPhoto(vAt+1);
+    viewer.addEventListener('click',e=>{if(e.target===viewer)closeViewer()});
+    let x0=null;
+    viewer.addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});
+    viewer.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)showPhoto(vAt+((dx<0)!==(T.lang==='ar')?1:-1))});
+  }
+  vList=list;vReturn=from;viewer.hidden=false;document.documentElement.classList.add('viewerOpen');showPhoto(i);viewer.querySelector('.vX').focus();
+}
+document.addEventListener('click',e=>{
+  const a=e.target.closest('.pics .strip a[data-big]');if(!a)return;
+  e.preventDefault();
+  const list=[...a.closest('.strip').querySelectorAll('a[data-big]')].map(x=>({big:x.dataset.big,title:x.dataset.title,credit:x.dataset.credit,page:x.href}));
+  openViewer(list,[...a.closest('.strip').querySelectorAll('a[data-big]')].indexOf(a),a);
+});
+addEventListener('keydown',e=>{
+  if(viewer&&!viewer.hidden){if(e.key==='Escape'){e.stopPropagation();closeViewer()}else if(e.key==='ArrowRight')showPhoto(vAt+(T.lang==='ar'?-1:1));else if(e.key==='ArrowLeft')showPhoto(vAt+(T.lang==='ar'?1:-1));return}
+  if(e.key==='Escape')closeSheet();
+},true);
 
 function draw(){
   const q=$('search').value.trim().toLowerCase(),unit=$('unit').value,metric=$('metric').value,min=+$('min').value||0,max=+$('max').value||Infinity;

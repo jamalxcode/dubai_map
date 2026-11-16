@@ -444,7 +444,7 @@
       }
     });
     map.on('popupopen', onPopup);
-    el('map').addEventListener('click', onPopupClick);
+    document.addEventListener('click', onPopupClick); // the map's pop-up, or the phone sheet that shows its content
     let mv;
     map.on('moveend', () => { clearTimeout(mv); mv = setTimeout(() => { const c = map.getCenter(); store.view = { lat: +c.lat.toFixed(4), lng: +c.lng.toFixed(4), z: map.getZoom() }; save(); }, 600); });
   }

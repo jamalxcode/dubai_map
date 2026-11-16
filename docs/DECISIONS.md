@@ -301,6 +301,16 @@ Running "Place unplaced areas" by hand showed two things.
 - **Name check:** OpenStreetMap often tags Dubai places in Arabic only, so the geocoder now asks for English names and compares the English name too.
 - **Al Twar Fifth** (2,480 contracts) stays unplaced: the Municipality list stops at Al Twar Fourth and OpenStreetMap has no such place. No guessing; the freshness check flags it until someone adds a reviewed point or alias (`data/area_locations.csv` or `data/dld_dm_aliases.csv`).
 
+## Decision on 2026-11-16 (twenty-seventh pass): phones and fold phones, especially drilling down
+
+The owner asked for a more phone-friendly page "including the wallet sized screen like the samsung fold" and "especially when drilling down a price and seeing the property related photos". Measured first: at 320 and 344 px the area pop-up (351 px) ran off the screen, covered the map buttons and left the photos as small thumbnails at the bottom.
+
+- **Bottom sheet at 860 px and narrower:** the breakdown slides up from the bottom, full width (capped at 640 px and centred on fold inner screens and phones held sideways), at most 80% of the screen high, scrolling on its own. It closes with ×, a swipe down, Escape or a tap on the map. The Leaflet pop-up stays open but hidden and its content moves into the sheet, so photos and "Check a rent here" keep working without changes; closing one closes the other.
+- **Pictures first on phones:** photos (a swipeable row, about three quarters of the width each, 150-170 px high) and the Google links (large chips) sit right under the area's name, before the figures.
+- **Photo viewer on every screen:** tapping a photo opens it full screen at 960 px with its title, author, licence and Commons link; arrows, swipes and the keyboard move between photos (direction follows the language); Escape or × closes it. Previously a tap left the site.
+- **Narrow screens:** map buttons shrink to 36 px (32 px at 400 px and below), the title to 30 px at 400 px and below.
+- **Checked** at 320 × 640, 344 × 882, 390 × 844, 690 × 830 (fold open) and 844 × 390 (sideways), English and Arabic. The browser check now covers the sheet, the viewer and the 320 and 344 px screens (no sideways scrolling, sheet fits, axe with the sheet open).
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
@@ -343,6 +353,8 @@ Running "Place unplaced areas" by hand showed two things.
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Phones and fold phones: area breakdown as a bottom sheet with photos first, full-screen photo viewer, smaller map buttons; checked down to 320 px.
 
 - 2026-11-16: Fixed the data check that rejected recorded failed look-ups; Al Aryam and Al Waha Villas placed at their DLD areas' official points; geocoder compares English names.
 

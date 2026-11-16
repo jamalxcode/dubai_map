@@ -167,6 +167,22 @@ try {
         `${name}: the breakdown links to Google Maps, Street View and Google photos`);
       check(see.photos.length === 1 && /Test Photographer/.test(see.photos[0]) && /CC BY-SA 4\.0/.test(see.photos[0]),
         `${name}: photos taken nearby show with author and licence, no maps or diagrams (${see.photos.length})`);
+      if (name === 'phone') {
+        const sh = await page.evaluate(() => { const e = document.querySelector('.areaSheet'); const r = e && !e.hidden && e.getBoundingClientRect();
+          return r ? { w: r.width, right: r.right, popupShown: getComputedStyle(document.querySelector('.leaflet-popup') || document.body).display !== 'none' } : null; });
+        check(!!sh && sh.right <= 390 && !sh.popupShown, `phone: the breakdown slides up as a full-width sheet, not a pop-up (${sh && Math.round(sh.w)} px)`);
+      }
+      await page.click('.leaflet-popup-content .pics .strip a');
+      await page.waitForTimeout(200);
+      const v = await page.evaluate(() => { const e = document.querySelector('.viewer'); return e && !e.hidden && { cap: e.querySelector('figcaption').textContent, src: e.querySelector('img').getAttribute('src') }; });
+      check(!!v && /Test Photographer/.test(v.cap) && /Wikimedia Commons/.test(v.cap), `${name}: tapping a photo opens it large with its credit`);
+      await page.keyboard.press('Escape');
+      check(await page.evaluate(() => document.querySelector('.viewer').hidden), `${name}: Escape closes the photo viewer`);
+      if (name === 'phone') {
+        await page.click('.areaSheet .sheetX');
+        await page.waitForTimeout(300); // Leaflet fades the pop-up out before removing it
+        check(await page.evaluate(() => document.querySelector('.areaSheet').hidden && !document.querySelector('.leaflet-popup')), 'phone: × closes the sheet and its pop-up');
+      }
       await page.evaluate(() => map.closePopup());
     }
     // The rent check: a nickname finds the area and shows a figure.
@@ -223,6 +239,18 @@ try {
     check(!english.length, `${name}: no English interface text left${english.length ? ': ' + english.join(' | ') : ''}`);
     check(!errors.length, `${name}: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await axe(page, name);
+    await page.context().close();
+  }
+  // Wallet-sized screens (fold phone covers, small phones): nothing sideways, the sheet fits, buttons stay small.
+  for (const width of [320, 344]) {
+    const { page, errors } = await open(browser, { width, height: 760 });
+    check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${width} px: no sideways scrolling`);
+    await page.evaluate(() => { const a = AREAS.find(x => x.lat != null); L.popup().setLatLng([a.lat, a.lng]).setContent(popup(a)).openOn(map); });
+    await page.waitForTimeout(300);
+    const fit = await page.evaluate(() => { const r = document.querySelector('.areaSheet:not([hidden])')?.getBoundingClientRect(); return r && r.left >= 0 && r.right <= innerWidth; });
+    check(!!fit, `${width} px: the area sheet fits the screen`);
+    check(!errors.length, `${width} px: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await axe(page, `${width} px with the sheet open`);
     await page.context().close();
   }
   const { page } = await open(browser, { width: 1350, height: 900 }, 'dark');

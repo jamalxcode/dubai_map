@@ -123,5 +123,8 @@ A point is a reference for the area, never a building; the page says so. Coordin
 - WCAG 2.1 AA in light, dark and Arabic, checked with axe-core on every push (`tests/ui-check.mjs`).
 - Text on shaded labels uses colours checked by hand for 4.5:1, because axe can't measure text on a gradient.
 - Map labels are keyboard buttons; their spoken name is their visible text.
-- No sideways scrolling on phones. On phones the map starts in the top 60% of the first screen.
+- No sideways scrolling on phones, down to 320 px wide (small phones, fold phone covers). On phones the map starts in the top 60% of the first screen.
+- 860 px and narrower (phones, fold phones open or closed): an area's breakdown is a bottom sheet, full width up to 640 px, at most 80% of the screen high, photos and Google links first; it closes with ×, a swipe down, Escape or a tap on the map. Wider screens keep the pop-up.
+- Photos open in a full-screen viewer (all screens) at 960 px, with author, licence and a link to the photo's Commons page; swipe or arrows for the others.
+- Map buttons shrink on narrow screens (36 px at 860 px and below, 32 px at 400 px and below).
 - Page assets carry `?v=__BUILD__`, replaced with the commit on deploy, so a browser never mixes a new page with old files.

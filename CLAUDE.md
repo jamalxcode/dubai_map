@@ -45,6 +45,7 @@ Standard-library Python only (3.12 in CI). Node 22 for tests.
 - CSS uses logical properties (`margin-inline-end`, `inset-inline-start`, `text-align:start`) so Arabic mirrors; the map container stays left to right.
 - The base map is MapLibre vector tiles (OpenFreeMap) under Leaflet, loaded after the data; `NAME_FIELD` in `atlas.js` sets the language of its names. The classic OSM raster is the fallback; keep both paths working. Tests serve a local stub style, never the real service.
 - Area breakdowns link out to Google (Maps URLs, no key) and show Wikimedia Commons photos with author and licence. Never copy or embed images from Google Images; tests stub Commons.
+- At 860 px and below an area's breakdown is a bottom sheet: the Leaflet pop-up stays open but hidden (CSS) and its content is moved into `.areaSheet`; code that reads pop-up content must also work there (`.leaflet-popup-content` class is kept on the sheet body). Test narrow screens at 320 and 344 px.
 - Label rules go in `labels.js` (no DOM) with a test in `tests/labels.test.mjs`; no two labels may overlap.
 - Shaded label text was contrast-checked by hand (axe can't measure gradients): keep those colours or recheck 4.5:1.
 - Keep the GoatCounter snippet in `index.html` (endpoint `https://salacompany.goatcounter.com/count`, shared with Flattery). Count features only, nothing personal.
