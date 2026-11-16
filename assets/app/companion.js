@@ -172,7 +172,7 @@
     out.innerHTML = `
       <div class="ck-answer">
         <p class="ck-what">${esc(what)} in <b>${esc(area.label)}</b></p>
-        <p class="ck-big">${aed(f.median)} <span>a year</span></p>
+        <p class="ck-big"><i class="pie" aria-hidden="true" style="--p:${Math.min(100, Math.round(f.median / 1000))}%"></i>${aed(f.median)} <span>a year</span></p>
         <p class="muted">${f.n == null
           ? `Median for this home type, ${area.through ? 'to ' + dateText(area.through) : period}. Source: Continental Club Property (CC BY 4.0), which gives ${plural(area.n, 'contract')} for the whole area but no count per home type.`
           : `${isTypical ? 'Typical' : 'Median'} of ${plural(f.n, 'contract')}, ${period}.`}${savedIdx >= 0 ? ' <span class="tag">Saved</span>' : ''}</p>

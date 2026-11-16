@@ -228,6 +228,14 @@ From the second critique (items 2 and 4):
 - **Browser check in CI** (`tests/ui-check.mjs`, Chromium via Playwright, axe-core), on every push and pull request against the real data: rent labels shown, no overlaps (start and zoom 13), no sideways scrolling, International City named at zoom 13, the phone map in the top 60% of the first screen, Enter on a label opens it, the rent check answers "jvc", no script errors, no serious/critical WCAG 2.1 AA problems in light and dark mode. Map tiles are not loaded during the check.
 - Its first run found three real problems, fixed: the keyboard labels' spoken names didn't match their visible text (WCAG 2.5.3; they now use the visible text), the rents table couldn't be scrolled by keyboard (now a focusable, named region), and the dark-mode "Download CSV" button had too little contrast.
 
+## Decision on 2026-11-16 (eighteenth pass): map pane, zoom controls, rent dial
+
+The owner found the map reads better tall than wide.
+- **Two panes from 1100 px:** a CSS grid with the map pane (`position: sticky`, full window height) on the right and everything else in a scrolling left pane (`minmax(420px, 34vw)`). The markup is now `.layout > .pane + .mapPane`; below 1100 px `.pane` uses `display: contents` and `order` keeps the old reading order (title, rent check, filters, warning, map, figures, table), so phones are unchanged except that the map starts higher (38% of the first screen, from 51%).
+- **Zoom:** 40 px + / − buttons and an "All Dubai" control (fits all placed areas, leaving out far-off Hatta). Rejected: fitting all of Dubai on first load; at common laptop widths it lands on zoom 10, where 19 readable labels merge into 8 groups.
+- **Rent dial:** a CSS conic-gradient pie next to every rent figure, filling to 100% at AED 100k (most medians sit below that; higher rents show a full dial). Decorative (`aria-hidden`); the number stays the information. Only for rents, not counts, yields or AED/m².
+- The browser check now also covers: the map pane is full height on the right and stays put while the left pane scrolls, labels show the dial, + zooms in, "All Dubai" brings the city back.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -266,6 +274,8 @@ From the second critique (items 2 and 4):
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Two-pane layout on wide screens (map full height on the right), zoom controls with All Dubai, AED 100k rent dial.
 
 - 2026-11-16: Freshness check every 6 hours; browser check (Playwright + axe) in CI; three accessibility fixes it found.
 

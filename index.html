@@ -106,7 +106,6 @@ button,input,select{font:inherit;color:inherit}
 .stale .x{position:absolute;right:10px;top:8px;border:0;background:none;font-size:22px;line-height:1;cursor:pointer;padding:4px 6px}
 
 /* Map */
-.mapArea{padding-top:20px}
 .mapWrap{position:relative;height:72vh;height:72svh;min-height:420px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 #map{position:absolute;inset:0;background:var(--map-bg)}
 .leaflet-tile-pane{filter:var(--tiles)}
@@ -184,7 +183,6 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .stale{padding:10px 36px 10px 46px;font-size:14px;margin-bottom:10px}
   .stale::before{left:12px;top:10px;width:22px;height:22px}.stale::after{left:12px;top:15px;width:22px;font-size:14px}
   .stale .more{display:none}
-  .mapArea{padding-top:12px}
   .big{text-align:left}
   .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
   .controls .seg{width:100%;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
@@ -207,11 +205,48 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .scrim{display:block;position:fixed;inset:0;z-index:1002;background:rgba(31,37,43,.45);opacity:0;pointer-events:none}
   .scrim.on{pointer-events:auto}
 }
+/* Layout. Narrower than 1100px: one column, in this order (the map right after the filters).
+   1100px and wider: two panes, everything else scrolls on the left, the map fills the window height on the right. */
+.layout{display:flex;flex-direction:column}
+.pane{display:contents}
+.pane>.band{order:1}.pane>#companion{order:2}.pane>.controls{order:3}.pane>.staleWrap{order:4}.mapPane{order:5}.pane>main{order:6}
+.staleWrap .stale{margin-top:16px}
+.mapPane{padding-top:12px}
+@media (min-width:1100px){
+  .layout{display:grid;grid-template-columns:minmax(420px,34vw) minmax(0,1fr);align-items:start}
+  .pane{display:block;min-width:0}
+  .pane .wrap{max-width:none;padding-left:24px;padding-right:24px}
+  .band .wrap{grid-template-columns:1fr;gap:14px;padding-top:58px;padding-bottom:24px}
+  .band h1{font-size:48px}
+  .big{text-align:left}
+  .big .num{font-size:58px}
+  .controls .wrap{gap:12px}
+  .pane .sheet{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
+  .pane .sheet .f-search{grid-column:1/-1}
+  .facts{grid-template-columns:1fr 1fr}
+  .about .wrap{grid-template-columns:1fr;gap:28px}
+  .mapPane{position:sticky;top:0;height:100vh;height:100svh;padding:0}
+  .mapPane .wrap{max-width:none;padding:0;height:100%}
+  .mapPane .mapWrap{height:100%;min-height:0;border-radius:0;border:0;border-left:1px solid var(--line)}
+}
+/* Zoom controls: larger targets, plus "All Dubai" to get back to the whole city. */
+.leaflet-control-zoom a,.leaflet-bar a.fit{width:40px!important;height:40px!important;line-height:40px!important;font-size:22px!important}
+.leaflet-bar a.fit{font:600 13px/40px var(--body)!important;width:auto!important;padding:0 10px;white-space:nowrap}
+/* Rent dial: fills as the rent approaches AED 100k (full at 100k or more), for a quick read at a glance. */
+.pie{display:inline-block;width:.78em;height:.78em;border-radius:50%;margin-right:.32em;vertical-align:-.06em;flex:none;
+  background:conic-gradient(var(--pie,var(--sign)) var(--p,0%),var(--pie-track,rgba(31,37,43,.16)) 0)}
+.rl.grp .pie,.band .pie{--pie:#fff;--pie-track:rgba(255,255,255,.32)}
+:root[data-theme="dark"] .rl:not(.grp) .pie{--pie:#80AAE6;--pie-track:rgba(255,255,255,.18)}
+.pie[hidden]{display:none}
+.big .pie{width:.62em;height:.62em;align-self:center;margin-right:.18em}
+.legend .note .pie{font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <link rel="stylesheet" href="assets/app/companion.css">
 </head>
 <body>
+<div class="layout">
+<div class="pane">
 <header class="band">
   <button class="theme" id="theme" type="button" aria-label="Switch to dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Dark</span></button>
   <div class="wrap">
@@ -220,7 +255,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
       <p>What tenants <b>actually pay</b> per year, from rent contracts registered in Ejari with the Dubai Land Department. Not asking prices.</p>
     </div>
     <div class="big" aria-live="polite">
-      <span class="num" id="med" aria-label="—">—</span>
+      <span class="num"><i class="pie" id="medPie" aria-hidden="true" hidden></i><span id="med" aria-label="—">—</span></span>
       <span class="cap" id="medLabel">Average yearly rent in view</span>
     </div>
   </div>
@@ -244,21 +279,18 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   </div>
 </nav>
 
+<div class="wrap staleWrap">
+<div class="stale" id="stale" role="status"><span id="staleText"></span><button class="x" id="staleX" type="button" aria-label="Hide this warning">×</button></div>
+</div>
+
 <main>
-  <section class="mapArea">
-    <div class="wrap">
-      <div class="stale" id="stale" role="status"><span id="staleText"></span><button class="x" id="staleX" type="button" aria-label="Hide this warning">×</button></div>
-      <div class="mapWrap" data-lenis-prevent>
-        <div id="map" role="region" aria-label="Map of yearly rents by area"></div>
-        <div class="legend" id="legend" hidden></div>
-      </div>
-      <dl class="facts">
-        <div><dt>Contracts, last 12 months</dt><dd id="n12">—</dd></div>
-        <div><dt>Placed on the map</dt><dd id="mapped">—</dd></div>
-        <div><dt id="newestLabel">Newest contract start</dt><dd id="newest">—</dd></div>
-        <div><dt>Data</dt><dd id="fresh">—</dd></div>
-      </dl>
-    </div>
+  <section class="wrap factsArea" aria-label="Key figures">
+    <dl class="facts">
+      <div><dt>Contracts, last 12 months</dt><dd id="n12">—</dd></div>
+      <div><dt>Placed on the map</dt><dd id="mapped">—</dd></div>
+      <div><dt id="newestLabel">Newest contract start</dt><dd id="newest">—</dd></div>
+      <div><dt>Data</dt><dd id="fresh">—</dd></div>
+    </dl>
   </section>
 
   <section class="wrap" aria-labelledby="tableTitle">
@@ -291,6 +323,17 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   </section>
   <footer class="wrap" id="foot"></footer>
 </main>
+</div><!-- /pane -->
+
+<section class="mapPane" aria-label="Map">
+  <div class="wrap">
+    <div class="mapWrap" data-lenis-prevent>
+        <div id="map" role="region" aria-label="Map of yearly rents by area"></div>
+        <div class="legend" id="legend" hidden></div>
+    </div>
+  </div>
+</section>
+</div><!-- /layout -->
 <button class="fab" id="openSheet" type="button" aria-controls="side">Filters</button>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -341,6 +384,18 @@ function odometer(el,value,prefix){
 const map=L.map('map',{zoomControl:true,attributionControl:true}).setView([25.13,55.27],11);
 // A small merged label (2-3 areas) names its busiest area, e.g. "International City Phase 1 +1", so nearby
 // places stay findable by name when zoomed in; bigger groups cover a region and just count their areas.
+// Rent dial: share of AED 100k (full at 100k or more). Only for rents, not counts or yields.
+const PIE_MAX=100000;
+const pie=(v,metric)=>metric==='median'&&v>0?'<i class="pie" aria-hidden="true" style="--p:'+Math.min(100,Math.round(v/PIE_MAX*100))+'%"></i>':'';
+// "All Dubai": back to the whole city (placed areas, leaving out far-off Hatta so the city isn't a dot).
+function fitDubai(animate){const pts=(CACHE.homes||AREAS).filter(x=>x.lat!=null&&x.lng<55.7).map(x=>[x.lat,x.lng]);
+  if(pts.length)map.fitBounds(pts,{padding:[30,30],animate:!!animate})}
+L.Control.Fit=L.Control.extend({options:{position:'topleft'},onAdd(){
+  const d=L.DomUtil.create('div','leaflet-bar'),a=L.DomUtil.create('a','fit',d);
+  a.href='#';a.role='button';a.textContent='All Dubai';a.title='Show all of Dubai';
+  L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);fitDubai(true)});
+  L.DomEvent.disableClickPropagation(d);return d}});
+new L.Control.Fit().addTo(map);
 const groupName=g=>{if(g.length>3)return g.length+' areas';const top=g.reduce((a,b)=>b.n>a.n?b:a,g[0]).a.label;
   return (top.length>22?top.slice(0,21)+'…':top)+' +'+(g.length-1)};
 // OpenStreetMap tile usage policy: this exact HTTPS URL, visible attribution, no bulk or offline use.
@@ -358,14 +413,14 @@ function renderLabels(){
     const val=metric==='n'?N:members.reduce((s,o)=>s+o.v*w(o),0);
     const lat=members.reduce((s,o)=>s+o.a.lat*w(o),0),lng=members.reduce((s,o)=>s+o.a.lng*w(o),0);
     const single=members.length===1,top=labelText(val,metric)+(single||metric==='n'?'':' avg'),sub=single?members[0].a.label:groupName(members);
-    return {members,N,val,lat,lng,single,px:map.latLngToLayerPoint([lat,lng]),w:Math.max(top.length*8.4,Math.min(sub.length,26)*5.8)+26,h:38};};
+    return {members,N,val,lat,lng,single,px:map.latLngToLayerPoint([lat,lng]),w:Math.max(top.length*8.4+(metric==='median'?14:0),Math.min(sub.length,26)*5.8)+26,h:38};};
   const hit=(a,b)=>Math.abs(a.px.x-b.px.x)*2<a.w+b.w+PAD&&Math.abs(a.px.y-b.px.y)*2<a.h+b.h+PAD;
   let cl=POINTS.map(p=>make([p])),again=true;
   while(again){again=false;cl.sort((x,y)=>y.N-x.N);
     outer:for(let i=0;i<cl.length;i++)for(let k=i+1;k<cl.length;k++)if(hit(cl[i],cl[k])){cl[i]=make(cl[i].members.concat(cl[k].members));cl.splice(k,1);again=true;break outer}}
   const added=[];
   for(const c of cl){const g=c.members;
-    const html='<div class="rl'+(c.single?'':' grp')+'" style="--c:'+colorOf(c.val)+'" tabindex="0"><b>'+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">avg</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
+    const html='<div class="rl'+(c.single?'':' grp')+'" style="--c:'+colorOf(c.val)+'" tabindex="0"><b>'+pie(c.val,metric)+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">avg</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
     const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
     // Keyboard: the label is a button. Enter or Space opens its breakdown, or zooms into a group.
@@ -390,10 +445,11 @@ function viewStat(){
   const metric=LABEL.metric,b=map.getBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0);
   const what=metric==='n'?'Contracts':metric==='median_sqm'?'Average rent per m² ':metric==='yield'?'Average gross yield':'Average yearly rent';
   $('medLabel').textContent=what+' in view'+(vis.length?' · '+vis.length+' areas, '+($('unit').value||TYPENAME()).toLowerCase():'');
-  if(!vis.length||!N){odometer($('med'),null);
+  if(!vis.length||!N){odometer($('med'),null);$('medPie').hidden=true;
     const perUnitOnly=!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'&&a.lat!=null&&b.contains([a.lat,a.lng]));
     $('medLabel').textContent=perUnitOnly?'Areas here have figures per unit only: pick a unit (e.g. 1 bed) to see them.':'Nothing to show here for '+TYPENAME().toLowerCase()+'. Zoom out to see more.';return}
   const v=metric==='n'?N:vis.reduce((s,p)=>s+p.v*p.n,0)/N;
+  const mp=$('medPie');mp.hidden=metric!=='median';mp.style.setProperty('--p',Math.min(100,Math.round(v/PIE_MAX*100))+'%');
   if(metric==='yield'){$('med').textContent=v.toFixed(1)+'%';$('med')._sig=null;return}
   odometer($('med'),metric==='n'?v:Math.round(v/(metric==='median_sqm'?1:100))*(metric==='median_sqm'?1:100),metric==='n'?'':'AED ');
 }
@@ -514,6 +570,7 @@ function draw(){
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
   $('legend').innerHTML='<div class="t">'+(metric==='n'?'Contracts':metric==='yield'?'Gross yield':metric==='median_sqm'?'Rent per m²':AREAS.some(a=>a.median_kind==='typical')?'Typical yearly rent':'Median yearly rent')+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?f(vals[0]):'')+'</span><span>'+(vals.length?f(vals.at(-1)):'')+'</span></div>';
+  if(metric==='median')$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%"></i>Dial fills up to AED 100k</div>');
   if(!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">Older districts (no all-homes median): pick a unit to see them</div>');
   const inArea=AREAS.filter(match);
   odometer($('n12'),inArea.reduce((s,a)=>s+a.n,0));odometer($('mapped'),shown.reduce((s,a)=>s+a.n,0));

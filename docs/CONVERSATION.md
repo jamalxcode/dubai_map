@@ -131,6 +131,10 @@ Critique, ranked: (1) the map mixed two measures after the older districts arriv
 
 A freshness check every 6 hours that fails (so GitHub emails) when data, pulls, deploys, sources or cross-checks go wrong, and a Chromium + axe-core page check in CI against the real data. The page check's first run found three real accessibility problems (label names, a table that couldn't be scrolled by keyboard, a low-contrast dark-mode button), now fixed.
 
+### ~16:15 · "dubai rent areas map can be better seen as a vertical larger window … make the map cover top to bottom on right side … inputs as a leftmost pane … add controls for zooming … a pie chart sort of indicator next to the number that maxes at 100k"
+
+Wide screens now have two panes: the map full height on the right (it stays put), the rest scrolling on the left; phones keep their order. Larger zoom buttons plus "All Dubai". A small dial next to every rent fills up to AED 100k. Fitting the whole city on first load was tried and dropped (labels merged into too few groups).
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

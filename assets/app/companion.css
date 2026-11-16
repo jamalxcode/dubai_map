@@ -88,3 +88,12 @@
 :root[data-theme="dark"] .btn:hover{background:#8EB6F0;color:#171C21}
 :root[data-theme="dark"] .btn.primary{color:var(--on-sign);border-color:var(--sign);background:var(--sign)}
 :root[data-theme="dark"] .btn.primary:hover{background:var(--sign-ink);border-color:var(--sign-ink)}
+/* Rent dial in the rent check (style in index.html): share of AED 100k */
+.ck-big .pie{width:.6em;height:.6em;vertical-align:.02em;margin-right:.2em}
+@media (min-width:1100px){
+  .ck-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .ck-form .ck-area{grid-column:1/-1}
+  .ck-form .btn{grid-column:1/-1}
+  .ck-remind,.set-grid{grid-template-columns:1fr}
+  .mine-list{grid-template-columns:1fr}
+}

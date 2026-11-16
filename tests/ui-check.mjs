@@ -81,6 +81,25 @@ try {
     check(start.labels >= 10, `${name}: map shows rent labels (${start.labels})`);
     check(start.overlaps === 0, `${name}: no labels overlap at the start (${start.overlaps})`);
     check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${name}: no sideways scrolling`);
+    if (name === 'desktop') {
+      const pane = await page.evaluate(() => { const r = document.querySelector('.mapWrap').getBoundingClientRect(); return { left: r.left, top: r.top, h: r.height / innerHeight }; });
+      check(pane.left >= 400 && pane.top <= 1 && pane.h >= 0.98, `desktop: map is a full-height pane on the right (left ${Math.round(pane.left)} px, ${Math.round(pane.h * 100)}% high)`);
+      await page.evaluate(() => scrollTo(0, 1500));
+      const still = await page.evaluate(() => document.querySelector('.mapWrap').getBoundingClientRect().top);
+      check(Math.abs(still) <= 1, 'desktop: the map pane stays in place while the left pane scrolls');
+      await page.evaluate(() => scrollTo(0, 0));
+    }
+    const pies = await page.evaluate(() => document.querySelectorAll('.rl .pie').length);
+    check(pies >= 10, `${name}: rent labels show the AED 100k dial (${pies})`);
+    const z0 = await page.evaluate(() => map.getZoom());
+    await page.click('.leaflet-control-zoom-in');
+    await page.waitForTimeout(400);
+    check(await page.evaluate(() => map.getZoom()) === z0 + 1, `${name}: the + zoom button zooms in`);
+    await page.evaluate(() => map.setView([24.5, 54.3], 8, { animate: false }));
+    await page.click('.leaflet-bar a.fit');
+    await page.waitForTimeout(500);
+    const fit = await page.evaluate(() => ({ z: map.getZoom(), c: map.getCenter() }));
+    check(fit.z >= 9 && fit.c.lng > 55 && fit.c.lng < 55.5, `${name}: "All Dubai" brings the whole city back (zoom ${fit.z})`);
     if (name === 'phone') {
       const top = await page.evaluate(() => document.querySelector('.mapWrap').getBoundingClientRect().top / innerHeight);
       check(top < 0.6, `phone: the map starts in the top 60% of the first screen (${Math.round(top * 100)}%)`);

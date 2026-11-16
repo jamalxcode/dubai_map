@@ -19,6 +19,9 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 - **Table:** the newest contracts, downloadable as CSV.
 - **Warning:** a yellow sign appears if the data is older than it should be.
 - **Phone:** map first; filters slide up from a button.
+- **Wide screens (1100 px and up):** two panes: the map fills the window height on the right and stays put; the title, rent check, filters, figures and table scroll in a pane on the left. Below 1100 px the page is one column with the map right after the filters.
+- **Zoom:** larger + and − buttons and an **All Dubai** button that brings the whole city back.
+- **Rent dial:** a small pie next to every rent (map labels, the headline, the rent check) that fills as the rent approaches AED 100k (full at 100k or more), for a reading at a glance.
 
 Every DLD area is placed at a reference point **inside its official Dubai Municipality community** (not on a building); see "Placing areas on the map".
 
