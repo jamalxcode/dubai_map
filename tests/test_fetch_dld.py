@@ -45,7 +45,9 @@ class FakeService:
 
 
 class DldTests(TempData):
-    def run_day(self, svc, today=TODAY, env=None, max_pages=70):
+    def run_day(self, svc, today=TODAY, env=None, max_pages=70, after_hours=None):
+        if after_hours and os.path.exists(os.path.join(self.tmp, "state.json")):
+            self.later(after_hours)
         client = fetch_dld.Client(max_pages=max_pages, pause=0, sleep=lambda s: None)
         client.post = lambda cmd, p: svc.post(client, cmd, p)
         with mock.patch.object(store, "today_dubai", return_value=today), \
@@ -65,19 +67,23 @@ class DldTests(TempData):
         self.assertFalse(st["backfill_complete"])
         days = [TODAY.replace(day=11), TODAY.replace(day=12)]
         for d in days:
-            st = self.run_day(svc, today=d)
+            st = self.run_day(svc, today=d, after_hours=24)
         self.assertEqual(st["months_done"], ["2026-01", "2026-02", "2026-03"])
         self.assertTrue(st["backfill_complete"])
         self.assertEqual(len(list(store.iter_all())), len(rows))
 
-    def test_once_per_day_and_force(self):
+    def test_at_most_every_six_hours_and_force(self):
         svc = FakeService([row("2026-03-09")])
         self.run_day(svc)
         n = len(svc.calls)
         self.run_day(svc)
-        self.assertEqual(len(svc.calls), n, "a second run the same day must not contact DLD")
+        self.assertEqual(len(svc.calls), n, "a duplicate start minutes later must not contact DLD")
+        st = self.run_day(svc, after_hours=7)
+        self.assertEqual(len(svc.calls), n + 1, "7 hours later, same day: the recent window only (one page)")
+        self.assertEqual(st["state"], "ok")
+        self.assertEqual(st["months_done"], ["2026-03"], "no second back-fill the same day")
         self.run_day(svc, env={"FORCE": "1"})
-        self.assertGreater(len(svc.calls), n)
+        self.assertGreater(len(svc.calls), n + 1)
 
     def test_page_cap_stops_politely_and_resumes_tomorrow(self):
         svc = FakeService([row("2026-03-09")])

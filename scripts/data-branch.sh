@@ -4,7 +4,8 @@
 #   scripts/data-branch.sh load            copy the data branch's files into ./data
 #                                          (plain files: git's index is not touched)
 #   scripts/data-branch.sh save "message"  commit ./data's generated files to the data
-#                                          branch and push; reports changed=true|false
+#                                          branch and push; reports changed=true|false,
+#                                          true only when a file the page loads changed
 #                                          (also as a step output under GitHub Actions)
 #
 # Generated (data branch): build output, source state, the contract archive, the
@@ -15,8 +16,9 @@ shopt -s nullglob
 cd "$(git rev-parse --show-toplevel)"
 
 BRANCH=${DATA_BRANCH:-data}
+PAGE_FILES=(data/areas.json 'data/areas_*.json' data/latest.json data/meta.json)
 GENERATED=(data/areas.json data/areas_*.json data/latest.json data/meta.json data/state.json
-           data/contracts data/datadubai data/osm_area_points.csv data/dm_communities.csv)
+           data/contracts data/datadubai data/crosscheck data/osm_area_points.csv data/dm_communities.csv)
 
 # Tell the workflow whether anything changed (step output `changed`), and say it in the log.
 result() {
@@ -58,13 +60,17 @@ save() {
     if git diff --cached --quiet; then
       echo "no data changes"; result false; exit 0
     fi
+    # Redeploy only when a file the page loads changed. Source state (state.json, the
+    # mirrors) is saved on every run (the 6-hour gap between pulls depends on it) but
+    # doesn't need a new deploy.
+    if git diff --cached --quiet -- "${PAGE_FILES[@]}"; then page=false; else page=true; fi
     git commit -qm "$msg"
     # Another job may have saved meanwhile: put our commit on top of theirs and retry.
     # (cherry-pick, not rebase: in a shallow clone rebase can't find the common parent.)
     mine=$(git rev-parse HEAD)
     for i in 1 2 3; do
       if git push -q origin "HEAD:refs/heads/$BRANCH"; then
-        echo "saved to $BRANCH @ $(git rev-parse --short HEAD)"; result true; exit 0
+        echo "saved to $BRANCH @ $(git rev-parse --short HEAD) (page files changed: $page)"; result "$page"; exit 0
       fi
       sleep $((i * 5))
       git fetch -q --depth=1 origin "$BRANCH" && git reset -q --hard FETCH_HEAD && git cherry-pick "$mine" >/dev/null

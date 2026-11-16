@@ -12,6 +12,7 @@ from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import crosscheck  # noqa: E402
 import fetch_datadubai  # noqa: E402
 import state as st  # noqa: E402
 import store  # noqa: E402
@@ -153,7 +154,7 @@ def main():
         "newest_start_date": newest or None,
         "property_types": [{"key": t, "label": lbl, "n": counts.get(t, 0)} for t, lbl in PROPERTY_TYPES],
         "unmatched_areas": [{"area": k, "n": v} for k, v in unmatched.most_common(60)],
-        "state": state, "sources": source_status(state),
+        "state": public_state(state), "sources": source_status(state) + crosscheck.compare(areas, state),
         "source": "Dubai Land Department Ejari rent contracts (open data)",
     }
     publish(files)
@@ -166,6 +167,14 @@ def _num(s):
         return float(s) if s not in ("", None) else None
     except ValueError:
         return None
+
+
+def public_state(state):
+    """Source state for meta.json without run timestamps (*_at): those change on every run
+    (three a day) and would otherwise make unchanged rents look like new data."""
+    if isinstance(state, dict):
+        return {k: public_state(v) for k, v in state.items() if not k.endswith("_at")}
+    return state
 
 
 def source_status(state, own=None):
@@ -251,8 +260,8 @@ def build_aggregate(now, state, own=None):
         "contracts_last_12m": total, "mapped_last_12m": sum(a["n"] for a in areas if a["lat"] is not None),
         "n_areas": len(areas),
         "newest_start_date": through, "data_through": through,
-        "unmatched_areas": sorted(unplaced, key=lambda x: -x["n"]), "state": state,
-        "sources": source_status(state, own or {}),
+        "unmatched_areas": sorted(unplaced, key=lambda x: -x["n"]), "state": public_state(state),
+        "sources": source_status(state, own or {}) + crosscheck.compare(areas, state),
         "property_types": [{"key": t, "label": lbl, "n": counts[t]} for t, lbl in PROPERTY_TYPES if t in counts],
         "source": "Dubai Data (datadubai.ae), Continental Club Property, based on Dubai Land "
                   "Department open data (Ejari)" + (f", data through {through}" if through else "") +

@@ -75,13 +75,14 @@ class LiveTests(TempData):
         with open(os.path.join(self.tmp, "state.json")) as f:
             self.assertEqual(json.load(f)["datadubai"]["state"], "failed")
 
-    def test_once_a_day_and_nothing_when_already_current(self):
+    def test_at_most_every_six_hours_and_nothing_when_already_current(self):
         self.run_main()
         n = len(self.calls)
         self.run_main()
-        self.assertEqual(len(self.calls), n, "no requests on a second run the same day")
-        self.run_main(today="2026-11-17")
-        self.assertEqual(len(self.calls), n + 1, "next day: only rents.json, since nothing newer was published")
+        self.assertEqual(len(self.calls), n, "no requests on a duplicate start minutes later")
+        self.later(7)
+        self.run_main()
+        self.assertEqual(len(self.calls), n + 1, "7 hours later: only rents.json, since nothing newer was published")
 
     def test_switch_off(self):
         self.run_main(env={"DATADUBAI_LIVE": "0"})

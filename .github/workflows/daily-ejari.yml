@@ -1,21 +1,26 @@
-name: Daily Ejari pull
+name: Daily Ejari pull   # runs three times a day; the name is kept so existing links and triggers still work
 
-# Once a day at 05:17 Kuwait time (02:17 UTC). Sources, in order:
+# Three times a day (see the schedule below). Sources, in order:
 #   1. DLD open-data service (OFF until DLD gives written permission;
 #      then set repo variable DLD_ENABLED=1)  collector/fetch_dld.py
 #   2. Dubai Pulse API (Dubai open-data licence, free key)  collector/fetch_ejari.py
 #   3. Dubai Data community medians (CC BY 4.0)             collector/fetch_datadubai.py
 #   4. Manual CSV in data/inbox/ (always imported)
-# Each collector refuses to contact its source more than once per Dubai
-# calendar day, so manual re-runs are safe. The data lives on the `data` branch
+#   +  Cross-check pages (dubairealestatedata.com, continentalclub.ae), compared, never shown
+#      instead of ours                                     collector/fetch_crosscheck.py
+# Each collector waits at least 6 hours between pulls of its source (the heavier
+# daily extras run on the first pull of a Dubai day only), so re-runs are safe. The data lives on the `data` branch
 # (scripts/data-branch.sh); the site is redeployed only when the data changed.
 on:
   schedule:
-    - cron: "17 2 * * *"
+    # 05:17, 13:17 and 21:17 Kuwait. cron-job.org starts it at these times through GitHub's API
+    # (GitHub's own schedule runs hours late); this schedule is the backup. A duplicate start
+    # minutes later does nothing: each source waits at least 6 hours between pulls.
+    - cron: "17 2,10,18 * * *"
   workflow_dispatch:
     inputs:
       force:
-        description: "Pull again even if already pulled today (use sparingly)"
+        description: "Pull again even if a source was pulled less than 6 hours ago (use sparingly)"
         type: boolean
         default: false
       allow_shrink:
@@ -45,14 +50,14 @@ jobs:
         with: { python-version: "3.12" }
       - name: Load the current data (data branch)
         run: scripts/data-branch.sh load
-      - name: "DLD open-data service (only if DLD_ENABLED=1, once per day)"
+      - name: "DLD open-data service (only if DLD_ENABLED=1, at most every 6 hours)"
         continue-on-error: true  # a failing source must not stop the backups or the build
         env:
           DLD_ENABLED: ${{ vars.DLD_ENABLED }}
           DLD_DISABLED: ${{ vars.DLD_DISABLED }}
           FORCE: ${{ inputs.force && '1' || '0' }}
         run: python3 collector/fetch_dld.py
-      - name: "Dubai Pulse API (if keys are set and the DLD service didn't run today) + inbox import"
+      - name: "Dubai Pulse API (if keys are set, at most every 6 hours, unless the DLD service just ran) + inbox import"
         continue-on-error: true  # a failing source must not stop the backups or the build
         env:
           DUBAI_PULSE_KEY: ${{ secrets.DUBAI_PULSE_KEY }}
@@ -64,6 +69,9 @@ jobs:
       - name: "Backup: Dubai Data community medians (Hugging Face, then GitHub)"
         continue-on-error: true  # a failing source must not stop the backups or the build
         run: python3 collector/fetch_datadubai.py
+      - name: "Cross-check: dubairealestatedata.com and continentalclub.ae rent pages (at most once a day)"
+        continue-on-error: true  # a check, never a reason to stop the build
+        run: python3 collector/fetch_crosscheck.py
       - name: Build map data (refuses to publish a much smaller catalog than the last one)
         env:
           ALLOW_SHRINK: ${{ inputs.allow_shrink && '1' || '0' }}

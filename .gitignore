@@ -9,5 +9,6 @@ __pycache__/
 /data/state.json
 /data/contracts/
 /data/datadubai/
+/data/crosscheck/
 /data/osm_area_points.csv
 /data/dm_communities.csv

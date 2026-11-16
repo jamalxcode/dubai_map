@@ -7,7 +7,7 @@ contract history (Dubai Pulse API, or the DLD service if enabled) covers most of
 table is also used to place DLD areas on the map.
 
 Freshest first. Dubai Data rebuilds its website daily (data a few days behind
-DLD), but its CSV export is only weekly and can stall. So, once a day:
+DLD), but its CSV export is only weekly and can stall. So, at most every 6 hours:
 
   1. Live: datadubai.ae/rents.json lists every community's median rent; if its
      "through" date is newer than ours, each community's own JSON page
@@ -16,7 +16,8 @@ DLD), but its CSV export is only weekly and can stall. So, once a day:
      Static JSON the site publishes for reuse ("free static JSON for every page,
      no key"); its robots.txt allows these paths. One request a second, at most
      once a day, honest User-Agent. All-or-nothing: if any page fails, the
-     previous files are kept and the weekly export is used instead.
+     previous files are kept and the weekly export is used instead. The index is
+     one small request; the community pages are read only when its date moves on.
   2. Weekly export: Hugging Face, then the GitHub mirror if Hugging Face fails.
      Skipped (except projects.csv, which only the export has) when step 1 is current.
 
@@ -103,15 +104,15 @@ def main(sleep=time.sleep):
 def fetch_live(block, sleep=time.sleep):
     """Rebuild the four CSVs the build reads from datadubai.ae's JSON pages.
     Returns 'updated' or 'current'. Raises on any failure; nothing is written then."""
-    if block.get("live_checked") == store.today_dubai().isoformat() and os.environ.get("FORCE") != "1":
-        return "current (already checked today)"
+    if not source_state.due(block, "live_checked_at") and os.environ.get("FORCE") != "1":
+        return f"current (checked {source_state.hours_since(block, 'live_checked_at'):.1f} h ago)"
     index = net.get_json(LIVE + "/rents.json", attempts=2, source="datadubai")
     through = index.get("through", "")
     comms = index.get("communities") or []
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", through) or len(comms) < MIN_COMMUNITIES:
         raise ValueError(f"rents.json looks wrong (through={through!r}, {len(comms)} communities)")
     if through <= (data_through() or ""):
-        block["live_checked"] = store.today_dubai().isoformat()
+        block["live_checked_at"] = source_state.now_iso()
         return "current"
     rents, beds, info, areas = [], [], [], {}
     for i, c in enumerate(comms):
@@ -152,7 +153,7 @@ def fetch_live(block, sleep=time.sleep):
                 "n_rents", "top_area"], info)
     _merge_areas(os.path.join(out, "areas.csv"), areas)
     _set_readme_through(os.path.join(out, "README.md"), through)
-    block["live_checked"] = store.today_dubai().isoformat()
+    block["live_checked_at"] = source_state.now_iso()
     block["through"] = through
     return "updated"
 

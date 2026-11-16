@@ -15,6 +15,7 @@ Code compares `state`, never the wording of `status`.
 """
 import json
 import os
+from datetime import datetime, timezone
 
 import store
 
@@ -38,6 +39,32 @@ def save(state):
     with open(path(), "w", encoding="utf-8") as f:
         json.dump(state, f, indent=2, sort_keys=True)
         f.write("\n")
+
+
+# The site pulls three times a day (cron-job.org, with GitHub's schedule as a backup). Each
+# source waits at least this long between pulls, so a duplicate trigger minutes later is a no-op.
+MIN_HOURS = float(os.environ.get("MIN_HOURS_BETWEEN_PULLS") or 6)
+
+
+def now_iso():
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def hours_since(block, key, now=None):
+    """Hours since the timestamp block[key], or None if there isn't a readable one."""
+    try:
+        then = datetime.fromisoformat(str(block.get(key)))
+    except (TypeError, ValueError):
+        return None
+    if then.tzinfo is None:
+        then = then.replace(tzinfo=timezone.utc)
+    return ((now or datetime.now(timezone.utc)) - then).total_seconds() / 3600
+
+
+def due(block, key, min_hours=None, now=None):
+    """True when the source may be contacted again: never tried, or tried long enough ago."""
+    h = hours_since(block, key, now)
+    return h is None or h >= (MIN_HOURS if min_hours is None else min_hours)
 
 
 def text(kind, detail=""):

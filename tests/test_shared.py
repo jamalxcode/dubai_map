@@ -129,3 +129,15 @@ class AreaRecordTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PullGapTests(unittest.TestCase):
+    def test_due_after_the_minimum_gap(self):
+        from datetime import datetime, timezone
+        now = datetime(2026, 11, 16, 12, 0, tzinfo=timezone.utc)
+        self.assertTrue(state.due({}, "last_try_at", 6, now), "never tried")
+        self.assertTrue(state.due({"last_try_at": "garbage"}, "last_try_at", 6, now), "unreadable: allowed")
+        self.assertFalse(state.due({"last_try_at": "2026-11-16T08:00:00+00:00"}, "last_try_at", 6, now))
+        self.assertTrue(state.due({"last_try_at": "2026-11-16T05:59:00+00:00"}, "last_try_at", 6, now))
+        self.assertAlmostEqual(state.hours_since({"t": "2026-11-16T09:00:00+00:00"}, "t", now), 3)
+        self.assertEqual(state.MIN_HOURS, 6)

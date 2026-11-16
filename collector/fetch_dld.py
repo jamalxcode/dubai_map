@@ -16,7 +16,8 @@ is built up here: each run pulls the last few days, and back-fills ONE missing
 month per day (newest first) until January 2026 onward is complete.
 
 Being a good citizen (same rules as fetch_ejari.py):
-  * At most ONE run per Dubai calendar day (FORCE=1 overrides).
+  * At most one run every 6 hours (FORCE=1 overrides). The late-registration slice
+    and the month back-fill run on the first run of a Dubai day only.
   * Requests are sequential (never parallel), with a pause between pages and a
     hard cap on pages per run.
   * On errors or "slow down", wait briefly at most twice, then stop until
@@ -56,6 +57,10 @@ SOURCE = "dld"
 
 class PageCap(Exception):
     """Reached this run's page cap; the rest waits for tomorrow."""
+
+
+class _RecentOnly(Exception):
+    """Not the first run today: recent days only, the daily extras already ran."""
 
 
 def log(msg):
@@ -127,7 +132,8 @@ def merge(rows):
 def run(state, today, client):
     """One day's work. Returns the updated 'dld' state block."""
     block = dict(state.get("dld") or {})
-    block["last_run_date"] = today.isoformat()  # even a failed run counts as today's one try
+    block["last_run_at"] = st.now_iso()  # even a failed run counts, so a failure isn't retried at once
+    daily = block.get("daily_date") != today.isoformat()  # slice + back-fill: once a day
     added = updated = 0
     try:
         # 1. Recent registrations (overlapping window catches late entries and corrections).
@@ -138,6 +144,8 @@ def run(state, today, client):
         #     cycling, so every recent day is checked again about every 10 days.
         #     (Cheap: one slice is a few pages. Catches contracts registered weeks
         #     after their start date, whichever date the service filters on.)
+        if not daily:
+            raise _RecentOnly()
         k = today.toordinal() % REFRESH_SLICES
         frm = today - timedelta(days=REFRESH_DAYS - 6 * k)
         rows = pull_window(client, frm, frm + timedelta(days=5))
@@ -161,6 +169,10 @@ def run(state, today, client):
             log(f"back-filled {month}: {got} rows")
         block["months_done"] = sorted(done)
         block["backfill_complete"] = not [m for m in todo if m not in done]
+        block["daily_date"] = today.isoformat()
+        st.set_status(block, "ok")
+        block["last_ok_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    except _RecentOnly:
         st.set_status(block, "ok")
         block["last_ok_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     except PageCap:
@@ -180,8 +192,8 @@ def main():
     if os.environ.get("DLD_ENABLED") != "1" or os.environ.get("DLD_DISABLED") == "1":
         log("off: needs DLD's written permission, then DLD_ENABLED=1 (see README)")
         st.set_status(state.setdefault("dld", {}), "off", "waiting for DLD's permission")
-    elif (state.get("dld") or {}).get("last_run_date") == today.isoformat() and os.environ.get("FORCE") != "1":
-        log(f"already ran today ({today}); not contacting DLD again")
+    elif not st.due(state.get("dld") or {}, "last_run_at") and os.environ.get("FORCE") != "1":
+        log(f"ran {st.hours_since(state['dld'], 'last_run_at'):.1f} h ago; next run after {st.MIN_HOURS:g} h")
         return
     else:
         state["dld"] = run(state, today, Client())

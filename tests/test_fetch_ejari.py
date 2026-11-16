@@ -26,12 +26,25 @@ class PullGuardTests(TempData):
         self.assertEqual(self.state()["pulse"]["state"], "no_key")
         self.assertEqual(self.state()["pulse"]["status"], "no credentials", "wording the page shows")
 
-    def test_only_one_pull_per_dubai_day(self):
+    def test_at_most_every_six_hours_and_daily_extras_once(self):
         keys = {"DUBAI_PULSE_KEY": "k", "DUBAI_PULSE_SECRET": "s", "FORCE": "0"}
-        self.assertEqual(self.run_main(keys).call_count, 1)
-        self.assertEqual(self.state()["pulse"]["last_pull_date"], store.today_dubai().isoformat())
-        self.assertEqual(self.run_main(keys).call_count, 0, "second run the same day must not call the API")
+        first = self.run_main(keys)
+        self.assertEqual(first.call_count, 1)
+        self.assertTrue(first.call_args.kwargs["refresh"], "first pull of the day re-checks an older slice")
+        self.assertEqual(self.state()["pulse"]["refresh_date"], store.today_dubai().isoformat())
+        self.assertEqual(self.run_main(keys).call_count, 0, "a duplicate start minutes later must not call the API")
+        self.later(5)
+        self.assertEqual(self.run_main(keys).call_count, 0, "5 hours is too soon")
+        self.later(2)
+        second = self.run_main(keys)
+        self.assertEqual(second.call_count, 1, "7 hours later: the next of three daily pulls")
+        self.assertFalse(second.call_args.kwargs["refresh"], "later pulls the same day fetch recent days only")
         self.assertEqual(self.run_main({**keys, "FORCE": "1"}).call_count, 1, "FORCE=1 overrides")
+
+    def test_recent_window_only_when_not_refreshing(self):
+        from datetime import date
+        self.assertEqual(len(fetch_ejari.windows(date(2026, 11, 16))), 2)
+        self.assertEqual(len(fetch_ejari.windows(date(2026, 11, 16), refresh=False)), 1)
 
     def test_a_failed_pull_still_counts_as_todays_try(self):
         keys = {"DUBAI_PULSE_KEY": "k", "DUBAI_PULSE_SECRET": "s", "FORCE": "0"}
@@ -117,6 +130,43 @@ class PullTests(unittest.TestCase):
         recs, kind, detail = self.pull(FakePulse(fail_at=3))
         self.assertEqual(len(recs), 2000)
         self.assertEqual((kind, detail), ("failed", "HTTP 503"))
+
+
+class HostFallbackTests(unittest.TestCase):
+    """apis.data.dubai first, api.dubaipulse.gov.ae if the new host is unreachable; never on a refusal."""
+
+    def run_pull(self, behaviour):
+        seen = []
+
+        def fake(url, headers=None, **kw):
+            host = url.split('/')[2]
+            seen.append(host)
+            err = behaviour.get(host)
+            if err:
+                raise err
+            return {"results": [{"contract_id": "C1", "contract_start_date": "2026-11-15", "annual_amount": 50000,
+                                 "area_name_en": "Al Barsha South Fourth"}]}
+        with mock.patch.object(fetch_ejari.net, "get_json", fake), mock.patch.object(fetch_ejari, "get_token", lambda k, s: "t"), \
+             mock.patch.object(fetch_ejari.time, "sleep"), mock.patch("builtins.print"):
+            recs, kind, detail = fetch_ejari.pull_api("k", "s", today=__import__("datetime").date(2026, 11, 16))
+        return seen, recs, kind, detail
+
+    def test_new_host_first(self):
+        seen, recs, kind, _ = self.run_pull({})
+        self.assertEqual(seen[0], "apis.data.dubai")
+        self.assertEqual(set(seen), {"apis.data.dubai"}, "the host that answered is kept for the run")
+        self.assertEqual(kind, "ok")
+
+    def test_falls_back_when_new_host_unreachable(self):
+        seen, recs, kind, _ = self.run_pull({"apis.data.dubai": fetch_ejari.StopForToday("network: timed out")})
+        self.assertEqual(seen[:2], ["apis.data.dubai", "api.dubaipulse.gov.ae"])
+        self.assertEqual(set(seen[2:]), {"api.dubaipulse.gov.ae"})
+        self.assertEqual(kind, "ok")
+
+    def test_a_refusal_is_not_a_reason_to_try_elsewhere(self):
+        seen, _, kind, detail = self.run_pull({"apis.data.dubai": fetch_ejari.StopForToday("HTTP 429")})
+        self.assertEqual(seen, ["apis.data.dubai"])
+        self.assertEqual((kind, detail), ("failed", "HTTP 429"))
 
 
 class ResponseShapeTests(unittest.TestCase):

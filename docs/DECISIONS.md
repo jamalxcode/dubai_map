@@ -176,6 +176,17 @@ The recurring need is "what do people actually pay for a home like mine?", which
 
 The rent check card above the map pushed the map from 43% to 84% of the first phone screen, undoing a same-day change that brought it up. On phones (≤ 860 px) the card now starts as one line (area + Check, placeholder "Check a rent: type an area"), opens when tapped or when a check runs, and folds back with "Close". A resumed check stays folded with its area filled in. Map now starts at 51% of the first screen. Desktop unchanged. Rejected: hiding the check on phones (it is the main action) and moving it below the map (out of sight).
 
+## Decision on 2026-11-16 (twelfth pass): the owner's source list, and three pulls a day
+
+The owner listed 12 sources to pull from and asked for cron-job.org to run the pull three times a day. Each source was probed once from GitHub Actions (this workspace can't reach them):
+
+- **Dubai Pulse API (sources 2–4):** `apis.data.dubai` is a new host for the same gateway (`SDG-DDADS-OpenAPI`); both hosts return 401 without a key. The collector now tries `apis.data.dubai/open/dld/dld_rent_contracts-open-api` first and falls back to `api.dubaipulse.gov.ae` only when the first is unreachable (never after a refusal). Still waiting for the key.
+- **DLD website (1), Rental Index (5), Rental Performance Index (6):** CAPTCHA-gated export; an allowed-increase calculator; figures from 2022 with a "no commercial purposes" clause. Not automated.
+- **Dubai Data (7, 8):** already in use.
+- **dubairealestatedata.com (9, 10)** and **continentalclub.ae (11):** CC BY 4.0 figures (commercial reuse allowed with credit), markdown pages robots.txt allows. Added as **cross-checks**, compared with our medians and listed on the page, never shown instead of ours: the first is independent (built from Dubai Pulse's bulk data, new contracts only); the second is Dubai Data's publisher, so it checks our import. Rejected: putting their numbers on the map (different measures; the first only covers 30 areas).
+- **overit.ae (12):** no rent figures; content signals allow reference use only.
+- **Three pulls a day:** `17 2,10,18 * * *` UTC (05:17, 13:17, 21:17 Kuwait), started by cron-job.org through `workflow_dispatch` (as for Flattery), GitHub's schedule as the backup. "Once per Dubai day" became "at least 6 hours apart" per source; late-registration slices, back-fill and the daily cross-check still run once a day. Run timestamps stay out of `meta.json`, and the site redeploys only when a file the page loads changed, so quiet runs cost one small commit of source state and no deploy.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -214,6 +225,8 @@ The rent check card above the map pushed the map from 43% to 84% of the first ph
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Three pulls a day (cron-job.org + GitHub backup, 6-hour gap per source); Dubai Pulse via apis.data.dubai with fallback; cross-checks against dubairealestatedata.com and continentalclub.ae; review of the owner's 12 sources.
 
 - 2026-11-16: Rent check folds to one line on phones; design goals, decision log and conversation log brought up to date.
 

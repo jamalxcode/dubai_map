@@ -29,6 +29,25 @@ class TempData(unittest.TestCase):
         store.DATA, store.CONTRACTS = self._saved
         shutil.rmtree(self.tmp, ignore_errors=True)
 
+    def later(self, hours):
+        """Pretend `hours` have passed since each source last ran: moves every saved *_at
+        timestamp in state.json back, so the minimum gap between pulls can be tested."""
+        import json
+        from datetime import datetime, timedelta
+        path = os.path.join(self.tmp, "state.json")
+        with open(path) as f:
+            state = json.load(f)
+        for block in state.values():
+            if isinstance(block, dict):
+                for k, v in list(block.items()):
+                    if k.endswith("_at") and isinstance(v, str):
+                        try:
+                            block[k] = (datetime.fromisoformat(v) - timedelta(hours=hours)).isoformat(timespec="seconds")
+                        except ValueError:
+                            pass
+        with open(path, "w") as f:
+            json.dump(state, f)
+
     def write(self, rel, text):
         path = os.path.join(self.tmp, rel)
         os.makedirs(os.path.dirname(path), exist_ok=True)

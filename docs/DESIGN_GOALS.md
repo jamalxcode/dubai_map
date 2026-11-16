@@ -25,10 +25,11 @@ These are the goals the owner set while building the project (see [CONVERSATION.
 
 ## 3. Be a good citizen with data sources: never get blocked
 
-- ✅ At most **one pull per day** from DLD/Ejari (05:17 Kuwait time). Re-runs the same day do not contact the API.
+- 🔶 **Three pulls a day** (05:17, 13:17, 21:17 Kuwait), changed by the owner on 16 Nov from one a day. Each source waits at least 6 hours between pulls, so duplicate starts do nothing, and the heavier extras still run once a day. (Before: at most one pull per Dubai day.)
 - ✅ Small window, paced pages, a page cap, bounded waits on "slow down", then stop until tomorrow.
 - ✅ Honest User-Agent pointing at this repo. No CAPTCHA workarounds, no scraping listing portals, no identity rotation.
 - ✅ The Dubai Data mirror is fetched with conditional requests, so an unchanged file costs nothing.
+- ✅ Every candidate source is checked for terms and robots.txt before it is used; CAPTCHA pages, calculators and sources that forbid reuse are left alone (see README, "Sources reviewed").
 - 🔶 OpenStreetMap is only a last resort, for areas Dubai Municipality hasn't published. Since 15 Nov a weekly job accepts a point only after automatic checks (inside Dubai, a place rather than a shop or road, a close name match), at 1 request per second; anything else is listed for a person. (Before: every result was reviewed by hand.)
 - ✅ All collectors share one polite HTTP module (`collector/net.py`): one User-Agent, bounded retries, stop for today.
 

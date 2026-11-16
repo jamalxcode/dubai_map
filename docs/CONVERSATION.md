@@ -97,10 +97,15 @@ Merged; deploy and tests passed. Flagged that the card pushed the map down on ph
 
 The card is one line on phones until tapped (map back from 84% to 51% of the first screen). Updated [DESIGN_GOALS.md](DESIGN_GOALS.md) (new goal 9, plus what changed in goals 3, 4, 5 and 7), [DECISIONS.md](DECISIONS.md) and this log.
 
+### ~14:10 · "use these sources to pull data" (12 Ejari sources) and "lets set up https://console.cron-job.org/ also to let dubai map pull 3 times a day from these sources"
+
+This workspace couldn't reach the sources, so a one-off GitHub Actions probe made one request per page and read terms and robots.txt. Outcome per source in [DECISIONS.md](DECISIONS.md) (twelfth pass): Dubai Pulse now tried at `apis.data.dubai` first (still needs the key); dubairealestatedata.com and continentalclub.ae added as daily cross-checks (CC BY 4.0); the DLD website, rental index and 2022 performance index, and overit.ae, left out with reasons. The pull runs three times a day with a 6-hour minimum gap per source; cron-job.org setup steps are in the README.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner): register at dubaipulse.gov.ae, then add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks per-contract detail and the older districts.
 2. **Front-end split** (once the page is quiet): `index.html` into script, styles and a testable module; self-host Leaflet, GSAP and Lenis; faster label merging.
-3. **Old branches** `fix-tabs`, `mobile-redesign`, `engagement`, `compact-phone` and the collaborator's working branches can be deleted once merged.
-4. Community outlines (shaded areas) from Dubai Municipality data.
-5. Expansion to other cities in the region (new source adapter per registry).
+3. **cron-job.org jobs** (owner): a fine-grained token with Actions read/write on this repo, and three dispatch jobs (README, "The timer").
+4. **Old branches** `fix-tabs`, `mobile-redesign`, `engagement`, `compact-phone`, `three-a-day` and the collaborator's working branches can be deleted once merged.
+5. Community outlines (shaded areas) from Dubai Municipality data.
+6. Expansion to other cities in the region (new source adapter per registry).

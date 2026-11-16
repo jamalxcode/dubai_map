@@ -31,35 +31,54 @@ Built as one static page: [Leaflet](https://leafletjs.com/) for the map, [GSAP](
 | [Dubai Data](https://datadubai.ae/) community medians: daily from the site's own JSON pages (`datadubai.ae/rents.json` + one page per community), else the weekly export on [Hugging Face](https://huggingface.co/datasets/datadubai/dubai-real-estate-dld) / the [GitHub mirror](https://github.com/datadubai/dubai-real-estate-dld) | CC BY 4.0; credit + licence link + say what changed (all on the page). The site offers its static JSON for reuse, no key; robots.txt allows these paths | No | Daily (data ~3 days behind DLD); weekly if the pages fail | Used today. Also maps DLD area names to communities. |
 | DLD's open-data service (`gateway.dubailand.gov.ae/open-data`, behind DLD's [Real Estate Data](https://dubailand.gov.ae/en/open-data/real-estate-data/) page) | Only DLD's [website terms](https://dubailand.gov.ae/en/terms-conditions) apply: personal, noncommercial use unless DLD agrees in writing | No | Daily | **Off.** Built and tested, but only switched on (`DLD_ENABLED=1`) once DLD gives written permission. |
 | Manual CSV in `data/inbox/` | Whatever licence the file came with | No | When added | Always imported. |
+| **Cross-check:** [dubairealestatedata.com](https://www.dubairealestatedata.com/rents) (`/rents.md`: new-contract apartment median, top 30 areas, built from Dubai Pulse's bulk data) | CC BY 4.0, reuse incl. commercial with credit (its terms); robots.txt allows the page | No | Daily check (they update weekly) | Compared with our medians; the result is listed on the page. Never shown instead of ours. |
+| **Cross-check:** [continentalclub.ae](https://continentalclub.ae/data-center/) (`/rents.md`: median by unit size for ~100 official DLD areas) | Data pages CC BY 4.0 incl. commercial (data centre); robots.txt: "Crawl it, quote it, cite it" | No | Daily check | Same publisher as Dubai Data, so it checks our import rather than the numbers. Listed on the page. |
+
+**Sources reviewed on 16 Nov 2026** (one polite request per page from GitHub Actions):
+- DLD [Real Estate Data](https://dubailand.gov.ae/en/open-data/real-estate-data/): the rents search and CSV download sit behind a CAPTCHA, and the page points to data.dubai for earlier years. Not automated.
+- Dubai Pulse API: the gateway answers at both `apis.data.dubai/open/dld/dld_rent_contracts-open-api` (new host, tried first) and `api.dubaipulse.gov.ae/open/dld/dld_rent_contracts-open` (fallback); both return 401 without a key. Token: `api.dubaipulse.gov.ae/oauth/client_credential/accesstoken`. Ready the moment the key is added.
+- DLD [Rental Index](https://dubailand.gov.ae/en/eservices/rental-index/): the allowed-increase calculator (a form), not rents. Not used, by design.
+- DLD [Residential Rental Performance Index](https://dubailand.gov.ae/en/open-data/residential-rental-performance-index/): latest figures Q3 2022 and the page says it "should not be used for any commercial purposes". Not used.
+- [Dubai Data](https://datadubai.ae/) on Hugging Face / GitHub: in use (above).
+- [overit.ae](https://overit.ae/sources): company and register data, no rent figures; robots.txt content signals allow reference use only. Not used.
 
 **Which one the map shows:** our own contracts once they hold at least 1,000 home contracts and contracts in at least 43 of the last 52 weeks (about 300 days; counted week by week, so one old import doesn't count as a full year); Dubai Data before that. The daily Dubai Pulse pull only covers recent weeks, so on its own it takes about 10 months to build up that history; importing a year of contracts once gets there straight away: download Dubai Pulse's full Ejari CSV ([dld_rent_contracts-open](https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open), open-data licence), cut it to the last 12 months, and drop it in `data/inbox/`. `data/meta.json` → `sources` shows the status of each source, and the page lists it under "Where the numbers come from".
 
 Dubai Data attribution: *Dubai Data (datadubai.ae), Continental Club Property — based on Dubai Land Department open data. Not an official DLD product.* (CC BY 4.0). No source includes tenant or unit details.
 
-## How the daily update works (and why it won't get us blocked)
+## How the update works (three times a day, and why it won't get us blocked)
 
-`.github/workflows/daily-ejari.yml` runs once a day at **05:17 Kuwait time**. Each step may fail without stopping the others:
+`.github/workflows/daily-ejari.yml` runs at **05:17, 13:17 and 21:17 Kuwait time**, started by cron-job.org (see below), with GitHub's own schedule as a backup. Every source waits **at least 6 hours** between pulls, so a duplicate start does nothing; the heavier extras (late-registration slices, month back-fill) run only on the first pull of a Dubai day. Each step may fail without stopping the others:
 
 1. `collector/fetch_dld.py` (**off unless `DLD_ENABLED=1`**, see above):
-   - at most **one run per Dubai calendar day** (re-runs the same day don't contact DLD unless "force" is ticked);
+   - at most **one run every 6 hours** (sooner only if "force" is ticked); the slice and the back-fill below run on the first run of a Dubai day only;
    - pulls the last 3 days, plus one 6-day slice of the last 60 days (cycling, so late registrations are caught within about 10 days);
    - back-fills **one missing month per day**, newest first, until January 2026 onward is complete;
    - requests are **sequential**, 2,000 rows per page, a 2-second pause between pages, at most 70 pages per run;
    - on errors or "slow down" it waits briefly at most twice, then **stops until tomorrow**;
    - an honest User-Agent pointing at this repo; no CAPTCHA pages are touched.
-2. `collector/fetch_ejari.py`: calls the Dubai Pulse API if keys are set (skipped on days the DLD service ran), with the same politeness rules: once a day, contract start dates from 3 days back to 14 ahead plus one 6-day slice of the last 60 days (cycling, so late registrations are caught within about 10 days), 1,000-row pages 4 seconds apart, at most 60 pages. Rows fetched before a stop are kept. Also imports any CSV in `data/inbox/`.
+2. `collector/fetch_ejari.py`: calls the Dubai Pulse API if keys are set (skipped on days the DLD service ran), with the same politeness rules: at most every 6 hours, contract start dates from 3 days back to 14 ahead plus (first pull of the day only) one 6-day slice of the last 60 days (cycling, so late registrations are caught within about 10 days), 1,000-row pages 4 seconds apart, at most 60 pages. Rows fetched before a stop are kept. Also imports any CSV in `data/inbox/`.
 3. New contracts are merged into small daily files under `data/contracts/YYYY-MM/DD.csv.gz` on the **`data` branch** (de-duplicated, so overlaps and corrections are safe; daily files keep each commit small).
-4. `collector/fetch_datadubai.py` reads Dubai Data's daily JSON pages once a day: `rents.json`, then, only if it has a newer "through" date, one page per community, one request a second (about 100 requests, 2 minutes). All-or-nothing: if any page fails, the previous files stay and the weekly export (Hugging Face, then GitHub, conditional requests) is used. `DATADUBAI_LIVE=0` turns the daily pages off.
+4. `collector/fetch_datadubai.py` reads Dubai Data's daily JSON pages at most every 6 hours: `rents.json` (one small request), then, only if it has a newer "through" date, one page per community, one request a second (about 100 requests, 2 minutes). All-or-nothing: if any page fails, the previous files stay and the weekly export (Hugging Face, then GitHub, conditional requests) is used. `DATADUBAI_LIVE=0` turns the daily pages off.
 5. `collector/build.py` writes the small files the page loads: `data/areas.json`, `data/latest.json`, `data/meta.json`. Only homes count (flats, studios, villas): shops, offices, labour camps and whole-building leases would skew the medians.
 6. If contracts, mapped contracts or areas fell by more than 30% since the last build (same source), `build.py` refuses to publish and keeps the previous files; re-run with "allow shrink" ticked if the drop is real. Then the data checks in `tests/test_data.py` run; if they fail, nothing is committed.
-7. The data is saved to the **`data` branch** (only if something changed), and only then is the site redeployed. Only the page and those JSON files are published, not the raw archive.
+7. `collector/fetch_crosscheck.py` reads the two cross-check pages at most once a day; `build.py` compares them with our medians and lists the result on the page.
+8. The data is saved to the **`data` branch**, and the site is redeployed only if a file the page loads changed (source state alone doesn't redeploy). Only the page and those JSON files are published, not the raw archive.
+
+### The timer: cron-job.org
+
+GitHub's schedules run late (this repo's daily job started about 7 hours late on some days), so, as for Flattery and heat.sala.company, [cron-job.org](https://console.cron-job.org/) starts the workflow through GitHub's API:
+
+- Token: a fine-grained GitHub token for **jamalxcode/dubai_map only**, permission **Actions: read and write** (or add this repo to the token the Flattery jobs already use).
+- Three jobs (or one job with three times): `POST https://api.github.com/repos/jamalxcode/dubai_map/actions/workflows/daily-ejari.yml/dispatches`, body `{"ref":"main"}`, headers `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `Content-Type: application/json`; at **02:17, 10:17 and 18:17 UTC**. GitHub answers `204` when it worked.
+- GitHub's schedule stays on as a backup. The token expires; renew it in the cron-job.org jobs before it does.
 
 ### Daily data: add the free Dubai Pulse key
 
 1. Register at [Dubai Pulse](https://www.dubaipulse.gov.ae/) and request API access to `dld_rent_contracts-open`. You get an API key and secret by email.
 2. In this repo: **Settings → Secrets and variables → Actions**
    - Secrets: `DUBAI_PULSE_KEY`, `DUBAI_PULSE_SECRET`
-   - Variable `EJARI_API_URL`, only if the endpoint in your Dubai Pulse account differs from the default `https://api.dubaipulse.gov.ae/open/dld/dld_rent_contracts-open`
+   - Variable `EJARI_API_URL`, only to pin one endpoint (by default `https://apis.data.dubai/open/dld/dld_rent_contracts-open-api` is tried first, then `https://api.dubaipulse.gov.ae/open/dld/dld_rent_contracts-open`)
    - Variable `EJARI_FILTER`, only if the date filter syntax needs adjusting (default `contract_start_date>='{from}' AND contract_start_date<='{to}'`)
 3. Run **Actions → Daily Ejari pull → Run workflow** once to check. `data/meta.json` (on the `data` branch) → `sources` shows each source's `state` (`ok`, `partial`, `failed`, `off`, `no_key`, `standby`, `not_run`) and the reason it stopped.
 
@@ -124,6 +143,7 @@ node --test tests/page.test.mjs            # stale-data rule and pinned script h
 | DLD open-data service | DLD website terms: personal, noncommercial use without written agreement | Off by default; needs DLD's written OK. |
 | Dubai Municipality community boundaries (`dm_communities.csv` is derived from them) | DM open data: mention Dubai Municipality as the source | Credited on the page and here. `dm_communities.py` downloads DM's own file first; two GitHub copies of the same DM file are fallbacks. |
 | Dubai Data medians | CC BY 4.0 | Credit, licence link and "reshaped" note on the page. |
+| Cross-check pages (dubairealestatedata.com, continentalclub.ae) | CC BY 4.0 (their stated terms for these figures) | Named on the page next to the comparison; their figures are compared, not republished. |
 | OpenStreetMap map tiles | [Tile usage policy](https://operations.osmfoundation.org/policies/tiles/) | Exact HTTPS URL, visible attribution, browsers send their normal Referer, no bulk/offline use, "Report a map problem" link. For heavy traffic, switch to another tile provider. |
 | `osm_area_points.csv` (from Nominatim) | OpenStreetMap data, ODbL 1.0; [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/) | © OpenStreetMap contributors, ODbL. The file stays open in this public repo. Max 1 request/s, identifying User-Agent, results cached. |
 | Leaflet | BSD-2-Clause | Leaflet credit in the map corner. |
@@ -132,7 +152,7 @@ node --test tests/page.test.mjs            # stale-data rule and pinned script h
 | React Bits (Counter, SplitText) | MIT + Commons Clause | Not copied: our own plain-JS versions of the two effects, credited. Commons Clause only forbids selling the components. |
 | Barlow / Barlow Condensed fonts | SIL Open Font License 1.1 | Font files and `assets/fonts/OFL.txt` included; self-hosted, so no visitor data goes to a font service. |
 
-**Privacy:** no cookies, no analytics, no personal data. The page stores two small settings in the visitor's own browser: dark/light choice (`localStorage`) and a hidden warning (`sessionStorage`). Map tiles and the three libraries load from openstreetmap.org, unpkg.com and jsdelivr.net, which see visitors' IP addresses like any website they load from.
+**Privacy:** no cookies, no analytics, no personal data on any server. The page stores in the visitor's own browser: the dark/light choice and their saved areas, recent checks and reminder settings (`localStorage`, downloadable and deletable on the page), and a hidden warning (`sessionStorage`). Map tiles and the three libraries load from openstreetmap.org, unpkg.com and jsdelivr.net, which see visitors' IP addresses like any website they load from.
 
 This is not legal advice. The one open question is the DLD service, which needs DLD's answer.
 
