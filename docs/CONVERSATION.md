@@ -117,6 +117,8 @@ An open-source (MIT) client for the same data.dubai gateway. Read, not copied. I
 
 The owner's browser was blocked by the portal's web firewall. A probe from GitHub's servers (US) got the same "Request Rejected" page, so the block isn't the browser or the account: the portal turns away visitors it doesn't trust, most likely non-UAE addresses. The data API (`apis.data.dubai`) does answer from GitHub, so pulls will work once a key exists. Advice: a UAE connection, or Digital Dubai support; not a VPN (a deliberate block on a government portal).
 
+(cron-job.org was set up by the owner the same afternoon: one job, 05:17, 13:17 and 21:17 Kuwait, test run answered 204 and started the pull.)
+
 ### ~15:20 · Email to Digital Dubai support
 
 The owner wrote to help@digitaldubai.ae with the firewall's support ID: asked how to register for the open rental data and its API, said they're based in Kuwait, and asked whether developers outside the UAE can register. Waiting for an answer. When access comes: request `dld_rent_contracts-open-api`, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets, then run a forced pull and check the first real contracts.
@@ -130,7 +132,6 @@ Critique, ranked: (1) the map mixed two measures after the older districts arriv
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.
 2. **Freshness alert and a browser check in CI** (critique items 2 and 4).
 3. **Front-end split** (once the page is quiet): `index.html` into script, styles and a testable module; self-host Leaflet, GSAP and Lenis; faster label merging.
-4. **cron-job.org jobs** (owner): a fine-grained token with Actions read/write on this repo, and three dispatch jobs (README, "The timer").
-5. **Old branches** `fix-tabs`, `mobile-redesign`, `engagement`, `compact-phone`, `three-a-day` and the collaborator's working branches can be deleted once merged.
-6. Community outlines (shaded areas) from Dubai Municipality data.
-7. Expansion to other cities in the region (new source adapter per registry).
+4. **Old branches** `fix-tabs`, `mobile-redesign`, `engagement`, `compact-phone`, `three-a-day` and the collaborator's working branches can be deleted once merged.
+5. Community outlines (shaded areas) from Dubai Municipality data.
+6. Expansion to other cities in the region (new source adapter per registry).
