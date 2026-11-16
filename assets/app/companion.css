@@ -28,10 +28,10 @@
 .ck-answer>.muted{margin:4px 0 0;font-size:14px}
 .ck-verdict{margin:12px 0 0;font-size:17px}
 .ck-verdict small{color:var(--muted);font-size:13px}
-.ck-finds{margin:12px 0 0;padding-left:18px;font-size:15px}
+.ck-finds{margin:12px 0 0;padding-inline-start:18px;font-size:15px}
 .ck-finds li{margin-bottom:6px}
 .ck-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 0;margin-top:16px}
-.ck-actions .btn{margin-right:16px}
+.ck-actions .btn{margin-inline-end:16px}
 .ck-empty p{margin:0 0 6px}
 .ck-remind{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;align-items:end;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
 .ck-remind .field input,.ck-remind .field select{width:100%}
@@ -39,17 +39,17 @@
 .ck-done{margin:12px 0 0;font-size:14px;color:var(--ok);font-weight:600}
 
 .ck-new{border:2px solid var(--sign);border-radius:12px;padding:12px 16px;margin-bottom:12px}
-.ck-new p{margin:0 0 6px}.ck-new ul{margin:0 0 10px;padding-left:18px}
+.ck-new p{margin:0 0 6px}.ck-new ul{margin:0 0 10px;padding-inline-start:18px}
 
 .ck-mine{margin-top:14px}
 .ck-mine h3{font:700 24px/1.1 var(--cond);margin:0 0 8px}
 .mine-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .mine-list li{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
-.mine-main{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;border:0;background:none;padding:10px 36px 10px 12px;color:var(--text);font:inherit;cursor:pointer;border-radius:10px}
+.mine-main{display:flex;flex-direction:column;gap:2px;width:100%;text-align:start;border:0;background:none;padding:10px 12px;padding-inline-end:36px;color:var(--text);font:inherit;cursor:pointer;border-radius:10px}
 .mine-main:hover{background:var(--hover)}
 .mine-fig{font:700 20px/1.2 var(--cond)}
 .mine-fig small{font:600 13px var(--body)}
-.mine-list .x{position:absolute;top:6px;right:6px;border:0;background:none;color:var(--muted);font-size:20px;line-height:1;padding:4px 8px;cursor:pointer}
+.mine-list .x{position:absolute;top:6px;inset-inline-end:6px;border:0;background:none;color:var(--muted);font-size:20px;line-height:1;padding:4px 8px;cursor:pointer}
 .mine-recent{margin-top:10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .mine-settings{margin-top:12px;font-size:14px}
 .mine-settings summary{color:var(--muted)}
@@ -62,7 +62,7 @@
 .ck-close{display:none}
 .ck-head{position:relative}
 @media (max-width:860px){
-  .ck-close{display:inline;position:absolute;top:2px;right:0;font-size:15px}
+  .ck-close{display:inline;position:absolute;top:2px;inset-inline-end:0;font-size:15px}
   /* Compact (default on phones): one line, area + Check; the map stays high on the first screen. */
   #companion.compact{padding-top:10px}
   #companion.compact .ck{padding:10px 12px}
@@ -89,7 +89,7 @@
 :root[data-theme="dark"] .btn.primary{color:var(--on-sign);border-color:var(--sign);background:var(--sign)}
 :root[data-theme="dark"] .btn.primary:hover{background:var(--sign-ink);border-color:var(--sign-ink)}
 /* Rent dial in the rent check (style in index.html): share of AED 100k */
-.ck-big .pie{width:.6em;height:.6em;vertical-align:.02em;margin-right:.2em}
+.ck-big .pie{width:.6em;height:.6em;vertical-align:.02em;margin-inline-end:.2em}
 @media (min-width:1100px){
   /* Compact in the left pane: two rows (area + home, rent + Check), smaller type, less padding. */
   #companion{padding-top:10px}
@@ -109,11 +109,11 @@
   .ck-finds{font-size:12.5px;line-height:1.35;margin-top:6px}
   .ck-finds li{margin-bottom:2px}
   .ck-actions{margin-top:8px;font-size:13.5px}
-  .ck-actions .btn{padding:5px 10px;font-size:14px;margin-right:10px}
+  .ck-actions .btn{padding:5px 10px;font-size:14px;margin-inline-end:10px}
   .ck-actions .sep{margin:0 5px}
   .ck-mine{margin-top:8px}
   .ck-mine h3{font-size:19px;margin-bottom:6px}
-  .mine-main{padding:7px 32px 7px 10px}
+  .mine-main{padding:7px 10px;padding-inline-end:32px}
   .mine-fig{font-size:17px}
   .ck-remind,.set-grid{grid-template-columns:1fr}
   .mine-list{grid-template-columns:1fr}

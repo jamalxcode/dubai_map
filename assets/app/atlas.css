@@ -41,7 +41,10 @@ html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopp
 :root[data-theme="dark"] .leaflet-bar a,:root[data-theme="dark"] .leaflet-control-attribution{background:var(--panel);color:var(--text)!important;border-color:var(--line)}
 :root[data-theme="dark"] .leaflet-control-attribution a{color:#8EB6F0}
 :root[data-theme="dark"] .field input:focus,:root[data-theme="dark"] .field select:focus{box-shadow:0 0 0 3px rgba(128,170,230,.3)}
-.theme{position:absolute;z-index:2;top:22px;right:26px;display:inline-flex;align-items:center;gap:7px;border:2px solid rgba(255,255,255,.85);background:transparent;color:var(--on-sign);border-radius:999px;padding:6px 12px 6px 9px;font:600 16px/1 var(--cond);cursor:pointer}
+.topBtns{position:absolute;z-index:2;top:22px;inset-inline-end:26px;display:flex;gap:8px;align-items:center}
+.lang{border:2px solid rgba(255,255,255,.85);background:transparent;color:var(--on-sign);border-radius:999px;padding:6px 12px;font:600 16px/1 var(--body);cursor:pointer}
+.lang:hover{background:rgba(255,255,255,.14)}
+.theme{display:inline-flex;align-items:center;gap:7px;border:2px solid rgba(255,255,255,.85);background:transparent;color:var(--on-sign);border-radius:999px;padding:6px 12px 6px 9px;font:600 16px/1 var(--cond);cursor:pointer}
 .theme:hover{background:rgba(255,255,255,.14)}
 .theme svg{width:16px;height:16px}
 *{box-sizing:border-box}body{margin:0}
@@ -58,7 +61,7 @@ button,input,select{font:inherit;color:inherit}
 .band h1 .ch{display:inline-block}
 .band p{margin:14px 0 0;max-width:46ch;font-size:17px;color:#DCE6F6}
 .band p b{color:var(--on-sign);font-weight:600}
-.big{text-align:right}
+.big{text-align:end}
 .big .num{font:700 clamp(52px,7.2vw,104px)/1 var(--cond);font-variant-numeric:tabular-nums;white-space:nowrap;display:inline-flex;align-items:flex-end}
 .big .cap{display:block;margin-top:8px;font-size:15px;color:#DCE6F6}
 /* Counter (React Bits port): each digit is a rolling column */
@@ -66,7 +69,7 @@ button,input,select{font:inherit;color:inherit}
 .odo .col{display:block;height:1em;overflow:hidden}
 .odo .strip{display:flex;flex-direction:column;will-change:transform}
 .odo .strip span,.odo .fix{display:block;height:1em;line-height:1}
-.cur{margin-right:.2em;font-weight:600}
+.cur{margin-inline-end:.2em;font-weight:600}
 
 /* Type selector: segmented, with a sliding plate (moves only when you choose) */
 .controls{border-bottom:1px solid var(--line);background:var(--bg);position:relative;z-index:5}
@@ -86,12 +89,12 @@ button,input,select{font:inherit;color:inherit}
 .typesNote{margin:0;font-size:13px;color:var(--muted);align-self:center;max-width:52ch}
 
 /* Warning sign */
-.stale{display:none;margin:0 0 16px;background:var(--caution);color:#1d1600;border-radius:10px;padding:14px 16px 14px 56px;position:relative;max-width:900px;box-shadow:inset 0 0 0 2px #1d1600,inset 0 0 0 5px var(--caution)}
+.stale{display:none;margin:0 0 16px;background:var(--caution);color:#1d1600;border-radius:10px;padding:14px 16px;padding-inline-start:56px;position:relative;max-width:900px;box-shadow:inset 0 0 0 2px #1d1600,inset 0 0 0 5px var(--caution)}
 .stale.on{display:block}
-.stale::before{content:"";position:absolute;left:16px;top:14px;width:26px;height:26px;background:#1d1600;clip-path:polygon(50% 0,100% 100%,0 100%)}
-.stale::after{content:"!";position:absolute;left:16px;top:20px;width:26px;text-align:center;color:var(--caution);font:700 16px/1 var(--cond)}
+.stale::before{content:"";position:absolute;inset-inline-start:16px;top:14px;width:26px;height:26px;background:#1d1600;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.stale::after{content:"!";position:absolute;inset-inline-start:16px;top:20px;width:26px;text-align:center;color:var(--caution);font:700 16px/1 var(--cond)}
 .stale b{font-weight:600}
-.stale .x{position:absolute;right:10px;top:8px;border:0;background:none;font-size:22px;line-height:1;cursor:pointer;padding:4px 6px}
+.stale .x{position:absolute;inset-inline-end:10px;top:8px;border:0;background:none;font-size:22px;line-height:1;cursor:pointer;padding:4px 6px}
 
 /* Map */
 .mapWrap{position:relative;height:72vh;height:72svh;min-height:420px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
@@ -108,14 +111,14 @@ button,input,select{font:inherit;color:inherit}
 .leaflet-popup-content{font:400 13px/1.45 var(--body);color:var(--text);min-width:240px;margin:12px 14px}
 .leaflet-popup-content .t{font:700 22px/1 var(--cond);display:block;margin-bottom:4px}
 .leaflet-popup-content table{border-collapse:collapse;margin-top:6px;width:100%}
-.leaflet-popup-content td,.leaflet-popup-content th{padding:2px 8px 2px 0;font-size:12px;text-align:left;border:0}
+.leaflet-popup-content td,.leaflet-popup-content th{padding:2px 0;padding-inline-end:8px;font-size:12px;text-align:start;border:0}
 .leaflet-popup-content th{color:var(--muted);font-weight:500;position:static;background:none}
 .leaflet-popup-content small{color:var(--muted)}
 /* Rent labels on the map */
 .rl-wrap{background:none;border:0}
 .leader{stroke:var(--text);stroke-opacity:.55;fill:var(--label);fill-opacity:1}
 .rl{position:absolute;transform:translate(-50%,-50%);background:var(--label);color:var(--text);border-radius:6px;padding:3px 9px 4px 8px;white-space:nowrap;cursor:pointer;
-  box-shadow:0 0 0 1px rgba(31,37,43,.18),0 2px 6px rgba(31,37,43,.18);border-left:5px solid var(--c,var(--b3));text-align:left}
+  box-shadow:0 0 0 1px rgba(31,37,43,.18),0 2px 6px rgba(31,37,43,.18);border-left:5px solid var(--c,var(--b3));text-align:start}
 .rl b{display:block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums}
 .rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--sign),0 4px 10px rgba(31,37,43,.25)}
@@ -128,7 +131,7 @@ button,input,select{font:inherit;color:inherit}
 .rl.grp.rent{background:linear-gradient(90deg,#0E3478 var(--f),#3D6FBF var(--f))}
 .rl.grp{background:var(--sign);color:var(--on-sign);border-left-color:var(--c,var(--b3));box-shadow:0 0 0 2px var(--bg),0 2px 8px rgba(31,37,43,.3)}
 .rl.grp small{color:#DCE6F6}
-.rl .avg{font:600 13px/1 var(--cond);margin-left:3px;opacity:.85}
+.rl .avg{font:600 13px/1 var(--cond);margin-inline-start:3px;opacity:.85}
 
 /* Facts under the map */
 .facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:22px 0 0;border-top:3px solid var(--text)}
@@ -145,9 +148,9 @@ h2{font:700 34px/1 var(--cond);margin:0}
 .btn:hover{background:var(--sign);color:var(--on-sign)}
 .tableWrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;max-height:560px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
-th,td{padding:10px 14px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--panel)}
+th,td{padding:10px 14px;text-align:start;white-space:nowrap;border-bottom:1px solid var(--panel)}
 th{position:sticky;top:0;background:var(--panel);font-weight:600;font-size:13px;color:var(--text);z-index:1}
-td.r,th.r{text-align:right}
+td.r,th.r{text-align:end}
 tbody tr:hover td{background:var(--hover)}
 .muted{color:var(--muted)}
 
@@ -156,7 +159,7 @@ tbody tr:hover td{background:var(--hover)}
 .about .wrap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px}
 .about h3{font:700 24px/1.1 var(--cond);margin:0 0 10px}
 .about p,.about li{font-size:15px;max-width:60ch}
-.about ul{padding-left:18px;margin:0}
+.about ul{padding-inline-start:18px;margin:0}
 .about li{margin-bottom:6px}
 .status-ok{color:var(--ok);font-weight:600}.status-bad{color:var(--bad);font-weight:600}
 details summary{cursor:pointer;font-weight:600}
@@ -169,17 +172,18 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 @media (max-width:860px){
   .wrap{padding:0 16px}
   .band::after{inset:6px}
-  .theme{top:14px;right:16px;font-size:15px;padding:5px 10px 5px 8px}
+  .topBtns{top:14px;inset-inline-end:16px}.lang{font-size:15px;padding:5px 10px}
+  .theme{font-size:15px;padding:5px 10px 5px 8px}
   /* Phone: keep the sign compact so the map starts high on the first screen. */
   .band .wrap{grid-template-columns:1fr;gap:8px;padding-top:50px;padding-bottom:16px}
   .band h1{font-size:clamp(34px,10vw,44px)}
   .band p{font-size:14px;margin-top:6px;line-height:1.4}
   .big .num{font-size:46px}
   .big .cap{font-size:13px;margin-top:4px}
-  .stale{padding:10px 36px 10px 46px;font-size:14px;margin-bottom:10px}
-  .stale::before{left:12px;top:10px;width:22px;height:22px}.stale::after{left:12px;top:15px;width:22px;font-size:14px}
+  .stale{padding:10px 36px;padding-inline-start:46px;font-size:14px;margin-bottom:10px}
+  .stale::before{inset-inline-start:12px;top:10px;width:22px;height:22px}.stale::after{inset-inline-start:12px;top:15px;width:22px;font-size:14px}
   .stale .more{display:none}
-  .big{text-align:left}
+  .big{text-align:start}
   .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
   .controls .seg{width:100%;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
   .legend .t{display:none}.legend{font-size:11px}
@@ -192,7 +196,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .facts dd{font-size:26px}
   .about .wrap{grid-template-columns:1fr;gap:28px}
   .tableHead{margin-top:32px}
-  .fab{display:flex;position:fixed;z-index:1001;right:16px;bottom:max(16px,env(safe-area-inset-bottom));align-items:center;gap:8px;border:0;border-radius:999px;background:var(--sign);color:var(--on-sign);padding:14px 20px;font:600 19px/1 var(--cond);box-shadow:0 0 0 2px var(--bg),0 8px 22px rgba(14,52,120,.4);cursor:pointer}
+  .fab{display:flex;position:fixed;z-index:1001;inset-inline-end:16px;bottom:max(16px,env(safe-area-inset-bottom));align-items:center;gap:8px;border:0;border-radius:999px;background:var(--sign);color:var(--on-sign);padding:14px 20px;font:600 19px/1 var(--cond);box-shadow:0 0 0 2px var(--bg),0 8px 22px rgba(14,52,120,.4);cursor:pointer}
   .sheet{display:block;position:fixed;z-index:1003;left:0;right:0;bottom:0;background:var(--bg);border-radius:16px 16px 0 0;padding:0 16px max(20px,env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(31,37,43,.3);transform:translateY(105%);visibility:hidden;max-height:86svh;overflow:auto}
   .sheet.open{visibility:visible;transform:none}
   .sheet .field{display:flex;margin-bottom:14px}
@@ -214,7 +218,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .pane .wrap{max-width:none;padding-left:24px;padding-right:24px}
   .band .wrap{grid-template-columns:1fr;gap:14px;padding-top:58px;padding-bottom:24px}
   .band h1{font-size:48px}
-  .big{text-align:left}
+  .big{text-align:start}
   .big .num{font-size:58px}
   .controls .wrap{gap:12px}
   .pane .sheet{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
@@ -224,11 +228,12 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   /* Compact left pane: big and bold, but the title, rent check and filters fit the first screen. */
   .band::after{inset:6px}
   .band .wrap{gap:6px;padding-top:18px;padding-bottom:16px}
-  .band h1{font-size:38px;padding-right:90px}
+  .band h1{font-size:38px;padding-inline-end:180px}
   .band p{font-size:13.5px;line-height:1.4;margin-top:6px;max-width:none}
   .big .num{font-size:46px}
   .big .cap{font-size:12.5px;margin-top:2px}
-  .theme{top:14px;right:16px;font-size:14px;padding:4px 10px 4px 8px}
+  .topBtns{top:14px;inset-inline-end:16px}.lang{font-size:14px;padding:4px 10px}
+  .theme{font-size:14px;padding:4px 10px 4px 8px}
   .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
   .seg button{padding:7px 12px;font-size:16px}
   .typesNote{font-size:12px}
@@ -246,7 +251,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .band p{font-size:13px;line-height:1.35;margin-top:4px}
   .big .num{font-size:42px}
   .big .cap{font-size:12px;margin-top:0}
-  .theme{top:12px}
+  .topBtns{top:12px}
   .controls .wrap{padding-top:8px;padding-bottom:10px;gap:6px 10px;align-items:center}
   .seg{padding:3px}.seg .plate{top:3px;bottom:3px}
   .seg button{padding:6px 11px;font-size:15px}
@@ -265,17 +270,29 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .about p,.about li{font-size:13.5px;line-height:1.45}.about li{margin-bottom:4px}
   .mapPane{position:sticky;top:0;height:100vh;height:100svh;padding:0}
   .mapPane .wrap{max-width:none;padding:0;height:100%}
-  .mapPane .mapWrap{height:100%;min-height:0;border-radius:0;border:0;border-left:1px solid var(--line)}
+  .mapPane .mapWrap{height:100%;min-height:0;border-radius:0;border:0;border-inline-start:1px solid var(--line)}
 }
 /* Zoom controls: larger targets, plus "All Dubai" to get back to the whole city. */
 .leaflet-control-zoom a,.leaflet-bar a.fit{width:40px!important;height:40px!important;line-height:40px!important;font-size:22px!important}
 .leaflet-bar a.fit{font:600 13px/40px var(--body)!important;width:auto!important;padding:0 10px;white-space:nowrap}
 /* Rent dial: fills as the rent approaches AED 100k (full at 100k or more), for a quick read at a glance. */
-.pie{display:inline-block;width:.78em;height:.78em;border-radius:50%;margin-right:.32em;vertical-align:-.06em;flex:none;
+.pie{display:inline-block;width:.78em;height:.78em;border-radius:50%;margin-inline-end:.32em;vertical-align:-.06em;flex:none;
   background:conic-gradient(var(--pie,var(--sign)) var(--p,0%),var(--pie-track,rgba(31,37,43,.16)) 0)}
 .rl.grp .pie,.band .pie{--pie:#fff;--pie-track:rgba(255,255,255,.32)}
 :root[data-theme="dark"] .rl:not(.grp) .pie{--pie:#80AAE6;--pie-track:rgba(255,255,255,.18)}
 .pie[hidden]{display:none}
-.big .pie{width:.62em;height:.62em;align-self:center;margin-right:.18em}
+.big .pie{width:.62em;height:.62em;align-self:center;margin-inline-end:.18em}
 .legend .note .pie{font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Arabic (i18n.js): the page reads right to left; the logical properties above mirror it. The map
+   stays a left-to-right picture of the world, with its legend and breakdowns in Arabic. Barlow has
+   no Arabic letters, so they come from the device's Arabic font; numbers stay in Barlow. */
+:root[lang="ar"]{--body:"Barlow",system-ui,"Segoe UI","Noto Sans Arabic","Geeza Pro",Tahoma,sans-serif;
+  --cond:"Barlow Condensed","Noto Sans Arabic","Segoe UI","Geeza Pro",Tahoma,sans-serif}
+:root[lang="ar"] *{letter-spacing:0!important}
+[dir="rtl"] .mapWrap{direction:ltr}
+[dir="rtl"] .legend,[dir="rtl"] .leaflet-popup-content{direction:rtl;text-align:right}
+[dir="rtl"] .big .num{direction:ltr}
+@media (min-width:1100px){:root[lang="ar"] .band h1{font-size:34px;padding-inline-end:165px}}
+@media (max-width:860px){[dir="rtl"] .controls .seg{-webkit-mask-image:linear-gradient(270deg,#000 85%,transparent);mask-image:linear-gradient(270deg,#000 85%,transparent)}}

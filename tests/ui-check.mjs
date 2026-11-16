@@ -31,12 +31,12 @@ const BASE = `http://127.0.0.1:${server.address().port}/`;
 const failures = [];
 const check = (ok, what) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) failures.push(what); };
 
-async function open(browser, viewport, colorScheme = 'light') {
+async function open(browser, viewport, colorScheme = 'light', query = '') {
   const page = await (await browser.newContext({ viewport, colorScheme })).newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.route(/tile\.openstreetmap\.org/, r => r.abort()); // no tile load on every test run
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  await page.goto(BASE + query, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 });
   await page.waitForTimeout(600);
   return { page, errors };
@@ -146,6 +146,35 @@ try {
       check(/\/a\/jumeirah-village-circle\/(\?unit=|$)/.test(link), `desktop: "Share" copies the area's preview link (${link.replace(BASE, '')})`);
       check(/og:image/.test(await page.content()), 'desktop: the page has link-preview tags');
     }
+    check(!errors.length, `${name}: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await axe(page, name);
+    await page.context().close();
+  }
+  // Arabic: right to left, translated, the rent check still works, nothing sideways, accessible.
+  for (const [name, viewport] of [['Arabic desktop', { width: 1350, height: 900 }], ['Arabic phone', { width: 390, height: 844 }]]) {
+    const { page, errors } = await open(browser, viewport, 'light', '?lang=ar');
+    check(await page.evaluate(() => document.documentElement.dir === 'rtl' && document.documentElement.lang === 'ar'), `${name}: the page reads right to left`);
+    check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${name}: no sideways scrolling`);
+    await page.click('#ckArea');
+    await page.fill('#ckArea', 'jvc');
+    await page.press('#ckArea', 'Enter');
+    await page.waitForTimeout(400);
+    const big = await page.$eval('.ck-big', e => e.textContent).catch(() => '');
+    check(/AED\s*[\d,]+/.test(big) && /سنويًا/.test(big), `${name}: rent check answers in Arabic (${big.trim()})`);
+    // Leftover English: common interface words in visible text (area names, AED and sources stay English).
+    const english = await page.evaluate(() => {
+      const words = /\b(Check|Share|Save|Show|Median|Contracts|Filters|Unit|Area|Average|Weekly|Download|Remind|Loading)\b/;
+      const skip = el => el.closest('.leaflet-container,#sources,#foot,#rows,option,.ck-what b,[lang="en"]');
+      const out = [];
+      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let n; (n = walk.nextNode());) {
+        const el = n.parentElement;
+        if (!el || skip(el) || !el.offsetParent) continue;
+        if (words.test(n.textContent)) out.push(n.textContent.trim().slice(0, 40));
+      }
+      return out;
+    });
+    check(!english.length, `${name}: no English interface text left${english.length ? ': ' + english.join(' | ') : ''}`);
     check(!errors.length, `${name}: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await axe(page, name);
     await page.context().close();

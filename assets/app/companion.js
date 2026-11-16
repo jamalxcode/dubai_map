@@ -9,8 +9,9 @@
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const aed = n => n == null || !isFinite(n) ? '—' : 'AED ' + Math.round(n).toLocaleString('en-AE');
   const short = n => n >= 1e6 ? (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'M' : Math.round(n / 1e3) + 'k';
-  const dateText = d => d ? new Date(d + 'T00:00:00+04:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Dubai' }) : '';
-  const plural = (n, w) => n.toLocaleString('en-AE') + ' ' + w + (n === 1 ? '' : 's');
+  const dateText = d => d ? new Date(d + 'T00:00:00+04:00').toLocaleDateString(T.locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Dubai' }) : '';
+  const plural = (n, w) => T.count(n, w);
+  const U = u => T.unit(u), US = u => T.unit(u, true); // home types: shown in the page's language, stored in English
 
   let store = RI.emptyStore(), AREAS_ALL = [], BY_LABEL = {}, THROUGH = null, current = null;
   // Phones: the card starts as one line (area + Check) so the map stays near the top of the
@@ -22,7 +23,7 @@
     if (!c) return;
     c.classList.toggle('compact', folded);
     const input = el('ckArea');
-    if (input) input.placeholder = folded ? 'Check a rent: type an area' : 'e.g. JVC, Business Bay, Al Qusais';
+    if (input) input.placeholder = folded ? T('Check a rent: type an area') : T('e.g. JVC, Business Bay, Al Qusais');
   };
   const isCompact = () => el('companion').classList.contains('compact');
 
@@ -38,20 +39,20 @@
       <div class="ck-new" id="ckNew" hidden role="status"></div>
       <div class="ck">
         <div class="ck-head">
-          <h2 id="ckTitle">Check a rent</h2>
-          <button type="button" class="link ck-close" data-act="close">Close</button>
-          <p>What tenants actually pay for a home like yours, from registered contracts.</p>
+          <h2 id="ckTitle">${T('Check a rent')}</h2>
+          <button type="button" class="link ck-close" data-act="close">${T('Close')}</button>
+          <p>${T('What tenants actually pay for a home like yours, from registered contracts.')}</p>
         </div>
         <form class="ck-form" id="ckForm" autocomplete="off" novalidate>
-          <label class="field ck-area"><span class="lbl">Area</span>
-            <input id="ckArea" list="ckAreas" placeholder="e.g. JVC, Business Bay, Al Qusais" enterkeyhint="search" required aria-describedby="ckTitle">
+          <label class="field ck-area"><span class="lbl">${T('Area')}</span>
+            <input id="ckArea" list="ckAreas" placeholder="${T('e.g. JVC, Business Bay, Al Qusais')}" enterkeyhint="search" required aria-describedby="ckTitle">
           </label>
           <datalist id="ckAreas"></datalist>
-          <label class="field ck-unit">Home<select id="ckUnit" disabled><option value="">Pick an area first</option></select></label>
-          <label class="field ck-rent"><span>Your yearly rent <span class="opt">(optional)</span></span>
-            <input id="ckRent" type="text" inputmode="numeric" placeholder="e.g. 75,000">
+          <label class="field ck-unit">${T('Home')}<select id="ckUnit" disabled><option value="">${T('Pick an area first')}</option></select></label>
+          <label class="field ck-rent"><span>${T('Your yearly rent')} <span class="opt">${T('(optional)')}</span></span>
+            <input id="ckRent" type="text" inputmode="numeric" placeholder="${T('e.g. 75,000')}">
           </label>
-          <button class="btn primary" type="submit" id="ckGo">Check</button>
+          <button class="btn primary" type="submit" id="ckGo">${T('Check')}</button>
         </form>
         <div class="ck-result" id="ckResult" aria-live="polite"></div>
       </div>
@@ -73,9 +74,9 @@
     const sel = el('ckUnit');
     const units = RI.unitOptions(area);
     sel.disabled = !area;
-    if (!area) { sel.innerHTML = '<option value="">Pick an area first</option>'; return ''; }
-    sel.innerHTML = units.map(u => `<option value="${esc(u.u)}">${esc(RI.unitShort(u.u))}</option>`).join('') +
-      (area.median_kind === 'unit' ? '' : `<option value="">All homes</option>`);  // no all-homes median published
+    if (!area) { sel.innerHTML = `<option value="">${T('Pick an area first')}</option>`; return ''; }
+    sel.innerHTML = units.map(u => `<option value="${esc(u.u)}">${esc(US(u.u))}</option>`).join('') +
+      (area.median_kind === 'unit' ? '' : `<option value="">${T('All homes')}</option>`);  // no all-homes median published
     // Keep the visitor's choice when the new area has it; otherwise its most common home,
     // the fairest default for comparing areas.
     const allHomes = area.median_kind !== 'unit';
@@ -126,20 +127,20 @@
     const pick = (some.length ? some : close).slice(0, 6);
     el('ckResult').innerHTML = `
       <div class="ck-empty">
-        <p><b>${some.length ? 'Several areas match' : 'No area called'} “${esc(text)}”${some.length ? '' : ' in the data'}.</b>
-        ${pick.length ? (some.length ? 'Which one?' : 'Did you mean:') : 'Try the area name on your Ejari contract (for example <i>Al Barsha South Fourth</i> for JVC), or find it on the map.'}</p>
+        <p><b>${some.length ? T('Several areas match “{q}”.', { q: esc(text) }) : T('No area called “{q}” in the data.', { q: esc(text) })}</b>
+        ${pick.length ? (some.length ? T('Which one?') : T('Did you mean:')) : T('Try the area name on your Ejari contract (for example <i>Al Barsha South Fourth</i> for JVC), or find it on the map.')}</p>
         ${pick.length ? `<div class="chips">${pick.map(h => `<button type="button" class="chip" data-area="${esc(h.area.label)}">${esc(h.area.label)}</button>`).join('')}</div>` : ''}
-        <p class="muted">Older districts such as Deira and Bur Dubai are added once daily contract data is switched on.</p>
+        <p class="muted">${T('Some areas are missing until daily contract data is switched on.')}</p>
       </div>`;
   }
 
   function nextStep(saved, f) {
     // One recommended next step, in the order that builds the most value for the visitor.
-    if (!current.rent) return { id: 'rent', label: 'Compare with my rent' };
-    if (saved < 0) return { id: 'save', label: 'Save to My areas' };
+    if (!current.rent) return { id: 'rent', label: T('Compare with my rent') };
+    if (saved < 0) return { id: 'save', label: T('Save to My areas') };
     const s = store.saved[saved];
-    if (!s.renews) return { id: 'remind', label: 'Remind me before renewal' };
-    return { id: 'map', label: 'Show on the map' };
+    if (!s.renews) return { id: 'remind', label: T('Remind me before renewal') };
+    return { id: 'map', label: T('Show on the map') };
   }
 
   function render() {
@@ -148,50 +149,52 @@
     const out = el('ckResult');
     if (!f) {
       const units = RI.unitOptions(area);
-      out.innerHTML = `<div class="ck-empty"><p><b>Too few contracts for ${esc(unit)} in ${esc(area.label)} to give a fair figure.</b>
-        ${units.length ? 'Figures exist for:' : ''}</p>
-        <div class="chips">${units.map(u => `<button type="button" class="chip" data-unit="${esc(u.u)}">${esc(RI.unitShort(u.u))}</button>`).join('')}</div></div>`;
+      out.innerHTML = `<div class="ck-empty"><p><b>${T('Too few contracts for {unit} in {area} to give a fair figure.', { unit: esc(U(unit)), area: esc(area.label) })}</b>
+        ${units.length ? T('Figures exist for:') : ''}</p>
+        <div class="chips">${units.map(u => `<button type="button" class="chip" data-unit="${esc(u.u)}">${esc(US(u.u))}</button>`).join('')}</div></div>`;
       return;
     }
     const facts = RI.insights(AREAS_ALL, area, unit, rent);
     const v = facts.find(x => x.kind === 'verdict');
     const savedIdx = RI.isSaved(store, area.label, unit);
     const step = nextStep(savedIdx, f);
-    const what = unit || 'All homes';
+    const what = unit ? U(unit) : T('All homes');
     const isTypical = !unit && area.median_kind === 'typical';
-    const period = AGG ? `last 12 months, to ${dateText(THROUGH)}` : 'last 12 months';
+    const period = AGG ? T('last 12 months, to {d}', { d: dateText(THROUGH) }) : T('last 12 months');
     let verdictHtml = '';
     if (v) {
-      const words = { below: `${Math.abs(v.pct)}% below`, above: `${v.pct}% above`, about: 'about the same as' };
-      verdictHtml = `<p class="ck-verdict ck-${v.word}">You pay <b>${aed(rent)}</b>: <b>${words[v.word]}</b> the median` +
-        (v.word === 'about' ? '.' : ` (${aed(Math.abs(v.diff))} a year ${v.word === 'below' ? 'less' : 'more'}).`) +
+      const vars = { rent: `<b>${aed(rent)}</b>`, pct: Math.abs(v.pct), diff: aed(Math.abs(v.diff)) };
+      verdictHtml = `<p class="ck-verdict ck-${v.word}">` + (v.word === 'about'
+          ? T('You pay {rent}: <b>about the same as</b> the median.', vars)
+          : v.word === 'below' ? T('You pay {rent}: <b>{pct}% below</b> the median ({diff} a year less).', vars)
+            : T('You pay {rent}: <b>{pct}% above</b> the median ({diff} a year more).', vars)) +
         `<br><small>${f.p25 != null && f.p75 != null
-          ? (rent < f.p25 ? 'That is in the cheapest quarter.' : rent > f.p75 ? 'That is in the dearest quarter.' : 'That is within the middle half.')
-          : 'Half of these tenants pay more and half less.'} Size, floor, view and building all move the price.</small></p>`;
+          ? (rent < f.p25 ? T('That is in the cheapest quarter.') : rent > f.p75 ? T('That is in the dearest quarter.') : T('That is within the middle half.'))
+          : T('Half of these tenants pay more and half less.')} ${T('Size, floor, view and building all move the price.')}</small></p>`;
     }
     const cheaper = facts.find(x => x.kind === 'cheaper'), rank = facts.find(x => x.kind === 'rank'), tr = facts.find(x => x.kind === 'trend');
     const finds = [];
-    if (cheaper) finds.push(`<li><b>Same home for less nearby:</b> ` + cheaper.items.map(c =>
-      `<button type="button" class="link" data-area="${esc(c.area.label)}" data-unit="${esc(unit)}">${esc(c.area.label)}</button> ${aed(c.median)} <span class="muted">(${c.km} km, ${short(c.saving)} less)</span>`).join(', ') + '</li>');
-    if (tr) finds.push(`<li><b>Trend:</b> the median is ${tr.pct > 0 ? 'up' : 'down'} ${Math.abs(tr.pct)}% from ${esc(tr.from)} to ${esc(tr.to)}.</li>`);
-    if (rank) finds.push(`<li>Cheaper than <b>${rank.cheaperThanPct}%</b> of ${rank.of} areas with figures for ${esc(what.toLowerCase())}.</li>`);
-    if (f.yield != null) finds.push(`<li class="muted">For owners: gross rental yield ${f.yield}%.</li>`);
+    if (cheaper) finds.push(`<li><b>${T('Same home for less nearby:')}</b> ` + cheaper.items.map(c =>
+      `<button type="button" class="link" data-area="${esc(c.area.label)}" data-unit="${esc(unit)}">${esc(c.area.label)}</button> ${aed(c.median)} <span class="muted">(${T('{km} km, {s} less', { km: c.km, s: short(c.saving) })})</span>`).join(T(', ')) + '</li>');
+    if (tr) finds.push(`<li><b>${T('Trend:')}</b> ${T(tr.pct > 0 ? 'the median is up {pct}% from {from} to {to}.' : 'the median is down {pct}% from {from} to {to}.', { pct: Math.abs(tr.pct), from: esc(tr.from), to: esc(tr.to) })}</li>`);
+    if (rank) finds.push(`<li>${T('Cheaper than <b>{pct}%</b> of {of} areas with figures for {what}.', { pct: rank.cheaperThanPct, of: rank.of, what: esc(what.toLowerCase()) })}</li>`);
+    if (f.yield != null) finds.push(`<li class="muted">${T('For owners: gross rental yield {v}%.', { v: f.yield })}</li>`);
     const secondary = [];
-    if (step.id !== 'save' && savedIdx < 0) secondary.push(`<button type="button" class="link" data-act="save">Save to My areas</button>`);
-    if (step.id !== 'map') secondary.push(`<button type="button" class="link" data-act="map">Show on the map</button>`);
-    secondary.push(`<button type="button" class="link" data-act="share">Share</button>`);
-    if (area.url) secondary.push(`<a href="${esc(area.url)}" target="_blank" rel="noopener">Dubai Data page</a>`);
+    if (step.id !== 'save' && savedIdx < 0) secondary.push(`<button type="button" class="link" data-act="save">${T('Save to My areas')}</button>`);
+    if (step.id !== 'map') secondary.push(`<button type="button" class="link" data-act="map">${T('Show on the map')}</button>`);
+    secondary.push(`<button type="button" class="link" data-act="share">${T('Share')}</button>`);
+    if (area.url) secondary.push(`<a href="${esc(area.url)}" target="_blank" rel="noopener">${T('Dubai Data page')}</a>`);
     out.innerHTML = `
       <div class="ck-answer">
-        <p class="ck-what">${esc(what)} in <b>${esc(area.label)}</b></p>
-        <p class="ck-big"><i class="pie" aria-hidden="true" style="--p:${Math.min(100, Math.round(f.median / 1000))}%"></i>${aed(f.median)} <span>a year</span></p>
+        <p class="ck-what">${T('{what} in {area}', { what: esc(what), area: `<b>${esc(area.label)}</b>` })}</p>
+        <p class="ck-big"><i class="pie" aria-hidden="true" style="--p:${Math.min(100, Math.round(f.median / 1000))}%"></i><bdi>${aed(f.median)}</bdi> <span>${T('a year')}</span></p>
         <p class="muted">${f.n == null
-          ? `Median for this home type, ${area.through ? 'to ' + dateText(area.through) : period}. Source: Continental Club Property (CC BY 4.0), which gives ${plural(area.n, 'contract')} for the whole area but no count per home type.`
-          : `${isTypical ? 'Typical' : 'Median'} of ${plural(f.n, 'contract')}, ${period}.`}${savedIdx >= 0 ? ' <span class="tag">Saved</span>' : ''}</p>
-        ${AGG && /^[3-9]-bedroom/.test(unit) ? '<p class="muted">Dubai Data groups homes by bedrooms: in villa communities this figure may include villas and townhouses.</p>' : ''}
+          ? T('Median for this home type, {period}. Source: Continental Club Property (CC BY 4.0), which gives {n} for the whole area but no count per home type.', { period: area.through ? T('to {d}', { d: dateText(area.through) }) : period, n: plural(area.n, 'contract') })
+          : T(isTypical ? 'Typical of {n}, {period}.' : 'Median of {n}, {period}.', { n: plural(f.n, 'contract'), period })}${savedIdx >= 0 ? ` <span class="tag">${T('Saved')}</span>` : ''}</p>
+        ${AGG && /^[3-9]-bedroom/.test(unit) ? `<p class="muted">${T('Dubai Data groups homes by bedrooms: in villa communities this figure may include villas and townhouses.')}</p>` : ''}
         <p class="muted ck-range">${f.p25 != null && f.p75 != null
-          ? `The middle half of these tenants pay <b>${aed(f.p25)}</b> to <b>${aed(f.p75)}</b>.`
-          : 'No range yet: the open sources publish only the middle figure (half pay more, half less). Ranges arrive with contract-level data.'}</p>
+          ? T('The middle half of these tenants pay <b>{a}</b> to <b>{b}</b>.', { a: aed(f.p25), b: aed(f.p75) })
+          : T('No range yet: the open sources publish only the middle figure (half pay more, half less). Ranges arrive with contract-level data.')}</p>
         ${verdictHtml}
         ${finds.length ? `<ul class="ck-finds">${finds.join('')}</ul>` : ''}
         <div class="ck-actions">
@@ -214,34 +217,34 @@
       const v = f && RI.verdict(s.rent, f.median);
       return `<li>
         <button type="button" class="mine-main" data-area="${esc(s.area)}" data-unit="${esc(s.unit)}" data-rent="${s.rent || ''}">
-          <b>${esc(s.area)}</b> <span class="muted">${esc(s.unit || 'All homes')}</span>
-          <span class="mine-fig">${f ? aed(f.median) : 'no figure now'}${ch && ch.pct !== 0 ? ` <small class="${ch.pct > 0 ? 'up' : 'down'}">${ch.pct > 0 ? '+' : ''}${ch.pct}% since ${esc(dateText(ch.since)) || 'saved'}</small>` : ch ? ' <small class="muted">no change since saved</small>' : ''}</span>
-          ${v ? `<small class="muted">You pay ${aed(s.rent)} (${v.word === 'about' ? 'about the median' : Math.abs(v.pct) + '% ' + v.word})</small>` : ''}
-          ${s.renews ? `<small class="muted">Renews ${esc(dateText(s.renews))}</small>` : ''}
+          <b>${esc(s.area)}</b> <span class="muted">${esc(s.unit ? U(s.unit) : T('All homes'))}</span>
+          <span class="mine-fig">${f ? aed(f.median) : T('no figure now')}${ch && ch.pct !== 0 ? ` <small class="${ch.pct > 0 ? 'up' : 'down'}">${T('{sign}{pct}% since {when}', { sign: ch.pct > 0 ? '+' : '', pct: ch.pct, when: esc(dateText(ch.since)) || T('saved') })}</small>` : ch ? ` <small class="muted">${T('no change since saved')}</small>` : ''}</span>
+          ${v ? `<small class="muted">${T('You pay {rent} ({how})', { rent: aed(s.rent), how: v.word === 'about' ? T('about the median') : T(v.word === 'below' ? '{pct}% below' : '{pct}% above', { pct: Math.abs(v.pct) }) })}</small>` : ''}
+          ${s.renews ? `<small class="muted">${T('Renews {d}', { d: esc(dateText(s.renews)) })}</small>` : ''}
         </button>
-        <button type="button" class="x" data-del="${i}" aria-label="Remove ${esc(s.area)} from My areas">×</button>
+        <button type="button" class="x" data-del="${i}" aria-label="${T('Remove {area} from My areas', { area: esc(s.area) })}">×</button>
       </li>`;
     }).join('');
     box.innerHTML = `
-      ${store.saved.length ? `<h3>My areas</h3><ul class="mine-list">${savedHtml}</ul>` : ''}
-      ${recent.length ? `<div class="mine-recent"><span class="muted">Recent:</span> ${recent.map(h => `<button type="button" class="chip" data-area="${esc(h.area)}" data-unit="${esc(h.unit)}">${esc(h.area)}${h.unit ? ' · ' + esc(RI.unitShort(h.unit)) : ''}</button>`).join('')}
-        <button type="button" class="link" data-act="clear-history">Clear</button></div>` : ''}
+      ${store.saved.length ? `<h3>${T('My areas')}</h3><ul class="mine-list">${savedHtml}</ul>` : ''}
+      ${recent.length ? `<div class="mine-recent"><span class="muted">${T('Recent:')}</span> ${recent.map(h => `<button type="button" class="chip" data-area="${esc(h.area)}" data-unit="${esc(h.unit)}">${esc(h.area)}${h.unit ? ' · ' + esc(US(h.unit)) : ''}</button>`).join('')}
+        <button type="button" class="link" data-act="clear-history">${T('Clear')}</button></div>` : ''}
       <details class="mine-settings">
-        <summary>Reminders and your saved data</summary>
+        <summary>${T('Reminders and your saved data')}</summary>
         <div class="set-grid">
-          <label class="field">Renewal reminders arrive
-            <select id="setRemind">${[90, 60, 30].map(d => `<option value="${d}" ${store.prefs.remindDays === d ? 'selected' : ''}>${d} days before</option>`).join('')}</select>
+          <label class="field">${T('Renewal reminders arrive')}
+            <select id="setRemind">${[90, 60, 30].map(d => `<option value="${d}" ${store.prefs.remindDays === d ? 'selected' : ''}>${T('{d} days before', { d })}</option>`).join('')}</select>
           </label>
-          <label class="field">Remind me to check the market
-            <select id="setEvery">${[[0, 'Never'], [3, 'Every 3 months'], [6, 'Every 6 months'], [12, 'Once a year']].map(([m, t]) => `<option value="${m}" ${store.prefs.checkEvery === m ? 'selected' : ''}>${t}</option>`).join('')}</select>
+          <label class="field">${T('Remind me to check the market')}
+            <select id="setEvery">${[[0, 'Never'], [3, 'Every 3 months'], [6, 'Every 6 months'], [12, 'Once a year']].map(([m, t]) => `<option value="${m}" ${store.prefs.checkEvery === m ? 'selected' : ''}>${T(t)}</option>`).join('')}</select>
           </label>
-          <button type="button" class="btn" data-act="every-ics" ${store.prefs.checkEvery ? '' : 'disabled'}>Add to my calendar</button>
-          <label class="check"><input type="checkbox" id="setNew" ${store.prefs.whatsNew ? 'checked' : ''}> Tell me what changed when I come back</label>
+          <button type="button" class="btn" data-act="every-ics" ${store.prefs.checkEvery ? '' : 'disabled'}>${T('Add to my calendar')}</button>
+          <label class="check"><input type="checkbox" id="setNew" ${store.prefs.whatsNew ? 'checked' : ''}> ${T('Tell me what changed when I come back')}</label>
         </div>
-        <p class="muted">Reminders go into your own calendar, which does the reminding: delete the event there to stop it. Your areas and checks are saved only in this browser, never sent anywhere. The site counts visits and which features are used (GoatCounter: no cookies, nothing personal).</p>
-        <p class="data-acts"><button type="button" class="link" data-act="export">Download my data</button><span class="sep">·</span>
-          <label class="link">Import<input type="file" id="setImport" accept="application/json" hidden></label><span class="sep">·</span>
-          <button type="button" class="link" data-act="wipe">Delete my saved data</button></p>
+        <p class="muted">${T('Reminders go into your own calendar, which does the reminding: delete the event there to stop it. Your areas and checks are saved only in this browser, never sent anywhere. The site counts visits and which features are used (GoatCounter: no cookies, nothing personal).')}</p>
+        <p class="data-acts"><button type="button" class="link" data-act="export">${T('Download my data')}</button><span class="sep">·</span>
+          <label class="link">${T('Import')}<input type="file" id="setImport" accept="application/json" hidden></label><span class="sep">·</span>
+          <button type="button" class="link" data-act="wipe">${T('Delete my saved data')}</button></p>
       </details>`;
   }
 
@@ -263,10 +266,10 @@
     const today = new Date().toISOString().slice(0, 10);
     el('ckRemindHere').innerHTML = `
       <form class="ck-remind" id="ckRemindForm">
-        <label class="field">My lease renews on<input type="date" id="ckRenews" min="${today}" value="${s.renews || ''}" required></label>
-        <label class="field">Remind me<select id="ckRemindDays">${[90, 60, 30].map(d => `<option value="${d}" ${store.prefs.remindDays === d ? 'selected' : ''}>${d} days before</option>`).join('')}</select></label>
-        <button class="btn primary" type="submit">Add to my calendar</button>
-        <p class="muted">Downloads a calendar event; your calendar app reminds you. A good time to check the market is before your landlord's renewal notice (usually 90 days ahead).</p>
+        <label class="field">${T('My lease renews on')}<input type="date" id="ckRenews" min="${today}" value="${s.renews || ''}" required></label>
+        <label class="field">${T('Remind me')}<select id="ckRemindDays">${[90, 60, 30].map(d => `<option value="${d}" ${store.prefs.remindDays === d ? 'selected' : ''}>${T('{d} days before', { d })}</option>`).join('')}</select></label>
+        <button class="btn primary" type="submit">${T('Add to my calendar')}</button>
+        <p class="muted">${T("Downloads a calendar event; your calendar app reminds you. A good time to check the market is before your landlord's renewal notice (usually 90 days ahead).")}</p>
       </form>`;
     el('ckRenews').focus();
   }
@@ -283,10 +286,10 @@
     const f = RI.unitFigure(BY_LABEL[s.area], s.unit);
     download('rent-renewal-' + RI.norm(s.area).replace(/ /g, '-') + '.ics', RI.ics({
       uid: 'renewal-' + RI.norm(s.area + ' ' + s.unit).replace(/ /g, '-') + '-' + s.renews + '@dubai-rent-atlas',
-      title: 'Rent renewal: ' + s.area + ' (check the market)',
+      title: T('Rent renewal: {area} (check the market)', { area: s.area }),
       date: s.renews, alarmDays: days,
-      details: `Your lease renews today. Before agreeing a new rent, check what tenants pay for ${s.unit || 'homes'} in ${s.area}` +
-        (f ? ` (median ${aed(f.median)} a year when you set this reminder).` : '.'),
+      details: T('Your lease renews today. Before agreeing a new rent, check what tenants pay for {what} in {area}.', { what: s.unit ? U(s.unit) : T('homes'), area: s.area }) +
+        (f ? ' ' + T('(Median {aed} a year when you set this reminder.)', { aed: aed(f.median) }) : ''),
       url: siteUrl(s.area, s.unit),
     }), 'text/calendar');
   }
@@ -297,9 +300,9 @@
     const first = store.saved[0];
     download('rent-check-every-' + months + '-months.ics', RI.ics({
       uid: 'market-check-every-' + months + '@dubai-rent-atlas',
-      title: 'Check Dubai rents' + (first ? ': ' + first.area : ''),
+      title: T('Check Dubai rents') + (first ? ': ' + first.area : ''),
       date: RI.addMonths(new Date().toISOString().slice(0, 10), months), everyMonths: months, alarmDays: 0,
-      details: 'A reminder you set on Dubai Rent Atlas to see how rents have moved. Delete this event to stop it.',
+      details: T('A reminder you set on Dubai Rent Atlas to see how rents have moved. Delete this event to stop it.'),
       url: first ? siteUrl(first.area, first.unit) : location.origin + location.pathname,
     }), 'text/calendar');
   }
@@ -312,10 +315,10 @@
     if (!store.seenThrough || !isReturning) { store.seenThrough = THROUGH; save(); return; }
     const w = RI.whatsNew(store, THROUGH, BY_LABEL);
     if (!w || !store.prefs.whatsNew) { if (w) { store.seenThrough = THROUGH; save(); } return; }
-    const items = w.changes.slice(0, 4).map(c => `<li><button type="button" class="link" data-area="${esc(c.area)}" data-unit="${esc(c.unit)}">${esc(c.area)}${c.unit ? ' · ' + esc(c.unit) : ''}</button>: ${aed(c.to)} <small class="${c.pct > 0 ? 'up' : 'down'}">${c.pct > 0 ? '+' : ''}${c.pct}% since you saved it</small></li>`).join('');
-    box.innerHTML = `<p><b>New figures since your last visit</b>: rents now run to ${esc(dateText(w.to))} (was ${esc(dateText(w.from))}).</p>
-      ${items ? `<ul>${items}</ul>` : '<p class="muted">Your saved areas have not changed.</p>'}
-      <button type="button" class="btn" data-act="seen">Got it</button>`;
+    const items = w.changes.slice(0, 4).map(c => `<li><button type="button" class="link" data-area="${esc(c.area)}" data-unit="${esc(c.unit)}">${esc(c.area)}${c.unit ? ' · ' + esc(US(c.unit)) : ''}</button>: ${aed(c.to)} <small class="${c.pct > 0 ? 'up' : 'down'}">${T('{sign}{pct}% since you saved it', { sign: c.pct > 0 ? '+' : '', pct: c.pct })}</small></li>`).join('');
+    box.innerHTML = `<p>${T('<b>New figures since your last visit</b>: rents now run to {to} (was {from}).', { to: esc(dateText(w.to)), from: esc(dateText(w.from)) })}</p>
+      ${items ? `<ul>${items}</ul>` : `<p class="muted">${T('Your saved areas have not changed.')}</p>`}
+      <button type="button" class="btn" data-act="seen">${T('Got it')}</button>`;
     box.hidden = false;
   }
 
@@ -331,15 +334,16 @@
     const { area, unit } = current, f = RI.unitFigure(area, unit);
     const url = shareUrl(area, unit);
     count('share', area.label);
-    const text = `${unit || 'All homes'} in ${area.label}: ${f ? aed(f.median) + ' a year (median)' : 'rents'}, from Ejari contracts.`;
+    const text = f ? T('{what} in {area}: {aed} a year (median), from Ejari contracts.', { what: unit ? U(unit) : T('All homes'), area: area.label, aed: aed(f.median) })
+      : T('Rents in {area}, from Ejari contracts.', { area: area.label });
     if (navigator.share && matchMedia('(pointer:coarse)').matches) {
-      try { await navigator.share({ title: 'Dubai Rent Atlas', text, url }); } catch { /* closed the sheet */ }
+      try { await navigator.share({ title: T('Dubai Rent Atlas'), text, url }); } catch { /* closed the sheet */ }
       return;
     }
     let ok = false;
     try { await navigator.clipboard.writeText(url); ok = true; } catch { /* no clipboard permission */ }
-    btn.textContent = ok ? 'Link copied' : url;
-    if (ok) setTimeout(() => { if (btn.isConnected) btn.textContent = 'Share'; }, 2500);
+    btn.textContent = ok ? T('Link copied') : url;
+    if (ok) setTimeout(() => { if (btn.isConnected) btn.textContent = T('Share'); }, 2500);
   }
 
   function showOnMap(area, { scroll = true } = {}) {
@@ -364,7 +368,7 @@
     const m = content.match(/<span class="t">([^<]*)<\/span>/);
     const label = m && new DOMParser().parseFromString(m[1], 'text/html').body.textContent;
     if (!label || !BY_LABEL[label]) return; // group popups list several areas: no single check
-    e.popup.setContent(content + `<p class="ck-popact"><button type="button" class="btn primary" data-check="${esc(label)}">Check a rent here</button></p>`);
+    e.popup.setContent(content + `<p class="ck-popact"><button type="button" class="btn primary" data-check="${esc(label)}">${T('Check a rent here')}</button></p>`);
   }
 
   function onPopupClick(e) {
@@ -408,7 +412,7 @@
         case 'seen': store.seenThrough = THROUGH; save(); el('ckNew').hidden = true; break;
         case 'export': download('dubai-rent-atlas-my-data.json', JSON.stringify(store, null, 2), 'application/json'); break;
         case 'wipe':
-          if (confirm('Delete your saved areas, recent checks and settings from this browser?')) {
+          if (confirm(T('Delete your saved areas, recent checks and settings from this browser?'))) {
             try { localStorage.removeItem(KEY); } catch (err) { /* nothing stored */ }
             store = RI.emptyStore(); store.seenThrough = THROUGH; renderMine(); if (current) render();
           }
@@ -424,7 +428,7 @@
       save();
       renewalIcs(store.saved[i], store.prefs.remindDays);
       render(); renderMine();
-      el('ckRemindHere').innerHTML = `<p class="ck-done">Reminder downloaded: open the file to add it to your calendar. It will remind you ${store.prefs.remindDays} days before ${esc(dateText(store.saved[i].renews))}.</p>`;
+      el('ckRemindHere').innerHTML = `<p class="ck-done">${T('Reminder downloaded: open the file to add it to your calendar. It will remind you {d} days before {date}.', { d: store.prefs.remindDays, date: esc(dateText(store.saved[i].renews)) })}</p>`;
     });
     el('companion').addEventListener('change', e => {
       if (e.target.id === 'setRemind') { store.prefs.remindDays = +e.target.value; save(); }
@@ -436,7 +440,7 @@
           for (const s of incoming.saved) if (RI.isSaved(store, s.area, s.unit) < 0) store.saved.push(s);
           store.saved = store.saved.slice(0, RI.MAX_SAVED); store.prefs = incoming.prefs;
           save(); renderMine();
-        }).catch(() => alert('That file is not a Dubai Rent Atlas export.'));
+        }).catch(() => alert(T('That file is not a Dubai Rent Atlas export.')));
       }
     });
     map.on('popupopen', onPopup);
@@ -466,8 +470,8 @@
 
   function failed() {
     if (!mount()) return;
-    el('ckResult').innerHTML = `<div class="ck-empty"><p><b>The rent data didn't load.</b> This is usually a brief network hiccup.</p>
-      <button type="button" class="btn primary" onclick="location.reload()">Try again</button></div>`;
+    el('ckResult').innerHTML = `<div class="ck-empty"><p>${T("<b>The rent data didn't load.</b> This is usually a brief network hiccup.")}</p>
+      <button type="button" class="btn primary" onclick="location.reload()">${T('Try again')}</button></div>`;
     el('ckForm').hidden = true;
   }
 
