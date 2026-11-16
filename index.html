@@ -208,7 +208,9 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .scrim.on{pointer-events:auto}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-</style></head>
+</style>
+<link rel="stylesheet" href="assets/app/companion.css">
+</head>
 <body>
 <header class="band">
   <button class="theme" id="theme" type="button" aria-label="Switch to dark mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span>Dark</span></button>
@@ -223,6 +225,8 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
     </div>
   </div>
 </header>
+
+<section class="wrap" id="companion" aria-labelledby="ckTitle"></section>
 
 <div class="scrim" id="scrim"></div>
 <nav class="controls" aria-label="Filters">
@@ -391,7 +395,7 @@ async function getJSON(p){const r=await fetch(p,{cache:'no-cache'});if(!r.ok)thr
 
 async function init(){
   try{[META,{areas:AREAS},{rows:ROWS}]=await Promise.all([getJSON('data/meta.json'),getJSON('data/areas.json'),getJSON('data/latest.json')])}
-  catch(e){$('rows').innerHTML='<tr><td>The rent data could not be loaded. Reload the page; if it keeps failing, the daily update has not run yet.</td></tr>';return}
+  catch(e){$('rows').innerHTML='<tr><td>The rent data could not be loaded. Reload the page; if it keeps failing, the daily update has not run yet.</td></tr>';window.atlasState='error';dispatchEvent(new Event('atlas:error'));return}
   CACHE.homes=AREAS;
   AGG=META.mode==='aggregate';
   buildTypes();
@@ -413,6 +417,7 @@ async function init(){
   $('unmatched').innerHTML=un.map(x=>'<li>'+safe(x.area)+' <span class="muted">('+fmt(x.n)+')</span></li>').join('')||'<li class="muted">None</li>';
   $('foot').textContent=META.source||'';
   fillUnits();draw();intro();
+  window.atlasState='ready';dispatchEvent(new Event('atlas:ready')); // assets/app/companion.js takes it from here
 }
 
 function sources(){
@@ -564,4 +569,6 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let sav
 paintToggle();
 init();
 </script>
+<script src="assets/app/insights.js"></script>
+<script src="assets/app/companion.js"></script>
 </body></html>

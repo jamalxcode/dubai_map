@@ -160,6 +160,18 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - Tested end-to-end with all 102 real community pages collected on 16 Nov: data through 13 Nov, rents within -9%..+11% of 29 Oct, build and data checks pass.
 - Stale warning now at 7 days for every source.
 
+## Decision on 2026-11-16 (tenth pass): built for return visits that are worth it
+
+The recurring need is "what do people actually pay for a home like mine?", which matters most around a move or a renewal. The aim is useful, voluntary return visits, not time on the page.
+
+- **Core action first:** a "Check a rent" card at the top (area, home, optional rent). Area search accepts nicknames, DLD names and typos (offered as "did you mean", never silently accepted). The home defaults to the area's most common unit, the fairest basis for comparisons.
+- **One next step:** each result has one primary button in order of value: compare with my rent → save → renewal reminder → map. Everything else is a plain link. Clear stopping point; no feed, no autoplay.
+- **Rewards are facts:** how your rent compares (with the caveat that half pay more and half less), the same home for less within 12 km (30+ contracts), rank among areas, the trend when contract data exists. Area-to-area comparisons only for a specific unit, never "all homes" (different mixes). No badges, points or streaks.
+- **Triggers:** reminders are calendar files (renewal: 30/60/90 days before; market check: never/3/6/12 months). No push notifications: a static site has no server, and calendar reminders are under the visitor's control. On return, a "new figures" note shows only when the data moved on, with changes for saved areas; it can be switched off.
+- **Personal value, private:** My areas (with change since saved), recent checks, the last check and map view resume. Stored only in localStorage (`rentAtlas`), cleaned on read, downloadable/importable/deletable. Works, minus remembering, when storage is blocked.
+- **Empty results and errors:** suggestions for unknown areas, units with figures when a unit has too few contracts, a retry button when data fails to load.
+- **Code:** `assets/app/insights.js` (pure logic, tested in Node), `assets/app/companion.js` + `.css`; `index.html` only gains a placeholder, two script tags, a stylesheet and the ready/error events.
+
 ## Prioritized next work
 
 **Status on 2026-11-10:** P0 items 1–3 are done via the Dubai Data fallback and a live Pages deploy. P1 is built and waiting for the Dubai Pulse key. Next up: P2 item 6 (community polygons).
@@ -198,6 +210,8 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Check a rent, My areas, calendar reminders, what's new on return, resume.
 
 - 2026-11-16: Dubai Data from its daily JSON pages (weekly export as fallback); stale warning at 7 days.
 

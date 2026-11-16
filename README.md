@@ -7,6 +7,9 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 
 ## What you see
 
+- **Check a rent (the main action):** type an area (nicknames like JVC work, so do official DLD names and typos), pick the home, optionally add your rent. You get the median, how your rent compares, cheaper areas nearby for the same home, and where the area ranks. One recommended next step: compare, save, set a renewal reminder, or see it on the map. Links like `?area=Arjan&unit=Studios` open a check directly.
+- **My areas:** save areas to see how their rent moves since you saved them; recent checks and the map view come back on your next visit; a short "new figures since your last visit" note appears only when the data has moved on (can be switched off). Everything is kept in your browser only, never sent anywhere, and can be downloaded, imported or deleted.
+- **Reminders in your own calendar:** a renewal reminder (30, 60 or 90 days before your lease renews) and an optional "check the market" reminder every 3, 6 or 12 months, as calendar files. No accounts or push messages; delete the event to stop it.
 - **Rent as text on the map:** each area shows its median yearly rent, e.g. "AED 65k · Jumeirah Village Circle". Areas too close to read apart merge into one blue label with the contract-weighted average; tap to zoom in. Labels never overlap.
 - **Property type:** Homes (flats, studios and villas together, the default), Flats, Studios, Villas, Commercial, or Everything. Labour camps, land and bulk leases (one contract worth millions spread over tiny units) only appear under Everything, so they never skew home rents.
 - **Average rent in view:** one big number for whatever is on screen, rolling to the new value as you pan and zoom.

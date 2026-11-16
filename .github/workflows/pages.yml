@@ -35,7 +35,7 @@ jobs:
           [ -f .nojekyll ] && cp .nojekyll _site/ || true
           # No "|| true" here: a site without its data must fail, not deploy an empty map.
           cp data/areas*.json data/latest.json data/meta.json _site/data/
-          cp -r assets/fonts _site/assets/
+          cp -r assets/fonts assets/app _site/assets/
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload site

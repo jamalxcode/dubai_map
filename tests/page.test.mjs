@@ -32,7 +32,7 @@ test('missing or malformed date shows no warning instead of breaking', () => {
 
 test('every external script and library stylesheet is pinned with an integrity hash', () => {
   const tags = [...(html.match(/<script\b[^>]*\bsrc="https?:\/\/[^"]+"[^>]*>/g) || []),
-                ...(html.match(/<link\b[^>]*rel="stylesheet"[^>]*>/g) || [])];
+                ...(html.match(/<link\b[^>]*rel="stylesheet"[^>]*href="https?:[^"]*"[^>]*>/g) || [])];
   assert.ok(tags.length >= 4);
   for (const t of tags) assert.match(t, /integrity="sha(256|384)-[A-Za-z0-9+/=]+"/, t);
 });
@@ -52,4 +52,12 @@ test('elements the script relies on exist', () => {
 
 test('property type buttons are never rendered disabled', () => {
   assert.doesNotMatch(html, /b\.disabled\s*=/, 'a type without data gets no button instead of a dead one');
+});
+
+test('rent check hooks stay in place (assets/app/companion.js depends on them)', () => {
+  assert.match(html, /<section[^>]*id="companion"/);
+  assert.match(html, /<script src="assets\/app\/insights\.js"><\/script>\s*<script src="assets\/app\/companion\.js"><\/script>/);
+  assert.match(html, /dispatchEvent\(new Event\('atlas:ready'\)\)/);
+  assert.match(html, /dispatchEvent\(new Event\('atlas:error'\)\)/);
+  assert.match(html, /href="assets\/app\/companion\.css"/);
 });

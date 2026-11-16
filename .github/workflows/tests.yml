@@ -27,4 +27,4 @@ jobs:
       - name: Python tests (collector, build, published data)
         run: python3 -m unittest discover -s tests -v
       - name: Page tests (stale-data rule, script integrity)
-        run: node --test tests/page.test.mjs
+        run: node --test tests/page.test.mjs tests/insights.test.mjs
