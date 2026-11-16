@@ -292,6 +292,15 @@ The owner asked for images of properties "taken either from google maps or from 
 
 Points are area references, not buildings, so photos show the area. Building-level photos could later use Dubai Data's project coordinates. The browser check uses a stand-in Commons answer and image (one photo, one diagram, one map) to test the filter and credits without calling Wikimedia. The session's network was allowed to reach commons.wikimedia.org and upload.wikimedia.org to check real answers (owner approved).
 
+## Decision on 2026-11-16 (twenty-sixth pass): a broken data check fixed, two areas placed from official points
+
+Running "Place unplaced areas" by hand showed two things.
+
+- **A bug from the twenty-second pass:** the geocoder records a failed look-up as a row without coordinates, but the data check (`tests/test_data.py`) read every row as a point and failed, so nothing was saved. The daily pull runs the same look-up and check, so it would have stopped publishing. The check now skips rows without coordinates (a bad point still fails).
+- **Al Aryam and Al Waha Villas** are Dubai Data communities that Dubai Data records as lying wholly in one DLD area (Al Yelayiss 1, Wadi Al Safa 7). A community with no point of its own and at least 90% in one DLD area now takes that area's official Municipality point. Independent agreement: OpenStreetMap's "فيلات الواحة" (Al Waha Villas) lies 1.2 km from the Wadi Al Safa 7 point.
+- **Name check:** OpenStreetMap often tags Dubai places in Arabic only, so the geocoder now asks for English names and compares the English name too.
+- **Al Twar Fifth** (2,480 contracts) stays unplaced: the Municipality list stops at Al Twar Fourth and OpenStreetMap has no such place. No guessing; the freshness check flags it until someone adds a reviewed point or alias (`data/area_locations.csv` or `data/dld_dm_aliases.csv`).
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -330,6 +339,8 @@ Points are area references, not buildings, so photos show the area. Building-lev
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Fixed the data check that rejected recorded failed look-ups; Al Aryam and Al Waha Villas placed at their DLD areas' official points; geocoder compares English names.
 
 - 2026-11-16: Area breakdowns link to Google Maps, Street View and Google photos, and show credited photos taken nearby (Wikimedia Commons).
 

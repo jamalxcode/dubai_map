@@ -51,8 +51,9 @@ First match wins:
 
 1. Hand-checked points (`data/area_locations.csv`).
 2. Dubai Data's DLD-area → community table at hand-checked points (`data/community_locations.csv`).
+2b. A Dubai Data community with no point of its own and at least 90% of its contracts in one DLD area (Dubai Data's `top_area`, `share_in_top_area`): that area's official point (`build.top_area_point`). E.g. Al Waha Villas → Wadi Al Safa 7.
 3. Dubai Municipality communities: one point guaranteed inside each official boundary (`data/dm_communities.csv`), with reviewed DLD spellings (`data/dld_dm_aliases.csv`).
-4. OpenStreetMap, accepted only when the result is inside Dubai, is a place (suburb, neighbourhood, residential…, never a shop or road) and its name matches at 0.75 or better, ignoring "Al", "Dubai", "Villas", "Community", "Area" and ordinal words (`data/osm_area_points.csv`).
+4. OpenStreetMap, accepted only when the result is inside Dubai, is a place (suburb, neighbourhood, residential…, never a shop or road) and its name (or its English name in OpenStreetMap, asked for in English) matches at 0.75 or better, ignoring "Al", "Dubai", "Villas", "Community", "Area" and ordinal words (`data/osm_area_points.csv`).
 
 A point is a reference for the area, never a building; the page says so. Coordinates are never guessed by hand without a source. An area with 1,000 or more contracts that stays unplaced fails the freshness check.
 

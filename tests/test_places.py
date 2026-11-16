@@ -110,6 +110,12 @@ class OsmFallbackTests(TempData):
         self.assertIn("AL TWAR FIFTH", dm)
         self.assertNotIn("FAKE MALL", dm, "a failed look-up is not a map point")
 
+    def test_english_name_counts_when_the_name_is_arabic(self):
+        hit = {"name": "فيلات الواحة", "type": "administrative", "lat": "25.029", "lon": "55.286",
+               "namedetails": {"name": "فيلات الواحة", "name:en": "Al Waha Villas"}}
+        self.assertTrue(geocode_missing.accept("Al Waha Villas", hit))
+        self.assertFalse(geocode_missing.accept("Al Waha Villas", dict(hit, namedetails={})), "Arabic alone is not matched")
+
     def test_name_check(self):
         self.assertTrue(geocode_missing.accept("Al Waha Villas", {"name": "Al Waha", "type": "residential",
                                                                    "lat": "25.0", "lon": "55.3"}))

@@ -163,11 +163,15 @@ The base map is now vector tiles (OpenFreeMap) so its place and street names can
 
 Copying from Google Images isn't allowed (the photos belong to their photographers; Google's terms forbid it), so three options were offered: links out, free photos from Wikimedia Commons, or embedded Street View with a Google key. Done: 1 and 2. Each area breakdown now links to Google Maps, Street View and Google photos, and shows up to four credited photos taken within 1 km. Street View inside the breakdown waits for a Google key from the owner.
 
+### ~19:20 · "continue"
+
+Ran "Place unplaced areas" by hand. It exposed a bug from earlier today (the data check rejected recorded failed look-ups, which would have stopped the daily pull from publishing), now fixed. Al Aryam and Al Waha Villas are placed at the official points of the DLD areas they lie in; Al Twar Fifth has no source for a point yet.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.
 2. **Arabic area names**: from DLD's own Arabic field once contract-level data arrives (the interface is already in Arabic). A native speaker's read of the Arabic interface text would also help.
-3. **Al Twar Fifth, Al Aryam, Al Waha Villas**: should be placed by the next daily pull's OpenStreetMap look-up; if not, the freshness check says so and they need a reviewed alias or point.
+3. **Al Twar Fifth** (2,480 contracts) is the only area off the map: not in Dubai Municipality's list (it stops at Al Twar Fourth) nor in OpenStreetMap. The freshness check flags it every 6 hours until a reviewed point goes into `data/area_locations.csv` (a line like `al twar fifth,Al Twar Fifth,<lat>,<lng>,area`) or an alias into `data/dld_dm_aliases.csv`. Al Aryam and Al Waha Villas are placed (26th pass).
 4. **Old branches** to delete on GitHub (the session may not): `datadubai-daily`, `engagement`, `fix-tabs`, `mobile-redesign` (merged), `phone-map-first` (superseded), `probe-sources` (one-off probes).
 5. Community outlines (shaded areas) from Dubai Municipality data.
 5a. **Street View inside the breakdown** (option 3): needs the owner's Google Maps Embed API key (free, billing enabled, restricted to the site's address).

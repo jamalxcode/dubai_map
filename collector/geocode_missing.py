@@ -55,8 +55,12 @@ def simplify(s):
 
 
 def score(area, hit):
-    name = hit.get("name") or hit.get("display_name", "").split(",")[0]
-    return difflib.SequenceMatcher(None, simplify(area), simplify(name)).ratio()
+    """Best name match among the hit's names: its name, its English name (namedetails) and the first part
+    of its display name. Places in Dubai are often tagged in Arabic only in `name`."""
+    det = hit.get("namedetails") or {}
+    names = [hit.get("name"), det.get("name:en"), det.get("int_name"), det.get("official_name:en"),
+             hit.get("display_name", "").split(",")[0]]
+    return max((difflib.SequenceMatcher(None, simplify(area), simplify(n)).ratio() for n in names if n), default=0.0)
 
 
 def accept(area, hit):
@@ -71,7 +75,7 @@ def accept(area, hit):
 
 def search(q):
     url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode(
-        {"q": q, "format": "jsonv2", "limit": 5, "viewbox": VIEWBOX, "bounded": 1})
+        {"q": q, "format": "jsonv2", "limit": 5, "viewbox": VIEWBOX, "bounded": 1, "namedetails": 1, "accept-language": "en"})
     return net.get_json(url, timeout=30, attempts=2, source="osm")
 
 

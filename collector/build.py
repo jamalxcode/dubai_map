@@ -220,6 +220,7 @@ def build_aggregate(now, state, own=None):
     with open(os.path.join(store.DATA, "community_locations.csv"), encoding="utf-8") as f:
         pts = {r["community"]: (float(r["lat"]), float(r["lng"])) for r in csv.DictReader(f)}
 
+    dm_pts = load_dm_points()
     areas, table, unplaced = [], [], []
     for r in rents:
         name, n, med_rent = r["name"], int(float(r["contracts"] or 0)), _num(r["rent_median"])
@@ -230,6 +231,8 @@ def build_aggregate(now, state, own=None):
         if not pt and len(proj_pts.get(name, [])) >= 3:
             ps = proj_pts[name]
             pt = (statistics.median(x[0] for x in ps), statistics.median(x[1] for x in ps))
+        if not pt:
+            pt = top_area_point(c, dm_pts)
         if not pt:
             unplaced.append({"area": name, "n": n})
         by_unit = [{"u": b["label"], "n": int(float(b["n_rents"] or 0)), "median": round(float(b["rent_median"])),
@@ -290,6 +293,22 @@ def agg_kind(label):
     """Dubai Data unit label -> our type: "Studios" -> studio, "2-bedroom apartments" -> flat."""
     lab = label.lower()
     return "studio" if lab.startswith("studio") else "flat" if "apartment" in lab else None
+
+
+TOP_AREA_SHARE = 0.9  # a community at least this much inside one DLD area may use that area's official point
+
+
+def top_area_point(comm, dm):
+    """Last resort for a Dubai Data community with no point of its own: the official Dubai Municipality
+    point of the DLD area it lies (almost) wholly in, per Dubai Data's top_area and share_in_top_area.
+    E.g. Al Waha Villas: 100% in Wadi Al Safa 7. Never a guess: no top area, a split community or an
+    unplaced area gives None."""
+    try:
+        share = float(comm.get("share_in_top_area") or 0)
+    except ValueError:
+        return None
+    hit = dm.get(norm_area(comm.get("top_area") or "")) if share >= TOP_AREA_SHARE else None
+    return (float(hit["lat"]), float(hit["lng"])) if hit else None
 
 
 def aggregate_type(area, t):

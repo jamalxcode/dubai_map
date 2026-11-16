@@ -104,7 +104,7 @@ Drop a CSV of Ejari contracts into `data/inbox/` on GitHub (Add file → Upload 
 In order, the first match wins:
 
 1. `data/area_locations.csv`: hand-checked points (`field=area` matches the official DLD area name, `field=any` a marketing name anywhere in the project).
-2. Dubai Data's DLD-area → community table, placed at the hand-checked points in `data/community_locations.csv`.
+2. Dubai Data's DLD-area → community table, placed at the hand-checked points in `data/community_locations.csv`; a community without one, lying at least 90% in one DLD area, takes that area's official point.
 3. **Official Dubai Municipality communities** (`data/dm_communities.csv`): one point per community, guaranteed to lie inside its official boundary. Made by `collector/dm_communities.py` from DM's open data. DLD spellings that differ from DM's (e.g. "Al Murqabat" vs "Al Muraqqabat") are in `data/dld_dm_aliases.csv`, each one reviewed.
 4. **OpenStreetMap** (`data/osm_area_points.csv`): for brand-new areas DM hasn't published yet. `collector/geocode_missing.py` accepts a result only if it is inside Dubai, is a place (not a shop or road) and its name matches.
 

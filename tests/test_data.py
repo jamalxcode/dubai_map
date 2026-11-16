@@ -78,12 +78,14 @@ class PublishedDataTests(unittest.TestCase):
 
 
 class LocationFileTests(unittest.TestCase):
-    def check_points(self, name, key):
+    def check_points(self, name, key, allow_empty=False):
         seen = set()
         for r in rows(name):
             with self.subTest(r[key]):
                 self.assertNotIn(r[key], seen, "duplicate row")
                 seen.add(r[key])
+                if allow_empty and not r["lat"] and not r["lng"]:
+                    continue  # a recorded look-up that found nothing (retried after a week), not a map point
                 lat, lng = float(r["lat"]), float(r["lng"])
                 self.assertTrue(in_dubai(lat, lng), "outside Dubai")
 
@@ -105,7 +107,7 @@ class LocationFileTests(unittest.TestCase):
 
     def test_osm_points_if_any(self):
         if os.path.exists(os.path.join(DATA, "osm_area_points.csv")):
-            self.check_points("osm_area_points.csv", "dld_area")
+            self.check_points("osm_area_points.csv", "dld_area", allow_empty=True)
 
     def test_area_locations(self):
         for r in rows("area_locations.csv"):

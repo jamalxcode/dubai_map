@@ -255,3 +255,18 @@ class AggregateBuildTests(TempData):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TopAreaPointTests(unittest.TestCase):
+    """A Dubai Data community with no point of its own uses the official point of the DLD area it lies in."""
+    DM = {"WADI AL SAFA 7": {"lat": "25.03982", "lng": "55.28558"}}
+
+    def test_wholly_inside_one_area(self):
+        self.assertEqual(build.top_area_point({"top_area": "Wadi Al Safa 7", "share_in_top_area": "1.0"}, self.DM), (25.03982, 55.28558))
+
+    def test_split_unknown_or_missing_gives_nothing(self):
+        self.assertIsNone(build.top_area_point({"top_area": "Wadi Al Safa 7", "share_in_top_area": "0.6"}, self.DM), "split community")
+        self.assertIsNone(build.top_area_point({"top_area": "Nowhere", "share_in_top_area": "1"}, self.DM), "area not placed")
+        self.assertIsNone(build.top_area_point({}, self.DM))
+        self.assertIsNone(build.top_area_point({"top_area": "Wadi Al Safa 7", "share_in_top_area": "n/a"}, self.DM))
+
