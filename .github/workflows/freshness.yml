@@ -1,0 +1,29 @@
+name: Freshness check
+
+# Every 6 hours: fails, so GitHub emails the owner, when the data is stale, the pull has
+# stopped or failed, the site didn't get the latest data, a source is failing, or a
+# cross-check suddenly disagrees. The rules are in scripts/check_fresh.py.
+on:
+  schedule:
+    - cron: "41 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write    # read the pull's runs, and keep this schedule switched on
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Keep this schedule switched on (GitHub turns off quiet scheduled workflows after 60 days)
+        continue-on-error: true
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/freshness.yml/enable" && echo "schedule kept on"
+      - name: Load the published data (data branch)
+        run: scripts/data-branch.sh load
+      - name: Check
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: python3 scripts/check_fresh.py

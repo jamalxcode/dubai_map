@@ -266,7 +266,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
       <div><h2 id="tableTitle">Newest contracts</h2><p id="updated">—</p></div>
       <button id="export" class="btn" type="button">Download CSV</button>
     </div>
-    <div class="tableWrap" data-lenis-prevent><table><thead id="thead"></thead><tbody id="rows"><tr><td class="muted">Loading rents…</td></tr></tbody></table></div>
+    <div class="tableWrap" data-lenis-prevent tabindex="0" role="region" aria-label="Rents table (scrolls)"><table><thead id="thead"></thead><tbody id="rows"><tr><td class="muted">Loading rents…</td></tr></tbody></table></div>
   </section>
 
   <section class="about" aria-label="About the data">
@@ -370,8 +370,8 @@ function renderLabels(){
     added.push(m);
     // Keyboard: the label is a button. Enter or Space opens its breakdown, or zooms into a group.
     const el=m.getElement()&&m.getElement().firstChild;
+    // Its spoken name is its visible text (rent and area), as WCAG 2.5.3 asks; the marker title lists a group's areas.
     if(el){el.setAttribute('role','button');
-      el.setAttribute('aria-label',c.single?g[0].a.label+', '+labelText(c.val,metric)+'. Show breakdown':g.length+' areas, '+labelText(c.val,metric)+' average: '+g.map(o=>o.a.label).join(', ')+'. Zoom in');
       el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(c.single)m.openPopup();else m.fire('click')}})}
     if(c.single)m.bindPopup(popup(g[0].a),{maxWidth:320});
     else m.on('click',()=>{const b=L.latLngBounds(g.map(o=>[o.a.lat,o.a.lng])),z=map.getBoundsZoom(b,false,L.point(140,140));

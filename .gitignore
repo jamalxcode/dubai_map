@@ -12,3 +12,5 @@ __pycache__/
 /data/crosscheck/
 /data/osm_area_points.csv
 /data/dm_communities.csv
+
+node_modules/

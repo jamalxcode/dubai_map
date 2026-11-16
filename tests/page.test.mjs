@@ -66,5 +66,6 @@ test('one measure on the map: older districts only with a unit; starts on 1 bed;
   assert.match(html, /if\(!u&&a\.median_kind==='unit'\)return null;/, 'no all-homes value for per-unit-only areas');
   assert.match(html, /\['1-bedroom apartments','1 bed'\]\.find/, 'default unit is 1 bedroom');
   assert.match(html, /el\.setAttribute\('role','button'\)/);
+  assert.doesNotMatch(html, /setAttribute\('aria-label',c\.single/, 'spoken name = visible text (WCAG 2.5.3)');
   assert.match(html, /e\.key==='Enter'\|\|e\.key===' '/);
 });

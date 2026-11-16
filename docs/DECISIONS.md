@@ -221,6 +221,13 @@ From the second critique:
 - **Schedule kept on.** GitHub disables scheduled workflows after 60 days without repository activity; with data commits on the `data` branch, `main` can be quiet that long, and a disabled workflow can't be dispatched by cron-job.org. Both scheduled workflows now re-enable themselves on every run (Flattery's approach).
 - **Keyboard.** Map labels are buttons with a spoken name; Enter or Space opens a breakdown or zooms into a group. (Open since the first critique.)
 
+## Decision on 2026-11-16 (seventeenth pass): alerts and a browser check
+
+From the second critique (items 2 and 4):
+- **Freshness check** every 6 hours (`scripts/check_fresh.py`, pure rules with unit tests). It fails, and GitHub emails the owner, on: data over 10 days old; latest pull over 14 h old or not successful; the live site more than 2 h behind the saved data, or unreachable; a source in state `failed`; cross-check agreement below 50% (dubairealestatedata.com) or 70% (continentalclub.ae) with at least 5 matches. It keeps its own schedule switched on.
+- **Browser check in CI** (`tests/ui-check.mjs`, Chromium via Playwright, axe-core), on every push and pull request against the real data: rent labels shown, no overlaps (start and zoom 13), no sideways scrolling, International City named at zoom 13, the phone map in the top 60% of the first screen, Enter on a label opens it, the rent check answers "jvc", no script errors, no serious/critical WCAG 2.1 AA problems in light and dark mode. Map tiles are not loaded during the check.
+- Its first run found three real problems, fixed: the keyboard labels' spoken names didn't match their visible text (WCAG 2.5.3; they now use the visible text), the rents table couldn't be scrolled by keyboard (now a focusable, named region), and the dark-mode "Download CSV" button had too little contrast.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -259,6 +266,8 @@ From the second critique:
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Freshness check every 6 hours; browser check (Playwright + axe) in CI; three accessibility fixes it found.
 
 - 2026-11-16: Map starts on 1-bedroom (one measure across sources); workflows keep their schedule on; keyboard-usable map labels.
 

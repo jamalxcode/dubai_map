@@ -127,11 +127,14 @@ The owner wrote to help@digitaldubai.ae with the firewall's support ID: asked ho
 
 Critique, ranked: (1) the map mixed two measures after the older districts arrived; (2) no alert when something breaks; (3) GitHub may switch off the schedule after 60 quiet days, now that data commits skip `main`; (4) no browser check in CI; (5) map labels not usable by keyboard; (6) every figure comes from one publisher; plus search pages, measurement, the front-end split, Continental Club's terms and leftover branches. Done: 1 (map starts on 1-bedroom; "All units" shows only areas with an all-homes median), 3 (workflows re-enable themselves), 5 (labels are keyboard buttons). Next: 2 and 4.
 
+### ~15:55 · "do 2 and 4 and merge to main"
+
+A freshness check every 6 hours that fails (so GitHub emails) when data, pulls, deploys, sources or cross-checks go wrong, and a Chromium + axe-core page check in CI against the real data. The page check's first run found three real accessibility problems (label names, a table that couldn't be scrolled by keyboard, a low-contrast dark-mode button), now fixed.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.
-2. **Freshness alert and a browser check in CI** (critique items 2 and 4).
-3. **Front-end split** (once the page is quiet): `index.html` into script, styles and a testable module; self-host Leaflet, GSAP and Lenis; faster label merging.
-4. **Old branches** `fix-tabs`, `mobile-redesign`, `engagement`, `compact-phone`, `three-a-day` and the collaborator's working branches can be deleted once merged.
-5. Community outlines (shaded areas) from Dubai Municipality data.
-6. Expansion to other cities in the region (new source adapter per registry).
+2. **Front-end split** (once the page is quiet): `index.html` into script, styles and a testable module; self-host Leaflet, GSAP and Lenis; faster label merging.
+3. **Old branches** `fix-tabs`, `mobile-redesign`, `engagement`, `compact-phone`, `three-a-day` and the collaborator's working branches can be deleted once merged.
+4. Community outlines (shaded areas) from Dubai Municipality data.
+5. Expansion to other cities in the region (new source adapter per registry).

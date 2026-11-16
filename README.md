@@ -73,6 +73,7 @@ GitHub's schedules run late (this repo's daily job started about 7 hours late on
 - Token: a fine-grained GitHub token for **jamalxcode/dubai_map only**, permission **Actions: read and write** (or add this repo to the token the Flattery jobs already use).
 - Three jobs (or one job with three times): `POST https://api.github.com/repos/jamalxcode/dubai_map/actions/workflows/daily-ejari.yml/dispatches`, body `{"ref":"main"}`, headers `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `Content-Type: application/json`; at **02:17, 10:17 and 18:17 UTC**. GitHub answers `204` when it worked.
 - GitHub's schedule stays on as a backup. The token expires; renew it in the cron-job.org jobs before it does.
+- **Freshness check** (`.github/workflows/freshness.yml`, `scripts/check_fresh.py`, every 6 hours): fails, so GitHub emails you, when the data is over 10 days old, the latest pull is over 14 hours old or failed (cron-job.org stopped, token expired), the live site is behind the saved data (a failed deploy) or down, a source is failing, or a cross-check suddenly disagrees (below 50% / 70% agreement).
 - GitHub switches off scheduled workflows after 60 days without repository activity, and data commits now go to the `data` branch, so `main` can stay quiet. Each run of the pull (and of the weekly placing job) switches its own schedule back on (`actions: write`), as Flattery's scan does; a switched-off workflow couldn't be started by cron-job.org either.
 
 ### Daily data: add the free Dubai Pulse key
@@ -128,7 +129,12 @@ python3 -m unittest discover -s tests -v   # collector, build, and sanity checks
 node --test tests/page.test.mjs            # stale-data rule and pinned script hashes in index.html
 ```
 
-`.github/workflows/tests.yml` runs both on every push and pull request. The daily data job also runs the data checks before it commits, so a broken source file is not published.
+```sh
+npm install --no-save playwright axe-core && npx playwright install chromium
+node tests/ui-check.mjs                    # the page in Chromium with the real data: labels, overlaps, rent check, phone layout, keyboard, WCAG 2.1 AA (axe-core)
+```
+
+`.github/workflows/tests.yml` runs all three on every push and pull request. The daily data job also runs the data checks before it commits, so a broken source file is not published.
 
 ## Roadmap
 

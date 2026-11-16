@@ -83,3 +83,8 @@
 
 /* Map legend note (index.html): areas left out of the All units view */
 .legend .note{font-size:11px;color:var(--muted);margin-top:4px;max-width:230px}
+/* Dark mode: sign-blue text on the dark page fails contrast; outline buttons use the light blue links use. */
+:root[data-theme="dark"] .btn{color:#8EB6F0;border-color:#8EB6F0}
+:root[data-theme="dark"] .btn:hover{background:#8EB6F0;color:#171C21}
+:root[data-theme="dark"] .btn.primary{color:var(--on-sign);border-color:var(--sign);background:var(--sign)}
+:root[data-theme="dark"] .btn.primary:hover{background:var(--sign-ink);border-color:var(--sign-ink)}
