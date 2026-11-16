@@ -727,4 +727,17 @@ init();
 </script>
 <script src="assets/app/insights.js?v=__BUILD__"></script>
 <script src="assets/app/companion.js?v=__BUILD__"></script>
+<!-- GoatCounter visit counts: no cookies, nothing stored in the browser, no personal data (not loaded on localhost;
+     paths are prefixed with the host so the owner's apps share one dashboard). Same snippet as Flattery. -->
+<script>
+  (function () {
+    if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+    window.goatcounter = { endpoint: 'https://salacompany.goatcounter.com/count', path: function (p) { return location.host + p; } };
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://gc.zgo.at/count.js';
+    s.setAttribute('data-goatcounter', 'https://salacompany.goatcounter.com/count');
+    document.body.appendChild(s);
+  })();
+</script>
 </body></html>

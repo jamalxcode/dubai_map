@@ -96,6 +96,10 @@
     return null;
   }
 
+  // Counts what people use (GoatCounter events, no personal data): which features earn their place.
+  const count = (what, title) => { try { window.goatcounter && window.goatcounter.count &&
+    window.goatcounter.count({ path: location.host + '/dubai_map/event/' + what, title: title || what, event: true }); } catch { /* counting never breaks the page */ } };
+
   function check({ areaText, unit, rent, quiet } = {}) {
     areaText = areaText != null ? areaText : el('ckArea').value;
     if (!areaText.trim()) { el('ckResult').innerHTML = ''; return; }
@@ -114,6 +118,7 @@
     // With the map beside the rent check (two-pane layout), a check takes the map to that area.
     // On narrower screens the map is further down the page, so it waits for "Show on the map".
     if (!quiet && PANE.matches) showOnMap(area, { scroll: false });
+    if (!quiet) count('check', area.label);
   }
 
   function showNoMatch(text, hits) {
@@ -232,7 +237,7 @@
           <button type="button" class="btn" data-act="every-ics" ${store.prefs.checkEvery ? '' : 'disabled'}>Add to my calendar</button>
           <label class="check"><input type="checkbox" id="setNew" ${store.prefs.whatsNew ? 'checked' : ''}> Tell me what changed when I come back</label>
         </div>
-        <p class="muted">Reminders go into your own calendar, which does the reminding: delete the event there to stop it. Your areas and checks are saved only in this browser, never sent anywhere.</p>
+        <p class="muted">Reminders go into your own calendar, which does the reminding: delete the event there to stop it. Your areas and checks are saved only in this browser, never sent anywhere. The site counts visits and which features are used (GoatCounter: no cookies, nothing personal).</p>
         <p class="data-acts"><button type="button" class="link" data-act="export">Download my data</button><span class="sep">·</span>
           <label class="link">Import<input type="file" id="setImport" accept="application/json" hidden></label><span class="sep">·</span>
           <button type="button" class="link" data-act="wipe">Delete my saved data</button></p>
@@ -247,6 +252,7 @@
       snap: f ? { median: f.median, through: THROUGH } : null });
     store.saved = store.saved.slice(0, RI.MAX_SAVED);
     save(); render(); renderMine();
+    count('save', area.label);
   }
 
   function remindForm() {
@@ -323,6 +329,7 @@
   async function share(btn) {
     const { area, unit } = current, f = RI.unitFigure(area, unit);
     const url = shareUrl(area, unit);
+    count('share', area.label);
     const text = `${unit || 'All homes'} in ${area.label}: ${f ? aed(f.median) + ' a year (median)' : 'rents'}, from Ejari contracts.`;
     if (navigator.share && matchMedia('(pointer:coarse)').matches) {
       try { await navigator.share({ title: 'Dubai Rent Atlas', text, url }); } catch { /* closed the sheet */ }
