@@ -93,5 +93,6 @@ Set on 16 Nov after the third critique.
 - ✅ **Sharing that works where rents are discussed:** each area has its own link whose preview (WhatsApp, X, iMessage) shows its rent; "Share" on a result opens the phone's share sheet or copies the link.
 - ✅ **Accessible:** WCAG 2.1 AA in light, dark and Arabic, checked on every push; labels work by keyboard.
 - ✅ **Phones first:** the map stays high on the first screen; no sideways scrolling.
+- ✅ **See the place:** an area's breakdown links to Google Maps, Street View and Google photos, and shows freely licensed photos taken nearby (Wikimedia Commons), each credited. Nothing is copied from Google; where no free photo exists, only the links show.
 - ✅ **One language on the map:** a button on the map (English · عربي · Both) sets the language of the base map's place and street names, instead of the mix the classic tiles print. Starts in the page's language, remembered.
 - ⏳ Arabic area names for the rent labels; other cities (goal 6).

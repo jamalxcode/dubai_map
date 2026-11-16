@@ -15,7 +15,7 @@ A map of what people **actually pay** to rent across Dubai, built from **Ejari r
 - **Average rent in view:** one big number for whatever is on screen, rolling to the new value as you pan and zoom.
 - **Filters:** search, unit (studio, 1 bed, 2 bed… where DLD records rooms), rent range, and what the labels show (median rent, rent per m², contract count). The map **starts on 1-bedroom**, the one measure every area has (the older districts publish no all-homes median); "All units" shows only areas with an all-homes median, so two different measures are never coloured or averaged together.
 - **Keyboard:** map labels are buttons: Tab to one, Enter or Space opens its breakdown (or zooms into a group).
-- **Popup per area:** median and middle-half range, rent per m², new vs renewal, monthly trend, unit breakdown and busiest buildings.
+- **Popup per area:** median and middle-half range, rent per m², new vs renewal, monthly trend, unit breakdown and busiest buildings; links to **Google Maps, Street View and photos on Google** (new tab), and up to four **photos taken nearby** from Wikimedia Commons, each credited with its author and licence.
 - **Table:** the newest contracts, downloadable as CSV.
 - **Warning:** a yellow sign appears if the data is older than it should be.
 - **Phone:** map first; filters slide up from a button.
@@ -170,7 +170,7 @@ node tests/ui-check.mjs                    # the page in Chromium with the real 
 | React Bits (Counter, SplitText) | MIT + Commons Clause | Not copied: our own plain-JS versions of the two effects, credited. Commons Clause only forbids selling the components. |
 | Barlow / Barlow Condensed fonts | SIL Open Font License 1.1 | Font files and `assets/fonts/OFL.txt` included; self-hosted, so no visitor data goes to a font service. |
 
-**Privacy:** no cookies and no personal data on any server. Visits and the use of three features (rent checks, saves, shares, with the area name) are counted with GoatCounter, which sets no cookies and stores nothing in the browser; the counter is skipped on localhost. The page stores in the visitor's own browser: the dark/light choice and their saved areas, recent checks and reminder settings (`localStorage`, downloadable and deletable on the page), and a hidden warning (`sessionStorage`). The base map loads from tiles.openfreemap.org (or tile.openstreetmap.org as the fallback) and the counter from gc.zgo.at; they see visitors' IP addresses like any website they load from. Fonts and libraries (Leaflet, GSAP, Lenis, MapLibre) are served from this site (`assets/vendor/`).
+**Privacy:** no cookies and no personal data on any server. Visits and the use of three features (rent checks, saves, shares, with the area name) are counted with GoatCounter, which sets no cookies and stores nothing in the browser; the counter is skipped on localhost. The page stores in the visitor's own browser: the dark/light choice and their saved areas, recent checks and reminder settings (`localStorage`, downloadable and deletable on the page), and a hidden warning (`sessionStorage`). The base map loads from tiles.openfreemap.org (or tile.openstreetmap.org as the fallback) photos near an area from commons.wikimedia.org (only when a breakdown opens) and the counter from gc.zgo.at; they see visitors' IP addresses like any website they load from. Fonts and libraries (Leaflet, GSAP, Lenis, MapLibre) are served from this site (`assets/vendor/`).
 
 This is not legal advice. The one open question is the DLD service, which needs DLD's answer.
 

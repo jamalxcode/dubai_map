@@ -45,6 +45,11 @@
 
   // Text the scripts build (atlas.js, companion.js), keyed by its English.
   const AR = {
+    'unknown author': 'مصوّر غير معروف',
+    'Photos taken near this point, from Wikimedia Commons. Tap one for its author and licence.': 'صور التُقطت قرب هذه النقطة، من ويكيميديا كومنز. اضغط على صورة لمعرفة مصوّرها وترخيصها.',
+    'Photos on Google': 'صور على Google',
+    'Street View': 'التجوّل الافتراضي',
+    'Google Maps': 'خرائط Google',
     '(Median {aed} a year when you set this reminder.)': '(كان الوسيط {aed} سنويًا عند ضبط هذا التذكير.)',
     '(optional)': '(اختياري)',
     '(to {d}).': '(حتى {d}).',

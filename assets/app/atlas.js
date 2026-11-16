@@ -260,8 +260,51 @@ function popup(a){
     (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>':'')+
     (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<table><tr><th>'+T('Busiest buildings')+'</th><th>n</th><th>'+T('Median')+'</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
     (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'')+
+    // See the place: Google links (open a new tab; Google allows these links without a key) and free photos
+    // taken near the point (Wikimedia Commons, filled in when the breakdown opens; see loadPhotos).
+    '<p class="see">'+[['https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a.label+', Dubai'),T('Google Maps')],
+      ['https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+a.lat+','+a.lng,T('Street View')],
+      ['https://www.google.com/search?tbm=isch&q='+encodeURIComponent(a.label+' Dubai'),T('Photos on Google')]]
+      .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+'</p>'+
+    (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
     '<small>'+T('DLD area: {list}. The point is an approximate reference for the area, not a building.',{list:a.dld_areas.map(safe).join(', ')})+(a.url?' <a href="'+safe(a.url)+'" target="_blank" rel="noopener">'+T('Dubai Data page')+'</a>':'')+'</small>';
 }
+
+// Photos taken near an area's point: freely licensed, from Wikimedia Commons, each credited (author and
+// licence) and linked to its page. Asked for only when a breakdown opens, once per point per visit; photos
+// only (no maps, logos, plans or diagrams), within 1 km. Nothing found or no answer: nothing is shown.
+const PHOTOS={},NOT_PHOTO=/\b(map|logo|flag|plan|diagram|chart|seal|icon|sign|route|course|schematic|location)\b/i;
+const stripTags=h=>{const d=document.createElement('div');d.innerHTML=h||'';return d.textContent.replace(/\s+/g,' ').trim()};
+function commonsPhotos(json,max=4){
+  const pages=Object.values((json&&json.query&&json.query.pages)||{}).sort((p,q)=>(p.index||0)-(q.index||0));
+  const out=[];
+  for(const p of pages){const ii=p.imageinfo&&p.imageinfo[0];if(!ii||ii.mime!=='image/jpeg'||!ii.thumburl||NOT_PHOTO.test(p.title))continue;
+    const m=ii.extmetadata||{},author=stripTags(m.Artist&&m.Artist.value).slice(0,40)||T('unknown author'),lic=stripTags(m.LicenseShortName&&m.LicenseShortName.value)||'';
+    out.push({src:ii.thumburl,page:ii.descriptionurl,title:p.title.replace(/^File:/,'').replace(/\.[a-z]+$/i,''),author,lic});
+    if(out.length>=max)break}
+  return out;
+}
+function photosFor(lat,lng){
+  const k=(+lat).toFixed(4)+','+(+lng).toFixed(4);
+  if(!PHOTOS[k])PHOTOS[k]=fetch('https://commons.wikimedia.org/w/api.php?'+new URLSearchParams({action:'query',format:'json',origin:'*',
+      generator:'geosearch',ggscoord:lat+'|'+lng,ggsradius:'1000',ggslimit:'20',ggsnamespace:'6',prop:'imageinfo',
+      iiprop:'url|mime|extmetadata',iiurlwidth:'320',iiextmetadatafilter:'Artist|LicenseShortName'}))
+    .then(r=>r.ok?r.json():null).then(j=>commonsPhotos(j)).catch(()=>[]);
+  return PHOTOS[k];
+}
+async function loadPhotos(e){
+  await null; // after other popupopen handlers have set the final content
+  const box=e.popup.getElement()&&e.popup.getElement().querySelector('.pics:not([data-done])');if(!box)return;
+  box.dataset.done='1';box.classList.add('loading');
+  const ph=await photosFor(box.dataset.lat,box.dataset.lng);
+  const live=e.popup.getElement()&&e.popup.getElement().querySelector('.pics');if(!live)return; // closed meanwhile
+  live.classList.remove('loading');
+  if(!ph.length){live.remove();return}
+  live.innerHTML='<div class="strip">'+ph.map(p=>'<a href="'+safe(p.page)+'" target="_blank" rel="noopener" title="'+safe(p.title+' · '+p.author+(p.lic?' · '+p.lic:''))+'">'+
+    '<img src="'+safe(p.src)+'" alt="'+safe(p.title)+'" loading="lazy" onerror="this.parentNode.remove()"><span>'+safe(p.author)+(p.lic?', '+safe(p.lic):'')+'</span></a>').join('')+'</div>'+
+    '<small>'+T('Photos taken near this point, from Wikimedia Commons. Tap one for its author and licence.')+'</small>';
+}
+map.on('popupopen',loadPhotos);
 
 function draw(){
   const q=$('search').value.trim().toLowerCase(),unit=$('unit').value,metric=$('metric').value,min=+$('min').value||0,max=+$('max').value||Infinity;

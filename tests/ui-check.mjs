@@ -36,6 +36,16 @@ async function open(browser, viewport, colorScheme = 'light', query = '') {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.route(/tile\.openstreetmap\.org/, r => r.abort()); // no tile load on every test run
+  // Photos near an area (Wikimedia Commons): a stand-in answer with one photo, one diagram and one map,
+  // and a tiny image, so the filter and credits are tested without calling Wikimedia.
+  const photo = (i, title, mime) => ({ pageid: i, index: i, title, imageinfo: [{ mime, thumburl: `https://thumb.wikimedia.org/t${i}.jpg`,
+    descriptionurl: `https://commons.wikimedia.org/wiki/${encodeURIComponent(title)}`,
+    extmetadata: { Artist: { value: '<a href="x">Test Photographer</a>' }, LicenseShortName: { value: 'CC BY-SA 4.0' } } }] });
+  await page.route(/commons\.wikimedia\.org\/w\/api\.php/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ query: { pages: {
+    1: photo(1, 'File:Marina towers at dusk.jpg', 'image/jpeg'), 2: photo(2, 'File:Racetrack course.svg', 'image/svg+xml'),
+    3: photo(3, 'File:Location map of the marina.jpg', 'image/jpeg') } } }) }));
+  await page.route(/thumb\.wikimedia\.org/, r => r.fulfill({ contentType: 'image/png',
+    body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64') }));
   // The vector base map: a tiny local style instead of OpenFreeMap, so the language button is tested
   // without depending on that service (its tiles, fonts and sprites are not fetched).
   await page.route(/tiles\.openfreemap\.org/, r => /\/styles\//.test(r.request().url()) ? r.fulfill({ contentType: 'application/json', body: JSON.stringify({
@@ -149,6 +159,14 @@ try {
       await page.keyboard.press('Enter');
       await page.waitForTimeout(300);
       check(!!(await page.$('.leaflet-popup-content')), `${name}: Enter on a map label opens its breakdown`);
+      await page.waitForSelector('.leaflet-popup-content .pics .strip img', { timeout: 5000 }).catch(() => {});
+      const see = await page.evaluate(() => ({
+        links: [...document.querySelectorAll('.leaflet-popup-content .see a')].map(a => a.href),
+        photos: [...document.querySelectorAll('.leaflet-popup-content .pics .strip a')].map(a => a.textContent + ' ' + a.title) }));
+      check(see.links.length === 3 && see.links.every(u => /^https:\/\/www\.google\.com\//.test(u)) && see.links.some(u => /map_action=pano/.test(u)),
+        `${name}: the breakdown links to Google Maps, Street View and Google photos`);
+      check(see.photos.length === 1 && /Test Photographer/.test(see.photos[0]) && /CC BY-SA 4\.0/.test(see.photos[0]),
+        `${name}: photos taken nearby show with author and licence, no maps or diagrams (${see.photos.length})`);
       await page.evaluate(() => map.closePopup());
     }
     // The rent check: a nickname finds the area and shows a figure.

@@ -159,6 +159,10 @@ Added `docs/BUSINESS_RULES.md` (every rule and threshold, read from the code, wi
 
 The base map is now vector tiles (OpenFreeMap) so its place and street names can be shown in English, Arabic or both, from a button on the map that starts in the page's language and is remembered. The classic tiles remain as the fallback. Arabic is properly joined and right to left on the map.
 
+### ~19:00 · "can i get images of properties there taken either from google maps or from google images when clicked by the user, especially when i drill down" → "do 1 and 2"
+
+Copying from Google Images isn't allowed (the photos belong to their photographers; Google's terms forbid it), so three options were offered: links out, free photos from Wikimedia Commons, or embedded Street View with a Google key. Done: 1 and 2. Each area breakdown now links to Google Maps, Street View and Google photos, and shows up to four credited photos taken within 1 km. Street View inside the breakdown waits for a Google key from the owner.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.
@@ -166,4 +170,5 @@ The base map is now vector tiles (OpenFreeMap) so its place and street names can
 3. **Al Twar Fifth, Al Aryam, Al Waha Villas**: should be placed by the next daily pull's OpenStreetMap look-up; if not, the freshness check says so and they need a reviewed alias or point.
 4. **Old branches** to delete on GitHub (the session may not): `datadubai-daily`, `engagement`, `fix-tabs`, `mobile-redesign` (merged), `phone-map-first` (superseded), `probe-sources` (one-off probes).
 5. Community outlines (shaded areas) from Dubai Municipality data.
+5a. **Street View inside the breakdown** (option 3): needs the owner's Google Maps Embed API key (free, billing enabled, restricted to the site's address).
 6. Expansion to other cities in the region (new source adapter per registry).

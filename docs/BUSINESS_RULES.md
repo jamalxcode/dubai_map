@@ -112,7 +112,9 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Names in Arabic | Area names stay as registered in Ejari (English); home types are translated for display but stored in English | `i18n.js T.unit` |
 | Numbers | Western digits in both languages, as on Ejari contracts; AED kept as "AED" | `i18n.js` |
 | Counting visits | GoatCounter: no cookies, nothing stored in the browser, skipped on localhost. Events: rent check, save, share, with the area name. Nothing personal | `index.html`, `companion.js count` |
-| Third parties | Fonts and libraries served from this site; only the base map (OpenFreeMap, or OpenStreetMap as fallback) and the counter load from elsewhere | `assets/vendor/`, `assets/fonts/` |
+| See the place | An area's breakdown links to Google Maps (search), Street View (at the point) and Google Images (search), opening a new tab; Google allows these links without a key. No Google images are copied or embedded | `atlas.js popup` |
+| Photos nearby | Up to 4 freely licensed photos from Wikimedia Commons taken within 1 km of the point: JPEG only, no maps, logos, plans, diagrams, signs or routes; each shows its author and licence and links to its page. Asked only when a breakdown opens, once per point per visit; none found or no answer: nothing shown. A photo that fails to load is dropped | `atlas.js loadPhotos`, `commonsPhotos` |
+| Third parties | Fonts and libraries served from this site; only the base map (OpenFreeMap, or OpenStreetMap as fallback), photos near an area (Wikimedia Commons, when a breakdown opens) and the counter load from elsewhere | `assets/vendor/`, `assets/fonts/` |
 | Secrets | GitHub Secrets only. No personal, tenant or owner data in the public repo | — |
 
 ## 9. Accessibility and layout

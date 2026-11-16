@@ -282,6 +282,16 @@ The owner: "the map is a mix of arabic and english, lets have a localization but
 - **Tests:** the browser check serves a tiny local map style (no dependency on OpenFreeMap) and checks the button switches the names, is remembered, starts in Arabic on the Arabic page, the fallback hides it, and no rent label sits under it.
 - To check the result, the session's network was allowed to reach tiles.openfreemap.org (owner approved).
 
+## Decision on 2026-11-16 (twenty-fifth pass): pictures of the place, legally
+
+The owner asked for images of properties "taken either from google maps or from google images when clicked", especially on drilling down. Pictures in Google Images belong to their photographers and Google's terms don't allow lifting them from results, so three legitimate options were offered; the owner chose the first two:
+
+1. **Links (done):** each area breakdown links to Google Maps (search for the area), Street View (at the area's point) and Google Images (search), in a new tab. Google's Maps URLs need no key.
+2. **Free photos inside the breakdown (done):** Wikimedia Commons' geosearch for files within 1 km of the point; JPEG only, titles that look like maps, logos, plans, diagrams, signs or routes left out; up to 4, each with author and licence, linked to its file page. Fetched only when a breakdown opens, once per point per visit, and nothing shows when nothing qualifies. Checked on real data: Dubai Marina had 20 candidates (credited photos of the marina and JBR), Arjan mostly racetrack diagrams, which the filter drops. Thumbnails come from thumb.wikimedia.org.
+3. **Street View inside the breakdown (not done):** the Maps Embed API is free but needs the owner's Google Cloud key (billing enabled, restricted to the site). Ready when the key is.
+
+Points are area references, not buildings, so photos show the area. Building-level photos could later use Dubai Data's project coordinates. The browser check uses a stand-in Commons answer and image (one photo, one diagram, one map) to test the filter and credits without calling Wikimedia. The session's network was allowed to reach commons.wikimedia.org and upload.wikimedia.org to check real answers (owner approved).
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -320,6 +330,8 @@ The owner: "the map is a mix of arabic and english, lets have a localization but
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Area breakdowns link to Google Maps, Street View and Google photos, and show credited photos taken nearby (Wikimedia Commons).
 
 - 2026-11-16: Base map in vector tiles (OpenFreeMap) with a map language button: English, Arabic or both.
 
