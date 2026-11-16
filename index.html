@@ -298,12 +298,13 @@ const KIND_IN={homes:['flat','studio','villa'],flat:['flat'],studio:['studio'],v
 
 /*<staleness>*/
 // How old the newest data is, and whether to warn. Dubai Data publishes weekly with a few days' lag,
-// so up to 14 days is normal there; the daily DLD pull should never be more than a week behind.
+// Dubai Data's daily pages run a few days behind DLD; past a week something is stuck (the weekly
+// export fallback alone can be up to ~14 days). Daily contract sources should never be more than a week behind.
 function staleness(meta,now){
   const through=meta&&(meta.data_through||meta.newest_start_date);
   if(!through||!/^\d{4}-\d{2}-\d{2}$/.test(through))return null;
   const days=Math.floor((now-Date.parse(through+'T00:00:00+04:00'))/864e5);
-  const limit=meta.mode==='aggregate'?14:7;
+  const limit=7;
   return {through,days,limit,stale:days>limit};
 }
 /*</staleness>*/
@@ -395,7 +396,7 @@ async function init(){
   if(AGG){const o=$('metric').querySelector('option[value=median_sqm]');o.value='yield';o.textContent='Gross rental yield'}
   if(age&&age.stale){
     $('staleText').innerHTML='<b>This data is '+age.days+' days old.</b> Rents run through '+safe(niceDate(age.through))+'. '+
-      (AGG?'The weekly source has not published a newer update yet, so changes since then are not shown.':'The daily update has not brought in newer contracts, so changes since then are not shown.');
+      (AGG?'Dubai Data has not published a newer update yet, so changes since then are not shown.':'The daily update has not brought in newer contracts, so changes since then are not shown.');
     let hidden=false;try{hidden=sessionStorage.getItem('staleHidden')===age.through}catch(e){}
     if(!hidden){$('stale').classList.add('on');setTimeout(()=>map.invalidateSize(),0)}
   }

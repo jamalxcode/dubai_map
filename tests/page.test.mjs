@@ -11,11 +11,11 @@ const src = html.split('/*<staleness>*/')[1].split('/*</staleness>*/')[0];
 const staleness = new Function(src + '\nreturn staleness;')();
 const at = iso => Date.parse(iso + 'T12:00:00+04:00');
 
-test('Dubai Data (weekly source): fine up to 14 days, warns after', () => {
-  const meta = { mode: 'aggregate', data_through: '2026-10-29' };
-  assert.deepEqual(staleness(meta, at('2026-11-12')), { through: '2026-10-29', days: 14, limit: 14, stale: false });
-  assert.equal(staleness(meta, at('2026-11-13')).stale, true);
-  assert.equal(staleness(meta, at('2026-11-15')).days, 17);
+test('Dubai Data (daily pages, a few days behind DLD): fine up to 7 days, warns after', () => {
+  const meta = { mode: 'aggregate', data_through: '2026-11-13' };
+  assert.deepEqual(staleness(meta, at('2026-11-20')), { through: '2026-11-13', days: 7, limit: 7, stale: false });
+  assert.equal(staleness(meta, at('2026-11-21')).stale, true);
+  assert.equal(staleness(meta, at('2026-11-16')).days, 3);
 });
 
 test('daily Ejari pull: warns after 7 days', () => {

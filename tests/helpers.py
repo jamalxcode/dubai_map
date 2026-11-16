@@ -4,6 +4,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "collector"))
@@ -15,6 +16,10 @@ class TempData(unittest.TestCase):
     """Points store.DATA / store.CONTRACTS at a throwaway folder for each test."""
 
     def setUp(self):
+        # Tests never reach datadubai.ae: the live-page fetch is off unless a test turns it on.
+        env = mock.patch.dict(os.environ, {"DATADUBAI_LIVE": "0"})
+        env.start()
+        self.addCleanup(env.stop)
         self.tmp = tempfile.mkdtemp(prefix="dubai_map_test_")
         self._saved = (store.DATA, store.CONTRACTS)
         store.DATA = self.tmp

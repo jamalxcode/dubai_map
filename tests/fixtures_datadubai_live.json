@@ -1,0 +1,267 @@
+{
+ "/rents.json": {
+  "entity": "Dubai rents",
+  "through": "2026-11-13",
+  "contracts_12m": 599367,
+  "median_annual_rent": 65000,
+  "communities": [
+   {
+    "name": "Jumeirah Village Circle",
+    "url": "/communities/jumeirah-village-circle/",
+    "contracts": 30000,
+    "rent_median": 66000,
+    "yield_pct": 6.26
+   },
+   {
+    "name": "Dubai Marina",
+    "url": "/communities/dubai-marina/",
+    "contracts": 14057,
+    "rent_median": 110000,
+    "yield_pct": 5.71
+   },
+   {
+    "name": "Jumeirah Park",
+    "url": "/communities/jumeirah-park/",
+    "contracts": 860,
+    "rent_median": 330000,
+    "yield_pct": null
+   }
+  ]
+ },
+ "/communities/jumeirah-village-circle.json": {
+  "through": "2026-11-13",
+  "gross_yield_pct": 6.26,
+  "summary": {
+   "n": 11674,
+   "quality": "ok",
+   "price_median": 1050000,
+   "psf_median": 1481.0223732202694
+  },
+  "bedrooms": [
+   {
+    "code": "Studio",
+    "label": "Studios",
+    "slug": "studio",
+    "n": 3433,
+    "quality": "ok",
+    "price_median": 714997,
+    "psf_median": 1718.1897344374543,
+    "sqft_median": 410.750821501643,
+    "rent_median": 48000,
+    "n_rents": 7735,
+    "yield_pct": 7.8,
+    "url": "/communities/jumeirah-village-circle/studio/"
+   },
+   {
+    "code": "1 B/R",
+    "label": "1-bedroom apartments",
+    "slug": "1-bedroom",
+    "n": 5860,
+    "quality": "ok",
+    "price_median": 1107757,
+    "psf_median": 1426.1068274006432,
+    "sqft_median": 785.2272648989742,
+    "rent_median": 70000,
+    "n_rents": 15726,
+    "yield_pct": 7,
+    "url": "/communities/jumeirah-village-circle/1-bedroom/"
+   },
+   {
+    "code": "2 B/R",
+    "label": "2-bedroom apartments",
+    "slug": "2-bedroom",
+    "n": 1479,
+    "quality": "ok",
+    "price_median": 1653858.5,
+    "psf_median": 1309.2478893088207,
+    "sqft_median": 1237.2038632966155,
+    "rent_median": 95000,
+    "n_rents": 4672,
+    "yield_pct": 6.33,
+    "url": "/communities/jumeirah-village-circle/2-bedroom/"
+   },
+   {
+    "code": "3 B/R",
+    "label": "3-bedroom apartments",
+    "slug": "3-bedroom",
+    "n": 264,
+    "quality": "ok",
+    "price_median": 2424550,
+    "psf_median": 1577.7947777380282,
+    "sqft_median": 1559.4753411729046,
+    "rent_median": 150000,
+    "n_rents": 906,
+    "yield_pct": 5.85,
+    "url": "/communities/jumeirah-village-circle/3-bedroom/"
+   },
+   {
+    "code": "4 B/R",
+    "label": "4-bedroom apartments",
+    "slug": "4-bedroom",
+    "n": 99,
+    "quality": "ok",
+    "price_median": 3350000,
+    "psf_median": 1617.0591026302218,
+    "sqft_median": 1856.774546882427,
+    "rent_median": 200000,
+    "n_rents": 379,
+    "yield_pct": 6.11,
+    "url": "/communities/jumeirah-village-circle/4-bedroom/"
+   },
+   {
+    "code": "5 B/R",
+    "label": "5-bedroom apartments",
+    "slug": "5-bedroom",
+    "n": 2,
+    "quality": "insufficient",
+    "price_median": null,
+    "psf_median": null,
+    "sqft_median": null,
+    "rent_median": 200000,
+    "n_rents": 36,
+    "yield_pct": null,
+    "url": null
+   }
+  ],
+  "breakdown": [
+   {
+    "name": "Al Barsha South Fourth",
+    "n": 11674
+   }
+  ]
+ },
+ "/communities/dubai-marina.json": {
+  "through": "2026-11-13",
+  "gross_yield_pct": 5.71,
+  "summary": {
+   "n": 2305,
+   "quality": "ok",
+   "price_median": 2025000,
+   "psf_median": 1961.3160412008351
+  },
+  "bedrooms": [
+   {
+    "code": "Studio",
+    "label": "Studios",
+    "slug": "studio",
+    "n": 169,
+    "quality": "ok",
+    "price_median": 1065000,
+    "psf_median": 2423.7683276806683,
+    "sqft_median": 465.7544037310297,
+    "rent_median": 60000,
+    "n_rents": 1078,
+    "yield_pct": 5.71,
+    "url": "/communities/dubai-marina/studio/"
+   },
+   {
+    "code": "1 B/R",
+    "label": "1-bedroom apartments",
+    "slug": "1-bedroom",
+    "n": 874,
+    "quality": "ok",
+    "price_median": 1600000,
+    "psf_median": 2008.7623371372333,
+    "sqft_median": 823.4391468782937,
+    "rent_median": 90000,
+    "n_rents": 6504,
+    "yield_pct": 5.81,
+    "url": "/communities/dubai-marina/1-bedroom/"
+   },
+   {
+    "code": "2 B/R",
+    "label": "2-bedroom apartments",
+    "slug": "2-bedroom",
+    "n": 633,
+    "quality": "ok",
+    "price_median": 2600000,
+    "psf_median": 1918.540505457764,
+    "sqft_median": 1329.773492880319,
+    "rent_median": 138000,
+    "n_rents": 4838,
+    "yield_pct": 5.47,
+    "url": "/communities/dubai-marina/2-bedroom/"
+   },
+   {
+    "code": "3 B/R",
+    "label": "3-bedroom apartments",
+    "slug": "3-bedroom",
+    "n": 269,
+    "quality": "ok",
+    "price_median": 4125000,
+    "psf_median": 1829.7609607706827,
+    "sqft_median": 1998.4276079663268,
+    "rent_median": 211600,
+    "n_rents": 1387,
+    "yield_pct": 5.29,
+    "url": "/communities/dubai-marina/3-bedroom/"
+   },
+   {
+    "code": "4 B/R",
+    "label": "4-bedroom apartments",
+    "slug": "4-bedroom",
+    "n": 74,
+    "quality": "ok",
+    "price_median": 4250000,
+    "psf_median": 1564.3436293386774,
+    "sqft_median": 3179.2285806793834,
+    "rent_median": 292000,
+    "n_rents": 190,
+    "yield_pct": 7.89,
+    "url": "/communities/dubai-marina/4-bedroom/"
+   },
+   {
+    "code": "5 B/R",
+    "label": "5-bedroom apartments",
+    "slug": "5-bedroom",
+    "n": 5,
+    "quality": "low",
+    "price_median": null,
+    "psf_median": 1525.0747218240645,
+    "sqft_median": 4498.022884934659,
+    "rent_median": 420000,
+    "n_rents": 31,
+    "yield_pct": null,
+    "url": null
+   }
+  ],
+  "breakdown": [
+   {
+    "name": "Marsa Dubai",
+    "n": 2305
+   }
+  ]
+ },
+ "/communities/jumeirah-park.json": {
+  "through": "2026-11-13",
+  "gross_yield_pct": null,
+  "summary": {
+   "n": 147,
+   "quality": "ok",
+   "price_median": 9000000,
+   "psf_median": null
+  },
+  "bedrooms": [
+   {
+    "code": "4 B/R",
+    "label": "4-bedroom apartments",
+    "slug": "4-bedroom",
+    "n": 3,
+    "quality": "insufficient",
+    "price_median": null,
+    "psf_median": null,
+    "sqft_median": null,
+    "rent_median": 350000,
+    "n_rents": 331,
+    "yield_pct": null,
+    "url": null
+   }
+  ],
+  "breakdown": [
+   {
+    "name": "Al Thanyah Fifth",
+    "n": 147
+   }
+  ]
+ }
+}

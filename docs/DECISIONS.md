@@ -152,6 +152,14 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - **`build.py` split:** `kinds.py`, `places.py`, `output.py` (with one area-record layout for both modes).
 - **Left for later on purpose:** the front-end split (`index.html` into script, styles and a testable module), self-hosting Leaflet/GSAP/Lenis and faster label merging. Another collaborator was working on the page at the time.
 
+## Decision on 2026-11-16: Dubai Data's daily pages instead of its weekly export
+
+- The weekly export stalled (last: data through 29 Oct, published 2 Nov) while Dubai Data's site kept rebuilding daily (data through 13 Nov on 16 Nov). The map showed 17-day-old rents.
+- `fetch_datadubai.py` now reads the site's static JSON (`/rents.json`, `/communities/<slug>.json`) once a day and writes the same CSVs the build already reads, so nothing downstream changed. The site offers this JSON for reuse with no key, robots.txt allows it, and the licence is the same CC BY 4.0.
+- Polite: only when `rents.json` shows newer data; 1 request/s; honest User-Agent; at most once a day. All-or-nothing, with the weekly export as fallback.
+- Tested end-to-end with all 102 real community pages collected on 16 Nov: data through 13 Nov, rents within -9%..+11% of 29 Oct, build and data checks pass.
+- Stale warning now at 7 days for every source.
+
 ## Prioritized next work
 
 **Status on 2026-11-10:** P0 items 1–3 are done via the Dubai Data fallback and a live Pages deploy. P1 is built and waiting for the Dubai Pulse key. Next up: P2 item 6 (community polygons).
@@ -190,6 +198,8 @@ Proposed by a collaborator, for the owner to review on the `mobile-redesign` bra
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Dubai Data from its daily JSON pages (weekly export as fallback); stale warning at 7 days.
 
 - 2026-11-15: Data moved to the `data` branch; deploy only on change; shared net/state modules; build.py split; structured source state.
 
