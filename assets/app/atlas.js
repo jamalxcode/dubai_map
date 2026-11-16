@@ -61,13 +61,29 @@ const groupName=g=>{if(g.length>3)return T.count(g.length,'area');const top=g.re
 // page is up; the rent labels don't wait for it. Without WebGL, or if the vector map can't load, the classic
 // OpenStreetMap tiles are used instead (names as tagged locally, a mix) and the language button is hidden.
 const OSM_ATTR='© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>';
-const BASE_STYLE='https://tiles.openfreemap.org/styles/positron';
+// Detailed colour map (Liberty) by day, OpenFreeMap's own dark map at night; both free, no key.
+const styleFor=()=>'https://tiles.openfreemap.org/styles/'+(document.documentElement.dataset.theme==='dark'?'dark':'liberty');
 const MAP_LANGS=['en','ar','both'];
 const NAME_FIELD={ // OpenMapTiles name fields; 'both' keeps the style's own (Latin and local script)
   en:['coalesce',['get','name:en'],['get','name_en'],['get','name:latin'],['get','name']],
   ar:['coalesce',['get','name:ar'],['get','name']]};
 let mapLang=(()=>{let v;try{v=localStorage.getItem('mapLang')}catch(e){}return MAP_LANGS.includes(v)?v:T.lang==='ar'?'ar':'en'})();
 let gl=null,glNames=[];
+const readNames=()=>{glNames=gl.getStyle().layers.filter(l=>l.type==='symbol'&&l.layout&&/"name/.test(JSON.stringify(l.layout['text-field']||''))).map(l=>[l.id,l.layout['text-field']])};
+// OpenFreeMap's dark map is near-black with sea and land almost the same; lift it to the site's night
+// colours so the coast, the Palm and the roads read clearly under the rent labels.
+function tuneDark(m){if(document.documentElement.dataset.theme!=='dark')return;
+  const set=(test,type,prop,v)=>m.getStyle().layers.filter(l=>l.type===type&&test.test(l.id)).forEach(l=>{try{m.setPaintProperty(l.id,prop,v)}catch(e){}});
+  set(/^background$/,'background','background-color','#1E252C');
+  set(/water/,'fill','fill-color','#13304D');
+  set(/landuse|landcover|park/,'fill','fill-color','#232C33');
+  set(/building/,'fill','fill-color','#2B343C');
+  set(/highway_(path|minor)|road_pier/,'line','line-color','#3C4752');
+  set(/highway_(major|motorway)_(inner|subtle)/,'line','line-color','#56646F');
+  set(/.*/,'symbol','text-color','#B9C4CE');set(/.*/,'symbol','text-halo-color','#1E252C')}
+// Light/dark switch: load the matching style, then put the chosen name language back.
+function restyleBase(){if(!gl)return;const want=styleFor();if(gl._styleUrl===want)return;gl._styleUrl=want;
+  gl.setStyle(want,{diff:false});gl.once('style.load',()=>{readNames();tuneDark(gl);applyMapLang()})}
 function applyMapLang(){
   if(gl)for(const [id,orig] of glNames)gl.setLayoutProperty(id,'text-field',NAME_FIELD[mapLang]||orig);
   document.querySelectorAll('.maplang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===mapLang));
@@ -90,12 +106,12 @@ async function vectorBase(){
     if(!window.maplibregl||(maplibregl.supported&&!maplibregl.supported()))throw Error('no WebGL');
     // Arabic needs shaping and right-to-left order, which MapLibre leaves to this plugin.
     try{maplibregl.setRTLTextPlugin('assets/vendor/maplibre/mapbox-gl-rtl-text.js',true)}catch(e){}
-    const layer=L.maplibreGL({style:BASE_STYLE,interactive:false,attribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> '+OSM_ATTR}).addTo(map);
+    const layer=L.maplibreGL({style:styleFor(),interactive:false,attribution:'<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> '+OSM_ATTR}).addTo(map);
     const m=layer.getMaplibreMap();
     const fail=setTimeout(()=>{map.removeLayer(layer);rasterBase()},12000); // style or tiles unreachable
     m.on('error',e=>{if(!gl&&!e.sourceId){clearTimeout(fail);map.removeLayer(layer);rasterBase()}}); // the style itself, not one tile
-    m.once('load',()=>{clearTimeout(fail);gl=m;
-      glNames=m.getStyle().layers.filter(l=>l.type==='symbol'&&l.layout&&/"name/.test(JSON.stringify(l.layout['text-field']||''))).map(l=>[l.id,l.layout['text-field']]);
+    m.once('load',()=>{clearTimeout(fail);gl=m;gl._styleUrl=styleFor();
+      readNames();tuneDark(m);map.getContainer().classList.add('glBase');
       langCtl.getContainer().hidden=false;applyMapLang();
       if(LABEL.metric)renderLabels()}); // rent labels step out from under the button that just appeared
   }catch(e){rasterBase()}
@@ -472,7 +488,7 @@ const MOON='<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
 function paintToggle(){const dark=document.documentElement.dataset.theme==='dark',b=$('theme');
   b.querySelector('svg').innerHTML=dark?SUN:MOON;b.querySelector('span').textContent=dark?T('Light'):T('Dark');
   b.setAttribute('aria-label',dark?T('Switch to light mode'):T('Switch to dark mode'))}
-function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{localStorage.setItem('theme',t)}catch(e){}paintToggle();
+function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{localStorage.setItem('theme',t)}catch(e){}paintToggle();restyleBase();
   if(LABEL.metric)renderLabels()}
 $('theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark',true);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let saved;try{saved=localStorage.getItem('theme')}catch(_){}if(!saved)setTheme(e.matches?'dark':'light',false)});

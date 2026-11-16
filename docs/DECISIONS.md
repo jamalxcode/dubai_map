@@ -417,3 +417,11 @@ The owner asked for design ideas, lessons learned, the conversation, business ru
 - 2026-11-09: Built initial map and stored first README/decisions.
 - 2026-11-09: Added GitHub Pages Actions workflow. Activation and deployment not verified.
 - 2026-11-09: Expanded design specification and README to capture full scope, roadmap, access/legal constraints, geography confidence and accurate implementation status.
+
+## Decision on 2026-11-16: language switch and a better base map
+
+Asked by the collaborator: "add an English and Arabic section so we can switch languages" and "a different map that is better quality".
+- **Language:** the header button only showed the other language (عربي or English), so it read as a label, not a switch. Now a two-part switch, **English | عربي**, with the current language filled white. Same behaviour as before (`T.set`, `?lang=`, remembered).
+- **Base map:** OpenFreeMap's **Liberty** style replaces Positron by day: roads, water, parks, buildings and motorway numbers in colour, with English and Arabic names. At night OpenFreeMap's **Dark** style replaces the inverted, greyed Positron; it is near-black with sea and land almost the same, so `tuneDark` lifts water to navy and roads to grey. Switching the theme reloads the style and keeps the chosen name language. Same provider, no key, same licence and attribution.
+- **Considered and rejected:** satellite imagery (Esri needs an account and key; free Sentinel-2 mosaics are non-commercial / share-alike), MapTiler and Stadia (keys), Fiord (blue land clashes with the blue rent labels).
+- **Checked:** all tests; Liberty and the tuned Dark viewed over Dubai with the real tiles; the switch at 320 px, 375 px and desktop in both languages.

@@ -300,12 +300,16 @@
       doc.querySelectorAll('[data-t-ph]').forEach(el => { const v = STATIC[el.dataset.tPh]; if (v) el.placeholder = v; });
       doc.querySelectorAll('[data-t-aria]').forEach(el => { const v = STATIC[el.dataset.tAria]; if (v) el.setAttribute('aria-label', v); });
     }
-    const b = doc.getElementById('langBtn');
-    if (b) {
-      b.textContent = LANG === 'ar' ? 'English' : 'عربي';
-      b.lang = LANG === 'ar' ? 'en' : 'ar';
-      b.title = LANG === 'ar' ? 'Read this page in English' : 'اقرأ هذه الصفحة بالعربية';
-      b.addEventListener('click', () => T.set(LANG === 'ar' ? 'en' : 'ar'));
+    // Language switch in the header: both languages always shown, the current one highlighted.
+    const sw = doc.getElementById('langSw');
+    if (sw) {
+      sw.setAttribute('aria-label', LANG === 'ar' ? 'اللغة' : 'Language');
+      sw.querySelectorAll('button[data-l]').forEach(b => {
+        const on = b.dataset.l === LANG;
+        b.setAttribute('aria-pressed', String(on));
+        b.title = b.dataset.l === 'ar' ? 'اقرأ هذه الصفحة بالعربية' : 'Read this page in English';
+        b.addEventListener('click', () => { if (!on) T.set(b.dataset.l); });
+      });
     }
   }
   return T;

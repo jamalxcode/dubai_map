@@ -31,7 +31,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 - **Palette:** Dubai road signs. Sign blue `#1546A0` (header, primary buttons, dearest band), ink `#0E3478`, caution yellow `#F2B705` (stale-data warning only). Tokens on `:root`, redefined for dark mode (`data-theme="dark"`).
 - **Price bands:** five blues, light to dear in light mode, dearer is brighter at night. Bands cut at the 20/40/60/80th percentiles of what is shown.
-- **Dark mode:** follows the device until the visitor picks; remembered (`theme`). The map tiles are inverted and greyed by a CSS filter.
+- **Dark mode:** follows the device until the visitor picks; remembered (`theme`). The base map switches with it: OpenFreeMap **Liberty** (detailed, in colour) by day, OpenFreeMap **Dark** lifted to the site's night colours (`tuneDark` in atlas.js) at night. The CSS invert filter is only for the OpenStreetMap fallback tiles.
 - **Contrast:** WCAG AA (4.5:1) in light, dark and Arabic, checked by axe on every push. Text on shaded labels uses colours checked by hand (`#46515B`, `#fff`, `#C5CED8`), because axe can't measure text on a gradient.
 - **Type:** Barlow (text) and Barlow Condensed (headings, figures), served from the site. Arabic letters come from the device's Arabic font; numbers stay in Barlow. No letter-spacing in Arabic (it breaks letter joining).
 - **Figures:** tabular numbers; AED written before the amount; Western digits in both languages.
@@ -71,6 +71,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 ## 8. Language and direction
 
 - English and Arabic. Chosen by a `?lang=` link, else the saved choice, else the device; set before first paint to avoid a flash in the wrong direction.
+- **Language switch** (header, next to the theme button): **English | عربي** both always shown, the current one filled white; tapping the other reloads the page in that language and remembers it (`lang`).
 - Every visible text goes through `T()`; fixed markup text has a `data-t` key. A missing translation shows English, and the tests fail on it.
 - CSS uses logical properties (`margin-inline-end`, `inset-inline-start`, `text-align:start`) so the page mirrors without separate rules.
 - Area names stay as registered in Ejari (English); home types are shown in Arabic but stored in English.

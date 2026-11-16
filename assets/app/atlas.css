@@ -42,8 +42,12 @@ html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopp
 :root[data-theme="dark"] .leaflet-control-attribution a{color:#8EB6F0}
 :root[data-theme="dark"] .field input:focus,:root[data-theme="dark"] .field select:focus{box-shadow:0 0 0 3px rgba(128,170,230,.3)}
 .topBtns{position:absolute;z-index:2;top:22px;inset-inline-end:26px;display:flex;gap:8px;align-items:center}
-.lang{border:2px solid rgba(255,255,255,.85);background:transparent;color:var(--on-sign);border-radius:999px;padding:6px 12px;font:600 16px/1 var(--body);cursor:pointer}
-.lang:hover{background:rgba(255,255,255,.14)}
+/* Language switch: both languages always visible, the current one filled white like a road-sign panel. */
+.langSw{display:inline-flex;border:2px solid rgba(255,255,255,.85);border-radius:999px;overflow:hidden}
+.langSw button{border:0;background:transparent;color:var(--on-sign);padding:6px 12px;font:600 16px/1 var(--body);cursor:pointer}
+.langSw button:hover{background:rgba(255,255,255,.14)}
+.langSw button[aria-pressed="true"]{background:#fff;color:var(--sign);cursor:default}
+.langSw button:focus-visible{outline:3px solid #F2B705;outline-offset:-3px}
 .theme{display:inline-flex;align-items:center;gap:7px;border:2px solid rgba(255,255,255,.85);background:transparent;color:var(--on-sign);border-radius:999px;padding:6px 12px 6px 9px;font:600 16px/1 var(--cond);cursor:pointer}
 .theme:hover{background:rgba(255,255,255,.14)}
 .theme svg{width:16px;height:16px}
@@ -100,6 +104,7 @@ button,input,select{font:inherit;color:inherit}
 .mapWrap{position:relative;height:72vh;height:72svh;min-height:420px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 #map{position:absolute;inset:0;background:var(--map-bg)}
 .leaflet-tile-pane{filter:var(--tiles)}
+.glBase .leaflet-tile-pane{filter:none} /* the vector map has its own dark style; the filter is only for the OpenStreetMap fallback */
 /* Area breakdown: Google links and photos taken nearby (atlas.js loadPhotos). */
 .leaflet-popup-content .see{margin:8px 0 4px;font-size:13px}
 .leaflet-popup-content .see .sep{margin:0 6px;color:var(--muted)}
@@ -188,7 +193,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 @media (max-width:860px){
   .wrap{padding:0 16px}
   .band::after{inset:6px}
-  .topBtns{top:14px;inset-inline-end:16px}.lang{font-size:15px;padding:5px 10px}
+  .topBtns{top:14px;inset-inline-end:16px}.langSw button{font-size:15px;padding:5px 10px}
   .theme{font-size:15px;padding:5px 10px 5px 8px}
   /* Phone: keep the sign compact so the map starts high on the first screen. */
   .band .wrap{grid-template-columns:1fr;gap:8px;padding-top:50px;padding-bottom:16px}
@@ -248,7 +253,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .band p{font-size:13.5px;line-height:1.4;margin-top:6px;max-width:none}
   .big .num{font-size:46px}
   .big .cap{font-size:12.5px;margin-top:2px}
-  .topBtns{top:14px;inset-inline-end:16px}.lang{font-size:14px;padding:4px 10px}
+  .topBtns{top:14px;inset-inline-end:16px}.langSw button{font-size:14px;padding:5px 9px}
   .theme{font-size:14px;padding:4px 10px 4px 8px}
   .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
   .seg button{padding:7px 12px;font-size:16px}
