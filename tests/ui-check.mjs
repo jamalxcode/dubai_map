@@ -149,6 +149,12 @@ try {
       const near = Math.abs(c.lat - 25.058) < 0.02 && Math.abs(c.lng - 55.209) < 0.02;
       check(near && c.z >= 13, `desktop: a rent check takes the map to the area (JVC; zoom ${c.z})`);
       check(!!(await page.$('.leaflet-popup-content')), 'desktop: and opens its breakdown');
+      await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
+      await page.click('.ck-actions [data-act="share"]');
+      await page.waitForTimeout(200);
+      const link = await page.evaluate(() => navigator.clipboard.readText()).catch(() => '');
+      check(/\/a\/jumeirah-village-circle\/(\?unit=|$)/.test(link), `desktop: "Share" copies the area's preview link (${link.replace(BASE, '')})`);
+      check(/og:image/.test(await page.content()), 'desktop: the page has link-preview tags');
     }
     check(!errors.length, `${name}: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await axe(page, name);

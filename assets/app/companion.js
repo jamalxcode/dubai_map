@@ -174,6 +174,7 @@
     const secondary = [];
     if (step.id !== 'save' && savedIdx < 0) secondary.push(`<button type="button" class="link" data-act="save">Save to My areas</button>`);
     if (step.id !== 'map') secondary.push(`<button type="button" class="link" data-act="map">Show on the map</button>`);
+    secondary.push(`<button type="button" class="link" data-act="share">Share</button>`);
     if (area.url) secondary.push(`<a href="${esc(area.url)}" target="_blank" rel="noopener">Dubai Data page</a>`);
     out.innerHTML = `
       <div class="ck-answer">
@@ -312,6 +313,27 @@
   }
 
   // ---- map: from exploring to checking, and back ----
+  // The same rule as slug() in scripts/share_pages.py, which writes a/<slug>/ with this area's preview.
+  const slug = s => s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\x00-\x7f]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  function shareUrl(area, unit) {
+    return new URL('a/' + slug(area.label) + '/' + (unit ? '?unit=' + encodeURIComponent(unit) : ''), location.href.split(/[?#]/)[0]).href;
+  }
+  // Phones: the system share sheet (WhatsApp and the rest). Elsewhere: copy the link.
+  async function share(btn) {
+    const { area, unit } = current, f = RI.unitFigure(area, unit);
+    const url = shareUrl(area, unit);
+    const text = `${unit || 'All homes'} in ${area.label}: ${f ? aed(f.median) + ' a year (median)' : 'rents'}, from Ejari contracts.`;
+    if (navigator.share && matchMedia('(pointer:coarse)').matches) {
+      try { await navigator.share({ title: 'Dubai Rent Atlas', text, url }); } catch { /* closed the sheet */ }
+      return;
+    }
+    let ok = false;
+    try { await navigator.clipboard.writeText(url); ok = true; } catch { /* no clipboard permission */ }
+    btn.textContent = ok ? 'Link copied' : url;
+    if (ok) setTimeout(() => { if (btn.isConnected) btn.textContent = 'Share'; }, 2500);
+  }
+
   function showOnMap(area, { scroll = true } = {}) {
     if (area.lat == null || typeof map === 'undefined') return;
     const open = () => {
@@ -372,6 +394,7 @@
         case 'save': saveCurrent(); break;
         case 'remind': remindForm(); break;
         case 'map': showOnMap(current.area); break;
+        case 'share': share(b); break;
         case 'clear-history': store.history = []; save(); renderMine(); break;
         case 'every-ics': everyIcs(); break;
         case 'seen': store.seenThrough = THROUGH; save(); el('ckNew').hidden = true; break;
