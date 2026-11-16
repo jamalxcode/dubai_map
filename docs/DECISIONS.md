@@ -262,6 +262,14 @@ The owner asked for a left pane that is "more space conservative without losing 
 8. **Front-end split.** `index.html` is markup only; styles, page script, label placement and translations are separate files. Leaflet, GSAP and Lenis are served from `assets/vendor/`, byte-identical to the CDN files (their integrity hashes match), so no visitor request goes to a library CDN.
 9. **Old branches.** All merged except `phone-map-first` (superseded by later phone layout work) and `probe-sources` (one-off source probes). Deleting branches was not allowed from the session; the owner deletes them on GitHub.
 
+## Decision on 2026-11-16 (twenty-third pass): the rules written down in one place
+
+The owner asked for the conversation, design decisions, business rules "and anything important" to be in the repo. Three changes:
+
+- **`docs/BUSINESS_RULES.md` (new):** every rule the site and its jobs follow, with the value in force and the file that applies it. Covers what counts as a rent, which data is published, polite fetching, placing areas, the map, the rent check, freshness and alerts, sharing, language and privacy, accessibility. Every threshold was read from the code, not from memory. It must change together with the code.
+- **`CLAUDE.md` (new):** what a future coding session needs first: commands, layout, and the rules that bite. These include the data branch, deploy on push to main, the parallel editor on `index.html`, translations, logical CSS, no guessed coordinates, DLD permission, and keeping personal details out.
+- **`docs/DESIGN_GOALS.md`:** brought up to date (158 areas, about 534k contracts; daily OpenStreetMap look-ups; self-hosted libraries; visit counting; honest ranges) and a goal 10, "Reach the people who need it" (Arabic, sharing, accessibility, phones).
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -300,6 +308,12 @@ The owner asked for a left pane that is "more space conservative without losing 
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: docs/BUSINESS_RULES.md and CLAUDE.md added; design goals brought up to date (goal 10: reach).
+
+- 2026-11-16: Critique fixes: new areas placed daily from OpenStreetMap, labels split when zoomed in, honest ranges, area share pages, GoatCounter, Arabic, like-for-like cross-check, front-end split with self-hosted libraries.
+
+- 2026-11-16: Tighter left pane on wide screens.
 
 - 2026-11-16: A rent check flies the map to the area in the two-pane layout.
 

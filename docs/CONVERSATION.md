@@ -151,10 +151,15 @@ Same content in less space on wide screens: a smaller header, rent check, facts 
 
 Critique, ranked: three busy areas off the map; labels still merged when zoomed in; a single number with no range; shared links with no preview; no way to know if anyone uses it; no Arabic; one cross-check borderline; the front-end split; old branches. All done (DECISIONS.md, twenty-second pass), merged to main in three steps. Two findings changed the plan on the way: Al Twar Fifth wasn't guessed onto the map (the daily pull now places new areas from OpenStreetMap itself), and the cross-check gap turned out to be Dubai Data counting villas as "apartments" in its 3+ bedroom rows.
 
+### ~18:00 · "update convo, design decisions, business rules and anything important to repo"
+
+Added `docs/BUSINESS_RULES.md` (every rule and threshold, read from the code, with where it lives) and `CLAUDE.md` (guidance for future coding sessions). Brought `DESIGN_GOALS.md` up to date, with a new goal 10 on reach (Arabic, sharing, accessibility). Logged the twenty-third pass in DECISIONS.md and linked everything from the README.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.
-2. **Arabic area names**: from DLD's own Arabic field once contract-level data arrives (the interface is already in Arabic).
-3. **Old branches** to delete on GitHub (the session may not): `datadubai-daily`, `engagement`, `fix-tabs`, `mobile-redesign` (merged), `phone-map-first` (superseded), `probe-sources` (one-off probes).
-4. Community outlines (shaded areas) from Dubai Municipality data.
-5. Expansion to other cities in the region (new source adapter per registry).
+2. **Arabic area names**: from DLD's own Arabic field once contract-level data arrives (the interface is already in Arabic). A native speaker's read of the Arabic interface text would also help.
+3. **Al Twar Fifth, Al Aryam, Al Waha Villas**: should be placed by the next daily pull's OpenStreetMap look-up; if not, the freshness check says so and they need a reviewed alias or point.
+4. **Old branches** to delete on GitHub (the session may not): `datadubai-daily`, `engagement`, `fix-tabs`, `mobile-redesign` (merged), `phone-map-first` (superseded), `probe-sources` (one-off probes).
+5. Community outlines (shaded areas) from Dubai Municipality data.
+6. Expansion to other cities in the region (new source adapter per registry).

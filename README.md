@@ -175,4 +175,4 @@ This is not legal advice. The one open question is the DLD service, which needs 
 
 ## Notes
 
-Independent tool, not an official DLD/RERA service. Respect Dubai Pulse terms. Never commit API keys (they live in GitHub Secrets). Map tiles © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), mapping via [Leaflet](https://leafletjs.com/). Design goals: [docs/DESIGN_GOALS.md](docs/DESIGN_GOALS.md) · decision log: [docs/DECISIONS.md](docs/DECISIONS.md) · how it was built: [docs/CONVERSATION.md](docs/CONVERSATION.md).
+Independent tool, not an official DLD/RERA service. Respect Dubai Pulse terms. Never commit API keys (they live in GitHub Secrets). Map tiles © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), mapping via [Leaflet](https://leafletjs.com/). Design goals: [docs/DESIGN_GOALS.md](docs/DESIGN_GOALS.md) · business rules: [docs/BUSINESS_RULES.md](docs/BUSINESS_RULES.md) · decision log: [docs/DECISIONS.md](docs/DECISIONS.md) · how it was built: [docs/CONVERSATION.md](docs/CONVERSATION.md) · notes for coding sessions: [CLAUDE.md](CLAUDE.md).
