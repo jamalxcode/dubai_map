@@ -358,6 +358,8 @@ The owner asked for design ideas, lessons learned, the conversation, business ru
 
 ## Change log
 
+- 2026-11-16: README rewritten for readers (what you can do first, the engine room after); outdated figures fixed; licences table completed.
+
 - 2026-11-16: docs/INTERFACE_RULES.md and docs/LESSONS_LEARNED.md added; map language buttons 32 px on small screens.
 
 - 2026-11-16: Phones and fold phones: area breakdown as a bottom sheet with photos first, full-screen photo viewer, smaller map buttons; checked down to 320 px.
