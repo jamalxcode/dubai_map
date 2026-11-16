@@ -339,6 +339,10 @@ function odometer(el,value,prefix){
 }
 
 const map=L.map('map',{zoomControl:true,attributionControl:true}).setView([25.13,55.27],11);
+// A small merged label (2-3 areas) names its busiest area, e.g. "International City Phase 1 +1", so nearby
+// places stay findable by name when zoomed in; bigger groups cover a region and just count their areas.
+const groupName=g=>{if(g.length>3)return g.length+' areas';const top=g.reduce((a,b)=>b.n>a.n?b:a,g[0]).a.label;
+  return (top.length>22?top.slice(0,21)+'…':top)+' +'+(g.length-1)};
 // OpenStreetMap tile usage policy: this exact HTTPS URL, visible attribution, no bulk or offline use.
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);
 const layer=L.layerGroup().addTo(map);
@@ -353,7 +357,7 @@ function renderLabels(){
   const make=members=>{const N=members.reduce((s,o)=>s+o.n,0),w=o=>N?o.n/N:1/members.length;
     const val=metric==='n'?N:members.reduce((s,o)=>s+o.v*w(o),0);
     const lat=members.reduce((s,o)=>s+o.a.lat*w(o),0),lng=members.reduce((s,o)=>s+o.a.lng*w(o),0);
-    const single=members.length===1,top=labelText(val,metric)+(single||metric==='n'?'':' avg'),sub=single?members[0].a.label:members.length+' areas';
+    const single=members.length===1,top=labelText(val,metric)+(single||metric==='n'?'':' avg'),sub=single?members[0].a.label:groupName(members);
     return {members,N,val,lat,lng,single,px:map.latLngToLayerPoint([lat,lng]),w:Math.max(top.length*8.4,Math.min(sub.length,26)*5.8)+26,h:38};};
   const hit=(a,b)=>Math.abs(a.px.x-b.px.x)*2<a.w+b.w+PAD&&Math.abs(a.px.y-b.px.y)*2<a.h+b.h+PAD;
   let cl=POINTS.map(p=>make([p])),again=true;
@@ -361,7 +365,7 @@ function renderLabels(){
     outer:for(let i=0;i<cl.length;i++)for(let k=i+1;k<cl.length;k++)if(hit(cl[i],cl[k])){cl[i]=make(cl[i].members.concat(cl[k].members));cl.splice(k,1);again=true;break outer}}
   const added=[];
   for(const c of cl){const g=c.members;
-    const html='<div class="rl'+(c.single?'':' grp')+'" style="--c:'+colorOf(c.val)+'" tabindex="0"><b>'+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">avg</span>')+'</b><small>'+(c.single?safe(g[0].a.label):g.length+' areas')+'</small></div>';
+    const html='<div class="rl'+(c.single?'':' grp')+'" style="--c:'+colorOf(c.val)+'" tabindex="0"><b>'+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">avg</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
     const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
     if(c.single)m.bindPopup(popup(g[0].a),{maxWidth:320});
