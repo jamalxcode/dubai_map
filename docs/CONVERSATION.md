@@ -139,6 +139,10 @@ Wide screens now have two panes: the map full height on the right (it stays put)
 
 Rent label boxes now fill from the left by rent / AED 100k. The left pane was tightened (filters end at 682 px on a 900-px screen instead of 1,050). The squashed rent check in the owner's screenshot was a cached old stylesheet; page assets are now versioned per deploy.
 
+### ~16:45 · "i did marina check a rent but the map did not move, i was expecting it to take me to the marina"
+
+In the two-pane layout a check now flies the map to the area and opens its breakdown (even when its label is merged with neighbours at that zoom).
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

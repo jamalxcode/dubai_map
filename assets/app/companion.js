@@ -16,6 +16,7 @@
   // Phones: the card starts as one line (area + Check) so the map stays near the top of the
   // first screen; it opens when the visitor taps it and folds back with "Close".
   const PHONE = matchMedia('(max-width:860px)');
+  const PANE = matchMedia('(min-width:1100px)'); // the map has its own full-height pane
   const compact = on => {
     const c = el('companion'), folded = !!on && PHONE.matches;
     if (!c) return;
@@ -110,6 +111,9 @@
     renderMine();
     if (!quiet) compact(false);
     if (!quiet && PHONE.matches) el('ckResult').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    // With the map beside the rent check (two-pane layout), a check takes the map to that area.
+    // On narrower screens the map is further down the page, so it waits for "Show on the map".
+    if (!quiet && PANE.matches) showOnMap(area, { scroll: false });
   }
 
   function showNoMatch(text, hits) {
@@ -303,16 +307,20 @@
   }
 
   // ---- map: from exploring to checking, and back ----
-  function showOnMap(area) {
+  function showOnMap(area, { scroll = true } = {}) {
     if (area.lat == null || typeof map === 'undefined') return;
     const open = () => {
       if (typeof layer === 'undefined') return;
-      layer.eachLayer(m => { if (m.options && m.options.title === area.label && m.getPopup()) m.openPopup(); });
+      let found = false;
+      layer.eachLayer(m => { if (m.options && m.options.title === area.label && m.getPopup()) { m.openPopup(); found = true; } });
+      // Merged with its neighbours at this zoom: open its own breakdown at its point anyway.
+      if (!found && typeof popup === 'function') L.popup({ maxWidth: 320 }).setLatLng([area.lat, area.lng]).setContent(popup(area)).openOn(map);
     };
-    el('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (scroll) el('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
     if (map.getZoom() === 14 && map.getBounds().contains([area.lat, area.lng])) { open(); return; }
-    map.once('zoomend moveend', () => setTimeout(open, 50));
-    map.setView([area.lat, area.lng], 14);
+    map.once('moveend', () => setTimeout(open, 50));
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) map.setView([area.lat, area.lng], 14);
+    else map.flyTo([area.lat, area.lng], 14, { duration: 0.8 });
   }
 
   function onPopup(e) {

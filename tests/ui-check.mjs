@@ -130,6 +130,13 @@ try {
     await page.waitForTimeout(400);
     const big = await page.$eval('.ck-big', e => e.textContent).catch(() => '');
     check(/AED\s*[\d,]+/.test(big), `${name}: rent check answers "jvc" (${big.trim().slice(0, 30)})`);
+    if (name === 'desktop') {
+      await page.waitForTimeout(1300); // the fly to the area
+      const c = await page.evaluate(() => ({ z: map.getZoom(), lat: map.getCenter().lat, lng: map.getCenter().lng }));
+      const near = Math.abs(c.lat - 25.058) < 0.02 && Math.abs(c.lng - 55.209) < 0.02;
+      check(near && c.z >= 13, `desktop: a rent check takes the map to the area (JVC; zoom ${c.z})`);
+      check(!!(await page.$('.leaflet-popup-content')), 'desktop: and opens its breakdown');
+    }
     check(!errors.length, `${name}: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await axe(page, name);
     await page.context().close();

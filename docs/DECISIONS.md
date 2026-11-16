@@ -242,6 +242,10 @@ The owner found the map reads better tall than wide.
 - **Compact left pane (from 1100 px):** smaller band, the rent check without its explanation line and in two rows, compact filters, tighter spacing. At 1440 × 900 the filters end at 682 px instead of 1,050 (975 instead of 1,404 with a result shown); the left pane is 16% shorter.
 - **Versioned assets:** the owner's browser mixed the new page with a cached old `companion.css`, squashing the rent check. Page assets now carry `?v=__BUILD__`, replaced with the commit by the Pages job (as in Flattery).
 
+## Decision on 2026-11-16 (twentieth pass): a rent check moves the map
+
+The owner checked "marina" and expected the map to go there. In the two-pane layout (map always beside the check) a check now flies the map to the area (zoom 14) and opens its breakdown, also when its label is merged with neighbours at that zoom. Not on narrower screens, where the map is further down the page and jumping there would interrupt reading the result ("Show on the map" does it), and not for a check restored from a previous visit (the saved map view wins). Reduced-motion users get a jump instead of a flight. The browser check covers it.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -280,6 +284,8 @@ The owner found the map reads better tall than wide.
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: A rent check flies the map to the area in the two-pane layout.
 
 - 2026-11-16: Label boxes shaded by rent; compact left pane; versioned page assets.
 
