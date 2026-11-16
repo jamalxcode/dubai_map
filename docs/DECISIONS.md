@@ -207,6 +207,13 @@ The owner pointed to [MCP-Dubai](https://github.com/mahdi-salmanzade/MCP-Dubai) 
 - Only equality filters are documented, so our date-range filter is unconfirmed: if the gateway refuses it (400), the collector reads `order_by=contract_start_date DESC` and stops once past the window.
 - Not adopted: everything else (air quality, prayer times, etc.) is unrelated to rents.
 
+## Decision on 2026-11-16 (fifteenth pass): getting the key from outside the UAE
+
+- **The block:** data.dubai's web firewall rejects the owner's browser (in Kuwait) and GitHub's servers alike with "Request Rejected", so registration can't be done from here. The API gateway `apis.data.dubai` is not blocked (it answers 401 without a key from GitHub), so once a key exists the scheduled pulls need no change.
+- **Chosen:** ask Digital Dubai support (help@digitaldubai.ae, 600 56 0000) for registration and for whether developers outside the UAE can get access, quoting the firewall's support ID. Sent 16 Nov; waiting.
+- **Rejected:** a VPN to look like a UAE visitor. The block is deliberate on a government portal, and access obtained that way could later count against the key.
+- **Meanwhile:** the site runs on Dubai Data (communities) and Continental Club (older districts), three pulls a day, cross-checked against dubairealestatedata.com.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -245,6 +252,8 @@ The owner pointed to [MCP-Dubai](https://github.com/mahdi-salmanzade/MCP-Dubai) 
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: data.dubai sign-up blocked from outside the UAE; Digital Dubai support contacted; docs updated.
 
 - 2026-11-16: Dubai Pulse client fixes from MCP-Dubai's documentation: data.dubai sign-up, 500-row pages, total/repeat guards, date-filter fallback, 403 message.
 

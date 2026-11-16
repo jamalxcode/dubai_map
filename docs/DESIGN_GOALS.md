@@ -36,7 +36,7 @@ These are the goals the owner set while building the project (see [CONVERSATION.
 ## 4. Work today, get richer later
 
 - ✅ **Now:** community medians from Dubai Data (datadubai.ae, CC BY 4.0), derived from the same Ejari feed. About 304k contracts in 102 communities over the last 12 months, all placed on the map.
-- 🔶 **Later, automatically:** once a Dubai Pulse API key is in GitHub Secrets, the build switches to per-contract data (trends, AED/m², new vs renewal, top buildings, last-30-days table). No code change is needed. It switches only when our own contracts cover at least 43 of the last 52 weeks (and 1,000 home contracts), so a few weeks of data are never shown as "last 12 months". Blocked on the key.
+- 🔶 **Later, automatically:** once a Dubai Pulse API key is in GitHub Secrets, the build switches to per-contract data (trends, AED/m², new vs renewal, top buildings, last-30-days table). No code change is needed. It switches only when our own contracts cover at least 43 of the last 52 weeks (and 1,000 home contracts), so a few weeks of data are never shown as "last 12 months". Blocked on the key: data.dubai's sign-up page rejects visitors from outside the UAE, so the owner asked Digital Dubai support for access on 16 Nov. The collector is ready (and tested against the gateway's documented behaviour); nothing else is needed once the key arrives.
 - ✅ A build never publishes a catalog more than 30% smaller than the last one; the previous files stay live and the run fails so someone looks.
 - ✅ Manual fallback: drop a DLD CSV into `data/inbox/` and it gets imported.
 

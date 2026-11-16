@@ -109,9 +109,21 @@ The data had International City Phase 1 and 3 and Warsan First Development all a
 
 Added 56 official DLD areas from continentalclub.ae (Deira, Bur Dubai, Karama, Al Qusais…), headline = 1-bedroom median and labelled as such, credited on the page. 158 areas now (was 102).
 
+### ~15:00 · "can we use anything from here : https://github.com/mahdi-salmanzade/MCP-Dubai/blob/main/CREDENTIALS.md"
+
+An open-source (MIT) client for the same data.dubai gateway. Read, not copied. It showed the Dubai Pulse portal has moved to data.dubai, that the token host is `apis.data.dubai`, and that pages hold at most 500 rows. That last point exposed a latent bug: our 1,000-row requests would have come back short, been read as the last page, and kept only the first 500 contracts of every window. Fixed (500-row pages, stop at the reported total or a repeated page, newest-first fallback if the date filter is refused, a clear 403 message), and the README's sign-up steps now point to data.dubai.
+
+### ~15:10 · data.dubai: "The requested URL was rejected. Please consult with your administrator."
+
+The owner's browser was blocked by the portal's web firewall. A probe from GitHub's servers (US) got the same "Request Rejected" page, so the block isn't the browser or the account: the portal turns away visitors it doesn't trust, most likely non-UAE addresses. The data API (`apis.data.dubai`) does answer from GitHub, so pulls will work once a key exists. Advice: a UAE connection, or Digital Dubai support; not a VPN (a deliberate block on a government portal).
+
+### ~15:20 · Email to Digital Dubai support
+
+The owner wrote to help@digitaldubai.ae with the firewall's support ID: asked how to register for the open rental data and its API, said they're based in Kuwait, and asked whether developers outside the UAE can register. Waiting for an answer. When access comes: request `dld_rent_contracts-open-api`, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets, then run a forced pull and check the first real contracts.
+
 ## Open items
 
-1. **Dubai Pulse API key** (owner): register at dubaipulse.gov.ae, then add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks per-contract detail and the older districts.
+1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.
 2. **Front-end split** (once the page is quiet): `index.html` into script, styles and a testable module; self-host Leaflet, GSAP and Lenis; faster label merging.
 3. **cron-job.org jobs** (owner): a fine-grained token with Actions read/write on this repo, and three dispatch jobs (README, "The timer").
 4. **Old branches** `fix-tabs`, `mobile-redesign`, `engagement`, `compact-phone`, `three-a-day` and the collaborator's working branches can be deleted once merged.

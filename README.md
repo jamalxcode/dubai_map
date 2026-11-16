@@ -76,6 +76,7 @@ GitHub's schedules run late (this repo's daily job started about 7 hours late on
 ### Daily data: add the free Dubai Pulse key
 
 1. Sign up at **[data.dubai](https://data.dubai)** (the Dubai Pulse portal moved there in Dec 2025 to Jan 2026; www.dubaipulse.gov.ae now redirects). Find the DLD rent contracts dataset and request access to **`dld_rent_contracts-open-api`**. Access is granted per dataset; approval time varies. You receive an **API key** (the client id) and an **API secret** (the client secret). Help: help@digitaldubai.ae, 600 56 0000.
+   - **From outside the UAE** the sign-up page may answer "The requested URL was rejected" (its firewall; seen from Kuwait and from GitHub's US servers on 16 Nov). Write to support with the support ID it shows and ask for access; a UAE connection also works. The API itself (`apis.data.dubai`) is reachable from anywhere, so the scheduled pulls are unaffected. Status: request sent 16 Nov, waiting.
 2. In this repo: **Settings → Secrets and variables → Actions**
    - Secrets: `DUBAI_PULSE_KEY`, `DUBAI_PULSE_SECRET`
    - Variable `EJARI_API_URL`, only to pin one endpoint (by default `https://apis.data.dubai/open/dld/dld_rent_contracts-open-api` is tried first, then `https://api.dubaipulse.gov.ae/open/dld/dld_rent_contracts-open`)
