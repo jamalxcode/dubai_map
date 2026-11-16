@@ -108,3 +108,17 @@ test('calendar file: all-day event, reminder before, optional repeat', () => {
   assert.match(RI.ics({ uid: 'z', title: 't', date: '2027-01-31', details: '', everyMonths: 6 }), /RRULE:FREQ=MONTHLY;INTERVAL=6/);
   assert.equal(RI.addMonths('2026-11-16', 3), '2027-02-16');
 });
+
+test('areas with no count per home type (older districts): no all-homes figure, still comparable', () => {
+  const karama = { label: 'Al Karama', lat: 25.245, lng: 55.305, n: 12391, median: 57330, median_kind: 'unit',
+                   median_unit: '1-bedroom apartments', dld_areas: ['Al Karama'],
+                   by_unit: [{ u: '1-bedroom apartments', n: null, median: 57330 }, { u: 'Studios', n: null, median: 44000 }] };
+  const mankhool = { label: 'Mankhool', lat: 25.249, lng: 55.295, n: 10285, median: 63670, median_kind: 'unit',
+                     by_unit: [{ u: '1-bedroom apartments', n: null, median: 63670 }] };
+  assert.deepEqual(RI.unitOptions(karama).map(u => u.u), ['1-bedroom apartments', 'Studios'], 'source order kept');
+  assert.equal(RI.unitFigure(karama, ''), null, 'no all-homes median is published');
+  assert.equal(RI.unitFigure(karama, 'Studios').median, 44000);
+  const cheaper = RI.cheaperNearby([karama, mankhool], mankhool, '1-bedroom apartments');
+  assert.deepEqual(cheaper.map(c => [c.area.label, c.n]), [['Al Karama', 12391]], 'the area total stands in for trust');
+});
+

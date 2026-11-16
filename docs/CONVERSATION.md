@@ -101,6 +101,14 @@ The card is one line on phones until tapped (map back from 84% to 51% of the fir
 
 This workspace couldn't reach the sources, so a one-off GitHub Actions probe made one request per page and read terms and robots.txt. Outcome per source in [DECISIONS.md](DECISIONS.md) (twelfth pass): Dubai Pulse now tried at `apis.data.dubai` first (still needs the key); dubairealestatedata.com and continentalclub.ae added as daily cross-checks (CC BY 4.0); the DLD website, rental index and 2022 performance index, and overit.ae, left out with reasons. The pull runs three times a day with a 6-hour minimum gap per source; cron-job.org setup steps are in the README.
 
+### ~14:35 · "do a pull now , lets see if all areas included" / "im especially looking for international city / warsan which has not been shown in the past pulls"
+
+The data had International City Phase 1 and 3 and Warsan First Development all along; the map hid them. Phase 1 sits 500 m from Warsan First Development, so the two stayed merged as "2 areas" at every zoom. Small merged labels now name their busiest area ("International City Ph… +1"). Phase 2 has no figure of its own in Dubai Data. The bigger gap was the older districts, which Dubai Data doesn't publish.
+
+### ~14:50 · "yes, use continentalclub to add the older districts"
+
+Added 56 official DLD areas from continentalclub.ae (Deira, Bur Dubai, Karama, Al Qusais…), headline = 1-bedroom median and labelled as such, credited on the page. 158 areas now (was 102).
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner): register at dubaipulse.gov.ae, then add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks per-contract detail and the older districts.

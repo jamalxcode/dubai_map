@@ -50,7 +50,7 @@ These are the goals the owner set while building the project (see [CONVERSATION.
 
 ## 6. Coverage
 
-- 🔶 Dubai master-planned communities are covered. Older districts (Deira, Bur Dubai, Karama…) need the per-contract feed.
+- 🔶 Dubai master-planned communities are covered (Dubai Data), and since 16 Nov the older districts too (Deira, Bur Dubai, Karama, Al Qusais…: 56 official DLD areas from Continental Club Property, median by unit size). The per-contract feed will replace both once the Dubai Pulse key is in.
 - ⏳ **Other cities in the region**: the project is meant to expand beyond Dubai. Each emirate or country has its own registry (e.g. Abu Dhabi, Sharjah), so a new city means a new source adapter plus its own location file, with the same label UI. The collector and build steps are kept per source to allow this.
 
 ## 7. Simple, cheap, owned

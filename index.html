@@ -284,7 +284,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
       <div>
         <h3>What this is not</h3>
         <p>Not asking prices from listing sites, and not the RERA rental index used for rent increases. An independent tool, not an official DLD or RERA service.</p>
-        <p>Sources: Ejari rent contracts, <a href="https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open" target="_blank" rel="noopener">Dubai Land Department open data</a> via Dubai Pulse. Community boundaries: <a href="https://www.dubaipulse.gov.ae/data/dm-location/dm_community-open" target="_blank" rel="noopener">Dubai Municipality</a>. Community medians: <a href="https://datadubai.ae/" target="_blank" rel="noopener">Dubai Data</a>, Continental Club Property, licensed <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> (reshaped into map labels and the table). A few area points and the map: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL. <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Report a map problem</a>.</p>
+        <p>Sources: Ejari rent contracts, <a href="https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open" target="_blank" rel="noopener">Dubai Land Department open data</a> via Dubai Pulse. Community boundaries: <a href="https://www.dubaipulse.gov.ae/data/dm-location/dm_community-open" target="_blank" rel="noopener">Dubai Municipality</a>. Community medians: <a href="https://datadubai.ae/" target="_blank" rel="noopener">Dubai Data</a>, Continental Club Property, licensed <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> (reshaped into map labels and the table). Older districts (Deira, Bur Dubai, Karama and others): <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0, median by unit size. A few area points and the map: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL. <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Report a map problem</a>.</p>
         <p class="muted">Built with Leaflet (BSD-2-Clause), GSAP (standard no-charge licence), Lenis (MIT) and Barlow fonts (SIL OFL). The rolling number and title animation are our own versions of React Bits' Counter and SplitText.</p>
       </div>
     </div>
@@ -476,12 +476,14 @@ function spark(monthly){
 function popup(a){
   const types=Object.entries(a.reg_types||{}).map(([k,v])=>safe(k)+' '+fmt(v)).join(', ');
   return '<span class="t">'+safe(a.label)+'</span>'+
-    (a.median_kind==='typical'?'Typical <b>AED '+fmt(a.median)+'</b> a year (average of the bedroom medians below) from ':'Median <b>AED '+fmt(a.median)+'</b> a year from ')+fmt(a.n)+' contracts'+(a.p25!=null?'<br>Middle half pay AED '+fmt(a.p25)+' to '+fmt(a.p75):'')+'<br>'+
+    (a.median_kind==='unit'?'Median for '+safe(String(a.median_unit||'').toLowerCase())+' <b>AED '+fmt(a.median)+'</b> a year (no all-homes median is published for this area); '
+      :a.median_kind==='typical'?'Typical <b>AED '+fmt(a.median)+'</b> a year (average of the bedroom medians below) from ':'Median <b>AED '+fmt(a.median)+'</b> a year from ')+fmt(a.n)+' contracts'+(a.p25!=null?'<br>Middle half pay AED '+fmt(a.p25)+' to '+fmt(a.p75):'')+'<br>'+
     (a.median_sqm?'AED '+fmt(a.median_sqm)+' per m² a year<br>':'')+
     (a.yield_pct!=null?'Gross yield '+a.yield_pct+'%'+(a.sale_median?', median sale price AED '+fmt(a.sale_median):'')+'<br>':'')+
     (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+
     (a.by_unit.length?'<table><tr><th>Unit</th><th>Contracts</th><th>Median AED</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr><td>'+safe(u.u)+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>':'')+
     (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<table><tr><th>Busiest buildings</th><th>n</th><th>Median</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
+    (a.source==='ccp'?'<small>Figures: <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?', to '+safe(a.through):'')+'.</small><br>':'')+
     '<small>DLD area: '+a.dld_areas.map(safe).join(', ')+'. The point is an approximate reference for the area, not a building.'+(a.url?' <a href="'+safe(a.url)+'" target="_blank" rel="noopener">Dubai Data page</a>':'')+'</small>';
 }
 

@@ -103,3 +103,42 @@ class PublicStateTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OlderDistrictTests(TempData):
+    """Continental Club fills in DLD areas Dubai Data doesn't publish, and only those."""
+
+    def setUp(self):
+        super().setUp()
+        self.write("crosscheck/ccp.csv", "area,unit,median,n\n"
+                   "Al Barsha South Fourth,1-bedroom apartments,70000,29316\n"   # covered by JVC: skipped
+                   "Al Karama,Studios,44000,12391\nAl Karama,1-bedroom apartments,57330,12391\n"
+                   "Al Karama,2-bedroom apartments,70999,12391\n"
+                   "Al Ttay,2-bedroom apartments,45000,744\n"                  # no 1-bed or studio
+                   "Nowhere Land,1-bedroom apartments,40000,50\n")             # no map point
+        import ccp_areas
+        self.ccp = ccp_areas
+
+    def test_adds_uncovered_areas_with_honest_figures(self):
+        dm = {"AL KARAMA": {"lat": "25.245", "lng": "55.305"}, "AL TTAY": {"lat": "25.2", "lng": "55.6"}}
+        areas, unplaced, table = self.ccp.older_districts(AREAS, dm, "2026-11-14")
+        by = {a["label"]: a for a in areas}
+        self.assertEqual(set(by), {"Al Karama", "Al Ttay", "Nowhere Land"}, "Al Barsha South Fourth is already JVC")
+        k = by["Al Karama"]
+        self.assertEqual((k["median"], k["median_kind"], k["median_unit"]), (57330, "unit", "1-bedroom apartments"))
+        self.assertEqual([u["u"] for u in k["by_unit"]], ["1-bedroom apartments", "Studios", "2-bedroom apartments"])
+        self.assertTrue(all(u["n"] is None for u in k["by_unit"]), "no count per home type is invented")
+        self.assertEqual((k["n"], k["lat"], k["source"], k["through"]), (12391, 25.245, "ccp", "2026-11-14"))
+        self.assertEqual(by["Al Ttay"]["median_unit"], "2-bedroom apartments", "falls back to the next size")
+        self.assertEqual(unplaced, [{"area": "Nowhere Land", "n": 50}])
+        self.assertEqual(len(table), 5)
+
+    def test_never_compared_with_itself(self):
+        areas, _, _ = self.ccp.older_districts(AREAS, {"AL KARAMA": {"lat": "25.2", "lng": "55.3"}})
+        out = crosscheck.compare(AREAS + areas, state={})
+        ccp = [e for e in out if e["name"].startswith("Continental")][0]
+        self.assertNotIn("Al Karama", [g["area"] for g in ccp.get("largest_gaps", [])])
+
+    def test_no_file_no_extra_areas(self):
+        os.remove(os.path.join(self.tmp, "crosscheck", "ccp.csv"))
+        self.assertEqual(self.ccp.older_districts(AREAS, {}), ([], [], []))

@@ -12,6 +12,7 @@ from collections import Counter, defaultdict
 from datetime import date, datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ccp_areas  # noqa: E402
 import crosscheck  # noqa: E402
 import fetch_datadubai  # noqa: E402
 import state as st  # noqa: E402
@@ -242,8 +243,14 @@ def build_aggregate(now, state, own=None):
         for u in by_unit or [{"u": "All units", "n": n, "median": round(med_rent), "yield": _num(r["yield_pct"])}]:
             table.append({"c": name, "u": u["u"], "a": u["median"], "n": u["n"], "y": u["yield"],
                           "ar": ", ".join(areas[-1]["dld_areas"]), "url": r["url"], "m": 1 if pt else 0})
-    areas.sort(key=lambda a: -a["n"])
     through = fetch_datadubai.data_through()
+    # Older districts Dubai Data doesn't publish (Deira, Bur Dubai, Karama…), from Continental Club.
+    ccp_through = ((state.get("crosscheck") or {}).get("ccp") or {}).get("through")
+    extra, extra_unplaced, extra_table = ccp_areas.older_districts(areas, load_dm_points(), ccp_through)
+    areas += extra
+    unplaced += extra_unplaced
+    table += extra_table
+    areas.sort(key=lambda a: -a["n"])
     total = sum(a["n"] for a in areas)
     files = {"areas.json": {"generated_at": now, "from": None, "to": through, "type": "homes", "areas": areas},
              "latest.json": {"generated_at": now, "mode": "aggregate", "rows": table}}
@@ -261,11 +268,16 @@ def build_aggregate(now, state, own=None):
         "n_areas": len(areas),
         "newest_start_date": through, "data_through": through,
         "unmatched_areas": sorted(unplaced, key=lambda x: -x["n"]), "state": public_state(state),
-        "sources": source_status(state, own or {}) + crosscheck.compare(areas, state),
+        "sources": source_status(state, own or {}) + ([{
+            "name": ccp_areas.NAME + ": older districts", "state": "ok",
+            "status": f"in use: {len(extra)} DLD areas Dubai Data doesn't publish (Deira, Bur Dubai, Karama and others), "
+                      f"CC BY 4.0" + (f", data to {ccp_through}" if ccp_through else "")}] if extra else [])
+            + crosscheck.compare(areas, state),
         "property_types": [{"key": t, "label": lbl, "n": counts[t]} for t, lbl in PROPERTY_TYPES if t in counts],
         "source": "Dubai Data (datadubai.ae), Continental Club Property, based on Dubai Land "
                   "Department open data (Ejari)" + (f", data through {through}" if through else "") +
-                  ". CC BY 4.0. Not an official DLD product.",
+                  ". CC BY 4.0. Not an official DLD product." +
+                  (f" Older districts ({len(extra)} DLD areas): {ccp_areas.NAME}, CC BY 4.0." if extra else ""),
     }
     publish(files)
     print(f"built (aggregate): {len(areas)} communities, {total} contracts in 12m, "
@@ -283,14 +295,18 @@ def aggregate_type(area, t):
     """One area's Dubai Data figures for flats or studios. Dubai Data publishes a median
     per bedroom count, not one for all flats together, so the Flats figure is the
     contract-weighted average of those medians and is labelled "typical", not "median"."""
-    units = [u for u in area["by_unit"] if agg_kind(u["u"]) == t and u["n"] and u["median"]]
+    # Continental Club areas give no count per unit size: those units count equally.
+    units = [u for u in area["by_unit"] if agg_kind(u["u"]) == t and u["median"] and (u["n"] or area.get("source") == "ccp")]
     if not units:
         return None
-    n = sum(u["n"] for u in units)
+    counted = all(u["n"] for u in units)
+    n = sum(u["n"] for u in units) if counted else area["n"]
     if len(units) == 1:
         value, kind = units[0]["median"], "median"
-    else:
+    elif counted:
         value, kind = round(sum(u["median"] * u["n"] for u in units) / n / 500) * 500, "typical"
+    else:
+        value, kind = round(sum(u["median"] for u in units) / len(units) / 500) * 500, "typical"
     ys = [(u["yield"], u["n"]) for u in units if u.get("yield") is not None]
     return dict(area, n=n, median=value, median_kind=kind, by_unit=units,
                 yield_pct=round(sum(y * k for y, k in ys) / sum(k for _, k in ys), 2) if ys else None)

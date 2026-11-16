@@ -14,12 +14,14 @@ AREA_DEFAULTS = {
     "label": None, "lat": None, "lng": None, "dld_areas": [], "n": 0, "median": None,
     "p25": None, "p75": None, "median_sqm": None, "reg_types": {}, "by_unit": [], "monthly": [],
     "top_projects": [], "yield_pct": None, "sale_median": None, "sale_psf": None, "url": None,
+    "source": None,   # None: the main source; "ccp": Continental Club older districts (ccp_areas.py)
+    "through": None,  # set when an area's figures run to a different date than the rest
 }
 
 
 def area(**fields):
     """One area record with every key present. Unknown keys are a bug, not data."""
-    extra = set(fields) - set(AREA_DEFAULTS) - {"median_kind"}
+    extra = set(fields) - set(AREA_DEFAULTS) - {"median_kind", "median_unit"}
     if extra:
         raise ValueError(f"unknown area fields: {sorted(extra)}")
     fresh = {k: (type(v)() if isinstance(v, (list, dict)) else v) for k, v in AREA_DEFAULTS.items()}

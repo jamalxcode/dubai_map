@@ -63,12 +63,15 @@
 
   /** The units an area has figures for, busiest first. */
   function unitOptions(area) {
-    return (area && area.by_unit || []).filter(u => u.median && u.n).slice().sort((a, b) => b.n - a.n);
+    // Some areas (Continental Club's older districts) publish no count per home type: keep their
+    // units, in the order given, and leave the count empty rather than invent one.
+    const units = (area && area.by_unit || []).filter(u => u.median && (u.n || u.n === null));
+    return units.some(u => u.n === null) ? units.slice() : units.slice().sort((a, b) => b.n - a.n);
   }
 
   function unitFigure(area, unit) {
     if (!area) return null;
-    if (!unit) return area.median ? { u: 'All homes', n: area.n, median: area.median, yield: area.yield_pct } : null;
+    if (!unit) return area.median && area.median_kind !== 'unit' ? { u: 'All homes', n: area.n, median: area.median, yield: area.yield_pct } : null;
     return unitOptions(area).find(u => u.u === unit) || null;
   }
 
@@ -95,10 +98,10 @@
     for (const a of areas) {
       if (a === area || a.lat == null) continue;
       const f = unitFigure(a, unit);
-      if (!f || f.n < minContracts || f.median >= here.median * 0.97) continue;
+      if (!f || (f.n ?? a.n) < minContracts || f.median >= here.median * 0.97) continue;
       const d = km(area, a);
       if (d > maxKm) continue;
-      out.push({ area: a, median: f.median, n: f.n, km: Math.round(d * 10) / 10, saving: here.median - f.median });
+      out.push({ area: a, median: f.median, n: f.n ?? a.n, km: Math.round(d * 10) / 10, saving: here.median - f.median });
     }
     out.sort((x, y) => (y.saving / (1 + y.km)) - (x.saving / (1 + x.km)));
     return out.slice(0, k);
@@ -108,7 +111,7 @@
   function rankAmong(areas, area, unit) {
     const here = unitFigure(area, unit);
     if (!here) return null;
-    const meds = areas.map(a => unitFigure(a, unit)).filter(f => f && f.n >= 30).map(f => f.median);
+    const meds = areas.map(a => [a, unitFigure(a, unit)]).filter(([a, f]) => f && (f.n ?? a.n) >= 30).map(([, f]) => f.median);
     if (meds.length < 5) return null;
     const dearer = meds.filter(m => m > here.median).length;
     return { cheaperThanPct: Math.round(dearer / meds.length * 100), of: meds.length };

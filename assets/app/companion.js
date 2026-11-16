@@ -74,10 +74,11 @@
     sel.disabled = !area;
     if (!area) { sel.innerHTML = '<option value="">Pick an area first</option>'; return ''; }
     sel.innerHTML = units.map(u => `<option value="${esc(u.u)}">${esc(RI.unitShort(u.u))}</option>`).join('') +
-      `<option value="">All homes</option>`;
+      (area.median_kind === 'unit' ? '' : `<option value="">All homes</option>`);  // no all-homes median published
     // Keep the visitor's choice when the new area has it; otherwise its most common home,
     // the fairest default for comparing areas.
-    const choice = keep === '' ? '' : units.some(u => u.u === keep) ? keep : (units[0] ? units[0].u : '');
+    const allHomes = area.median_kind !== 'unit';
+    const choice = keep === '' && allHomes ? '' : units.some(u => u.u === keep) ? keep : (units[0] ? units[0].u : '');
     sel.value = choice;
     return choice;
   }
@@ -172,7 +173,9 @@
       <div class="ck-answer">
         <p class="ck-what">${esc(what)} in <b>${esc(area.label)}</b></p>
         <p class="ck-big">${aed(f.median)} <span>a year</span></p>
-        <p class="muted">${isTypical ? 'Typical' : 'Median'} of ${plural(f.n, 'contract')}, ${period}.${savedIdx >= 0 ? ' <span class="tag">Saved</span>' : ''}</p>
+        <p class="muted">${f.n == null
+          ? `Median for this home type, ${area.through ? 'to ' + dateText(area.through) : period}. Source: Continental Club Property (CC BY 4.0), which gives ${plural(area.n, 'contract')} for the whole area but no count per home type.`
+          : `${isTypical ? 'Typical' : 'Median'} of ${plural(f.n, 'contract')}, ${period}.`}${savedIdx >= 0 ? ' <span class="tag">Saved</span>' : ''}</p>
         ${verdictHtml}
         ${finds.length ? `<ul class="ck-finds">${finds.join('')}</ul>` : ''}
         <div class="ck-actions">

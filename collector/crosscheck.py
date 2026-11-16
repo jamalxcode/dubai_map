@@ -32,6 +32,7 @@ def load(key):
 def pairs_dred(rows, areas):
     """dred names communities much like ours ("Jumeirah Village Circle"): match by name, compare
     with our all-homes median."""
+    areas = [a for a in areas if a.get("source") != "ccp"]  # never compare a source with itself
     by_name = {norm(a["label"]): a for a in areas}
     for r in rows:
         a = by_name.get(norm(r["area"]))
@@ -44,6 +45,8 @@ def pairs_ccp(rows, areas):
     area, and compare the same unit size."""
     owners = {}
     for a in areas:
+        if a.get("source") == "ccp":
+            continue
         for d in a.get("dld_areas") or []:
             owners.setdefault(norm(d), []).append(a)
     for r in rows:

@@ -187,6 +187,15 @@ The owner listed 12 sources to pull from and asked for cron-job.org to run the p
 - **overit.ae (12):** no rent figures; content signals allow reference use only.
 - **Three pulls a day:** `17 2,10,18 * * *` UTC (05:17, 13:17, 21:17 Kuwait), started by cron-job.org through `workflow_dispatch` (as for Flattery), GitHub's schedule as the backup. "Once per Dubai day" became "at least 6 hours apart" per source; late-registration slices, back-fill and the daily cross-check still run once a day. Run timestamps stay out of `meta.json`, and the site redeploys only when a file the page loads changed, so quiet runs cost one small commit of source state and no deploy.
 
+## Decision on 2026-11-16 (thirteenth pass): older districts from Continental Club
+
+The owner asked to use continentalclub.ae to add the districts Dubai Data doesn't publish. `collector/ccp_areas.py` adds every official DLD area from its `rents.md` that none of our areas already covers (56 areas, ~227k contracts: Karama, Al Murqabat, Naif, Al Qusais, Mankhool, Al Nahda, Hor Al Anz, Oud Metha…), placed at Dubai Municipality community points (55 of 56; Al Twar Fifth isn't published by DM yet and waits for the weekly OSM job). Dubai Data mode only; per-contract data replaces it.
+
+- **Headline figure:** the source gives a median per unit size and one area total, no all-homes median and no count per unit size. The map label is the 1-bedroom median (studio, then larger, if missing), and the popup and rent check say exactly that. Rejected: averaging the unit medians (overstates districts of mostly small homes; on JVC it gives 91k against an all-homes median of 66k and a 1-bedroom median of 70k).
+- **No invented counts:** unit counts stay empty; the rent check offers no "All homes" for these areas and says the source gives no count per home type; comparisons use the area total as the trust threshold.
+- **Credit:** on the page's source list, in the footer line and in each popup (CC BY 4.0). These areas are never compared with the same source's cross-check.
+- Result on 16 Nov: 158 areas (was 102), ~534k contracts, 3 not yet placed.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P3 item 10 is partly done (tests, phone layout, accessibility checks); the front-end split (`index.html` into script, styles and a testable module, self-hosted libraries, faster label merging) is still open.
@@ -225,6 +234,8 @@ The owner listed 12 sources to pull from and asked for cron-job.org to run the p
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-16: Older districts (56 DLD areas) from Continental Club Property; small merged labels name their busiest area.
 
 - 2026-11-16: Three pulls a day (cron-job.org + GitHub backup, 6-hour gap per source); Dubai Pulse via apis.data.dubai with fallback; cross-checks against dubairealestatedata.com and continentalclub.ae; review of the owner's 12 sources.
 
