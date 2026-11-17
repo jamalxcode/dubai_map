@@ -187,6 +187,10 @@ README rewritten: a short story up front, a tour of what you can do (check a ren
 
 All pulls since the changes ran on time and succeeded (cron-job.org at 05:17, 21:17 Kuwait; GitHub's backup schedule too); data through 16 Nov, 534,331 contracts, 158 areas; both cross-checks healthy (10 of 13 and 85 of 98 agree). Two findings: Al Aryam and Al Waha Villas had dropped off the map again (the live Dubai Data files lacked a column the placing rule needs; fixed, back with Dubai Data's next update), and the freshness check's failure was the expected Al Twar Fifth alert.
 
+### 17 Nov · Two palettes: "use this palette for text, use price key palette for prices, the top price will be the top price pulled"
+
+Brand palette applied to text and surfaces (cream paper, ink type and header, gold accents; dark mode ink paper with gold actions), with taupe and gold deepened where small text needed WCAG AA. The six-step price key now colours prices (label edges, shading, dials, legend), each colour a sixth of the areas shown. Dials and shading are a share of the top price pulled (AED 279k for 1-bedroom today) instead of AED 100k. Share image redrawn.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

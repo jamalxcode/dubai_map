@@ -25,8 +25,8 @@ Then one clear next step: compare, save, set a reminder or see it on the map. On
 
 ### 🗺️ Read the city at a glance
 - Every area shows its rent **as text**: `AED 65k · Jumeirah Village Circle`. No colour legends to decode.
-- A little **dial** fills as the rent approaches AED 100k, and the label's box shades by the same share. AED 52k is half a box.
-- Too crowded to read? Labels **merge** into one blue label with the contract-weighted average. Zoom in and they come apart. Two neighbours that only just collide get their own labels, one moved aside with a thin line to its spot. **Labels never overlap.** Ever. A test checks.
+- Every price wears the **price key**, from deep purple (cheapest) to bright yellow (dearest). A little **dial** and the label's shading show the rent as a share of the **top price on the map**, so you see at a glance how far each area is from the dearest.
+- Too crowded to read? Labels **merge** into one ink-black label with the contract-weighted average. Zoom in and they come apart. Two neighbours that only just collide get their own labels, one moved aside with a thin line to its spot. **Labels never overlap.** Ever. A test checks.
 - The big number up top is the **average rent of whatever is on screen**, rolling like an odometer as you pan.
 - Filter by **property type** (Homes, Flats, Studios), **unit**, rent range, or switch the labels to rent per m² or contract counts. Labour camps and whole-building leases never sneak into home rents.
 
@@ -52,7 +52,7 @@ On a phone the breakdown slides up from the bottom with the photos first, sized 
 **Share** on any result opens your phone's share sheet. Every area has its own link (`/a/dubai-marina/`), and pasted into WhatsApp it previews as *"Dubai Marina rents: AED 90,000 a year for a 1-bedroom apartment"*.
 
 ### ♿ Works for everyone
-Keyboard-friendly (map labels are real buttons), WCAG 2.1 AA contrast in light, dark and Arabic, checked automatically on every change. Dark mode follows your phone. Motion switches off if your device asks.
+Ink, cream and gold for everything you read; the price key only for prices. Keyboard-friendly (map labels are real buttons), WCAG 2.1 AA contrast in light, dark and Arabic, checked automatically on every change. Dark mode follows your phone. Motion switches off if your device asks.
 
 ---
 

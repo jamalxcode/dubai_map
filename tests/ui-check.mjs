@@ -116,7 +116,11 @@ try {
     await page.evaluate(v => map.setView(v.c, v.z, { animate: false }), view0);
     await page.waitForTimeout(300);
     const pies = await page.evaluate(() => document.querySelectorAll('.rl .pie').length);
-    check(pies >= 10, `${name}: rent labels show the AED 100k dial (${pies})`);
+    check(pies >= 10, `${name}: rent labels show the rent dial (${pies})`);
+    const scale = await page.evaluate(() => { const vals = POINTS.map(p => p.v); return { top: LABEL.top, max: Math.max(...vals),
+      bands: new Set(vals.map(v => LABEL.colorOf(v))).size, note: document.querySelector('#legend .note')?.textContent || '' }; });
+    check(scale.top === scale.max && scale.bands === 6 && /279k|\d+k/.test(scale.note),
+      `${name}: the price key tops out at the top price pulled (AED ${Math.round(scale.top / 1000)}k) and uses all six colours`);
     const fills = await page.evaluate(() => [...document.querySelectorAll('.rl.rent')].map(e => parseFloat(e.style.getPropertyValue('--f'))));
     check(fills.length >= 10 && fills.every(f => f > 0 && f <= 100), `${name}: rent labels are shaded in proportion to the rent (${fills.slice(0, 4).join('%, ')}%…)`);
     const z0 = await page.evaluate(() => map.getZoom());

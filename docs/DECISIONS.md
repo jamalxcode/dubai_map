@@ -319,6 +319,16 @@ The owner asked for design ideas, lessons learned, the conversation, business ru
 
 Checking the pulls the morning after: every pull ran on time and succeeded, but Al Aryam and Al Waha Villas were unplaced again. The twenty-sixth pass placed them using Dubai Data's `share_in_top_area`, which the weekly export has but the files rebuilt from Dubai Data's live pages did not. The live fetcher now computes it from each community page's per-area breakdown (top area's transactions ÷ all). It takes effect at Dubai Data's next daily update (the fetcher rewrites its files only when the data date moves). The 90% rule stays strict. The freshness check's one failure overnight was the expected Al Twar Fifth alert.
 
+## Decision on 2026-11-17 (thirtieth pass): the brand palette for text, the price key for prices, scaled to the top price
+
+The owner gave two palettes: a brand palette for text (Ink Black #141414, Cream #F7F2E9, Gold #B98A2F, Taupe #8B8378, Soft White #EDE6D8, with their roles) and a six-step price key (deep purple to yellow, low to high), and asked that the top of the price scale be the top price pulled.
+
+- **Brand palette:** cream paper, ink type, an ink header framed in gold with the highlighted words in gold, ink primary buttons (gold in dark mode, with ink type), links underlined in gold, gold focus rings, the stale-data warning as ink on gold, soft-white panels. Dark mode: ink paper, cream type, gold actions.
+- **Contrast kept at WCAG AA:** brand taupe and gold are too light for small text on cream (3.4:1 and 2.8:1), so secondary text uses a deeper taupe (#655E54, 5.7:1) and gold as text on cream a deeper gold (#7D5C1C, 5.5:1). The brand shades stay for lines, frames, fills and text on ink. Label tints and small-text shades were computed against every price colour (light 25% tint with #4A443B, at least 5.5:1; dark 30% with #E3DBCD, at least 5.2:1; ink groups 35% with cream, at least 5.9:1).
+- **Price key for prices only:** label edges, label shading (a tint of the price colour), dials and the legend ramp, sampled from the owner's image (#3E0751, #424483, #41768C, #51A686, #8FCF63, #F9E855). Each colour holds a sixth of the areas shown, so all six are used; the same key in light and dark. Never used for text.
+- **Top price pulled:** dials and shading are now a rent's share of the dearest area shown (AED 279k for 1-bedroom today), named in the legend, instead of a fixed AED 100k. The rent check uses the dearest area for the home type checked.
+- **Share image** redrawn in the brand palette. The collaborator's map styles (detailed by day, dark at night) are kept.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
@@ -361,6 +371,8 @@ Checking the pulls the morning after: every pull ran on time and succeeded, but 
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-17: Brand palette (ink, cream, gold, taupe, soft white) for text and surfaces; six-step price key for prices; dials and shading scaled to the top price pulled.
 
 - 2026-11-17: Live Dubai Data files now include the top-area share, so Al Aryam and Al Waha Villas stay placed.
 

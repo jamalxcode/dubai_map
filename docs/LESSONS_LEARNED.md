@@ -48,6 +48,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 ## Accessibility
 
+- **Brand colours aren't always text colours.** The brand taupe and gold fail 4.5:1 as small text on cream. *Rule:* compute contrast before applying a palette; keep the brand shade for lines and fills and use a deeper shade of the same hue for text.
+
 - **axe found what we missed:** a label's spoken name not matching its visible text, a table that couldn't be scrolled by keyboard, a low-contrast dark-mode button. *Rule:* axe on every push, in light, dark, Arabic and the narrowest screens.
 - **axe can't measure text on a gradient.** *Rule:* contrast on shaded labels is checked by hand and the colours are recorded.
 

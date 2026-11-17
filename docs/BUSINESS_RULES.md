@@ -68,8 +68,8 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Controls | Labels step out from under the zoom buttons and legend | `labels.js` |
 | Group names | 2–3 areas: the busiest area's name plus "+N"; more: "N areas" | `atlas.js groupName` |
 | Never overlap | No two labels overlap at any zoom (browser-checked at the start, zoom 13 and zoom 14) | `tests/ui-check.mjs` |
-| Rent dial and shading | Fill = rent ÷ AED 100,000, full at 100k or more | `atlas.js PIE_MAX` |
-| Colour bands | Five bands at the 20/40/60/80th percentiles of what is shown | `atlas.js draw` |
+| Rent dial and shading | Fill = rent ÷ the top price pulled (the dearest area for what is shown; the rent check uses the dearest area for the home type checked) | `atlas.js share`, `priceKey` |
+| Colour bands | The six-colour price key (deep purple → yellow, low → high), each colour holding a sixth of the areas shown; prices only | `atlas.js bandsFor` |
 | Base map names | English: `name:en`, else `name_en`, else Latin, else the local name. Arabic: `name:ar`, else the local name. Both: the map style's own (Latin and local script). Starts in the page's language; the visitor's choice is remembered (`mapLang`). Road numbers are left alone | `atlas.js NAME_FIELD` |
 | Rent check moves the map | Wide screens (1,100 px and up): fly to the area at zoom 14 and open its breakdown. Not on narrower screens, not for a resumed check | `companion.js` |
 

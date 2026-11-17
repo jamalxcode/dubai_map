@@ -49,7 +49,8 @@ Standard-library Python only (3.12 in CI). Node 22 for tests.
 - Area breakdowns link out to Google (Maps URLs, no key) and show Wikimedia Commons photos with author and licence. Never copy or embed images from Google Images; tests stub Commons.
 - At 860 px and below an area's breakdown is a bottom sheet: the Leaflet pop-up stays open but hidden (CSS) and its content is moved into `.areaSheet`; code that reads pop-up content must also work there (`.leaflet-popup-content` class is kept on the sheet body). Test narrow screens at 320 and 344 px.
 - Label rules go in `labels.js` (no DOM) with a test in `tests/labels.test.mjs`; no two labels may overlap.
-- Shaded label text was contrast-checked by hand (axe can't measure gradients): keep those colours or recheck 4.5:1.
+- Colours: the brand palette (ink, cream, gold, taupe, soft white) for text and surfaces, the six-step price key (`--b1`…`--b6`) for prices only. Taupe and gold are too light for small text on cream; use `--muted` and `--gold-ink`. Shaded label text was contrast-checked by hand against every price colour (axe can't measure gradients): keep those values or recheck 4.5:1.
+- Dials and label shading are a share of the top price pulled (`LABEL.top`, `priceKey`), never a fixed amount.
 - Keep the GoatCounter snippet in `index.html` (endpoint `https://salacompany.goatcounter.com/count`, shared with Flattery). Count features only, nothing personal.
 - Don't guess coordinates: places come from Dubai Municipality, reviewed aliases or OpenStreetMap results that pass the checks.
 - The DLD service stays off without DLD's written permission. No VPN, no CAPTCHA workarounds, no listing portals.

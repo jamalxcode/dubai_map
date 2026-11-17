@@ -45,6 +45,7 @@
 
   // Text the scripts build (atlas.js, companion.js), keyed by its English.
   const AR = {
+    'Dial: share of the top price, {top}': 'المؤشر: نسبة من أعلى سعر، {top}',
     'Photos taken near this point, from Wikimedia Commons. Tap one to see it large, with its author and licence.': 'صور التُقطت قرب هذه النقطة، من ويكيميديا كومنز. اضغط على صورة لعرضها بحجم كبير مع مصوّرها وترخيصها.',
     'Photo {i} of {n}': 'الصورة {i} من {n}',
     'View on Wikimedia Commons': 'عرضها على ويكيميديا كومنز',
@@ -98,7 +99,6 @@
     'Data runs through': 'البيانات حتى',
     'Delete my saved data': 'احذف بياناتي المحفوظة',
     'Delete your saved areas, recent checks and settings from this browser?': 'هل تريد حذف مناطقك المحفوظة وعمليات التحقق الأخيرة والإعدادات من هذا المتصفح؟',
-    'Dial fills up to AED 100k': 'يمتلئ المؤشر حتى AED 100k',
     'Did you mean:': 'هل تقصد:',
     'Download my data': 'نزّل بياناتي',
     "Downloads a calendar event; your calendar app reminds you. A good time to check the market is before your landlord's renewal notice (usually 90 days ahead).": 'يُنزّل حدثًا في التقويم، ويتولى تطبيق التقويم تذكيرك. أفضل وقت لمراجعة السوق قبل إشعار التجديد من المالك (عادةً قبل 90 يومًا).',

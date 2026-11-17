@@ -10,64 +10,75 @@
 html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}
 .lenis [data-lenis-prevent]{overscroll-behavior:contain}.lenis.lenis-smooth iframe{pointer-events:none}
 
-/* Tokens: Dubai road-sign palette */
+/* Tokens: the brand palette (ink black, cream, gold, taupe, soft white) for text and surfaces, and the
+   price key (six steps, deep purple to yellow) for prices only. Contrast checked to WCAG AA: brand taupe
+   (#8B8378) and gold (#B98A2F) are too light for small text on cream, so text uses a deeper taupe
+   (--muted) and a deeper gold (--gold-ink); gold itself is for accents, fills and text on ink. */
 :root{
-  --sign:#1546A0;        /* road-sign blue: band, dearest price band, primary actions */
-  --sign-ink:#0E3478;
-  --caution:#F2B705;     /* warning-sign yellow */
-  --on-sign:#fff;        /* anything printed on the blue sign */
-  /* Light theme (default): daylight */
-  --bg:#fff;--text:#1F252B;--panel:#E8ECEF;--line:#C9D1D8;--muted:#5B6670;--hover:#F4F7FB;
-  --label:#fff;--legend:rgba(255,255,255,.94);--map-bg:#EEF1F3;--disabled:#98A2AB;--ok:#1C6B3A;--bad:#9A3B00;
-  --tiles:grayscale(.85) contrast(.95) brightness(1.04);
-  --b1:#D6E3F5;--b2:#9DBDE6;--b3:#5E91D3;--b4:#2E68BD;--b5:#1546A0; /* price bands, light to dear */
+  --ink:#141414;--cream:#F7F2E9;--gold:#B98A2F;--taupe:#8B8378;--soft:#EDE6D8;
+  --sign:var(--ink);     /* primary actions and the selected state */
+  --sign-ink:#2E2A25;    /* primary action, hovered */
+  --on-sign:var(--cream);
+  --gold-ink:#7D5C1C;    /* gold as text, underline or focus ring on cream (5.5:1) */
+  --focus:var(--gold-ink);
+  --caution:var(--gold); /* the stale-data warning: ink on gold (5.9:1) */
+  --band:var(--ink);--band-text:var(--cream);--band-muted:#D9D1C3;
+  /* Light theme (default): cream paper */
+  --bg:var(--cream);--text:var(--ink);--panel:var(--soft);--line:#D6CDBD;--muted:#655E54;--hover:#F1EBDF;
+  --label:#FFFDF8;--legend:rgba(255,253,248,.95);--map-bg:var(--soft);--disabled:#A39B8F;--ok:#1C6B3A;--bad:#9A3B00;
+  --small-on-fill:#4A443B; /* small text on a shaded label (5.5:1 or more on every price colour) */
+  --fill-mix:25%;
+  --tiles:grayscale(.85) contrast(.95) brightness(1.04) sepia(.08);
+  --b1:#3E0751;--b2:#424483;--b3:#41768C;--b4:#51A686;--b5:#8FCF63;--b6:#F9E855; /* the price key, low to high */
   color-scheme:light;
   --cond:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
   font:400 16px/1.5 var(--body);color:var(--text);background:var(--bg);
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
-/* Dark theme: Dubai road signs at night. The sign stays blue; the city goes dark. */
+/* Dark theme: ink paper, cream type, gold actions. The price key stays the same. */
 :root[data-theme="dark"]{
-  --bg:#171C21;--text:#E4E9EE;--panel:#222A31;--line:#36414B;--muted:#9AA6B1;--hover:#1F262D;
-  --label:#222A31;--legend:rgba(23,28,33,.92);--map-bg:#1B2127;--disabled:#5D6A75;--ok:#7FD39B;--bad:#FFB27A;
+  --sign:var(--gold);--sign-ink:#CFA14A;--on-sign:var(--ink);--gold-ink:#D2A851;--focus:#D2A851;
+  --band:#1F1C18;--band-muted:#D9D1C3;
+  --bg:var(--ink);--text:var(--cream);--panel:#221F1B;--line:#3A352D;--muted:#ABA294;--hover:#1C1A17;
+  --label:#1F1C18;--legend:rgba(31,28,24,.94);--map-bg:#1A1815;--disabled:#5E584F;--ok:#7FD39B;--bad:#FFB27A;
+  --small-on-fill:#E3DBCD;--fill-mix:30%;
   --tiles:invert(1) hue-rotate(180deg) grayscale(.8) brightness(.82) contrast(.9);
-  --b1:#2E4462;--b2:#3D6599;--b3:#5287D1;--b4:#80AAE6;--b5:#B4CFF5; /* dearer = brighter at night */
   color-scheme:dark;
 }
-:root[data-theme="dark"] a{color:#8EB6F0}
-:root[data-theme="dark"] .rl.grp small,:root[data-theme="dark"] .band p,:root[data-theme="dark"] .big .cap{color:#DCE6F6}
+:root[data-theme="dark"] a{color:var(--text)}
+:root[data-theme="dark"] .band p,:root[data-theme="dark"] .big .cap{color:var(--band-muted)}
 :root[data-theme="dark"] .leaflet-popup-content-wrapper,:root[data-theme="dark"] .leaflet-popup-tip{background:var(--panel);color:var(--text)}
 :root[data-theme="dark"] .leaflet-bar a,:root[data-theme="dark"] .leaflet-control-attribution{background:var(--panel);color:var(--text)!important;border-color:var(--line)}
-:root[data-theme="dark"] .leaflet-control-attribution a{color:#8EB6F0}
-:root[data-theme="dark"] .field input:focus,:root[data-theme="dark"] .field select:focus{box-shadow:0 0 0 3px rgba(128,170,230,.3)}
+:root[data-theme="dark"] .leaflet-control-attribution a{color:var(--gold-ink)}
+:root[data-theme="dark"] .field input:focus,:root[data-theme="dark"] .field select:focus{box-shadow:0 0 0 3px rgba(210,168,81,.35)}
 .topBtns{position:absolute;z-index:2;top:22px;inset-inline-end:26px;display:flex;gap:8px;align-items:center}
 /* Language switch: both languages always visible, the current one filled white like a road-sign panel. */
-.langSw{display:inline-flex;border:2px solid rgba(255,255,255,.85);border-radius:999px;overflow:hidden}
-.langSw button{border:0;background:transparent;color:var(--on-sign);padding:6px 12px;font:600 16px/1 var(--body);cursor:pointer}
-.langSw button:hover{background:rgba(255,255,255,.14)}
-.langSw button[aria-pressed="true"]{background:#fff;color:var(--sign);cursor:default}
-.langSw button:focus-visible{outline:3px solid #F2B705;outline-offset:-3px}
-.theme{display:inline-flex;align-items:center;gap:7px;border:2px solid rgba(255,255,255,.85);background:transparent;color:var(--on-sign);border-radius:999px;padding:6px 12px 6px 9px;font:600 16px/1 var(--cond);cursor:pointer}
-.theme:hover{background:rgba(255,255,255,.14)}
+.langSw{display:inline-flex;border:2px solid rgba(247,242,233,.85);border-radius:999px;overflow:hidden}
+.langSw button{border:0;background:transparent;color:var(--band-text);padding:6px 12px;font:600 16px/1 var(--body);cursor:pointer}
+.langSw button:hover{background:rgba(247,242,233,.14)}
+.langSw button[aria-pressed="true"]{background:var(--cream);color:var(--ink);cursor:default}
+.langSw button:focus-visible{outline:3px solid var(--gold);outline-offset:-3px}
+.theme{display:inline-flex;align-items:center;gap:7px;border:2px solid rgba(247,242,233,.85);background:transparent;color:var(--band-text);border-radius:999px;padding:6px 12px 6px 9px;font:600 16px/1 var(--cond);cursor:pointer}
+.theme:hover{background:rgba(247,242,233,.14)}
 .theme svg{width:16px;height:16px}
 *{box-sizing:border-box}body{margin:0}
-a{color:var(--sign);text-underline-offset:3px;text-decoration-thickness:1px}a:hover{text-decoration-thickness:2px}
+a{color:var(--text);text-decoration-color:var(--gold);text-underline-offset:3px;text-decoration-thickness:1.5px}a:hover{text-decoration-thickness:2.5px}
 button,input,select{font:inherit;color:inherit}
-:focus-visible{outline:3px solid var(--caution);outline-offset:2px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .wrap{max-width:1440px;margin:0 auto;padding:0 32px}
 
 /* Band: the sign */
-.band{background:var(--sign);color:var(--on-sign);position:relative;overflow:hidden}
-.band::after{content:"";position:absolute;inset:10px;border:2px solid rgba(255,255,255,.85);border-radius:10px;pointer-events:none}
+.band{background:var(--band);color:var(--band-text);position:relative;overflow:hidden}
+.band::after{content:"";position:absolute;inset:10px;border:2px solid var(--gold);border-radius:10px;pointer-events:none}
 .band .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:end;padding-top:40px;padding-bottom:34px}
 .band h1{font:700 clamp(44px,6.4vw,92px)/.9 var(--cond);letter-spacing:-.01em;margin:0}
 .band h1 .ch{display:inline-block}
-.band p{margin:14px 0 0;max-width:46ch;font-size:17px;color:#DCE6F6}
-.band p b{color:var(--on-sign);font-weight:600}
+.band p{margin:14px 0 0;max-width:46ch;font-size:17px;color:var(--band-muted)}
+.band p b{color:var(--gold);font-weight:600}
 .big{text-align:end}
 .big .num{font:700 clamp(52px,7.2vw,104px)/1 var(--cond);font-variant-numeric:tabular-nums;white-space:nowrap;display:inline-flex;align-items:flex-end}
-.big .cap{display:block;margin-top:8px;font-size:15px;color:#DCE6F6}
+.big .cap{display:block;margin-top:8px;font-size:15px;color:var(--band-muted)}
 /* Counter (React Bits port): each digit is a rolling column */
 .odo{display:inline-flex;align-items:flex-start;overflow:hidden;height:1em;line-height:1}
 .odo .col{display:block;height:1em;overflow:hidden}
@@ -86,16 +97,16 @@ button,input,select{font:inherit;color:inherit}
 .seg .plate{position:absolute;z-index:0;top:4px;bottom:4px;left:0;width:0;border-radius:7px;background:var(--sign);transition:none}
 .field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;color:var(--muted)}
 .field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;font-size:15px;min-width:0;color:var(--text)}
-.field input:focus,.field select:focus{border-color:var(--sign);outline:none;box-shadow:0 0 0 3px rgba(21,70,160,.18)}
+.field input:focus,.field select:focus{border-color:var(--gold-ink);outline:none;box-shadow:0 0 0 3px rgba(185,138,47,.35)}
 .controls .seg{flex:0 0 auto}
 .sheet-fields{display:contents}
 @media (min-width:861px){.sheet{display:grid!important;grid-template-columns:minmax(200px,1.6fr) minmax(140px,1fr) minmax(160px,1fr) minmax(100px,.7fr) minmax(100px,.7fr);gap:14px;flex:1 1 100%}}
 .typesNote{margin:0;font-size:13px;color:var(--muted);align-self:center;max-width:52ch}
 
 /* Warning sign */
-.stale{display:none;margin:0 0 16px;background:var(--caution);color:#1d1600;border-radius:10px;padding:14px 16px;padding-inline-start:56px;position:relative;max-width:900px;box-shadow:inset 0 0 0 2px #1d1600,inset 0 0 0 5px var(--caution)}
+.stale{display:none;margin:0 0 16px;background:var(--caution);color:var(--ink);border-radius:10px;padding:14px 16px;padding-inline-start:56px;position:relative;max-width:900px;box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 5px var(--caution)}
 .stale.on{display:block}
-.stale::before{content:"";position:absolute;inset-inline-start:16px;top:14px;width:26px;height:26px;background:#1d1600;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.stale::before{content:"";position:absolute;inset-inline-start:16px;top:14px;width:26px;height:26px;background:var(--ink);clip-path:polygon(50% 0,100% 100%,0 100%)}
 .stale::after{content:"!";position:absolute;inset-inline-start:16px;top:20px;width:26px;text-align:center;color:var(--caution);font:700 16px/1 var(--cond)}
 .stale b{font-weight:600}
 .stale .x{position:absolute;inset-inline-end:10px;top:8px;border:0;background:none;font-size:22px;line-height:1;cursor:pointer;padding:4px 6px}
@@ -139,19 +150,18 @@ button,input,select{font:inherit;color:inherit}
 .rl-wrap{background:none;border:0}
 .leader{stroke:var(--text);stroke-opacity:.55;fill:var(--label);fill-opacity:1}
 .rl{position:absolute;transform:translate(-50%,-50%);background:var(--label);color:var(--text);border-radius:6px;padding:3px 9px 4px 8px;white-space:nowrap;cursor:pointer;
-  box-shadow:0 0 0 1px rgba(31,37,43,.18),0 2px 6px rgba(31,37,43,.18);border-left:5px solid var(--c,var(--b3));text-align:start}
+  box-shadow:0 0 0 1px rgba(20,20,20,.18),0 2px 6px rgba(20,20,20,.18);border-left:5px solid var(--c,var(--b3));text-align:start}
 .rl b{display:block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums}
 .rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis}
-.rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--sign),0 4px 10px rgba(31,37,43,.25)}
-.rl.rent{background:linear-gradient(90deg,var(--fillc,#D3DEF0) var(--f),var(--label) var(--f))}
-:root[data-theme="dark"] .rl.rent{--fillc:#34475E}
-/* Small area names on shaded labels: stronger colours keep them above 4.5:1 on the fill. */
-.rl.rent small{color:#46515B}
-.rl.grp.rent small{color:#fff}
-:root[data-theme="dark"] .rl.rent:not(.grp) small{color:#C5CED8}
-.rl.grp.rent{background:linear-gradient(90deg,#0E3478 var(--f),#3D6FBF var(--f))}
-.rl.grp{background:var(--sign);color:var(--on-sign);border-left-color:var(--c,var(--b3));box-shadow:0 0 0 2px var(--bg),0 2px 8px rgba(31,37,43,.3)}
-.rl.grp small{color:#DCE6F6}
+.rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--gold),0 4px 10px rgba(20,20,20,.25)}
+/* The shaded part of a rent label is a tint of its price-key colour (25% in light, 30% in dark). */
+.rl.rent{background:linear-gradient(90deg,color-mix(in srgb,var(--c) var(--fill-mix),var(--label)) var(--f),var(--label) var(--f))}
+/* Small area names on shaded labels: colours checked by hand to stay above 4.5:1 on every tint. */
+.rl.rent small{color:var(--small-on-fill)}
+/* Group labels: ink, cream type, a gold edge; shaded with a 35% tint of their price colour. */
+.rl.grp{background:var(--ink);color:var(--cream);border-left-color:var(--c,var(--b3));box-shadow:0 0 0 1.5px var(--gold),0 2px 8px rgba(20,20,20,.3)}
+.rl.grp.rent{background:linear-gradient(90deg,color-mix(in srgb,var(--c) 35%,var(--ink)) var(--f),var(--ink) var(--f))}
+.rl.grp small,.rl.grp.rent small{color:var(--cream)}
 .rl .avg{font:600 13px/1 var(--cond);margin-inline-start:3px;opacity:.85}
 
 /* Facts under the map */
@@ -217,13 +227,13 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .facts dd{font-size:26px}
   .about .wrap{grid-template-columns:1fr;gap:28px}
   .tableHead{margin-top:32px}
-  .fab{display:flex;position:fixed;z-index:1001;inset-inline-end:16px;bottom:max(16px,env(safe-area-inset-bottom));align-items:center;gap:8px;border:0;border-radius:999px;background:var(--sign);color:var(--on-sign);padding:14px 20px;font:600 19px/1 var(--cond);box-shadow:0 0 0 2px var(--bg),0 8px 22px rgba(14,52,120,.4);cursor:pointer}
-  .sheet{display:block;position:fixed;z-index:1003;left:0;right:0;bottom:0;background:var(--bg);border-radius:16px 16px 0 0;padding:0 16px max(20px,env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(31,37,43,.3);transform:translateY(105%);visibility:hidden;max-height:86svh;overflow:auto}
+  .fab{display:flex;position:fixed;z-index:1001;inset-inline-end:16px;bottom:max(16px,env(safe-area-inset-bottom));align-items:center;gap:8px;border:0;border-radius:999px;background:var(--sign);color:var(--on-sign);padding:14px 20px;font:600 19px/1 var(--cond);box-shadow:0 0 0 2px var(--gold),0 8px 22px rgba(20,20,20,.35);cursor:pointer}
+  .sheet{display:block;position:fixed;z-index:1003;left:0;right:0;bottom:0;background:var(--bg);border-radius:16px 16px 0 0;padding:0 16px max(20px,env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(20,20,20,.3);transform:translateY(105%);visibility:hidden;max-height:86svh;overflow:auto}
   .sheet.open{visibility:visible;transform:none}
   .sheet .field{display:flex;margin-bottom:14px}
   .sheetHead{display:flex;justify-content:space-between;align-items:center;padding:16px 0 12px;position:sticky;top:0;background:var(--bg)}
   .sheetHead b{font:700 26px/1 var(--cond)}
-  .scrim{display:block;position:fixed;inset:0;z-index:1002;background:rgba(31,37,43,.45);opacity:0;pointer-events:none}
+  .scrim{display:block;position:fixed;inset:0;z-index:1002;background:rgba(20,20,20,.45);opacity:0;pointer-events:none}
   .scrim.on{pointer-events:auto}
 }
 /* Layout. Narrower than 1100px: one column, in this order (the map right after the filters).
@@ -296,11 +306,11 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 /* Zoom controls: larger targets, plus "All Dubai" to get back to the whole city. */
 .leaflet-control-zoom a,.leaflet-bar a.fit{width:40px!important;height:40px!important;line-height:40px!important;font-size:22px!important}
 .leaflet-bar a.fit{font:600 13px/40px var(--body)!important;width:auto!important;padding:0 10px;white-space:nowrap}
-/* Rent dial: fills as the rent approaches AED 100k (full at 100k or more), for a quick read at a glance. */
+/* Rent dial: the rent's share of the top price pulled, in its price-key colour, for a quick read at a glance. */
 .pie{display:inline-block;width:.78em;height:.78em;border-radius:50%;margin-inline-end:.32em;vertical-align:-.06em;flex:none;
-  background:conic-gradient(var(--pie,var(--sign)) var(--p,0%),var(--pie-track,rgba(31,37,43,.16)) 0)}
-.rl.grp .pie,.band .pie{--pie:#fff;--pie-track:rgba(255,255,255,.32)}
-:root[data-theme="dark"] .rl:not(.grp) .pie{--pie:#80AAE6;--pie-track:rgba(255,255,255,.18)}
+  background:conic-gradient(var(--c,var(--b3)) var(--p,0%),var(--pie-track,rgba(20,20,20,.16)) 0);box-shadow:inset 0 0 0 1px rgba(20,20,20,.12)}
+.rl.grp .pie,.band .pie{--pie-track:rgba(247,242,233,.32)}
+:root[data-theme="dark"] .pie{--pie-track:rgba(247,242,233,.2)}
 .pie[hidden]{display:none}
 .big .pie{width:.62em;height:.62em;align-self:center;margin-inline-end:.18em}
 .legend .note .pie{font-size:13px}
@@ -333,8 +343,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 .areaSheet .body td,.areaSheet .body th{font-size:13.5px;padding:4px 0;padding-inline-end:10px}
 .areaSheet .see{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
 .areaSheet .see .sep{display:none}
-.areaSheet .see a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--line);border-radius:999px;font:600 14px/1 var(--body);text-decoration:none;color:var(--sign)}
-:root[data-theme="dark"] .areaSheet .see a{color:#8EB6F0}
+.areaSheet .see a{display:inline-flex;align-items:center;min-height:40px;padding:0 14px;border:1px solid var(--gold);border-radius:999px;font:600 14px/1 var(--body);text-decoration:none;color:var(--text)}
 .areaSheet .pics{margin-top:6px}
 .areaSheet .pics .strip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin:6px -16px 4px;padding:0 16px;scroll-padding-inline:16px;scrollbar-width:none}
 .areaSheet .pics .strip::-webkit-scrollbar{display:none}
@@ -363,18 +372,21 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .areaSheet .pics .strip img{height:150px}
 }
 /* Photo viewer (all screens). */
-.viewer{position:fixed;inset:0;z-index:1300;background:rgba(10,12,14,.94);display:flex;align-items:center;justify-content:center;padding:56px 12px calc(12px + env(safe-area-inset-bottom))}
+.viewer{position:fixed;inset:0;z-index:1300;background:rgba(20,20,20,.95);display:flex;align-items:center;justify-content:center;padding:56px 12px calc(12px + env(safe-area-inset-bottom))}
 .viewer[hidden]{display:none}
 .viewer figure{margin:0;max-width:min(100%,1000px);display:flex;flex-direction:column;align-items:center;gap:10px}
 .viewer img{max-width:100%;max-height:calc(100svh - 190px);max-height:calc(100vh - 190px);object-fit:contain;border-radius:6px;background:#222}
-.viewer figcaption{color:#E6EAEE;font-size:13.5px;line-height:1.45;text-align:center;max-width:640px}
-.viewer figcaption a{color:#9CC3FF}
-.viewer .vCount{display:block;color:#AEB7C0;font-size:12px}
+.viewer figcaption{color:var(--cream);font-size:13.5px;line-height:1.45;text-align:center;max-width:640px}
+.viewer figcaption a{color:#E2C27A}
+.viewer .vCount{display:block;color:#ABA294;font-size:12px}
 .viewer button{position:absolute;border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:50%;width:44px;height:44px;font-size:28px;line-height:1;cursor:pointer}
-.viewer button:focus-visible{outline:2px solid #9CC3FF;outline-offset:2px}
+.viewer button:focus-visible{outline:2px solid #E2C27A;outline-offset:2px}
 .viewer .vX{top:10px;inset-inline-end:10px}
 .viewer .vPrev{inset-inline-start:8px;top:50%;transform:translateY(-50%)}
 .viewer .vNext{inset-inline-end:8px;top:50%;transform:translateY(-50%)}
 .viewer button[hidden]{display:none}
 html.viewerOpen,html.viewerOpen body{overflow:hidden}
 @media (prefers-reduced-motion:reduce){.areaSheet{animation:none}}
+/* Leaflet's own surfaces in the brand's warm white. */
+.leaflet-popup-content-wrapper,.leaflet-popup-tip,.leaflet-bar a{background:var(--label)}
+.leaflet-bar a:hover{background:var(--hover)}

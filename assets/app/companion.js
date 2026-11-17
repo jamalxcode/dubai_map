@@ -187,7 +187,7 @@
     out.innerHTML = `
       <div class="ck-answer">
         <p class="ck-what">${T('{what} in {area}', { what: esc(what), area: `<b>${esc(area.label)}</b>` })}</p>
-        <p class="ck-big"><i class="pie" aria-hidden="true" style="--p:${Math.min(100, Math.round(f.median / 1000))}%"></i><bdi>${aed(f.median)}</bdi> <span>${T('a year')}</span></p>
+        <p class="ck-big">${(k => `<i class="pie" aria-hidden="true" style="--p:${k.share(f.median)}%;--c:${k.color(f.median)}"></i>`)(window.priceKey(unit))}<bdi>${aed(f.median)}</bdi> <span>${T('a year')}</span></p>
         <p class="muted">${f.n == null
           ? T('Median for this home type, {period}. Source: Continental Club Property (CC BY 4.0), which gives {n} for the whole area but no count per home type.', { period: area.through ? T('to {d}', { d: dateText(area.through) }) : period, n: plural(area.n, 'contract') })
           : T(isTypical ? 'Typical of {n}, {period}.' : 'Median of {n}, {period}.', { n: plural(f.n, 'contract'), period })}${savedIdx >= 0 ? ` <span class="tag">${T('Saved')}</span>` : ''}</p>

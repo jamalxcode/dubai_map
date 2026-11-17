@@ -4,7 +4,7 @@ const fmt=n=>n==null||!isFinite(n)?'—':Number(n).toLocaleString('en-AE',{maxim
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const kuwait=iso=>iso?T('{t} Kuwait time',{t:new Date(iso).toLocaleString(T.locale,{timeZone:'Asia/Kuwait',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}):'—';
 const median=xs=>{if(!xs.length)return null;const s=[...xs].sort((a,b)=>a-b),i=s.length>>1;return s.length%2?s[i]:(s[i-1]+s[i])/2};
-const BANDS=['var(--b1)','var(--b2)','var(--b3)','var(--b4)','var(--b5)'];
+const BANDS=['var(--b1)','var(--b2)','var(--b3)','var(--b4)','var(--b5)','var(--b6)']; // the price key, low to high
 const G=window.gsap,FX=!!G&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
 const TYPES=[['homes',T('Homes')],['flat',T('Flats')],['studio',T('Studios')],['villa',T('Villas')],['commercial',T('Commercial')],['all',T('Everything')]];
 const KIND_IN={homes:['flat','studio','villa'],flat:['flat'],studio:['studio'],villa:['villa'],commercial:['commercial'],all:null};
@@ -42,9 +42,23 @@ function odometer(el,value,prefix){
 const map=L.map('map',{zoomControl:true,attributionControl:true}).setView([25.13,55.27],11);
 // A small merged label (2-3 areas) names its busiest area, e.g. "International City Phase 1 +1", so nearby
 // places stay findable by name when zoomed in; bigger groups cover a region and just count their areas.
-// Rent dial: share of AED 100k (full at 100k or more). Only for rents, not counts or yields.
-const PIE_MAX=100000;
-const pie=(v,metric)=>metric==='median'&&v>0?'<i class="pie" aria-hidden="true" style="--p:'+Math.min(100,Math.round(v/PIE_MAX*100))+'%"></i>':'';
+// Rent dial: share of the top price pulled (the dearest area for what is shown), in its price-key colour.
+// Only for rents, not counts or yields. LABEL.top is set by draw().
+const share=v=>Math.min(100,Math.max(0,Math.round(v/(LABEL.top||v||1)*100)));
+const pie=(v,metric)=>metric==='median'&&v>0?'<i class="pie" aria-hidden="true" style="--p:'+share(v)+'%"></i>':'';
+// Price key bands: six colours, each holding a sixth of the areas shown (so every colour is used), low to high.
+function bandsFor(vals){
+  const cuts=[1,2,3,4,5].map(k=>vals[Math.floor(k/6*(vals.length-1))]).filter(v=>v!=null);
+  return v=>BANDS[Math.min(5,cuts.filter(c=>v>c).length)];
+}
+// The same scale for any home type, for the rent check (assets/app/companion.js): top price and colour.
+const SCALES={};
+window.priceKey=unit=>{
+  const k=TYPE+'|'+(unit||'');if(SCALES[k])return SCALES[k];
+  const vals=(CACHE.homes||AREAS).map(a=>areaValue(a,'median',unit||'')).filter(v=>v>0).sort((a,b)=>a-b);
+  const colorOf=bandsFor(vals),top=vals.at(-1)||1;
+  return SCALES[k]={top,color:colorOf,share:v=>Math.min(100,Math.round(v/top*100))};
+};
 // "All Dubai": back to the whole city (placed areas, leaving out far-off Hatta so the city isn't a dot).
 function fitDubai(animate){const pts=(CACHE.homes||AREAS).filter(x=>x.lat!=null&&x.lng<55.7).map(x=>[x.lat,x.lng]);
   if(pts.length)map.fitBounds(pts,{padding:[30,30],animate:!!animate})}
@@ -139,8 +153,8 @@ function renderLabels(){
   for(const c of cl){const g=c.members,moved=c.lx!==c.x||c.ly!==c.y,pos=moved?map.layerPointToLatLng([c.lx,c.ly]):L.latLng(c.lat,c.lng);
     if(moved){L.polyline([[c.lat,c.lng],pos],{className:'leader',weight:1.5,interactive:false}).addTo(layer);
       L.circleMarker([c.lat,c.lng],{className:'leader dot',radius:3,weight:1.5,interactive:false}).addTo(layer)}
-    // Rent labels fill from the left in proportion to the rent (AED 100k = full), a second cue next to the dial.
-    const fill=metric==='median'&&c.val>0?';--f:'+Math.min(100,Math.round(c.val/PIE_MAX*100))+'%':'';
+    // Rent labels fill from the start in proportion to the rent (the top price pulled = full), a second cue next to the dial.
+    const fill=metric==='median'&&c.val>0?';--f:'+share(c.val)+'%':'';
     const html='<div class="rl'+(c.single?'':' grp')+(fill?' rent':'')+'" style="--c:'+colorOf(c.val)+fill+'" tabindex="0"><b>'+pie(c.val,metric)+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">'+T('avg')+'</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
     const m=L.marker(pos,{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
@@ -170,7 +184,7 @@ function viewStat(){
     const perUnitOnly=!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'&&a.lat!=null&&b.contains([a.lat,a.lng]));
     $('medLabel').textContent=perUnitOnly?T('Areas here have figures per unit only: pick a unit (e.g. 1 bed) to see them.'):T('Nothing to show here for {type}. Zoom out to see more.',{type:TYPENAME().toLowerCase()});return}
   const v=metric==='n'?N:vis.reduce((s,p)=>s+p.v*p.n,0)/N;
-  const mp=$('medPie');mp.hidden=metric!=='median';mp.style.setProperty('--p',Math.min(100,Math.round(v/PIE_MAX*100))+'%');
+  const mp=$('medPie');mp.hidden=metric!=='median';mp.style.setProperty('--p',share(v)+'%');mp.style.setProperty('--c',LABEL.colorOf?LABEL.colorOf(v):'var(--b3)');
   if(metric==='yield'){$('med').textContent=v.toFixed(1)+'%';$('med')._sig=null;return}
   odometer($('med'),metric==='n'?v:Math.round(v/(metric==='median_sqm'?1:100))*(metric==='median_sqm'?1:100),metric==='n'?'':'AED ');
 }
@@ -261,7 +275,7 @@ function spark(monthly){
   const pts=(monthly||[]).filter(m=>m.median);if(pts.length<3)return '';
   const vs=pts.map(m=>m.median),lo=Math.min(...vs),hi=Math.max(...vs),w=230,h=40;
   const d=pts.map((m,i)=>(i?'L':'M')+(i*w/(pts.length-1)).toFixed(1)+','+(h-4-(hi===lo?.5:(m.median-lo)/(hi-lo))*(h-8)).toFixed(1)).join('');
-  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+T('Monthly median rent')+'"><path d="'+d+'" fill="none" stroke="#1546A0" stroke-width="2"/></svg><br><small>'+safe(T('Monthly median, {a} to {b}',{a:pts[0].m,b:pts.at(-1).m}))+'</small><br>';
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+T('Monthly median rent')+'"><path d="'+d+'" fill="none" stroke="#B98A2F" stroke-width="2"/></svg><br><small>'+safe(T('Monthly median, {a} to {b}',{a:pts[0].m,b:pts.at(-1).m}))+'</small><br>';
 }
 function popup(a){
   const types=Object.entries(a.reg_types||{}).map(([k,v])=>safe(k)+' '+fmt(v)).join(', ');
@@ -411,13 +425,12 @@ function draw(){
     // Weight for averages: the unit's contracts; where a source gives none per unit, a rough share of the area total.
     const n=bu?(bu.n!=null?bu.n:Math.round(a.n/Math.max(1,a.by_unit.length)))||0:a.n;POINTS.push({a,v,n})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
-  const cuts=[...new Set([.2,.4,.6,.8].map(p=>vals[Math.floor(p*(vals.length-1))]))].filter(v=>v!=null);
-  const colorOf=v=>BANDS[Math.min(4,Math.round(cuts.filter(c=>v>c).length*4/Math.max(1,cuts.length)))];
-  LABEL={metric,colorOf};renderLabels();viewStat();
+  const colorOf=bandsFor(vals);
+  LABEL={metric,colorOf,top:vals.at(-1)||1};renderLabels();viewStat();
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
   $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?f(vals[0]):'')+'</span><span>'+(vals.length?f(vals.at(-1)):'')+'</span></div>';
-  if(metric==='median')$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%"></i>'+T('Dial fills up to AED 100k')+'</div>');
+  if(metric==='median')$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%;--c:var(--b4)"></i>'+T('Dial: share of the top price, {top}',{top:'AED '+compact(LABEL.top)})+'</div>');
   if(!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts (no all-homes median): pick a unit to see them')+'</div>');
   const inArea=AREAS.filter(match);
   odometer($('n12'),inArea.reduce((s,a)=>s+a.n,0));odometer($('mapped'),shown.reduce((s,a)=>s+a.n,0));
