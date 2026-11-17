@@ -219,6 +219,10 @@ Renamed everywhere visible (English and Arabic: أطلس دبي العقاري),
 
 Nine items, all done and merged in three batches (decisions, thirty-seventh pass): thin figures marked; rent-only areas explained in the sale and yield views; the table and rent check follow the view; a 24-month sale price trend in each breakdown; unplaced areas no longer email every 6 hours; pale blues visible; MapLibre on demand; area pages as real content with a sitemap; official community outlines shaded under the labels.
 
+### 17 Nov · "the info card gets obstructed sometimes" · "in the rents by area there's a lot of middle space and the right column gets truncated" · "put a small x and y scale on the trend line"
+
+All three done in one pass (decisions, thirty-eighth pass): the breakdown pans clear of the buttons and legend; the DLD area moved under the area name so the table fits; trend lines show lowest/highest value and first/middle/last month.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

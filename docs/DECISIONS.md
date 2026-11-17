@@ -413,7 +413,15 @@ Data rebuilt after merging (daily pull for the trend file, placement job for the
 - Leaflet: https://leafletjs.com/
 - OSM copyright: https://www.openstreetmap.org/copyright
 
+## Decision on 2026-11-17 (thirty-eighth pass): breakdown clear of the buttons, a tighter table, scaled trends
+
+1. **Breakdown hidden under buttons:** Leaflet draws its controls above pop-ups, and its automatic pan only kept 5 px from the map's edge, so a breakdown opened near the top could sit under the language and view buttons. The pan margins now come from the measured controls and legend; the map pans the breakdown into the clear space. A browser check opens one near the buttons and counts overlaps (0).
+2. **Rents table:** a whole column for the DLD area plus no wrapping left a wide gap in the middle and cut off the figures. The DLD area is now a small second line under the area name, and names, unit and headers wrap.
+3. **Trend scales:** both trend lines show their lowest and highest value and the first, middle and last month.
+
 ## Change log
+
+- 2026-11-17: Breakdowns no longer open under the map's buttons; the rents table fits; trend lines have scales.
 
 - 2026-11-17: Fourth critique: thin figures marked, view-aware table, sale trend, community outlines, real area pages with a sitemap, quieter alerts, visible pale blues, MapLibre on demand.
 

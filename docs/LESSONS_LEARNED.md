@@ -51,6 +51,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Placeholders get cut off on narrow fields.** *Rule:* keep examples short; check at the narrowest width.
 - **Never show made-up figures**, even in a share image. *Rule:* the share image shows features, not prices.
 - **Don't copy from Google Images.** The photos belong to their photographers and Google's terms forbid it. *Rule:* link out to Google; show only freely licensed photos, credited.
+- **Leaflet draws controls above pop-ups, and its pan margin is 5 px.** A pop-up opened near the buttons hid under them. *Rule:* set the pop-up's pan padding from the measured controls and legend, and test a pop-up opened beside them.
+- **A table column for a secondary label costs the figures.** The DLD area column plus `nowrap` pushed the numbers out of view in the narrow side column. *Rule:* secondary labels go as a small second line; only numbers stay unwrapped.
 
 ## Accessibility
 

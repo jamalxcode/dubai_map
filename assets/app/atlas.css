@@ -188,6 +188,13 @@ table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:ta
 th,td{padding:10px 14px;text-align:start;white-space:nowrap;border-bottom:1px solid var(--panel)}
 th{position:sticky;top:0;background:var(--panel);font-weight:600;font-size:13px;color:var(--text);z-index:1}
 td.r,th.r{text-align:end}
+/* The area name wraps, with its DLD area as a small second line, so the figures stay in view; numbers never wrap. */
+td.w{white-space:normal;min-width:11ch;max-width:24ch}
+th{white-space:normal;vertical-align:bottom;min-width:7ch}
+td.u{white-space:normal;min-width:10ch}
+.tableWrap th,.tableWrap td{padding-inline:8px}
+td.w small,th small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:2px}
+.chart{display:block;overflow:visible}.chart text{font-size:10px;fill:var(--muted);font-variant-numeric:tabular-nums}
 tbody tr:hover td{background:var(--hover)}
 .muted{color:var(--muted)}
 

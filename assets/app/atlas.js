@@ -147,7 +147,7 @@ async function vectorBase(){
     m.on('error',e=>{if(!gl&&!e.sourceId){clearTimeout(fail);map.removeLayer(layer);rasterBase()}}); // the style itself, not one tile
     m.once('load',()=>{clearTimeout(fail);gl=m;gl._styleUrl=styleFor();
       readNames();tuneDark(m);map.getContainer().classList.add('glBase');
-      langCtl.getContainer().hidden=false;applyMapLang();
+      langCtl.getContainer().hidden=false;applyMapLang();popupMargins();
       if(LABEL.metric)renderLabels()}); // rent labels step out from under the button that just appeared
   }catch(e){rasterBase()}
 }
@@ -308,20 +308,30 @@ function areaValue(a,metric,unit){
   if(metric==='sale')return u?u.sale:a.sale_median;
   return u?u.median:a.median;
 }
+// A small line chart with its scale: lowest and highest value on the left, first, middle and last month below.
+function chart(pts,{label,stroke,h=40}){
+  const w=250,gl=40,gb=14,pw=w-gl-4,ph=h-6,vs=pts.map(p=>p.v),lo=Math.min(...vs),hi=Math.max(...vs);
+  const y=v=>(3+(hi===lo?.5:1-(v-lo)/(hi-lo))*ph).toFixed(1),x=i=>(gl+i*pw/(pts.length-1)).toFixed(1);
+  const num=v=>v>=10000?fmt(Math.round(v/1000))+'k':fmt(Math.round(v));
+  const d=pts.map((p,i)=>(i?'L':'M')+x(i)+','+y(p.v)).join('');
+  const mid=pts.length>>1,ticks=[[0,'start'],[mid,'middle'],[pts.length-1,'end']];
+  return '<svg class="chart" direction="ltr" width="'+w+'" height="'+(h+gb)+'" viewBox="0 0 '+w+' '+(h+gb)+'" role="img" aria-label="'+safe(label)+'">'+
+    '<path d="M'+gl+',2V'+(h-1)+'H'+(w-2)+'" fill="none" stroke="var(--line)"/>'+
+    (hi!==lo?'<text x="'+(gl-4)+'" y="'+(+y(hi)+3)+'" text-anchor="end">'+num(hi)+'</text>':'')+
+    '<text x="'+(gl-4)+'" y="'+(+y(lo)+3)+'" text-anchor="end">'+num(lo)+'</text>'+
+    ticks.map(([i,a])=>'<text x="'+x(i)+'" y="'+(h+gb-2)+'" text-anchor="'+a+'">'+safe(pts[i].m)+'</text>').join('')+
+    '<path d="'+d+'" fill="none" stroke="'+stroke+'" stroke-width="2"/></svg>';
+}
 function spark(monthly){
-  const pts=(monthly||[]).filter(m=>m.median);if(pts.length<3)return '';
-  const vs=pts.map(m=>m.median),lo=Math.min(...vs),hi=Math.max(...vs),w=230,h=40;
-  const d=pts.map((m,i)=>(i?'L':'M')+(i*w/(pts.length-1)).toFixed(1)+','+(h-4-(hi===lo?.5:(m.median-lo)/(hi-lo))*(h-8)).toFixed(1)).join('');
-  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+T('Monthly median rent')+'"><path d="'+d+'" fill="none" stroke="#C9A227" stroke-width="2"/></svg><br><small>'+safe(T('Monthly median, {a} to {b}',{a:pts[0].m,b:pts.at(-1).m}))+'</small><br>';
+  const pts=(monthly||[]).filter(m=>m.median).map(m=>({m:m.m,v:m.median}));if(pts.length<3)return '';
+  return chart(pts,{label:T('Monthly median rent'),stroke:'#C9A227'})+'<br><small>'+safe(T('Monthly median, {a} to {b}',{a:pts[0].m,b:pts.at(-1).m}))+'</small><br>';
 }
 // Sale price per sq ft, month by month (Dubai Data, months with at least 5 sales), and the change on a year ago.
 function saleTrend(a){
   const t=a.sale_trend||[];if(t.length<6)return '';
-  const vs=t.map(x=>x.psf),lo=Math.min(...vs),hi=Math.max(...vs),w=230,h=36;
-  const d=t.map((x,i)=>(i?'L':'M')+(i*w/(t.length-1)).toFixed(1)+','+(h-3-(hi===lo?.5:(x.psf-lo)/(hi-lo))*(h-6)).toFixed(1)).join('');
   const yoy=a.sale_yoy;
   return '<div class="trend"><small>'+T('Sale price per sq ft, {a} to {b}',{a:t[0].m,b:t.at(-1).m})+(yoy!=null?' · <b class="'+(yoy>0?'up':yoy<0?'down':'')+'">'+T('{sign}{v}% on a year ago',{sign:yoy>0?'+':'',v:yoy})+'</b>':'')+'</small>'+
-    '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+safe(T('Sale price per sq ft, monthly'))+'"><path d="'+d+'" fill="none" stroke="var(--gold-ink)" stroke-width="2"/></svg></div>';
+    chart(t.map(x=>({m:x.m,v:x.psf})),{label:T('Sale price per sq ft, monthly'),stroke:'var(--gold-ink)'})+'</div>';
 }
 function popup(a){
   const types=Object.entries(a.reg_types||{}).map(([k,v])=>safe(k)+' '+fmt(v)).join(', ');
@@ -381,6 +391,19 @@ async function loadPhotos(e){
     '<small>'+T('Photos taken near this point, from Wikimedia Commons. Tap one to see it large, with its author and licence.')+'</small>';
 }
 map.on('popupopen',loadPhotos);
+// Pop-ups keep clear of the map's buttons and legend (Leaflet draws controls above pop-ups): the map pans so the
+// whole card sits inside these margins, measured from the controls as they are now. Pop-ups read their options
+// from this shared object, so updating it covers every pop-up, bound or opened later.
+function popupMargins(){
+  const box=map.getContainer().getBoundingClientRect(),rects=sel=>[...map.getContainer().parentNode.querySelectorAll(sel)]
+    .filter(e=>!e.hidden&&e.offsetParent).map(e=>e.getBoundingClientRect()).filter(r=>r.width);
+  const left=Math.max(0,...rects('.leaflet-top.leaflet-left .leaflet-control').map(r=>r.right-box.left));
+  const top=Math.max(0,...rects('.leaflet-top.leaflet-right .leaflet-control').map(r=>r.bottom-box.top));
+  const bottom=Math.max(0,...rects('.legend').map(r=>box.bottom-r.top));
+  const o=L.Popup.prototype.options;
+  o.autoPanPaddingTopLeft=L.point(left+10,top+10);o.autoPanPaddingBottomRight=L.point(10,Math.min(bottom,box.height/3)+10);
+}
+map.whenReady(()=>setTimeout(popupMargins,0));addEventListener('resize',popupMargins);
 
 // Phones and fold phones (860 px and narrower): an area's breakdown slides up from the bottom of the
 // screen, full width and scrollable, instead of a small pop-up on the map. The Leaflet pop-up stays
@@ -474,7 +497,7 @@ function draw(){
     const thin=bu?(bu.n!=null&&bu.n<THIN):a.n<THIN;POINTS.push({a,v,n,thin})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
   const sc=scaleFor(vals),colorOf=sc.colorOf;
-  LABEL={metric,colorOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();drawOutlines();
+  LABEL={metric,colorOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();drawOutlines();setTimeout(popupMargins,0);
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
   $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='sale'?T('Median sale price'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?'≤ '+f(sc.lo):'')+'</span><span>'+(vals.length?'≥ '+f(sc.hi):'')+'</span></div>';
@@ -498,16 +521,16 @@ function table(){
     const m=$('metric').value;
     $('tableTitle').textContent=m==='sale'?T('Sale prices by area'):m==='yield'?T('Yields by area'):T('Rents by area');
     $('updated').textContent=m==='sale'?T('Median sale price by area and unit, from registered sales'):m==='yield'?T('Gross rental yield by area and unit'):T('Median yearly rent by area and unit, last 12 months');
-    $('thead').innerHTML='<tr><th>'+T('Area')+'</th><th>'+T('DLD area')+'</th><th>'+T('Unit')+'</th><th class="r">'+T('Median yearly rent (AED)')+'</th><th class="r">'+T('Contracts')+'</th><th class="r">'+T('Median sale price (AED)')+'</th><th class="r">'+T('Gross yield')+'</th></tr>';
+    $('thead').innerHTML='<tr><th>'+T('Area')+' <small>'+T('DLD area')+'</small></th><th>'+T('Unit')+'</th><th class="r">'+T('Median yearly rent (AED)')+'</th><th class="r">'+T('Contracts')+'</th><th class="r">'+T('Median sale price (AED)')+'</th><th class="r">'+T('Gross yield')+'</th></tr>';
     // The view's own column leads: rows sorted by it, highest first, when sale price or yield is shown.
     const key=m==='sale'?'s':m==='yield'?'y':null,rows=key?[...view].sort((x,y)=>(y[key]??-1)-(x[key]??-1)):view;
-    for(const r of rows){const tr=document.createElement('tr');cell(tr,r.c);cell(tr,r.ar);cell(tr,T.unit(r.u));cell(tr,fmt(r.a),1);cell(tr,fmt(r.n),1);cell(tr,r.s?fmt(r.s):'',1);cell(tr,r.y!=null?r.y+'%':'',1);tb.append(tr)}
-    if(!view.length)tb.innerHTML='<tr><td colspan="7">'+T('No areas match. Clear the search or widen the rent range.')+'</td></tr>';
+    for(const r of rows){const tr=document.createElement('tr');{const td=document.createElement('td');td.className='w';td.append(r.c);if(r.ar&&r.ar!==r.c){const sm=document.createElement('small');sm.textContent=r.ar;td.append(sm)}tr.append(td)}cell(tr,T.unit(r.u));tr.lastChild.className='u';cell(tr,fmt(r.a),1);cell(tr,fmt(r.n),1);cell(tr,r.s?fmt(r.s):'',1);cell(tr,r.y!=null?r.y+'%':'',1);tb.append(tr)}
+    if(!view.length)tb.innerHTML='<tr><td colspan="6">'+T('No areas match. Clear the search or widen the rent range.')+'</td></tr>';
     return;
   }
   $('thead').innerHTML='<tr><th>'+T('Start')+'</th><th>'+T('Area')+'</th><th>'+T('Building')+'</th><th>'+T('Unit')+'</th><th class="r">'+T('Yearly rent (AED)')+'</th><th class="r">m²</th><th class="r">'+T('AED per m²')+'</th><th>'+T('New or renewal')+'</th></tr>';
   for(const r of view.slice(0,500)){const tr=document.createElement('tr');
-    cell(tr,r.s);cell(tr,r.c);cell(tr,r.p||r.mp||'');cell(tr,T.unit(r.u));cell(tr,fmt(r.a),1);cell(tr,r.sq?fmt(r.sq):'',1);cell(tr,r.sq?fmt(r.a/r.sq):'',1);cell(tr,r.t);tb.append(tr)}
+    cell(tr,r.s);cell(tr,r.c);cell(tr,r.p||r.mp||'');cell(tr,T.unit(r.u));tr.lastChild.className='u';cell(tr,fmt(r.a),1);cell(tr,r.sq?fmt(r.sq):'',1);cell(tr,r.sq?fmt(r.a/r.sq):'',1);cell(tr,r.t);tb.append(tr)}
   if(!view.length)tb.innerHTML='<tr><td colspan="8">'+T('No contracts match. Clear the search or widen the rent range.')+'</td></tr>';
   else if(view.length>500)tb.insertAdjacentHTML('beforeend','<tr><td colspan="8" class="muted">'+T('Showing the newest 500 of {n}. Download the CSV for all of them.',{n:fmt(view.length)})+'</td></tr>');
 }

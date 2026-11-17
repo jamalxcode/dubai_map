@@ -25,6 +25,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 | 320 px | The narrowest screen supported and tested (no sideways scrolling, the sheet fits) | `tests/ui-check.mjs` |
 
 - No sideways scrolling at any width. Tables scroll inside their own box (keyboard-focusable).
+- **Area table:** the DLD area is a small muted second line under the area name (no column of its own); names, unit and headers wrap at word breaks, numbers never wrap; 8 px side padding. It fits without scrolling in the 440 px side column at 1,440 px and on phones from about 540 px.
 - The order of content below 1,100 px follows the reading order, kept with `display:contents` and `order`.
 
 ## 3. Colour and type
@@ -70,7 +71,8 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 ## 7. Area breakdown (drilling down)
 
 - **Content order:** the area's name; photos taken nearby and the Google links (Maps, Street View, Photos); the median and contracts; the sale price trend (24-month line, change on a year ago); range; rent per m²; yield; unit table; busiest buildings; sources; "Check a rent here".
-- **Wide screens:** a Leaflet pop-up, up to 320 px wide.
+- **Wide screens:** a Leaflet pop-up, up to 320 px wide. It never opens under the map's buttons or the legend: Leaflet draws controls above pop-ups, so the pop-up's pan margins are measured from the controls (left column, top-right stack, legend) and the map pans to clear them (`popupMargins` in `atlas.js`, rechecked on resize, language button and redraw).
+- **Trend lines** (rent by month, sale price per sq ft) carry a small scale: lowest and highest value at the left (thousands as "k" above 10,000), first, middle and last month underneath, in 10 px muted text; drawn left to right in Arabic too.
 - **860 px and below:** a bottom sheet, full width (capped at 640 px, centred), at most 80% of the screen high, scrolling on its own; photos and links move to the top; links become 40 px chips. Closes with ×, swipe down, Escape or a tap on the map. The pop-up stays open but hidden and its content moves into the sheet, so everything that hooks into pop-ups works in both.
 - **Photos:** up to 4, a grid on wide screens, a swipeable row on phones (about 72–80% of the width, 150–170 px high). Each shows its author and licence. A photo that fails to load disappears; no photos means no strip.
 - **Photo viewer (all screens):** tap a photo for a full-screen view at 960 px with title, author, licence and a link to its Commons page; arrows, swipes and the arrow keys move between photos (direction follows the language); Escape or × closes it and focus returns to the photo.

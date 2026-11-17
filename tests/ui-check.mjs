@@ -216,9 +216,20 @@ try {
     const big = await page.$eval('.ck-big', e => e.textContent).catch(() => '');
     check(/AED\s*[\d,]+/.test(big), `${name}: rent check answers "jvc" (${big.trim().slice(0, 30)})`);
     if (name === 'desktop') {
+      // A breakdown opened near the top-right buttons must not sit under them (the map pans instead).
+      const clear = await page.evaluate(async () => { map.closePopup(); const a = AREAS.find(x => x.lat != null && x.median);
+        const s = map.getSize(); map.setView([a.lat, a.lng], 14, { animate: false }); map.panBy([-s.x * .4, -s.y * .35], { animate: false });
+        L.popup({ maxWidth: 320 }).setLatLng([a.lat, a.lng]).setContent(popup(a)).openOn(map); await new Promise(r => setTimeout(r, 600));
+        const pr = document.querySelector('.leaflet-popup-content-wrapper').getBoundingClientRect();
+        const hits = [...document.querySelectorAll('.leaflet-control,.legend')].map(e => e.getBoundingClientRect())
+          .filter(c => c.width && pr.left < c.right && c.left < pr.right && pr.top < c.bottom && c.top < pr.bottom).length;
+        map.closePopup(); return hits; });
+      check(clear === 0, `desktop: a breakdown near the map's buttons isn't hidden under them (${clear} overlaps)`);
+      await page.click('#ckArea'); await page.fill('#ckArea', 'jvc'); await page.press('#ckArea', 'Enter');
       await page.waitForTimeout(1300); // the fly to the area
-      const c = await page.evaluate(() => ({ z: map.getZoom(), lat: map.getCenter().lat, lng: map.getCenter().lng }));
-      const near = Math.abs(c.lat - 25.058) < 0.02 && Math.abs(c.lng - 55.209) < 0.02;
+      // The breakdown may pan the map to clear the buttons, so check JVC is in view rather than centred.
+      const c = await page.evaluate(() => ({ z: map.getZoom(), inView: map.getBounds().pad(-0.05).contains([25.058, 55.209]) }));
+      const near = c.inView;
       check(near && c.z >= 13, `desktop: a rent check takes the map to the area (JVC; zoom ${c.z})`);
       check(!!(await page.$('.leaflet-popup-content')), 'desktop: and opens its breakdown');
       await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
