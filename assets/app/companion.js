@@ -23,7 +23,7 @@
     if (!c) return;
     c.classList.toggle('compact', folded);
     const input = el('ckArea');
-    if (input) input.placeholder = folded ? T('Check a rent: type an area') : T('e.g. JVC, Business Bay, Al Qusais');
+    if (input) input.placeholder = folded ? T('Area, e.g. JVC') : T('e.g. JVC, Business Bay, Al Qusais');
   };
   const isCompact = () => el('companion').classList.contains('compact');
 
@@ -178,8 +178,8 @@
       `<button type="button" class="link" data-area="${esc(c.area.label)}" data-unit="${esc(unit)}">${esc(c.area.label)}</button> ${aed(c.median)} <span class="muted">(${T('{km} km, {s} less', { km: c.km, s: short(c.saving) })})</span>`).join(T(', ')) + '</li>');
     if (tr) finds.push(`<li><b>${T('Trend:')}</b> ${T(tr.pct > 0 ? 'the median is up {pct}% from {from} to {to}.' : 'the median is down {pct}% from {from} to {to}.', { pct: Math.abs(tr.pct), from: esc(tr.from), to: esc(tr.to) })}</li>`);
     if (rank) finds.push(`<li>${T('Cheaper than <b>{pct}%</b> of {of} areas with figures for {what}.', { pct: rank.cheaperThanPct, of: rank.of, what: esc(what.toLowerCase()) })}</li>`);
-    if (f.sale || f.yield != null) finds.push(`<li class="muted">${f.sale && f.yield != null ? T('For owners: median sale price {sale}, gross rental yield {v}%.', { sale: aed(f.sale), v: f.yield })
-      : f.sale ? T('For owners: median sale price {sale}.', { sale: aed(f.sale) }) : T('For owners: gross rental yield {v}%.', { v: f.yield })}</li>`);
+    if (f.sale || f.yield != null) finds.push(`<li class="muted">${f.sale && f.yield != null ? T('For owners: median sale price {sale}, gross rental yield {v}%.', { sale: aed(f.sale), v: Number(f.yield).toFixed(1) })
+      : f.sale ? T('For owners: median sale price {sale}.', { sale: aed(f.sale) }) : T('For owners: gross rental yield {v}%.', { v: Number(f.yield).toFixed(1) })}</li>`);
     const secondary = [];
     if (step.id !== 'save' && savedIdx < 0) secondary.push(`<button type="button" class="link" data-act="save">${T('Save to My areas')}</button>`);
     if (step.id !== 'map') secondary.push(`<button type="button" class="link" data-act="map">${T('Show on the map')}</button>`);
@@ -188,7 +188,7 @@
     out.innerHTML = `
       <div class="ck-answer">
         <p class="ck-what">${T('{what} in {area}', { what: esc(what), area: `<b>${esc(area.label)}</b>` })}</p>
-        <p class="ck-big">${(k => `<i class="pie" aria-hidden="true" style="--p:${k.share(f.median)}%;--c:${k.color(f.median)}"></i>`)(window.priceKey(unit))}<bdi>${aed(f.median)}</bdi> <span>${T('a year')}</span></p>
+        <p class="ck-big"><i class="keyChip" aria-hidden="true" style="--c:${window.priceKey(unit).color(f.median)}"></i><bdi>${aed(f.median)}</bdi> <span>${T('a year')}</span></p>
         <p class="muted">${f.n == null
           ? T('Median for this home type, {period}. Source: Continental Club Property (CC BY 4.0), which gives {n} for the whole area but no count per home type.', { period: area.through ? T('to {d}', { d: dateText(area.through) }) : period, n: plural(area.n, 'contract') })
           : T(isTypical ? 'Typical of {n}, {period}.' : 'Median of {n}, {period}.', { n: plural(f.n, 'contract'), period })}${savedIdx >= 0 ? ` <span class="tag">${T('Saved')}</span>` : ''}</p>

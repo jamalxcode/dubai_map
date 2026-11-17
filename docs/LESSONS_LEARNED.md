@@ -53,6 +53,9 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Don't copy from Google Images.** The photos belong to their photographers and Google's terms forbid it. *Rule:* link out to Google; show only freely licensed photos, credited.
 - **Leaflet draws controls above pop-ups, and its pan margin is 5 px.** A pop-up opened near the buttons hid under them. *Rule:* set the pop-up's pan padding from the measured controls and legend, and test a pop-up opened beside them.
 - **A table column for a secondary label costs the figures.** The DLD area column plus `nowrap` pushed the numbers out of view in the narrow side column. *Rule:* secondary labels go as a small second line; only numbers stay unwrapped.
+- **Estimated label widths drift from drawn ones.** Character-count and canvas estimates missed the real fonts by 10+ px, so labels overlapped once names got longer. *Rule:* measure label boxes from a hidden label with the same styles, attached only while measuring (a probe left in the page was counted as a label by tests and keyboard focus).
+- **Two controls for one job confuse more than they help.** Two language switches, two view pickers and two area searches looked alike and did nearly the same thing. *Rule:* one control per job; a second entry point only when its scope is visibly different (the table finder filters only the table).
+- **`display:flex` beats the `hidden` attribute.** A `.field{display:flex}` rule kept a hidden field on screen. *Rule:* the page has `[hidden]{display:none!important}`.
 
 ## Accessibility
 

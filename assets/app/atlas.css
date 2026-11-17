@@ -28,8 +28,6 @@ html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopp
   /* Light theme (default): ivory paper */
   --bg:var(--ivory);--text:var(--espresso);--panel:var(--soft);--line:#D9CFBE;--muted:#655B51;--hover:#F0E9DC;
   --label:#FFFCF5;--legend:rgba(255,252,245,.95);--map-bg:var(--soft);--disabled:#A59A8C;--ok:#1C6B3A;--bad:#9A3B00;
-  --small-on-fill:#4A3F35; /* small text on a shaded label (4.75:1 or more on every price colour) */
-  --fill-mix:35%;
   --tiles:grayscale(.85) contrast(.95) brightness(1.04) sepia(.08);
   --b1:#EFF3FF;--b2:#C6DBEF;--b3:#9ECAE1;--b4:#6BAED6;--b5:#2171B5;--b6:#084594; /* prices: blue, lowest to highest */
   color-scheme:light;
@@ -44,7 +42,7 @@ html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopp
   --band:var(--oxblood);--band-muted:#E8DCCB;
   --bg:#1E1712;--text:var(--ivory);--panel:#2A211A;--line:#43372C;--muted:#B3A898;--hover:#251D17;
   --label:#2A211A;--legend:rgba(42,33,26,.94);--map-bg:#221A14;--disabled:#62574C;--ok:#7FD39B;--bad:#FFB27A;
-  --small-on-fill:#E6DCCB;--fill-mix:30%;
+
   --tiles:invert(1) hue-rotate(180deg) grayscale(.8) brightness(.82) contrast(.9);
   color-scheme:dark;
 }
@@ -65,6 +63,7 @@ html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopp
 .theme:hover{background:rgba(247,242,233,.14)}
 .theme svg{width:16px;height:16px}
 *{box-sizing:border-box}body{margin:0}
+[hidden]{display:none!important}
 a{color:var(--text);text-decoration-color:var(--gold);text-underline-offset:3px;text-decoration-thickness:1.5px}a:hover{text-decoration-thickness:2.5px}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
@@ -88,22 +87,13 @@ button,input,select{font:inherit;color:inherit}
 .odo .strip span,.odo .fix{display:block;height:1em;line-height:1}
 .cur{margin-inline-end:.2em;font-weight:600}
 
-/* Type selector: segmented, with a sliding plate (moves only when you choose) */
+/* Filters: one home picker and a rent range, on one row (wrapping on the narrowest phones). */
 .controls{border-bottom:1px solid var(--line);background:var(--bg);position:relative;z-index:5}
-.controls .wrap{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 20px;padding-top:18px;padding-bottom:18px}
-.seg{position:relative;display:inline-flex;background:var(--panel);border-radius:10px;padding:4px;gap:2px;max-width:100%;overflow-x:auto;scrollbar-width:none}
-.seg::-webkit-scrollbar{display:none}
-.seg button{position:relative;z-index:1;border:0;background:none;padding:9px 14px;border-radius:7px;font:600 17px/1 var(--cond);letter-spacing:.01em;cursor:pointer;white-space:nowrap;color:var(--text)}
-.seg button[aria-pressed="true"]{color:var(--on-sign)}
-.seg button:disabled{color:var(--disabled);cursor:not-allowed}
-.seg .plate{position:absolute;z-index:0;top:4px;bottom:4px;left:0;width:0;border-radius:7px;background:var(--sign);transition:none}
+.controls .wrap{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;padding-top:14px;padding-bottom:14px}
+.controls .f-home{flex:1 1 170px;min-width:0}.controls .f-home select{width:100%}.controls .f-num{flex:0 1 120px;min-width:84px}
 .field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;color:var(--muted)}
 .field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;font-size:15px;min-width:0;color:var(--text)}
 .field input:focus,.field select:focus{border-color:var(--gold-ink);outline:none;box-shadow:0 0 0 3px rgba(185,138,47,.35)}
-.controls .seg{flex:0 0 auto}
-.sheet-fields{display:contents}
-@media (min-width:861px){.sheet{display:grid!important;grid-template-columns:minmax(200px,1.6fr) minmax(140px,1fr) minmax(160px,1fr) minmax(100px,.7fr) minmax(100px,.7fr);gap:14px;flex:1 1 100%}}
-.typesNote{margin:0;font-size:13px;color:var(--muted);align-self:center;max-width:52ch}
 
 /* Warning sign */
 .stale{display:none;margin:0 0 16px;background:var(--caution);color:var(--ink);border-radius:10px;padding:14px 16px;padding-inline-start:56px;position:relative;max-width:900px;box-shadow:inset 0 0 0 2px var(--ink),inset 0 0 0 5px var(--caution)}
@@ -127,19 +117,17 @@ button,input,select{font:inherit;color:inherit}
 .pics .strip img{display:block;width:100%;height:58px;object-fit:cover;border-radius:4px;background:var(--panel)}
 .pics .strip span{display:block;font-size:10px;line-height:1.2;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pics small{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
-/* Map language button (atlas.js): English, Arabic or both for place names on the base map. */
-.maplang{display:flex;background:var(--legend);overflow:hidden}
-.maplang[hidden]{display:none}
-.maplang button{border:0;border-inline-end:1px solid var(--line);background:none;color:var(--text);font:600 13px/1 var(--body);padding:0 10px;height:34px;cursor:pointer}
-.maplang button:last-child{border-inline-end:0}
-.maplang button[aria-pressed="true"]{background:var(--sign);color:var(--on-sign)}
-.maplang button:focus-visible{outline:2px solid var(--sign);outline-offset:-2px}
 .legend{position:absolute;z-index:500;left:12px;bottom:12px;background:var(--legend);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
-.legend .t{font-weight:600;margin-bottom:5px}
+.legend .t{display:flex;align-items:center;gap:6px;width:100%;border:0;background:none;padding:0;margin-bottom:5px;font-weight:600;font-size:13px;color:var(--text);cursor:pointer;text-align:start}
+.legend .t .u{font-weight:400;color:var(--muted)}
+.legend .t .chev{margin-inline-start:auto;width:7px;height:7px;border:solid var(--muted);border-width:0 2px 2px 0;transform:rotate(45deg);margin-top:-3px}
+.legend.folded .t .chev{transform:rotate(-135deg);margin-top:3px}
+.legend.folded .note{display:none}
+.legend .ticks{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:3px;font-variant-numeric:tabular-nums;gap:2px}
+.legend .ticks span{flex:1 1 0;text-align:center;min-width:0}.legend .ticks span:first-child{text-align:start}.legend .ticks span:last-child{text-align:end}
 .legend .ramp{display:flex;gap:2px}
 .legend .ramp i{display:block;width:44px;height:8px;box-shadow:inset 0 0 0 1px rgba(43,33,24,.18)} /* outlined: the lowest step is almost paper-white */
 .legend .ramp i:first-child{border-radius:4px 0 0 4px}.legend .ramp i:last-child{border-radius:0 4px 4px 0}
-.legend .ends{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:3px;font-variant-numeric:tabular-nums}
 .leaflet-control-zoom a{color:var(--text)!important}
 .leaflet-popup-content-wrapper{border-radius:10px}
 .leaflet-popup-content{font:400 13px/1.45 var(--body);color:var(--text);min-width:240px;margin:12px 14px}
@@ -151,24 +139,24 @@ button,input,select{font:inherit;color:inherit}
 /* Rent labels on the map */
 .rl-wrap{background:none;border:0}
 .leader{stroke:var(--text);stroke-opacity:.55;fill:var(--label);fill-opacity:1}
-.rl{position:absolute;transform:translate(-50%,-50%);background:var(--label);color:var(--text);border-radius:6px;padding:3px 9px 4px 8px;white-space:nowrap;cursor:pointer;
-  box-shadow:0 0 0 1px rgba(20,20,20,.18),0 2px 6px rgba(20,20,20,.18);border-left:5px solid var(--c,var(--b3));text-align:start}
-.rl b{display:block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums}
+.rl{position:absolute;transform:translate(-50%,-50%);background:var(--label);color:var(--text);border-radius:7px;padding:4px 7px 4px 4px;white-space:nowrap;cursor:pointer;
+  box-shadow:0 0 0 1px rgba(20,20,20,.18),0 2px 6px rgba(20,20,20,.18);text-align:start}
+/* The price badge: the figure on its price-key colour (espresso or ivory type, 4.5:1 or more on each blue). */
+.rl b{display:inline-block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums;background:var(--c,var(--b3));color:var(--on,var(--espresso));
+  padding:3px 6px 2px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(43,33,24,.22)}
+.rl small{padding-inline-start:3px}
 .rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--gold),0 4px 10px rgba(20,20,20,.25)}
-/* The shaded part of a rent label is a tint of its price colour (35% in light, 30% in dark). */
-.rl.rent{background:linear-gradient(90deg,color-mix(in srgb,var(--c) var(--fill-mix),var(--label)) var(--f),var(--label) var(--f))}
-/* Small area names on shaded labels: colours checked by hand to stay above 4.5:1 on every tint. */
-.rl.rent small{color:var(--small-on-fill)}
-/* Dark mode: price labels stay light ivory cards with the same tints, so each price shows exactly its key
-   colour against the dark map (dark cards turned the blues grey-brown). Same contrast as light mode. */
-:root[data-theme="dark"] .rl{--label:#FFFCF5;--text:var(--espresso);--muted:#655B51;--small-on-fill:#4A3F35;--fill-mix:35%;--pie-track:rgba(43,33,24,.16);
-  box-shadow:0 0 0 1px rgba(0,0,0,.35),0 2px 8px rgba(0,0,0,.45)}
-:root[data-theme="dark"] .rl.grp{box-shadow:0 0 0 1.5px var(--gold),3px 3px 0 0 var(--label),3px 3px 0 1.5px var(--gold),0 3px 9px rgba(0,0,0,.45)}
+/* Dark mode: price labels stay light ivory cards, so each badge shows exactly its key colour against the dark
+   map, but smaller and softer (a thin edge, no gold stack) so they don't glare. Same contrast as light mode. */
+:root[data-theme="dark"] .rl{--label:#F3EDE2;--text:var(--espresso);--muted:#5E544A;padding:3px 6px 3px 3px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.5),0 1px 4px rgba(0,0,0,.4)}
+:root[data-theme="dark"] .rl b{font-size:15px}
+:root[data-theme="dark"] .rl small{font-size:10.5px}
+:root[data-theme="dark"] .rl.grp{box-shadow:0 0 0 1px rgba(0,0,0,.5),2px 2px 0 0 #CFC6B8,2px 2px 0 1px rgba(0,0,0,.5),0 1px 4px rgba(0,0,0,.4)}
 :root[data-theme="dark"] .leader{fill:#FFFCF5;stroke:var(--ivory)}
-/* Group labels follow the price key like single ones (tint, edge, dial); a gold stacked-card outline and "avg" mark them as several areas. */
-.rl.grp{border-left-color:var(--c,var(--b3));box-shadow:0 0 0 1.5px var(--gold),3px 3px 0 0 var(--label),3px 3px 0 1.5px var(--gold),0 3px 9px rgba(20,20,20,.22)} /* a stack of cards: several areas */
-.rl .avg{font:600 13px/1 var(--cond);margin-inline-start:3px;opacity:.85}
+/* Group labels follow the price key like single ones; a gold stacked-card outline and "+N" in the name mark several areas. */
+.rl.grp{box-shadow:0 0 0 1.5px var(--gold),3px 3px 0 0 var(--label),3px 3px 0 1.5px var(--gold),0 3px 9px rgba(20,20,20,.22)} /* a stack of cards: several areas */
 
 /* Facts under the map */
 .facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:22px 0 0;border-top:3px solid var(--text)}
@@ -181,6 +169,10 @@ button,input,select{font:inherit;color:inherit}
 .tableHead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:44px 0 12px}
 h2{font:700 34px/1 var(--cond);margin:0}
 .tableHead p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.tableTools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tblFind input{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:14px;width:12em;max-width:100%;color:var(--text)}
+.tblFind input:focus{border-color:var(--gold-ink);outline:none;box-shadow:0 0 0 3px rgba(185,138,47,.35)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .btn{border:2px solid var(--sign);background:var(--bg);color:var(--sign);border-radius:8px;padding:8px 14px;font:600 17px/1 var(--cond);cursor:pointer}
 .btn:hover{background:var(--sign);color:var(--on-sign)}
 .tableWrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;max-height:560px;overflow-y:auto}
@@ -210,9 +202,7 @@ details summary{cursor:pointer;font-weight:600}
 code{font-size:13px;background:var(--bg);padding:1px 5px;border-radius:4px}
 footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 
-/* Phone: map first, filters in a sheet */
-.sheet{display:contents}
-.fab,.sheetHead,.scrim{display:none}
+/* Phone: map first */
 @media (max-width:860px){
   .wrap{padding:0 16px}
   .band::after{inset:6px}
@@ -221,18 +211,17 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   /* Phone: keep the sign compact so the map starts high on the first screen. */
   .band .wrap{grid-template-columns:1fr;gap:8px;padding-top:50px;padding-bottom:16px}
   .band h1{font-size:clamp(34px,10vw,44px)}
-  .band p{font-size:14px;margin-top:6px;line-height:1.4}
+  .band p{display:none} /* phones: the title and the figure only, so the map starts higher; "About the data" says the rest */
   .big .num{font-size:46px}
   .big .cap{font-size:13px;margin-top:4px}
   .stale{padding:10px 36px;padding-inline-start:46px;font-size:14px;margin-bottom:10px}
   .stale::before{inset-inline-start:12px;top:10px;width:22px;height:22px}.stale::after{inset-inline-start:12px;top:15px;width:22px;font-size:14px}
   .stale .more{display:none}
   .big{text-align:start}
-  .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
-  .controls .seg{width:100%;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
-  .legend .t{display:none}.legend{font-size:11px}
-  .controls .field{display:none}
-  .typesNote{font-size:12px;margin-top:-2px;line-height:1.35}
+  .controls .wrap{padding-top:8px;padding-bottom:8px;gap:6px 8px}
+  .controls .field{font-size:11.5px;gap:2px}.controls .field input,.controls .field select{padding:7px 9px;font-size:14px}
+  .controls .f-home{flex:1 1 120px}.controls .f-num{flex:0 1 80px;min-width:68px} /* home and rent range on one row */
+  .legend{font-size:11px}.legend .t{font-size:12px;margin-bottom:3px}
   .controls{position:static;z-index:auto}
   .mapWrap{height:62svh;min-height:340px}
   .legend{left:8px;bottom:8px;padding:6px 8px}.legend .ramp i{width:26px}
@@ -240,14 +229,6 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .facts dd{font-size:26px}
   .about .wrap{grid-template-columns:1fr;gap:28px}
   .tableHead{margin-top:32px}
-  .fab{display:flex;position:fixed;z-index:1001;inset-inline-end:16px;bottom:max(16px,env(safe-area-inset-bottom));align-items:center;gap:8px;border:0;border-radius:999px;background:var(--sign);color:var(--on-sign);padding:14px 20px;font:600 19px/1 var(--cond);box-shadow:0 0 0 2px var(--gold),0 8px 22px rgba(20,20,20,.35);cursor:pointer}
-  .sheet{display:block;position:fixed;z-index:1003;left:0;right:0;bottom:0;background:var(--bg);border-radius:16px 16px 0 0;padding:0 16px max(20px,env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(20,20,20,.3);transform:translateY(105%);visibility:hidden;max-height:86svh;overflow:auto}
-  .sheet.open{visibility:visible;transform:none}
-  .sheet .field{display:flex;margin-bottom:14px}
-  .sheetHead{display:flex;justify-content:space-between;align-items:center;padding:16px 0 12px;position:sticky;top:0;background:var(--bg)}
-  .sheetHead b{font:700 26px/1 var(--cond)}
-  .scrim{display:block;position:fixed;inset:0;z-index:1002;background:rgba(20,20,20,.45);opacity:0;pointer-events:none}
-  .scrim.on{pointer-events:auto}
 }
 /* Layout. Narrower than 1100px: one column, in this order (the map right after the filters).
    1100px and wider: two panes, everything else scrolls on the left, the map fills the window height on the right. */
@@ -268,8 +249,6 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .big{text-align:start}
   .big .num{font-size:58px}
   .controls .wrap{gap:12px}
-  .pane .sheet{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
-  .pane .sheet .f-search{grid-column:1/-1}
   .facts{grid-template-columns:1fr 1fr}
   .about .wrap{grid-template-columns:1fr;gap:28px}
   /* Compact left pane: big and bold, but the title, rent check and filters fit the first screen. */
@@ -282,9 +261,6 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .topBtns{top:14px;inset-inline-end:16px}.langSw button{font-size:14px;padding:5px 9px}
   .theme{font-size:14px;padding:4px 10px 4px 8px}
   .controls .wrap{padding-top:10px;padding-bottom:10px;gap:8px}
-  .seg button{padding:7px 12px;font-size:16px}
-  .typesNote{font-size:12px}
-  .pane .sheet{gap:8px 10px}
   .pane .field{font-size:12px;gap:3px}
   .pane .field input,.pane .field select{padding:7px 10px;font-size:14px}
   .staleWrap .stale{margin-top:10px}
@@ -300,12 +276,6 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .big .cap{font-size:12px;margin-top:0}
   .topBtns{top:12px}
   .controls .wrap{padding-top:8px;padding-bottom:10px;gap:6px 10px;align-items:center}
-  .seg{padding:3px}.seg .plate{top:3px;bottom:3px}
-  .seg button{padding:6px 11px;font-size:15px}
-  .typesNote{flex:1 1 160px;font-size:11.5px;line-height:1.3}
-  .pane .sheet{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px 8px}
-  .pane .sheet .f-search,.pane .sheet .f-unit{grid-column:span 2}
-  .pane .sheet .f-metric{grid-column:span 2}
   .pane .field{font-size:11.5px;gap:2px}
   .pane .field input,.pane .field select{padding:6px 9px;font-size:13.5px}
   .facts{margin-top:10px;border-top-width:2px}.facts div{padding:6px 10px 0 0}.facts dt{font-size:12px}.facts dd{font-size:21px}
@@ -322,14 +292,9 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 /* Zoom controls: larger targets, plus "All Dubai" to get back to the whole city. */
 .leaflet-control-zoom a,.leaflet-bar a.fit{width:40px!important;height:40px!important;line-height:40px!important;font-size:22px!important}
 .leaflet-bar a.fit{font:600 13px/40px var(--body)!important;width:auto!important;padding:0 10px;white-space:nowrap}
-/* Rent dial: the rent's share of the top price pulled, in its price-key colour, for a quick read at a glance. */
-.pie{display:inline-block;width:.78em;height:.78em;border-radius:50%;margin-inline-end:.32em;vertical-align:-.06em;flex:none;
-  background:conic-gradient(var(--c,var(--b3)) var(--p,0%),var(--pie-track,rgba(20,20,20,.16)) 0);box-shadow:inset 0 0 0 1px rgba(20,20,20,.12)}
-.band .pie{--pie-track:rgba(247,242,233,.32)}
-:root[data-theme="dark"] .pie{--pie-track:rgba(247,242,233,.2)}
-.pie[hidden]{display:none}
-.big .pie{width:.62em;height:.62em;align-self:center;margin-inline-end:.18em}
-.legend .note .pie{font-size:13px}
+/* +, − and All Dubai share one bar, each button as wide as the bar. */
+.leaflet-control-zoom{display:flex;flex-direction:column}.leaflet-control-zoom a{width:auto!important;min-width:40px}
+.leaflet-control-zoom a.fit{border-bottom:0;border-top:1px solid #ccc}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 /* Arabic (i18n.js): the page reads right to left; the logical properties above mirror it. The map
@@ -342,7 +307,6 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 [dir="rtl"] .legend,[dir="rtl"] .leaflet-popup-content{direction:rtl;text-align:right}
 [dir="rtl"] .big .num{direction:ltr}
 @media (min-width:1100px){:root[lang="ar"] .band h1{font-size:34px;padding-inline-end:160px}}
-@media (max-width:860px){[dir="rtl"] .controls .seg{-webkit-mask-image:linear-gradient(270deg,#000 85%,transparent);mask-image:linear-gradient(270deg,#000 85%,transparent)}}
 
 /* Phones and fold phones: the area breakdown as a bottom sheet (atlas.js). The Leaflet pop-up stays
    open but hidden; its content lives in the sheet. Up to 640 px wide, centred on fold inner screens. */
@@ -371,13 +335,12 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
 @media (max-width:860px){
   .leaflet-popup{display:none}
-  html.sheetOpen .fab{display:none}
   /* Smaller map buttons on narrow screens, so the map stays visible. */
   .leaflet-control-zoom a,.leaflet-bar a.fit{width:36px!important;height:36px!important;line-height:36px!important;font-size:20px!important}
   .leaflet-bar a.fit{font-size:12px!important;width:auto!important}
 }
 @media (max-width:400px){
-  .maplang button{padding:0 7px;font-size:12px;height:32px}
+  .controls .f-num{flex-basis:72px}
   .leaflet-control-zoom a,.leaflet-bar a.fit{width:32px!important;height:32px!important;line-height:32px!important;font-size:18px!important}
   .leaflet-bar a.fit{font-size:11px!important;padding:0 7px}
   .leaflet-touch .leaflet-bar,.leaflet-touch .leaflet-control-layers{border-width:1px}
@@ -406,12 +369,12 @@ html.viewerOpen,html.viewerOpen body{overflow:hidden}
 /* Leaflet's own surfaces in the brand's warm white. */
 .leaflet-popup-content-wrapper,.leaflet-popup-tip,.leaflet-bar a{background:var(--label)}
 .leaflet-bar a:hover{background:var(--hover)}
-/* Dials on (light) price labels keep a dark track in dark mode too. */
-:root[data-theme="dark"] .rl .pie{--pie-track:rgba(43,33,24,.16)}
-/* Map view switch (atlas.js): rent, sale price or gross yield; same look as the language button. */
+/* The map's bar (atlas.js): rent, sale price or gross yield, then the place-names button (English and Arabic together). */
 .viewSw{display:flex;background:var(--legend);overflow:hidden}
+.viewSw .views{display:flex}
+.viewSw .names{border-inline-start:1px solid var(--line)!important;font-weight:700}
 .viewSw button{border:0;border-inline-end:1px solid var(--line);background:none;color:var(--text);font:600 13px/1 var(--body);padding:0 10px;height:34px;cursor:pointer}
-.viewSw button:last-child{border-inline-end:0}
+.viewSw .views button:last-child{border-inline-end:0}
 .viewSw button[hidden]{display:none}
 .viewSw button[aria-pressed="true"]{background:var(--sign);color:var(--on-sign)}
 .viewSw button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
@@ -422,12 +385,9 @@ html.viewerOpen,html.viewerOpen body{overflow:hidden}
 .band h1{padding-inline-end:0}
 @media (max-width:860px){.band .wrap{padding-top:54px}}
 @media (min-width:1100px){.band .wrap{padding-top:52px}.band h1,:root[lang="ar"] .band h1{padding-inline-end:0}}
-/* Price edge and dial: the key colour darkened a little, so the palest blue still shows on an ivory label. */
-.rl{--cd:color-mix(in srgb,var(--c,var(--b3)) 75%,#2B2118);border-left-color:var(--cd)}
-.rl.grp{border-left-color:var(--cd)}
-.pie{background:conic-gradient(color-mix(in srgb,var(--c,var(--b3)) 80%,#2B2118) var(--p,0%),var(--pie-track,rgba(20,20,20,.16)) 0)}
-/* Thin figures (fewer than 10 contracts): dashed edge and outline, italic figure; same colours and contrast. */
-.rl.thin{border-left-style:dashed;outline:1px dashed var(--cd);outline-offset:-1px}
+/* Thin figures (fewer than 10 contracts): a dashed outline and an italic figure; same colours and contrast. */
+.rl{--cd:color-mix(in srgb,var(--c,var(--b3)) 70%,#2B2118)}
+.rl.thin{outline:1.5px dashed var(--cd);outline-offset:-1px}
 .rl.thin b{font-style:italic}
 .leaflet-popup-content tr.thin td{font-style:italic;color:var(--muted)}
 .legend .thinMark{display:inline-block;width:14px;height:10px;border:1px dashed var(--muted);border-radius:2px;vertical-align:-1px;margin-inline-end:5px}

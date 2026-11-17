@@ -100,31 +100,39 @@ try {
     check(base !== 'none', `${name}: the base map loads (${base})`);
     if (base === 'vector') {
       const field = () => page.evaluate(() => JSON.stringify(gl.getLayoutProperty('place_label', 'text-field')));
-      check(await page.isVisible('.maplang') && /name:en/.test(await field()), `${name}: map names start in English, with a language button on the map`);
-      await page.click('.maplang button[data-l="ar"]');
-      check(/name:ar/.test(await field()) && await page.evaluate(() => localStorage.getItem('mapLang') === 'ar'), `${name}: "عربي" switches the map's place names to Arabic, and is remembered`);
-      await page.click('.maplang button[data-l="both"]');
-      check(/name_en/.test(await field()) && !/name:ar/.test(await field()), `${name}: "Both" restores the style's own names`);
-      await page.click('.maplang button[data-l="en"]');
+      check(await page.isVisible('.viewSw .names') && /name:en/.test(await field()), `${name}: map names follow the page (English), with one names button in the map's bar`);
+      await page.click('.viewSw .names');
+      check(/name_en/.test(await field()) && !/name:ar/.test(await field()) && await page.evaluate(() => localStorage.getItem('mapBoth') === '1' && document.querySelector('.viewSw .names').getAttribute('aria-pressed') === 'true'),
+        `${name}: the names button shows English and Arabic together, and is remembered`);
+      await page.click('.viewSw .names');
+      check(/name:en/.test(await field()), `${name}: pressed again, names follow the page language`);
     }
     const view0 = await page.evaluate(() => ({ c: map.getCenter(), z: map.getZoom() }));
     await page.evaluate(() => fitDubai(false));
     await page.waitForTimeout(300);
-    const underLang = await page.evaluate(() => { const b = document.querySelector('.maplang'); if (!b || b.hidden) return 0; const r = b.getBoundingClientRect();
+    const underLang = await page.evaluate(() => { const b = document.querySelector('.viewSw'); if (!b || b.hidden) return 0; const r = b.getBoundingClientRect();
       return [...document.querySelectorAll('.rl')].filter(e => { const a = e.getBoundingClientRect(); return a.left < r.right && r.left < a.right && a.top < r.bottom && r.top < a.bottom; }).length; });
-    check(underLang === 0, `${name}: no rent label sits under the map language button (${underLang})`);
+    check(underLang === 0, `${name}: no rent label sits under the map's bar (${underLang})`);
     await page.evaluate(v => map.setView(v.c, v.z, { animate: false }), view0);
     await page.waitForTimeout(300);
-    const pies = await page.evaluate(() => document.querySelectorAll('.rl .pie').length);
-    check(pies >= 10, `${name}: rent labels show the rent dial (${pies})`);
+    // The figure is a badge in its key colour, with dark type on the four light blues and light type on the two dark ones.
+    const badges = await page.evaluate(() => [...document.querySelectorAll('.rl')].map(e => [e.style.getPropertyValue('--c'), e.style.getPropertyValue('--on').toUpperCase(), getComputedStyle(e.querySelector('b')).backgroundColor]));
+    check(badges.length >= 10 && badges.every(([c, on, bg]) => /--b[1-6]/.test(c) && bg !== 'rgba(0, 0, 0, 0)' && (/--b[56]/.test(c) ? on === '#FFFCF5' : on === '#2B2118')),
+      `${name}: each label's figure sits on a badge in its key colour, with readable type (${badges.length})`);
+    check(await page.evaluate(() => !document.querySelector('.pie') && [...document.querySelectorAll('.rl.grp small')].every(e => /\+\d+$/.test(e.textContent))),
+      `${name}: merged labels name their busiest area and how many more ("+N"); no dials`);
     const scale = await page.evaluate(() => { const vals = POINTS.map(p => p.v).sort((a, b) => a - b);
       const p95 = vals[Math.round(.95 * (vals.length - 1))], p05 = vals[Math.round(.05 * (vals.length - 1))];
       return { top: LABEL.top, p95, p05, max: vals.at(-1), min: vals[0], topColour: LABEL.colorOf(vals.at(-1)), lowColour: LABEL.colorOf(vals[0]),
-        ends: document.querySelector('#legend .ends')?.textContent || '' }; });
-    check(scale.top === scale.p95 && scale.top < scale.max && scale.topColour === 'var(--b6)' && scale.lowColour === 'var(--b1)' && /≤.*≥/.test(scale.ends),
+        ticks: document.querySelectorAll('#legend .ticks span').length }; });
+    check(scale.top === scale.p95 && scale.top < scale.max && scale.topColour === 'var(--b6)' && scale.lowColour === 'var(--b1)' && scale.ticks === 7,
       `${name}: the key runs from the 5th to the 95th percentile (AED ${Math.round(scale.p05 / 1000)}k to ${Math.round(scale.p95 / 1000)}k, not ${Math.round(scale.min / 1000)}k to ${Math.round(scale.max / 1000)}k); the extremes keep the end colours`);
-    const fills = await page.evaluate(() => [...document.querySelectorAll('.rl.rent')].map(e => parseFloat(e.style.getPropertyValue('--f'))));
-    check(fills.length >= 10 && fills.every(f => f > 0 && f <= 100), `${name}: rent labels are shaded in proportion to the rent (${fills.slice(0, 4).join('%, ')}%…)`);
+    // The legend folds to its colour bar (phones start folded) and unfolds again.
+    const fold0 = await page.evaluate(() => document.getElementById('legend').classList.contains('folded'));
+    await page.click('#legend .t');
+    const fold1 = await page.evaluate(() => ({ f: document.getElementById('legend').classList.contains('folded'), exp: document.querySelector('#legend .t').getAttribute('aria-expanded') }));
+    check(fold0 === (name === 'phone') && fold1.f === !fold0 && fold1.exp === String(fold0), `${name}: the legend ${fold0 ? 'starts folded and unfolds' : 'folds to its colour bar'} with its title button`);
+    await page.click('#legend .t');
     // Map views: rent, sale price, gross yield; each its own key (5th-95th percentile), legend and labels.
     const views = {};
     for (const m of ['sale', 'yield', 'median']) {
@@ -207,6 +215,29 @@ try {
       }
       await page.evaluate(() => map.closePopup());
     }
+    // One home picker (no type buttons, no second search, no filter sheet): a home size drops the table's unit column.
+    check(await page.evaluate(() => !document.querySelector('.seg,.fab,#side') && !!document.getElementById('home').offsetParent && document.getElementById('home').options.length >= 4),
+      `${name}: one home picker, in view, with no type buttons or filter sheet`);
+    const cols = await page.evaluate(() => document.querySelectorAll('#thead th').length);
+    await page.selectOption('#home', 'homes|');
+    await page.waitForTimeout(300);
+    const allCols = await page.evaluate(() => document.querySelectorAll('#thead th').length);
+    check(cols === 5 && allCols === 6, `${name}: with one home size picked the table drops its unit column (${cols} columns; all homes ${allCols})`);
+    if (await page.evaluate(() => [...document.getElementById('home').options].some(o => o.value === 'flat|'))) {
+      await page.selectOption('#home', 'flat|');
+      await page.waitForFunction(() => TYPE === 'flat' && POINTS.length > 0, null, { timeout: 5000 }).catch(() => {});
+      check(await page.evaluate(() => TYPE === 'flat' && POINTS.length >= 20 && document.querySelectorAll('.rl').length >= 1), `${name}: "Flats, any size" switches the map to flats`);
+    }
+    await page.selectOption('#home', 'homes|1-bedroom apartments');
+    await page.waitForTimeout(300);
+    // The finder above the table filters the table only; the map keeps every area.
+    const before = await page.evaluate(() => ({ rows: document.querySelectorAll('#rows tr').length, pts: POINTS.length }));
+    await page.fill('#search', 'marina');
+    await page.waitForTimeout(400);
+    const after = await page.evaluate(() => ({ rows: document.querySelectorAll('#rows tr').length, pts: POINTS.length }));
+    check(after.rows < before.rows && after.rows >= 1 && after.pts === before.pts, `${name}: the table finder narrows the table (${before.rows} → ${after.rows} rows) and leaves the map alone`);
+    await page.fill('#search', '');
+    await page.waitForTimeout(300);
     // The rent check: a nickname finds the area and shows a figure.
     await page.evaluate(() => scrollTo(0, 0));
     await page.click('#ckArea');

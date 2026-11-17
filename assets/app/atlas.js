@@ -42,12 +42,10 @@ function odometer(el,value,prefix){
 const map=L.map('map',{zoomControl:true,attributionControl:true}).setView([25.13,55.27],11);
 // A small merged label (2-3 areas) names its busiest area, e.g. "International City Phase 1 +1", so nearby
 // places stay findable by name when zoomed in; bigger groups cover a region and just count their areas.
-// Rent dial: share of the top of the key (the 95th percentile of what is shown; dearer areas show a full dial), in its key colour.
-// Only for rents, not counts or yields. LABEL.top is set by draw().
-const share=v=>Math.min(100,Math.max(0,Math.round(v/(LABEL.top||v||1)*100)));
-// The three map views (rent, sale price, gross yield) each get the key, a dial and shading; counts and rent per m² don't.
+// The three map views (rent, sale price, gross yield), one tap apart on the map's bar.
 const VIEWS=['median','sale','yield'];
-const pie=(v,metric)=>VIEWS.includes(metric)&&v>0?'<i class="pie" aria-hidden="true" style="--p:'+share(v)+'%"></i>':'';
+// Text on a price badge: espresso on the four lighter blues, ivory on the two darkest (contrast 4.5:1 or more on each).
+const INK=['#2B2118','#2B2118','#2B2118','#2B2118','#FFFCF5','#FFFCF5'];
 // The price key: six colours in equal steps between the 5th and 95th percentile of what is shown, so a few
 // extreme areas don't stretch the key. Values below the 5th percentile take the lowest colour, above the
 // 95th the highest (and a full dial). `vals` must be sorted ascending.
@@ -56,8 +54,8 @@ const THIN=10; // fewer contracts than this: shown, but marked as a thin figure
 function scaleFor(vals){
   const at=q=>vals.length?vals[Math.round(q*(vals.length-1))]:0;
   const lo=at(TRIM),hi=Math.max(at(1-TRIM),lo+1);
-  const colorOf=v=>BANDS[v<=lo?0:v>=hi?5:Math.min(5,Math.floor((v-lo)/(hi-lo)*6))];
-  return {lo,hi,colorOf};
+  const band=v=>v<=lo?0:v>=hi?5:Math.min(5,Math.floor((v-lo)/(hi-lo)*6));
+  return {lo,hi,band,colorOf:v=>BANDS[band(v)],inkOf:v=>INK[band(v)]};
 }
 // The same scale for any home type, for the rent check (assets/app/companion.js): top price and colour.
 const SCALES={};
@@ -70,13 +68,12 @@ window.priceKey=unit=>{
 // "All Dubai": back to the whole city (placed areas, leaving out far-off Hatta so the city isn't a dot).
 function fitDubai(animate){const pts=(CACHE.homes||AREAS).filter(x=>x.lat!=null&&x.lng<55.7).map(x=>[x.lat,x.lng]);
   if(pts.length)map.fitBounds(pts,{padding:[30,30],animate:!!animate})}
-L.Control.Fit=L.Control.extend({options:{position:'topleft'},onAdd(){
-  const d=L.DomUtil.create('div','leaflet-bar'),a=L.DomUtil.create('a','fit',d);
+// "All Dubai" is the third button of the zoom bar (+, −, All Dubai).
+{const a=L.DomUtil.create('a','fit',map.zoomControl.getContainer());
   a.href='#';a.role='button';a.textContent=T('All Dubai');a.title=T('Show all of Dubai');
-  L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);fitDubai(true)});
-  L.DomEvent.disableClickPropagation(d);return d}});
-new L.Control.Fit().addTo(map);
-const groupName=g=>{if(g.length>3)return T.count(g.length,'area');const top=g.reduce((a,b)=>b.n>a.n?b:a,g[0]).a.label;
+  L.DomEvent.on(a,'click',e=>{L.DomEvent.stop(e);fitDubai(true)})}
+// A merged label names its busiest area and how many others it holds ("JLT +12"), so it says where it is.
+const groupName=g=>{const top=g.reduce((a,b)=>b.n>a.n?b:a,g[0]).a.label;
   return (top.length>22?top.slice(0,21)+'…':top)+' +'+(g.length-1)};
 // Base map. Vector tiles (OpenFreeMap: OpenStreetMap data, free, no key) so place and street names can be
 // shown in English, Arabic or both, chosen with the map's language button. MapLibre (1 MB) loads after the
@@ -85,11 +82,12 @@ const groupName=g=>{if(g.length>3)return T.count(g.length,'area');const top=g.re
 const OSM_ATTR='© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>';
 // Detailed colour map (Liberty) by day, OpenFreeMap's own dark map at night; both free, no key.
 const styleFor=()=>'https://tiles.openfreemap.org/styles/'+(document.documentElement.dataset.theme==='dark'?'dark':'liberty');
-const MAP_LANGS=['en','ar','both'];
 const NAME_FIELD={ // OpenMapTiles name fields; 'both' keeps the style's own (Latin and local script)
   en:['coalesce',['get','name:en'],['get','name_en'],['get','name:latin'],['get','name']],
   ar:['coalesce',['get','name:ar'],['get','name']]};
-let mapLang=(()=>{let v;try{v=localStorage.getItem('mapLang')}catch(e){}return MAP_LANGS.includes(v)?v:T.lang==='ar'?'ar':'en'})();
+// Place names follow the page's language; one button on the map's bar shows both scripts instead (remembered).
+let mapBoth=(()=>{try{return localStorage.getItem('mapBoth')==='1'}catch(e){return false}})();
+const mapLangNow=()=>mapBoth?'both':T.lang==='ar'?'ar':'en';
 let gl=null,glNames=[];
 const readNames=()=>{glNames=gl.getStyle().layers.filter(l=>l.type==='symbol'&&l.layout&&/"name/.test(JSON.stringify(l.layout['text-field']||''))).map(l=>[l.id,l.layout['text-field']])};
 // OpenFreeMap's dark map is near-black with sea and land almost the same; lift it to the site's night
@@ -107,32 +105,30 @@ function tuneDark(m){if(document.documentElement.dataset.theme!=='dark')return;
 function restyleBase(){if(!gl)return;const want=styleFor();if(gl._styleUrl===want)return;gl._styleUrl=want;
   gl.setStyle(want,{diff:false});gl.once('style.load',()=>{readNames();tuneDark(gl);applyMapLang()})}
 function applyMapLang(){
-  if(gl)for(const [id,orig] of glNames)gl.setLayoutProperty(id,'text-field',NAME_FIELD[mapLang]||orig);
-  document.querySelectorAll('.maplang button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===mapLang));
+  const l=mapLangNow();
+  if(gl)for(const [id,orig] of glNames)gl.setLayoutProperty(id,'text-field',NAME_FIELD[l]||orig);
+  const b=namesBtn();if(b)b.setAttribute('aria-pressed',mapBoth);
 }
-L.Control.MapLang=L.Control.extend({options:{position:'topright'},onAdd(){
-  const d=L.DomUtil.create('div','leaflet-bar maplang');d.setAttribute('role','group');d.setAttribute('aria-label',T('Map labels'));
-  d.title=T('Language of place names on the map');d.hidden=true;
-  for(const [l,txt,lang] of [['en','English','en'],['ar','عربي','ar'],['both',T('Both'),T.lang]]){
-    const b=L.DomUtil.create('button','',d);b.type='button';b.dataset.l=l;b.textContent=txt;b.lang=lang;
-    L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e);mapLang=l;try{localStorage.setItem('mapLang',l)}catch(_){}applyMapLang()})}
-  L.DomEvent.disableClickPropagation(d);return d}});
-const langCtl=new L.Control.MapLang().addTo(map);
-// What the map shows: rent, sale price or gross yield. Same as the "Labels show" menu, one tap away on the map.
-// Each view has its own key (5th to 95th percentile of its values). A view shows only when the data has it.
+// The map's one bar: what it shows (rent, sale price or gross yield; each view has its own key, 5th to 95th
+// percentile of its values, and shows only when the data has it), then the place-names button.
 L.Control.View=L.Control.extend({options:{position:'topright'},onAdd(){
-  const d=L.DomUtil.create('div','leaflet-bar viewSw');d.setAttribute('role','group');d.setAttribute('aria-label',T('Map shows'));
+  const d=L.DomUtil.create('div','leaflet-bar viewSw');
+  const g=L.DomUtil.create('div','views',d);g.setAttribute('role','group');g.setAttribute('aria-label',T('Map shows'));
   for(const [m,txt] of [['median',T('Rent')],['sale',T('Sale price')],['yield',T('Yield')]]){
-    const b=L.DomUtil.create('button','',d);b.type='button';b.dataset.m=m;b.textContent=txt;
+    const b=L.DomUtil.create('button','',g);b.type='button';b.dataset.m=m;b.textContent=txt;
     L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e);const sel=$('metric');if(sel.value===m)return;sel.value=m;sel.dispatchEvent(new Event('change'))})}
+  const n=L.DomUtil.create('button','names',d);n.type='button';n.hidden=true;n.innerHTML='<span aria-hidden="true"><span lang="en">A</span>+<span lang="ar">ع</span></span><span class="vh">'+safe(T('Place names in English and Arabic'))+'</span>';
+  n.title=T('Place names in English and Arabic');
+  L.DomEvent.on(n,'click',e=>{L.DomEvent.stop(e);mapBoth=!mapBoth;try{localStorage.setItem('mapBoth',mapBoth?'1':'0')}catch(_){}applyMapLang()});
   L.DomEvent.disableClickPropagation(d);return d}});
 const viewCtl=new L.Control.View().addTo(map);
+const namesBtn=()=>viewCtl.getContainer().querySelector('.names');
 function syncViews(){
   const sel=$('metric'),have=new Set([...sel.options].map(o=>o.value));
   viewCtl.getContainer().querySelectorAll('button').forEach(b=>{b.hidden=!have.has(b.dataset.m);b.setAttribute('aria-pressed',b.dataset.m===sel.value)});
 }
 // OpenStreetMap tile usage policy: this exact HTTPS URL, visible attribution, no bulk or offline use.
-function rasterBase(){if(map._osm)return;map._osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:OSM_ATTR}).addTo(map);langCtl.getContainer().hidden=true}
+function rasterBase(){if(map._osm)return;map._osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:OSM_ATTR}).addTo(map);namesBtn().hidden=true}
 const loadScript=src=>new Promise((ok,fail)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=fail;document.head.append(s)});
 async function vectorBase(){
   try{
@@ -147,7 +143,7 @@ async function vectorBase(){
     m.on('error',e=>{if(!gl&&!e.sourceId){clearTimeout(fail);map.removeLayer(layer);rasterBase()}}); // the style itself, not one tile
     m.once('load',()=>{clearTimeout(fail);gl=m;gl._styleUrl=styleFor();
       readNames();tuneDark(m);map.getContainer().classList.add('glBase');
-      langCtl.getContainer().hidden=false;applyMapLang();popupMargins();
+      namesBtn().hidden=false;applyMapLang();popupMargins();
       if(LABEL.metric)renderLabels()}); // rent labels step out from under the button that just appeared
   }catch(e){rasterBase()}
 }
@@ -167,7 +163,17 @@ function drawOutlines(){
 }
 function loadOutlines(){getJSON('data/outlines.json').then(d=>{OUTLINES=d.areas||[];drawOutlines()}).catch(()=>{})}
 let POINTS=[],LABEL={},animateLabels=true;
+const pct=v=>Number(v).toFixed(1)+'%'; // yields: always one decimal
 const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
+let probe=null;const BOXES=new Map();
+function labelBox(top,sub){
+  const k=document.documentElement.dataset.theme+'|'+top+'|'+sub;if(BOXES.has(k))return BOXES.get(k);
+  if(!probe){probe=document.createElement('div');probe.className='rl';probe.setAttribute('aria-hidden','true');
+    probe.style.cssText='visibility:hidden;left:-9999px;top:0;transform:none'}
+  probe.innerHTML='<b></b><small></small>';probe.firstChild.textContent=top;probe.lastChild.textContent=sub;
+  map.getContainer().append(probe); // only while measuring, so it is never taken for a real label
+  const r={w:Math.ceil(probe.offsetWidth)+2,h:Math.ceil(probe.offsetHeight)+2};probe.remove();BOXES.set(k,r);return r;
+}
 function labelText(v,metric){return metric==='sale'?'AED '+compact(v):metric==='yield'?Number(v).toFixed(1)+'%':metric==='n'?T('{n} contracts',{n:compact(v)}):metric==='median_sqm'?'AED '+fmt(v)+'/m²':'AED '+compact(v)}
 
 // Labels that would overlap at this zoom merge into one label with the contract-weighted average.
@@ -175,8 +181,9 @@ function renderLabels(){
   layer.clearLayers();if(!POINTS.length)return;
   const {metric,colorOf}=LABEL;
   // Where labels go (merging, splitting, avoiding the controls) is decided in labels.js, in pixels.
-  const size=(members,val)=>{const single=members.length===1,top=labelText(val,metric)+(single||metric==='n'?'':' '+T('avg')),sub=single?members[0].a.label:groupName(members);
-    return {w:Math.max(top.length*8.4+(VIEWS.includes(metric)?14:0),Math.min(sub.length,26)*5.8)+26,h:38}};
+  // Label boxes are measured as drawn (a hidden label with the same styles), so labels keep clear of each other
+  // and of the map's buttons in either theme and language.
+  const size=(members,val)=>labelBox(labelText(val,metric),members.length===1?members[0].a.label:groupName(members));
   const items=POINTS.map(p=>{const pt=map.latLngToLayerPoint([p.a.lat,p.a.lng]);return Object.assign({x:pt.x,y:pt.y,lat:p.a.lat,lng:p.a.lng},p)});
   const box=map.getContainer().getBoundingClientRect();
   const blocks=[...map.getContainer().parentNode.querySelectorAll('.leaflet-control,.legend')].map(e=>e.getBoundingClientRect())
@@ -187,9 +194,8 @@ function renderLabels(){
   for(const c of cl){const g=c.members,moved=c.lx!==c.x||c.ly!==c.y,pos=moved?map.layerPointToLatLng([c.lx,c.ly]):L.latLng(c.lat,c.lng);
     if(moved){L.polyline([[c.lat,c.lng],pos],{className:'leader',weight:1.5,interactive:false}).addTo(layer);
       L.circleMarker([c.lat,c.lng],{className:'leader dot',radius:3,weight:1.5,interactive:false}).addTo(layer)}
-    // Rent labels fill from the start in proportion to the rent (the top price pulled = full), a second cue next to the dial.
-    const fill=VIEWS.includes(metric)&&c.val>0?';--f:'+share(c.val)+'%':'';
-    const html='<div class="rl'+(c.single?'':' grp')+(fill?' rent':'')+(g.every(o=>o.thin)?' thin':'')+'" style="--c:'+colorOf(c.val)+fill+'" tabindex="0"><b>'+pie(c.val,metric)+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">'+T('avg')+'</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
+    // The figure sits on a badge in its price-key colour, so the price reads at a glance; the area name underneath.
+    const html='<div class="rl'+(c.single?'':' grp')+(g.every(o=>o.thin)?' thin':'')+'" style="--c:'+colorOf(c.val)+';--on:'+LABEL.inkOf(c.val)+'" tabindex="0"><b>'+safe(labelText(c.val,metric))+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
     const m=L.marker(pos,{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
     // Keyboard: the label is a button. Enter or Space opens its breakdown, or zooms into a group.
@@ -199,7 +205,7 @@ function renderLabels(){
       el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(c.single)m.openPopup();else m.fire('click')}})}
     if(c.single)m.bindPopup(popup(g[0].a),{maxWidth:320});
     else m.on('click',()=>{const b=L.latLngBounds(g.map(o=>[o.a.lat,o.a.lng])),z=map.getBoundsZoom(b,false,L.point(140,140));
-      if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<span class="t">'+T.count(g.length,'area')+'</span>'+safe(labelText(c.val,metric))+(metric==='n'?'':' '+T('average'))+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(o.a.label)+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
+      if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<span class="t">'+T.count(g.length,'area')+'</span>'+(metric==='n'?safe(labelText(c.val,metric)):T('Typical {v}',{v:safe(labelText(c.val,metric))}))+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(o.a.label)+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
       else map.fitBounds(b,{padding:[70,70],maxZoom:16})});
   }
   // Labels answer a filter change by settling in from the centre; plain zooming redraws instantly.
@@ -208,17 +214,18 @@ function renderLabels(){
     G.fromTo(els,{opacity:0},{opacity:1,duration:.35,ease:'power1.out',stagger:{each:.008,from:'center'}});}
 }
 map.on('zoomend',renderLabels);
+// Label boxes are measured with the label fonts: once they have loaded, place the labels again.
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{BOXES.clear();if(LABEL.metric)renderLabels()});
 
-// The headline number: contract-weighted average of what is on screen.
+// The headline number ("typical"): the contract-weighted average of the medians on screen.
 function viewStat(){
   const metric=LABEL.metric,b=map.getBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0);
-  const what=metric==='n'?T('Contracts'):metric==='median_sqm'?T('Average rent per m²'):metric==='yield'?T('Average gross yield'):metric==='sale'?T('Average sale price'):T('Average yearly rent');
+  const what=metric==='n'?T('Contracts'):metric==='median_sqm'?T('Typical rent per m²'):metric==='yield'?T('Typical gross yield'):metric==='sale'?T('Typical sale price'):T('Typical yearly rent');
   $('medLabel').textContent=T('{what} in view',{what})+(vis.length?' · '+T.count(vis.length,'area')+T(', ')+($('unit').value?T.unit($('unit').value):TYPENAME()).toLowerCase():'');
-  if(!vis.length||!N){odometer($('med'),null);$('medPie').hidden=true;
+  if(!vis.length||!N){odometer($('med'),null);
     const perUnitOnly=!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'&&a.lat!=null&&b.contains([a.lat,a.lng]));
     $('medLabel').textContent=perUnitOnly?T('Areas here have figures per unit only: pick a unit (e.g. 1 bed) to see them.'):T('Nothing to show here for {type}. Zoom out to see more.',{type:TYPENAME().toLowerCase()});return}
   const v=metric==='n'?N:vis.reduce((s,p)=>s+p.v*p.n,0)/N;
-  const mp=$('medPie');mp.hidden=!VIEWS.includes(metric);mp.style.setProperty('--p',share(v)+'%');mp.style.setProperty('--c',LABEL.colorOf?LABEL.colorOf(v):'var(--b3)');
   if(metric==='yield'){$('med').textContent=v.toFixed(1)+'%';$('med')._sig=null;return}
   const step=metric==='median_sqm'?1:metric==='sale'?1000:100;
   odometer($('med'),metric==='n'?v:Math.round(v/step)*step,metric==='n'?'':'AED ');
@@ -235,14 +242,13 @@ async function init(){
   catch(e){$('rows').innerHTML='<tr><td>'+T('The rent data could not be loaded. Reload the page; if it keeps failing, the daily update has not run yet.')+'</td></tr>';window.atlasState='error';dispatchEvent(new Event('atlas:error'));return}
   CACHE.homes=AREAS;
   AGG=META.mode==='aggregate';
-  buildTypes();
   const age=staleness(META,Date.now());
   $('newestLabel').textContent=AGG?T('Data runs through'):T('Newest contract start');
   $('newest').textContent=age?niceDate(age.through):'—';
-  $('fresh').innerHTML=(AGG?T('Weekly'):T('Daily'))+'<small>'+safe(T('Updated {t}',{t:kuwait(META.generated_at)}))+'</small>';
+  $('fresh').innerHTML=(META.generated_at?safe(new Date(META.generated_at).toLocaleString(T.locale,{timeZone:'Asia/Kuwait',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})):'—')+'<small>'+safe(T('Kuwait time. New data is looked for three times a day.'))+'</small>';
   $('updated').textContent=AGG?T('Median yearly rent by area and unit, last 12 months'):T('Contracts that started in the last 30 days, newest first');
   $('tableTitle').textContent=AGG?T('Rents by area'):T('Newest contracts');
-  if(AGG){const o=$('metric').querySelector('option[value=median_sqm]');o.value='yield';o.textContent=T('Gross rental yield')}
+  if(AGG){const o=$('metric').querySelector('option[value=median_sqm]');o.value='yield';o.textContent=T('Yield')}
   if(!AREAS.some(a=>a.sale_median||a.by_unit.some(u=>u.sale))){const o=$('metric').querySelector('option[value=sale]');if(o)o.remove()}
   if(age&&age.stale){
     $('staleText').innerHTML='<b>'+T('This data is {n} days old',{n:age.days})+'</b> '+safe(T('(to {d}).',{d:niceDate(age.through)}))+'<span class="more"> '+
@@ -254,7 +260,7 @@ async function init(){
   const un=META.unmatched_areas||[];$('unmatchedN').textContent=un.length;
   $('unmatched').innerHTML=un.map(x=>'<li>'+safe(x.area)+' <span class="muted">('+fmt(x.n)+')</span></li>').join('')||'<li class="muted">'+T('None')+'</li>';
   $('foot').textContent=META.source||'';
-  fillUnits();draw();intro();
+  fillUnits();buildHome();draw();intro();
   window.atlasState='ready';dispatchEvent(new Event('atlas:ready')); // assets/app/companion.js takes it from here
 }
 
@@ -264,29 +270,22 @@ function sources(){
     return '<li>'+safe(x.name)+': <span class="'+cls+'">'+safe(x.status||T('not run yet'))+'</span>'+(x.last_ok_at?' <span class="muted">('+safe(T('last success {t}',{t:kuwait(x.last_ok_at)}))+')</span>':'')+'</li>'}).join('')||'<li>'+T('Dubai Land Department Ejari contracts')+'</li>';
 }
 
-// Only the property types that have data get a button, so every button works.
-function buildTypes(){
+// One home picker: all homes, each home size, and the other property types that have data (e.g. flats of any
+// size). An option is a property type and a unit; it fills the type (TYPE) and the hidden #unit behind it.
+// A type already covered by a unit (studios) isn't offered twice.
+function buildHome(){
   const have=new Set((META.property_types||[{key:'homes'}]).filter(t=>t.key==='homes'||t.n>0).map(t=>t.key));
-  const seg=$('types');
-  TYPES.filter(([k])=>have.has(k)).forEach(([k,lbl])=>{const b=document.createElement('button');b.type='button';b.textContent=lbl;b.dataset.k=k;
-    b.setAttribute('aria-pressed',k===TYPE);b.onclick=()=>setType(k);seg.append(b)});
-  const missing=TYPES.filter(([k])=>!have.has(k)).map(([,l])=>l);
-  if(missing.length){$('typesNote').hidden=false;
-    $('typesNote').textContent=T('{list} will appear once daily contract data is switched on.',{list:T.list(missing)})}
-  requestAnimationFrame(()=>movePlate(false));
+  const units=[...$('unit').options].map(o=>o.value).filter(Boolean);
+  const opts=[['homes','',T('All homes')],...units.map(u=>['homes',u,T.unit(u)])];
+  for(const [k,lbl] of TYPES)if(k!=='homes'&&have.has(k)&&!(k==='studio'&&units.some(u=>/^studio/i.test(u))))opts.push([k,'',k==='flat'?T('Flats, any size'):lbl]);
+  $('home').innerHTML=opts.map(([k,u,l])=>'<option value="'+safe(k+'|'+u)+'">'+safe(l)+'</option>').join('');
+  $('home').value='homes|'+$('unit').value;
 }
-function movePlate(anim){
-  const b=$('types').querySelector('button[aria-pressed="true"]');if(!b)return;
-  const x=b.offsetLeft,w=b.offsetWidth;
-  if(FX&&anim)G.to('#plate',{x,width:w,duration:.38,ease:'power3.inOut'});else{G?G.set('#plate',{x,width:w}):Object.assign($('plate').style,{transform:'translateX('+x+'px)',width:w+'px'})}
+async function setHome(k,u){
+  if(k!==TYPE){TYPE=k;try{AREAS=CACHE[k]||(CACHE[k]=(await getJSON('data/areas_'+k+'.json')).areas)}catch(e){AREAS=[]}}
+  unitChosen=true;fillUnits();$('unit').value=[...$('unit').options].some(o=>o.value===u)?u:'';animateLabels=true;draw();
 }
-addEventListener('resize',()=>movePlate(false));
-async function setType(k){
-  if(k===TYPE)return;TYPE=k;
-  document.querySelectorAll('#types button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));movePlate(true);
-  try{AREAS=CACHE[k]||(CACHE[k]=(await getJSON('data/areas_'+k+'.json')).areas)}catch(e){AREAS=[]}
-  fillUnits();animateLabels=true;draw();
-}
+$('home').addEventListener('change',e=>{const [k,u]=e.target.value.split('|');setHome(k,u||'')});
 let unitChosen=false; // until the visitor picks a unit, the map starts on 1-bedroom: the one measure every area has
 function fillUnits(){
   const keep=$('unit').value,units=new Map();
@@ -341,7 +340,7 @@ function popup(a){
       :a.median_kind==='typical'?T('Typical {aed} a year (average of the bedroom medians below) from ',{aed:aed(a.median)}):T('Median {aed} a year from ',{aed:aed(a.median)}))+T.count(a.n,'contract')+
     (a.p25!=null?'<br>'+T('Middle half pay AED {a} to {b}',{a:fmt(a.p25),b:fmt(a.p75)}):'')+'<br>'+
     (a.median_sqm?T('AED {v} per m² a year',{v:fmt(a.median_sqm)})+'<br>':'')+
-    (a.yield_pct!=null?T('Gross yield {v}%',{v:a.yield_pct})+(a.sale_median?T(', median sale price AED {v}',{v:fmt(a.sale_median)}):'')+'<br>':'')+
+    (a.yield_pct!=null?T('Gross yield {v}%',{v:Number(a.yield_pct).toFixed(1)})+(a.sale_median?T(', median sale price AED {v}',{v:fmt(a.sale_median)}):'')+'<br>':'')+
     (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+saleTrend(a)+
     (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr'+(u.n!=null&&u.n<THIN?' class="thin" title="'+safe(T('Fewer than {n} contracts: a thin figure',{n:THIN}))+'"':'')+'><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>'+(a.by_unit.some(u=>u.n!=null&&u.n<THIN)?'<small>'+T('Italic rows: fewer than {n} contracts, so treat them as a rough guide.',{n:THIN})+'</small><br>':''):'')+
     (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<table><tr><th>'+T('Busiest buildings')+'</th><th>n</th><th>'+T('Median')+'</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
@@ -486,10 +485,17 @@ addEventListener('keydown',e=>{
   if(e.key==='Escape')closeSheet();
 },true);
 
+// The legend folds to its colour bar; phones start folded, so more of the map shows.
+const legendFolded=()=>{try{const v=localStorage.getItem('legendFolded');if(v)return v==='1'}catch(e){}return SHEET_MQ.matches};
+$('legend').addEventListener('click',e=>{if(!e.target.closest('.t'))return;const now=!$('legend').classList.contains('folded');
+  try{localStorage.setItem('legendFolded',now?'1':'0')}catch(_){}
+  $('legend').classList.toggle('folded',now);e.target.closest('.t').setAttribute('aria-expanded',!now);popupMargins();renderLabels()});
+L.DomEvent.disableClickPropagation($('legend'));
 function draw(){
+  // The finder above the table filters the table only; the map always shows every area.
   const q=$('search').value.trim().toLowerCase(),unit=$('unit').value,metric=$('metric').value,min=+$('min').value||0,max=+$('max').value||Infinity;
   const match=a=>!q||(a.label+' '+a.dld_areas.join(' ')+' '+(a.top_projects||[]).map(p=>p.p).join(' ')).toLowerCase().includes(q);
-  const shown=AREAS.filter(a=>a.lat!=null&&match(a));
+  const shown=AREAS.filter(a=>a.lat!=null);
   POINTS=[];for(const a of shown){const v=areaValue(a,metric,unit);if(v==null)continue;const bu=unit?(a.by_unit.find(u=>u.u===unit)||{}):null;
     // Weight for averages: the unit's contracts; where a source gives none per unit, a rough share of the area total.
     const n=bu?(bu.n!=null?bu.n:Math.round(a.n/Math.max(1,a.by_unit.length)))||0:a.n;
@@ -497,18 +503,23 @@ function draw(){
     const thin=bu?(bu.n!=null&&bu.n<THIN):a.n<THIN;POINTS.push({a,v,n,thin})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
   const sc=scaleFor(vals),colorOf=sc.colorOf;
-  LABEL={metric,colorOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();drawOutlines();setTimeout(popupMargins,0);
+  LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();drawOutlines();setTimeout(popupMargins,0);
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
-  $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='sale'?T('Median sale price'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?'≤ '+f(sc.lo):'')+'</span><span>'+(vals.length?'≥ '+f(sc.hi):'')+'</span></div>';
+  // The key: a value at every step (the first and last also cover everything below and above them), and a
+  // title button that folds the notes away, leaving just the colour bar (remembered on this device).
+  const ticks=vals.length?Array.from({length:7},(_,i)=>f(sc.lo+(sc.hi-sc.lo)*i/6).replace(/^AED /,'')):[];
+  $('legend').innerHTML='<button type="button" class="t" aria-expanded="'+!legendFolded()+'">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Typical gross yield'):metric==='sale'?T('Typical sale price'):metric==='median_sqm'?T('Typical rent per m²'):T('Typical yearly rent'))+(metric==='yield'||metric==='n'?'':' <span class="u">(AED)</span>')+'<span class="chev" aria-hidden="true"></span></button>'+
+    '<div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ticks" title="'+safe(T('Below the first value: the lightest blue; above the last: the darkest'))+'">'+ticks.map(t=>'<span>'+t+'</span>').join('')+'</div>';
+  $('legend').classList.toggle('folded',legendFolded());
   if(metric!=='median'&&AREAS.some(a=>a.lat!=null&&areaValue(a,'median',unit)!=null&&areaValue(a,metric,unit)==null))
     $('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts have rents only, so they show in the rent view.')+'</div>');
   if(POINTS.some(p=>p.thin))$('legend').insertAdjacentHTML('beforeend','<div class="note"><span class="thinMark"></span>'+T('Dashed: fewer than {n} contracts',{n:THIN})+'</div>');
-  if(VIEWS.includes(metric))$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%;--c:var(--b5)"></i>'+T('Dial: share of {top}; 95% of areas are below it',{top:labelText(LABEL.top,metric)})+'</div>');
   syncViews();
   if(!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts (no all-homes median): pick a unit to see them')+'</div>');
-  const inArea=AREAS.filter(match);
-  odometer($('n12'),inArea.reduce((s,a)=>s+a.n,0));odometer($('mapped'),shown.reduce((s,a)=>s+a.n,0));
+  const all=AREAS.reduce((s,a)=>s+a.n,0),placed=shown.reduce((s,a)=>s+a.n,0);
+  odometer($('n12'),all);
+  $('mapped').innerHTML=(all?safe((Math.floor(placed/all*1000)/10).toFixed(1))+'%':'—')+'<small>'+safe(T('of these contracts, in {n}',{n:T.count(shown.length,'area')}))+'</small>';
   const kinds=KIND_IN[TYPE];
   const rowKind=r=>AGG?(/^studio/i.test(r.u)?'studio':/apartment/i.test(r.u)?'flat':null):(r.k||'flat');
   view=ROWS.filter(r=>(!kinds||kinds.includes(rowKind(r))||(AGG&&TYPE==='homes'))&&(!unit||r.u===unit)&&r.a>=min&&r.a<=max&&(!q||[r.c,r.ar,r.mp,r.p].filter(Boolean).join(' ').toLowerCase().includes(q)));
@@ -518,14 +529,14 @@ function table(){
   const tb=$('rows');tb.replaceChildren();
   const cell=(tr,v,r)=>{const td=document.createElement('td');td.textContent=v;if(r)td.className='r';tr.append(td)};
   if(AGG){
-    const m=$('metric').value;
+    const m=$('metric').value,one=$('unit').value; // one home size picked: it goes in the subtitle, not on every row
     $('tableTitle').textContent=m==='sale'?T('Sale prices by area'):m==='yield'?T('Yields by area'):T('Rents by area');
-    $('updated').textContent=m==='sale'?T('Median sale price by area and unit, from registered sales'):m==='yield'?T('Gross rental yield by area and unit'):T('Median yearly rent by area and unit, last 12 months');
-    $('thead').innerHTML='<tr><th>'+T('Area')+' <small>'+T('DLD area')+'</small></th><th>'+T('Unit')+'</th><th class="r">'+T('Median yearly rent (AED)')+'</th><th class="r">'+T('Contracts')+'</th><th class="r">'+T('Median sale price (AED)')+'</th><th class="r">'+T('Gross yield')+'</th></tr>';
+    $('updated').textContent=(m==='sale'?T('Median sale price by area and unit, from registered sales'):m==='yield'?T('Gross rental yield by area and unit'):T('Median yearly rent by area and unit, last 12 months'))+(one?' · '+T.unit(one):'');
+    $('thead').innerHTML='<tr><th>'+T('Area')+' <small>'+T('DLD area')+'</small></th>'+(one?'':'<th>'+T('Unit')+'</th>')+'<th class="r">'+T('Median yearly rent (AED)')+'</th><th class="r">'+T('Contracts')+'</th><th class="r">'+T('Median sale price (AED)')+'</th><th class="r">'+T('Gross yield')+'</th></tr>';
     // The view's own column leads: rows sorted by it, highest first, when sale price or yield is shown.
     const key=m==='sale'?'s':m==='yield'?'y':null,rows=key?[...view].sort((x,y)=>(y[key]??-1)-(x[key]??-1)):view;
-    for(const r of rows){const tr=document.createElement('tr');{const td=document.createElement('td');td.className='w';td.append(r.c);if(r.ar&&r.ar!==r.c){const sm=document.createElement('small');sm.textContent=r.ar;td.append(sm)}tr.append(td)}cell(tr,T.unit(r.u));tr.lastChild.className='u';cell(tr,fmt(r.a),1);cell(tr,fmt(r.n),1);cell(tr,r.s?fmt(r.s):'',1);cell(tr,r.y!=null?r.y+'%':'',1);tb.append(tr)}
-    if(!view.length)tb.innerHTML='<tr><td colspan="6">'+T('No areas match. Clear the search or widen the rent range.')+'</td></tr>';
+    for(const r of rows){const tr=document.createElement('tr');{const td=document.createElement('td');td.className='w';td.append(r.c);if(r.ar&&r.ar!==r.c){const sm=document.createElement('small');sm.textContent=r.ar;td.append(sm)}tr.append(td)}if(!one){cell(tr,T.unit(r.u));tr.lastChild.className='u'}cell(tr,fmt(r.a),1);cell(tr,fmt(r.n),1);cell(tr,r.s?fmt(r.s):'',1);cell(tr,r.y!=null?pct(r.y):'',1);tb.append(tr)}
+    if(!view.length)tb.innerHTML='<tr><td colspan="'+(one?5:6)+'">'+T('No areas match. Clear the search or widen the rent range.')+'</td></tr>';
     return;
   }
   $('thead').innerHTML='<tr><th>'+T('Start')+'</th><th>'+T('Area')+'</th><th>'+T('Building')+'</th><th>'+T('Unit')+'</th><th class="r">'+T('Yearly rent (AED)')+'</th><th class="r">m²</th><th class="r">'+T('AED per m²')+'</th><th>'+T('New or renewal')+'</th></tr>';
@@ -537,7 +548,7 @@ function table(){
 
 let typing;
 ['search','min','max'].forEach(id=>$(id).addEventListener('input',()=>{clearTimeout(typing);typing=setTimeout(()=>{animateLabels=true;draw()},150)}));
-['unit','metric'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='unit')unitChosen=true;animateLabels=true;draw()}));
+$('metric').addEventListener('change',()=>{animateLabels=true;draw()});
 const csvCell=x=>{const s=String(x??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
 $('export').onclick=()=>{
   const [head,keys,name]=AGG?[['area','dld_area','unit','median_yearly_rent_aed','contracts_12m','median_sale_price_aed','gross_yield_pct'],['c','ar','u','a','n','s','y'],'dubai-real-estate-by-area.csv']
@@ -546,25 +557,7 @@ $('export').onclick=()=>{
   const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
 $('staleX').onclick=()=>{$('stale').classList.remove('on');try{sessionStorage.setItem('staleHidden',(staleness(META,Date.now())||{}).through||'')}catch(e){}map.invalidateSize()};
 
-// Phone: filters live in a sheet that slides up.
-const side=$('side'),scrim=$('scrim'),phone=matchMedia('(max-width:860px)');
 let lenis=null;
-function sheet(open){
-  if(!phone.matches)return;
-  side.classList.toggle('open',true);scrim.classList.toggle('on',open);$('openSheet').setAttribute('aria-expanded',open);
-  if(lenis)open?lenis.stop():lenis.start();
-  const done=()=>{if(!open)side.classList.remove('open')};
-  if(FX){G.to(side,{y:0,yPercent:open?0:105,duration:open?.42:.3,ease:open?'power3.out':'power2.in',onComplete:done});G.to(scrim,{opacity:open?1:0,duration:.3})}
-  else{side.style.transform=open?'none':'';scrim.style.opacity=open?1:0;done()}
-  if(open)setTimeout(()=>$('search').focus({preventScroll:true}),350);
-}
-$('openSheet').onclick=()=>sheet(true);$('closeSheet').onclick=scrim.onclick=()=>sheet(false);
-addEventListener('keydown',e=>{if(e.key==='Escape')sheet(false)});
-phone.addEventListener('change',()=>{side.classList.remove('open');side.style.transform='';if(G)G.set(side,{clearProps:'transform'});scrim.classList.remove('on');setTimeout(()=>{map.invalidateSize();movePlate(false)},60)});
-// The sheet's fields move into it only on phones; on wide screens they sit in the filter bar.
-if(G)G.set(side,{y:0,yPercent:phone.matches?105:0});
-phone.addEventListener('change',e=>{if(G)G.set(side,{y:0,yPercent:e.matches?105:0})});
-
 // Smooth scrolling (Lenis). The map and the table keep their own scrolling.
 if(window.Lenis&&FX){lenis=new Lenis({lerp:.12,wheelMultiplier:1});G.ticker.add(t=>lenis.raf(t*1000));G.ticker.lagSmoothing(0)}
 

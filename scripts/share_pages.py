@@ -60,7 +60,7 @@ def _units(a, e):
         rows.append("<tr{cls}><td>{u}</td><td class=r>{r}</td><td class=r>{n}</td><td class=r>{s}</td><td class=r>{y}</td></tr>".format(
             cls=' class="thin"' if thin else "", u=e(u["u"]), r=aed(u["median"]),
             n=f'{u["n"]:,}' if u.get("n") is not None else "—", s=aed(u["sale"]) if u.get("sale") else "—",
-            y=f'{u["yield"]}%' if u.get("yield") is not None else "—"))
+            y=f'{u["yield"]:.1f}%' if u.get("yield") is not None else "—"))
     if not rows:
         return ""
     return ("<table><thead><tr><th>Home</th><th class=r>Median yearly rent</th><th class=r>Contracts</th>"
@@ -92,7 +92,7 @@ def page(a, through):
         summary.append(f"<li><b>{aed(a['sale_median'])}</b> median sale price"
                        + (f", {a['sale_yoy']:+.1f}% on a year ago (price per sq ft)" if a.get("sale_yoy") is not None else "") + "</li>")
     if a.get("yield_pct") is not None:
-        summary.append(f"<li><b>{a['yield_pct']}%</b> gross rental yield</li>")
+        summary.append(f"<li><b>{a['yield_pct']:.1f}%</b> gross rental yield</li>")
     dld = ", ".join(e(d) for d in a.get("dld_areas") or [])
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">

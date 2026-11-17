@@ -84,7 +84,8 @@
 .legend .note{font-size:11px;color:var(--muted);margin-top:4px;max-width:230px}
 /* Dark mode: actions are gold with ink type (5.9:1); outline buttons gold on ink. */
 /* Rent dial in the rent check (style in index.html): share of AED 100k */
-.ck-big .pie{width:.6em;height:.6em;vertical-align:.02em;margin-inline-end:.2em}
+/* The figure's price-key colour, as on the map's badges. */
+.ck-big .keyChip{display:inline-block;width:.55em;height:.55em;border-radius:3px;vertical-align:.04em;margin-inline-end:.22em;background:var(--c);box-shadow:inset 0 0 0 1px rgba(43,33,24,.3)}
 @media (min-width:1100px){
   /* Compact in the left pane: two rows (area + home, rent + Check), smaller type, less padding. */
   #companion{padding-top:10px}

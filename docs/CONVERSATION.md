@@ -225,6 +225,10 @@ Then "fix the table scroll at 1100 too": done, all six columns fit at every two-
 
 All done in one pass (decisions, thirty-eighth pass): the breakdown pans clear of the buttons and legend; the DLD area moved under the area name so the table fits; trend lines show lowest/highest value and first/middle/last month.
 
+### 17 Nov · "critique the user interface, how can it be made better?" → "do it all, merge on main"
+
+All seven items done in one pass (decisions, thirty-ninth pass): duplicate controls merged (one Home picker, one map bar with an A+ع names button, the rent check as the search, a table-only finder, no filter sheet); figures on badges in their price colour, merged labels named "JLT +12", no dials, step values on the legend; "typical" wording and one-decimal yields; a shorter phone header with the map higher; softer dark-mode labels; clearer key figures; a folding legend and All Dubai joined to the zoom buttons.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

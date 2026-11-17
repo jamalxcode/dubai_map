@@ -16,13 +16,13 @@ These are the goals the owner set while building the project (see [CONVERSATION.
 ## 2. Readable at a glance: rents as text, one number per group
 
 - ✅ The rent is written **as text on the map** (e.g. "AED 67k · Jumeirah Village Circle"). No sized or coloured circles to decode.
-- ✅ When communities are too close to read separately, they merge into **one label with one number**, the average rent of the group, weighted by number of contracts (e.g. "AED 75k avg · 22 communities").
+- ✅ When communities are too close to read separately, they merge into **one label with one number**, the typical rent of the group (weighted by number of contracts), named after its busiest area (e.g. "AED 75k · JLT +12").
 - ✅ Labels never overlap at any zoom. Merging repeats until they don't. Tested on desktop and phone widths.
 - ✅ Zoomed in, areas keep their own names: a group of two or three comes apart when there is room, one label moved beside its point with a thin line (at zoom 14, merged labels went from 12 to 1). Labels keep clear of the zoom buttons and legend.
 - ✅ Clicking a group zooms in until it splits. Clicking a single community shows its unit-by-unit breakdown.
-- ✅ One headline number for the screen: **Average rent in view**, updated as you pan and zoom.
-- ✅ The unit-type filter (studio, 1-bed…) and the measure selector (rent, gross yield, contract count) drive the labels and the headline number.
-- 🔶 Secondary cues only, in six blues (palest to deep navy): a coloured edge, a small dial and a shaded box showing the rent's share of the top of the key (the 95th percentile, so extreme areas don't stretch it). The text carries the information, in the "golden note" palette (oxblood, ivory, gold leaf, espresso, warm gray).
+- ✅ One headline number for the screen: **Typical rent in view**, updated as you pan and zoom.
+- ✅ One home picker (all homes, each size, flats of any size) and one view bar on the map (rent, sale price, gross yield) drive the labels and the headline number.
+- ✅ Price at a glance: each figure sits on a badge in one of six blues (palest to deep navy, trimmed to the 5th-95th percentile so extreme areas don't stretch it), with a value at every step of the key. The text carries the information; surfaces use the "golden note" palette (oxblood, ivory, gold leaf, espresso, warm gray).
 
 ## 3. Be a good citizen with data sources: never get blocked
 
@@ -94,7 +94,7 @@ Set on 16 Nov after the third critique.
 - ✅ **Accessible:** WCAG 2.1 AA in light, dark and Arabic, checked on every push; labels work by keyboard.
 - ✅ **Phones first:** the map stays high on the first screen; no sideways scrolling down to 320 px (fold phone covers, small phones). Drilling into an area opens a bottom sheet with the photos first, large and swipeable, and a full-screen photo viewer.
 - ✅ **See the place:** an area's breakdown links to Google Maps, Street View and Google photos, and shows freely licensed photos taken nearby (Wikimedia Commons), each credited. Nothing is copied from Google; where no free photo exists, only the links show.
-- ✅ **One language on the map:** a button on the map (English · عربي · Both) sets the language of the base map's place and street names, instead of the mix the classic tiles print. Starts in the page's language, remembered.
+- ✅ **One language on the map:** the base map's place and street names follow the page language (English or Arabic), instead of the mix the classic tiles print; one button (A+ع) shows both, remembered.
 - ⏳ Arabic area names for the rent labels; other cities (goal 6).
 
 ## Ideas on the table

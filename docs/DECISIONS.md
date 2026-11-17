@@ -420,7 +420,19 @@ Data rebuilt after merging (daily pull for the trend file, placement job for the
 3. **Table at 1,100 px:** the side pane is 20 px wider at its narrowest (440 px), and in it the table uses 12 px figures and 6 px padding, so all six columns fit with no sideways scroll at any two-pane width.
 4. **Trend scales:** both trend lines show their lowest and highest value and the first, middle and last month.
 
+## Decision on 2026-11-17 (thirty-ninth pass): the interface critique, all seven done
+
+1. **One control per job.** The map's names follow the page language; the old English · عربي · Both group became one **A+ع** button in the map's bar (both scripts). The "Labels show" menu is gone (the map bar is the only view picker; the contract-count view went with it). The "Community or building" box is gone: the rent check is the area search, and a **Find in the table** box above the table filters the table only. Homes / Flats / Studios and the Unit menu became one **Home** picker (all homes, each size, "Flats, any size"); the note about villas and commercial coming later is gone. The phone filter sheet and its Filters button went too: the picker and rent range fit on one row.
+2. **Price at a glance.** Each figure sits on a badge in its band's blue (espresso or ivory type, 5.0:1 or more), instead of a faint tint, an edge and a dial. Merged labels always name their busiest area and count the rest ("JLT +12"), never "13 areas". The dial is gone (also from the header and the rent check, which shows a colour chip). The legend has a value at every step edge.
+3. **One word: "typical"** for the headline, the legend and merged labels (contract-weighted averages of medians); "median" stays where a figure is exactly one median. Yields always show one decimal.
+4. **Phone:** no tagline in the header, the rent check on one line, the home picker and rent range on one row, the legend folded: the map starts about 45 px higher (at 351 px on a 390 × 800 screen). One bar on the map instead of two rows.
+5. **Dark mode:** price labels stay ivory cards but smaller (15 px figures), with a thin dark edge and no gold stack.
+6. **Wording:** "Placed on the map 531,593" became "On the map 99.4% of these contracts, in 155 areas"; "Data: Weekly" became "Last updated 17 Nov, 09:00, Kuwait time; new data is looked for three times a day". With one home size picked the table drops its unit column and names it in the subtitle.
+7. **Small items:** the legend folds to its colour bar (remembered; phones start folded); All Dubai is the third button of the zoom bar; label boxes are now measured from a hidden label drawn with the same styles (the old estimate let a label slip under the map's buttons).
+
 ## Change log
+
+- 2026-11-17: Interface critique: one control per job (Home picker, one map bar, names follow the page, table finder), price badges, "typical", one-decimal yields, a shorter phone header, softer dark labels, a folding legend with step values, All Dubai in the zoom bar.
 
 - 2026-11-17: Breakdowns no longer open under the map's buttons; the rents table fits (at 1,100 px too); trend lines have scales.
 

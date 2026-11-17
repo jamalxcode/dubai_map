@@ -36,7 +36,7 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
       <p data-t="tagline">What tenants <b>actually pay</b> per year, from rent contracts registered in Ejari with the Dubai Land Department. Not asking prices.</p>
     </div>
     <div class="big" aria-live="polite">
-      <span class="num"><i class="pie" id="medPie" aria-hidden="true" hidden></i><span id="med" aria-label="—">—</span></span>
+      <span class="num"><span id="med" aria-label="—">—</span></span>
       <span class="cap" id="medLabel">Average yearly rent in view</span>
     </div>
   </div>
@@ -44,19 +44,14 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
 
 <section class="wrap" id="companion" aria-labelledby="ckTitle"></section>
 
-<div class="scrim" id="scrim"></div>
 <nav class="controls" aria-label="Filters" data-t-aria="filters">
   <div class="wrap">
-    <div class="seg" id="types" role="group" aria-label="Property type" data-t-aria="ptype"><span class="plate" id="plate"></span></div>
-    <p class="typesNote" id="typesNote" hidden></p>
-    <div class="sheet" id="side">
-      <div class="sheetHead"><b data-t="filters">Filters</b><button class="btn" id="closeSheet" type="button" data-t="done">Done</button></div>
-      <label class="field f-search"><span data-t="f.search">Community or building</span><input id="search" type="search" placeholder="e.g. JVC, Marina, Karama" data-t-ph="f.search.ph" autocomplete="off"></label>
-      <label class="field f-unit"><span data-t="f.unit">Unit</span><select id="unit"><option value="">All units</option></select></label>
-      <label class="field f-metric"><span data-t="f.metric">Labels show</span><select id="metric"><option value="median" data-t="m.median">Median yearly rent</option><option value="sale" data-t="m.sale">Median sale price</option><option value="median_sqm" data-t="m.sqm">Rent per m² per year</option><option value="n" data-t="m.n">Number of contracts</option></select></label>
-      <label class="field f-num"><span data-t="f.min">Min rent (AED)</span><input id="min" type="number" min="0" inputmode="numeric" placeholder="0"></label>
-      <label class="field f-num"><span data-t="f.max">Max rent (AED)</span><input id="max" type="number" min="0" inputmode="numeric" placeholder="Any" data-t-ph="any"></label>
-    </div>
+    <label class="field f-home"><span data-t="f.home">Home</span><select id="home"></select></label>
+    <label class="field f-num"><span data-t="f.min">Min rent (AED)</span><input id="min" type="number" min="0" inputmode="numeric" placeholder="0"></label>
+    <label class="field f-num"><span data-t="f.max">Max rent (AED)</span><input id="max" type="number" min="0" inputmode="numeric" placeholder="Any" data-t-ph="any"></label>
+    <!-- State behind the home picker and the map's Rent / Sale price / Yield bar (atlas.js). -->
+    <select id="unit" hidden aria-hidden="true" tabindex="-1"><option value="">All units</option></select>
+    <select id="metric" hidden aria-hidden="true" tabindex="-1"><option value="median">Rent</option><option value="sale">Sale price</option><option value="median_sqm">Rent per m²</option></select>
   </div>
 </nav>
 
@@ -68,16 +63,17 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
   <section class="wrap factsArea" aria-label="Key figures" data-t-aria="facts">
     <dl class="facts">
       <div><dt data-t="d.n12">Contracts, last 12 months</dt><dd id="n12">—</dd></div>
-      <div><dt data-t="d.mapped">Placed on the map</dt><dd id="mapped">—</dd></div>
+      <div><dt data-t="d.mapped2">On the map</dt><dd id="mapped">—</dd></div>
       <div><dt id="newestLabel">Newest contract start</dt><dd id="newest">—</dd></div>
-      <div><dt data-t="d.data">Data</dt><dd id="fresh">—</dd></div>
+      <div><dt data-t="d.updated">Last updated</dt><dd id="fresh">—</dd></div>
     </dl>
   </section>
 
   <section class="wrap" aria-labelledby="tableTitle">
     <div class="tableHead">
       <div><h2 id="tableTitle">Newest contracts</h2><p id="updated">—</p></div>
-      <button id="export" class="btn" type="button" data-t="csv">Download CSV</button>
+      <div class="tableTools"><label class="tblFind"><span class="vh" data-t="f.find">Find in the table</span><input id="search" type="search" placeholder="Find in the table" data-t-ph="f.find.ph" autocomplete="off"></label>
+      <button id="export" class="btn" type="button" data-t="csv">Download CSV</button></div>
     </div>
     <div class="tableWrap" data-lenis-prevent tabindex="0" role="region" aria-label="Rents table (scrolls)" data-t-aria="table"><table><thead id="thead"></thead><tbody id="rows"><tr><td class="muted" data-t="loadingRents">Loading rents…</td></tr></tbody></table></div>
   </section>
@@ -86,7 +82,7 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
     <div class="wrap">
       <div>
         <h3 data-t="a.read">Reading the map</h3>
-        <p data-t="a.read1">Each label is an area's median yearly rent for the property type you picked. Where areas sit too close to read, they merge into one blue label with the average, weighted by the number of contracts. Tap it to zoom in; tap a white label for the breakdown by unit.</p>
+        <p data-t="a.read1">Each label shows an area's typical yearly rent (its median) for the home you picked, on a badge in its price colour. Where areas sit too close to read, they merge into one label named after the busiest area with the number of others ("JLT +12"), showing their contract-weighted average. Tap it to zoom in; tap a single area's label for the breakdown by unit.</p>
         <p data-t="a.read2">Labels sit at an approximate reference point for each area, not on a building.</p>
       </div>
       <div>
@@ -115,7 +111,6 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
   </div>
 </section>
 </div><!-- /layout -->
-<button class="fab" id="openSheet" type="button" aria-controls="side" data-t="filters">Filters</button>
 
 <script src="assets/vendor/leaflet/leaflet.js"></script>
 <script src="assets/vendor/gsap/gsap.min.js"></script>

@@ -62,17 +62,21 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Rule | Value | Where |
 |---|---|---|
 | Starting view | 1-bedroom apartments, the one measure every area has | `atlas.js fillUnits` |
-| Map views | Rent (median yearly rent), Sale price (median sale price, from DLD sales), Gross yield (Dubai Data's, within property class and bedroom count). Per bedroom count where a unit is picked; for Flats/Studios a contract-weighted "typical" of the bedroom figures. Each view has its own key, trimmed to the 5th-95th percentile of its values, with its own dial top. Older districts (Continental Club) have rents only, so they show in the rent view only | `atlas.js VIEWS`, `areaValue`; `build.py aggregate_type` |
+| Map views | Rent (median yearly rent), Sale price (median sale price, from DLD sales), Gross yield (Dubai Data's, within property class and bedroom count). Per bedroom count where a unit is picked; for Flats/Studios a contract-weighted "typical" of the bedroom figures. Each view has its own key, trimmed to the 5th-95th percentile of its values. Older districts (Continental Club) have rents only, so they show in the rent view only | `atlas.js VIEWS`, `areaValue`; `build.py aggregate_type` |
 | "All units" | Only areas with an all-homes median; per-unit-only areas (older districts) appear once a unit is picked | `atlas.js areaValue` |
 | Merging | Labels that would overlap merge into one, showing the contract-weighted average (the total for counts) at the weighted centre; the busiest merge first | `assets/app/labels.js` |
 | Splitting | A merged label of up to 3 areas comes apart when each label fits at its own point or just beside it (a thin line joins a moved label to its point) | `labels.js MAX_SPLIT` |
-| Controls | Labels step out from under the zoom buttons and legend | `labels.js` |
-| Group names | 2–3 areas: the busiest area's name plus "+N"; more: "N areas" | `atlas.js groupName` |
+| Controls | Labels step out from under the zoom bar, the view bar and the legend; label boxes are measured as drawn | `labels.js`, `atlas.js labelBox` |
+| Group names | Every merged label: the busiest area's name (cut at 22 letters) plus "+N" others | `atlas.js groupName` |
+| Statistic wording | "Typical" for the headline (contract-weighted average of the medians in view), the legend and merged labels; "median" where a figure is exactly one median (breakdowns, the table) | `atlas.js viewStat`, `draw` |
+| Yields | One decimal everywhere (7.0%) | `atlas.js pct`, `companion.js`, `share_pages.py` |
+| Home picker | All homes, each home size (from the homes data), then other property types with data ("Flats, any size"); studios are a size, not offered again as a type | `atlas.js buildHome` |
+| Table finder | Filters the table's rows by area, DLD area, master project or building; never the map | `atlas.js draw` |
 | Never overlap | No two labels overlap at any zoom (browser-checked at the start, zoom 13 and zoom 14) | `tests/ui-check.mjs` |
-| Rent dial and shading | Fill = rent ÷ the top of the key (the 95th percentile of what is shown; the rent check uses the 95th percentile for the home type checked); dearer areas show a full dial | `atlas.js share`, `priceKey` |
-| Colour bands | Six blues (palest → deep navy, low → high) in equal steps between the 5th and 95th percentile of what is shown, so extreme areas don't stretch the key; below the 5th percentile: the palest, above the 95th: the deepest. Legend ends read "≤" and "≥" | `atlas.js scaleFor` |
-| Base map names | English: `name:en`, else `name_en`, else Latin, else the local name. Arabic: `name:ar`, else the local name. Both: the map style's own (Latin and local script). Starts in the page's language; the visitor's choice is remembered (`mapLang`). Road numbers are left alone | `atlas.js NAME_FIELD` |
-| Thin figures | A figure from fewer than 10 contracts (where the source gives a count) is still shown, with a dashed edge and outline and an italic figure on the map, italic rows in the breakdown and on area pages, and a legend note | `atlas.js THIN` |
+| Price badges | Each label's figure sits on its band's blue; espresso type on bands 1–4, ivory on 5–6. The rent check shows the same colour as a chip, from the key for the home type checked | `atlas.js scaleFor`, `INK`, `priceKey` |
+| Colour bands | Six blues (palest → deep navy, low → high) in equal steps between the 5th and 95th percentile of what is shown, so extreme areas don't stretch the key; below the 5th percentile: the palest, above the 95th: the deepest. The legend writes a value at all seven step edges | `atlas.js scaleFor` |
+| Base map names | English: `name:en`, else `name_en`, else Latin, else the local name. Arabic: `name:ar`, else the local name. Both: the map style's own (Latin and local script). Names follow the page language; the A+ع button shows both, remembered (`mapBoth`). Road numbers are left alone | `atlas.js NAME_FIELD` |
+| Thin figures | A figure from fewer than 10 contracts (where the source gives a count) is still shown, with a dashed outline and an italic figure on the map, italic rows in the breakdown and on area pages, and a legend note | `atlas.js THIN` |
 | Community outlines | Each map area is shaded inside the official Dubai Municipality outlines of its DLD areas, in its price-key colour for the current view; a DLD area shared by several map areas goes to the busiest (official boundaries don't separate sub-communities, so 44 of 155 areas have no outline of their own) | `build.area_outlines`, `dm_communities.write_outlines`, `atlas.js drawOutlines` |
 | Sale price trend | Monthly sale price per sq ft, last 24 months with at least 5 sales (Dubai Data community_monthly); year-on-year change = mean of the last 3 months against the same 3 months a year before | `build.sale_trends` |
 | Rent check moves the map | Wide screens (1,100 px and up): fly to the area at zoom 14 and open its breakdown. Not on narrower screens, not for a resumed check | `companion.js` |
@@ -128,9 +132,9 @@ The full interface rules (layout, colour, type, labels, controls, sheets, motion
 
 
 - WCAG 2.1 AA in light, dark and Arabic, checked with axe-core on every push (`tests/ui-check.mjs`).
-- Text on shaded labels uses colours checked by hand for 4.5:1, because axe can't measure text on a gradient.
+- Price badges: type colour per band, checked by hand for 4.5:1 (5.0:1 at the lowest).
 - Map labels are keyboard buttons; their spoken name is their visible text.
-- No sideways scrolling on phones, down to 320 px wide (small phones, fold phone covers). On phones the map starts in the top 60% of the first screen.
+- No sideways scrolling on phones, down to 320 px wide (small phones, fold phone covers). On phones the map starts in the top half of the first screen.
 - 860 px and narrower (phones, fold phones open or closed): an area's breakdown is a bottom sheet, full width up to 640 px, at most 80% of the screen high, photos and Google links first; it closes with ×, a swipe down, Escape or a tap on the map. Wider screens keep the pop-up.
 - Photos open in a full-screen viewer (all screens) at 960 px, with author, licence and a link to the photo's Commons page; swipe or arrows for the others.
 - Map buttons shrink on narrow screens (36 px at 860 px and below, 32 px at 400 px and below).

@@ -25,13 +25,13 @@ Then one clear next step: compare, save, set a reminder or see it on the map. On
 
 ### 🗺️ Read the city at a glance
 - Every area shows its rent **as text**: `AED 65k · Jumeirah Village Circle`. No colour legends to decode.
-- Every price wears the **price key**, from the palest blue (cheapest) to deep navy (dearest). A little **dial** and the label's shading show the rent as a share of the **top of the key**. The key ignores the most extreme 5% at each end, so one palace-priced area can't wash everything else out; those areas simply wear the deepest or palest blue.
-- Too crowded to read? Labels **merge** into one oxblood label with the contract-weighted average. Zoom in and they come apart. Two neighbours that only just collide get their own labels, one moved aside with a thin line to its spot. **Labels never overlap.** Ever. A test checks.
-- The big number up top is the **average rent of whatever is on screen**, rolling like an odometer as you pan.
+- Every price sits on a **badge in its price-key colour**, from the palest blue (cheapest) to deep navy (dearest), so you can read the city from across the room. The key has a value at every step, and ignores the most extreme 5% at each end, so one palace-priced area can't wash everything else out; those areas simply wear the deepest or palest blue.
+- Too crowded to read? Labels **merge** into one, named after the busiest area and how many more it holds ("JLT +12"), with their contract-weighted typical rent. Zoom in and they come apart. Two neighbours that only just collide get their own labels, one moved aside with a thin line to its spot. **Labels never overlap.** Ever. A test checks.
+- The big number up top is the **typical rent of whatever is on screen**, rolling like an odometer as you pan.
 - Areas are **shaded inside their official boundaries** in the same blues, so the city reads at a glance even zoomed out.
 - Figures that rest on **fewer than 10 contracts** are drawn dashed and italic, so you know which ones to take with a pinch of salt.
 - Switch the whole map between **Rent, Sale price and Yield** with one tap: the labels, the blues and the key all follow, each view with its own scale.
-- Filter by **property type** (Homes, Flats, Studios), **unit**, rent range, or switch the labels to rent per m² or contract counts. Labour camps and whole-building leases never sneak into home rents.
+- One **Home** picker (all homes, studios, 1-bed, 2-bed… or flats of any size) and a rent range: that's all the filtering there is. Labour camps and whole-building leases never sneak into home rents.
 
 ### 📸 Drill down and see the place
 Tap an area for its full breakdown: every bedroom count, contracts, yield, the DLD areas it covers, and a **24-month sale price trend** with the change on a year ago. Plus:
@@ -43,7 +43,7 @@ On a phone the breakdown slides up from the bottom with the photos first, sized 
 
 ### 🌍 English or Arabic, your choice
 - The whole site in **Arabic**, right to left, from the **عربي** button, a `?lang=ar` link, or a phone set to Arabic.
-- A separate button **on the map** sets the language of street and place names: **English · عربي · Both**. No more half-Arabic, half-English maps.
+- Street and place names on the map follow your language, and one button (**A+ع**) shows both at once. No more half-Arabic, half-English maps.
 
 ### 💾 It remembers you (and only you)
 - **My areas:** save areas and see how their rent moves since you saved them.
@@ -115,7 +115,7 @@ Today: **534,143 contracts** from the last 12 months across **158 areas**, 99.5%
 
 ```
 index.html              markup only
-assets/app/atlas.js     the map, labels, filters, breakdowns, photos, phone sheet
+assets/app/atlas.js     the map, labels, filters, breakdowns, photos, phone breakdown sheet
 assets/app/labels.js    label placement (pure, unit-tested: no two labels may overlap)
 assets/app/insights.js  rent-check logic (pure, unit-tested)
 assets/app/companion.js rent check, My areas, reminders, sharing
