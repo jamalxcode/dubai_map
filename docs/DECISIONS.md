@@ -342,6 +342,10 @@ The owner replaced both palettes: prices in a six-step blue scale (#EFF3FF lowes
 
 The owner: remove edge cases that distort the key; the top 5% should not set the maximum nor the bottom 5% the minimum, but they keep the highest and lowest colours. The key now runs from the 5th to the 95th percentile of what is shown (for 1-bedroom today AED 38k to 120k, against a raw 35k to 279k). The six blues are equal price steps across that range; below it the palest, above it the deepest. Dials and shading are a share of the 95th percentile, full above it, so a typical 70k area now fills about 58% instead of a quarter. The legend reads "≤ AED 38k … ≥ AED 120k" and names the dial's top. The rent check uses the same trimmed scale for the home type checked. Applies to every measure the labels can show.
 
+## Decision on 2026-11-17 (thirty-third pass): group labels follow the price key too
+
+The owner spotted brown/dark prices that didn't follow the key: the merged "N areas" labels, which had an oxblood background from the thirty-first pass. Every price now follows the key: group labels are ivory with the same price-colour tint, edge and dial as single ones, and a gold stacked-card outline plus "avg" marks them as several areas. Oxblood stays for the header, buttons and selected states. Rule: anything showing a price uses only the price key for its colour.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
@@ -384,6 +388,8 @@ The owner: remove edge cases that distort the key; the top 5% should not set the
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-17: Group labels coloured by the price key; a gold stacked-card outline marks them.
 
 - 2026-11-17: Price key trimmed to the 5th–95th percentile; extremes keep the end colours.
 

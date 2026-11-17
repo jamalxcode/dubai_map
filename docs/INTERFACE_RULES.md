@@ -29,19 +29,19 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 ## 3. Colour and type
 
-- **Brand palette, "golden note" (text and surfaces):** Oxblood `#521825` (primary field: header, primary buttons, selected states, group labels), Ivory `#F6F1E7` (paper and type on oxblood), Gold Leaf `#C9A227` (icons and accents: header frame, highlighted words, link underlines, focus on dark, dark-mode actions, the stale-data warning), Espresso `#2B2118` (deep text), Warm Gray `#8A7F72` (secondary, lines). Tokens: `--oxblood`, `--ivory`, `--gold`, `--espresso`, `--warmgray` (older names `--ink`, `--cream` map to espresso and ivory).
+- **Brand palette, "golden note" (text and surfaces):** Oxblood `#521825` (primary field: header, primary buttons, selected states), Ivory `#F6F1E7` (paper and type on oxblood), Gold Leaf `#C9A227` (icons and accents: header frame, highlighted words, link underlines, focus on dark, dark-mode actions, the stale-data warning), Espresso `#2B2118` (deep text), Warm Gray `#8A7F72` (secondary, lines). Tokens: `--oxblood`, `--ivory`, `--gold`, `--espresso`, `--warmgray` (older names `--ink`, `--cream` map to espresso and ivory).
 - **Contrast adjustments:** warm gray (3.5:1) and gold leaf (2.2:1) are too light for small text on ivory, so secondary text is a deeper warm gray `#655B51` (5.9:1) and gold as text on ivory is `#735B12` (5.8:1). Gold leaf reads on oxblood (5.7:1) and carries espresso type (6.5:1).
 - **Prices: six blues, lowest to highest:** `#EFF3FF`, `#C6DBEF`, `#9ECAE1`, `#6BAED6`, `#2171B5`, `#084594`. Equal steps between the 5th and 95th percentile of what is shown (extremes keep the end colours); the same scale in light and dark; label edges, shading, dials and the legend ramp, never text. The lowest step is almost paper-white, so legend swatches are outlined.
 - **Scale:** the key runs from the 5th to the 95th percentile, so a few extreme areas don't stretch it (legend: "≤ AED 38k … ≥ AED 120k"); dials and shading show a rent's share of the top of the key, full above it.
 - **Dark mode:** follows the device until the visitor picks; remembered (`theme`). The base map switches with it: OpenFreeMap **Liberty** (detailed, in colour) by day, OpenFreeMap **Dark** lifted to the site's night colours (`tuneDark` in atlas.js) at night. The CSS invert filter is only for the OpenStreetMap fallback tiles.
-- **Contrast:** WCAG AA (4.5:1) in light, dark and Arabic, checked by axe on every push. Shaded labels use a 35% tint of their price colour (30% in dark and on oxblood group labels); small text on them is `#4A3F35` (light, 4.75:1 or more on every tint), `#E6DCCB` (dark, 4.56:1 or more) and ivory on groups (5.2:1 or more), checked by hand because axe can't measure text on a gradient.
+- **Contrast:** WCAG AA (4.5:1) in light, dark and Arabic, checked by axe on every push. Shaded labels use a 35% tint of their price colour (30% in dark), group labels included; small text on them is `#4A3F35` (light, 4.75:1 or more on every tint) and `#E6DCCB` (dark, 4.56:1 or more), checked by hand because axe can't measure text on a gradient.
 - **Type:** Barlow (text) and Barlow Condensed (headings, figures), served from the site. Arabic letters come from the device's Arabic font; numbers stay in Barlow. No letter-spacing in Arabic (it breaks letter joining).
 - **Figures:** tabular numbers; AED written before the amount; Western digits in both languages.
 
 ## 4. Map labels
 
 - Each area: `AED 65k` plus the area name, with an edge, a dial and shading in its price-key colour; the dial and shading show its share of the top price pulled.
-- Labels never overlap. Overlapping labels merge into an oxblood group label with a gold-leaf edge (contract-weighted average, "avg"); groups of 2–3 name their busiest area ("Al Barsha First +1"), bigger ones count ("12 areas").
+- Labels never overlap. Overlapping labels merge into a group label coloured by the price key like any other, marked by a gold stacked-card outline and "avg" (contract-weighted average, "avg"); groups of 2–3 name their busiest area ("Al Barsha First +1"), bigger ones count ("12 areas").
 - A group of up to 3 comes apart when each label fits at its point or just beside it; a moved label has a thin line to a dot at its point.
 - Labels keep clear of the zoom buttons, the language button and the legend, and are re-placed when a control appears.
 - Labels are keyboard buttons: Tab to one, Enter or Space opens it; the spoken name is the visible text.

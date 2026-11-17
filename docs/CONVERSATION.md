@@ -199,6 +199,10 @@ Prices now use six blues (palest = lowest, deep navy = highest); the site uses o
 
 The key now spans the 5th to 95th percentile (AED 38k to 120k for 1-bedroom, instead of 35k to 279k), in six equal steps; the extremes take the palest or deepest blue and the dearest show a full dial. Legend ends read "≤" and "≥".
 
+### 17 Nov · "there are some brown / dark colored prices that do not follow the price key, fix it"
+
+Those were the merged group labels (oxblood background). They now use the price key like every other label; a gold stacked-card outline and "avg" show they cover several areas.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

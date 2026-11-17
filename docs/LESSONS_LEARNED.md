@@ -36,6 +36,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 ## Interface
 
+- **A brand colour on a price reads as a price.** Oxblood group labels looked like a seventh, off-key price colour. *Rule:* anything that shows a price takes its colour only from the price key; mark other differences (groups) with shape or outline.
+
 - **Measure before redesigning.** Every layout change started from pixel measurements (where the filters end, how wide the pop-up is) and was checked the same way after. The phone pop-up was 351 px wide on 320 px screens; we only knew because we measured.
 - **Browsers cache stylesheets across deploys.** The owner saw a new page with an old stylesheet (a squashed rent check). *Rule:* every page asset carries `?v=__BUILD__`.
 - **`display:grid` beats the `hidden` attribute.** *Rule:* every component that sets `display` also has a `[hidden]{display:none}` rule.
