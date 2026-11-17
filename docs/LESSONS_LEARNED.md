@@ -19,6 +19,7 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 ## Pipeline and workflows
 
+- **New data fields arrive with the next build, not the merge.** The sale price view needed per-bedroom sale prices in the data; the page deployed at once, but the data branch still held the old files, so the view was empty and the browser check failed in CI until the data was rebuilt. *Rule:* when a change adds a data field, run a rebuild ("Place unplaced areas" rebuilds and redeploys) right after merging, then rerun Tests.
 - **Run the real job after changing it.** Recording failed look-ups as rows without coordinates passed the unit tests but failed the data check that runs inside the job, which would have stopped the daily pull from publishing. It was caught only by running the placement job by hand. *Rule:* after changing a collector, run the workflow once and read its log.
 - **Scheduled workflows don't always run.** The weekly geocode job ran once and then missed its schedule, and GitHub turns off quiet schedules after 60 days. *Rule:* every scheduled workflow re-enables itself; important steps also run inside the thrice-daily pull; a freshness check fails loudly when something stops.
 - **Never let a bad run shrink the site.** *Rule:* a build more than 30% smaller than the last is not published; the old files stay live.
