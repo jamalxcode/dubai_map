@@ -183,6 +183,10 @@ Added `docs/INTERFACE_RULES.md` (how the page looks and behaves, with values) an
 
 README rewritten: a short story up front, a tour of what you can do (check a rent, read the map, drill down with photos, Arabic, reminders, sharing), the sources and honesty rules, the engine room in one diagram, setup in fold-out sections, and the paper trail. Facts checked against the code; two outdated figures fixed (Dubai Pulse pages are 500 rows, at most 120), and the licences table now covers MapLibre, OpenFreeMap, Wikimedia Commons and Google links.
 
+### 17 Nov · "check pull status up till now, how does it look?"
+
+All pulls since the changes ran on time and succeeded (cron-job.org at 05:17, 21:17 Kuwait; GitHub's backup schedule too); data through 16 Nov, 534,331 contracts, 158 areas; both cross-checks healthy (10 of 13 and 85 of 98 agree). Two findings: Al Aryam and Al Waha Villas had dropped off the map again (the live Dubai Data files lacked a column the placing rule needs; fixed, back with Dubai Data's next update), and the freshness check's failure was the expected Al Twar Fifth alert.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

@@ -315,6 +315,10 @@ The owner asked for a more phone-friendly page "including the wallet sized scree
 
 The owner asked for design ideas, lessons learned, the conversation, business rules and interface rules to be saved in the repo. New: `docs/INTERFACE_RULES.md` (principles, breakpoints, colour and type, labels, controls, the rent check, the area breakdown and sheet, photo viewer, language and direction, motion, states, accessibility, assets, each with its value and file) and `docs/LESSONS_LEARNED.md` (each problem hit while building, what it taught and the rule now followed). Writing the interface rules found one gap: the map language buttons were 30 px high at 400 px and below, under the 32 px touch target the rules state; now 32 px. Design ideas stay in DESIGN_GOALS.md ("Ideas on the table"); data rules in BUSINESS_RULES.md. All are linked from the README and CLAUDE.md.
 
+## Decision on 2026-11-17 (twenty-ninth pass): the live Dubai Data files carry the top-area share too
+
+Checking the pulls the morning after: every pull ran on time and succeeded, but Al Aryam and Al Waha Villas were unplaced again. The twenty-sixth pass placed them using Dubai Data's `share_in_top_area`, which the weekly export has but the files rebuilt from Dubai Data's live pages did not. The live fetcher now computes it from each community page's per-area breakdown (top area's transactions ÷ all). It takes effect at Dubai Data's next daily update (the fetcher rewrites its files only when the data date moves). The 90% rule stays strict. The freshness check's one failure overnight was the expected Al Twar Fifth alert.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
@@ -357,6 +361,8 @@ The owner asked for design ideas, lessons learned, the conversation, business ru
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-17: Live Dubai Data files now include the top-area share, so Al Aryam and Al Waha Villas stay placed.
 
 - 2026-11-16: README rewritten for readers (what you can do first, the engine room after); outdated figures fixed; licences table completed.
 

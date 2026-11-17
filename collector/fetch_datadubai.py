@@ -139,7 +139,10 @@ def fetch_live(block, sleep=time.sleep):
                      "quality": summ.get("quality", ""), "price_median": _blank(summ.get("price_median")),
                      "psf_median": _blank(summ.get("psf_median")), "yield_pct": _blank(page.get("gross_yield_pct")),
                      "rent_median": c.get("rent_median") or "", "n_rents": c.get("contracts") or 0,
-                     "top_area": parts[0]["name"] if parts else ""})
+                     "top_area": parts[0]["name"] if parts else "",
+                     # Share of the community's transactions in its top DLD area, as in the weekly export:
+                     # build.py places a community without its own point at that area's point when it's 90%+.
+                     "share_in_top_area": round((parts[0].get("n") or 0) / total, 3) if parts and (total := sum(p.get("n") or 0 for p in parts)) else ""})
         for p in parts:  # DLD area -> the community holding most of its transactions
             if p.get("name") and (p["name"] not in areas or (p.get("n") or 0) > areas[p["name"]][1]):
                 areas[p["name"]] = (url, p.get("n") or 0)
@@ -150,7 +153,7 @@ def fetch_live(block, sleep=time.sleep):
                 "sqft_median", "rent_median", "n_rents", "yield_pct", "url"], beds)
     _write_csv(os.path.join(out, "communities.csv"),
                ["name", "slug", "url", "n", "quality", "price_median", "psf_median", "yield_pct", "rent_median",
-                "n_rents", "top_area"], info)
+                "n_rents", "top_area", "share_in_top_area"], info)
     _merge_areas(os.path.join(out, "areas.csv"), areas)
     _set_readme_through(os.path.join(out, "README.md"), through)
     block["live_checked_at"] = source_state.now_iso()

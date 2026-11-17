@@ -60,11 +60,22 @@ class LiveTests(TempData):
         self.assertEqual(beds[0]["rent_median"], "48000")
         top = {c["name"]: c["top_area"] for c in self.rows("communities.csv")}
         self.assertEqual(top["Jumeirah Village Circle"], "Al Barsha South Fourth")
+        share = {c["name"]: c["share_in_top_area"] for c in self.rows("communities.csv")}
+        self.assertEqual(share["Jumeirah Village Circle"], "1.0", "the share build.py needs to place a community by its area")
         areas = {a["name"]: a["url"] for a in self.rows("areas.csv")}
         self.assertEqual(areas["Al Barsha South Fourth"], "https://datadubai.ae/communities/jumeirah-village-circle/")
         self.assertIn("Some Area", areas, "the export's other areas are kept")
         self.assertEqual(self.mirror_calls, ["huggingface:data/projects.csv"], "only projects.csv still comes from the export")
         self.assertEqual(len(self.calls), 4, "rents.json + one page per community")
+
+    def test_share_in_top_area_for_a_split_community(self):
+        PAGES["/communities/jumeirah-park.json"]["breakdown"] = [{"name": "Al Thanyah Fifth", "n": 300}, {"name": "Al Barsha Third", "n": 100}]
+        try:
+            self.run_main()
+        finally:
+            PAGES["/communities/jumeirah-park.json"]["breakdown"] = [{"name": "Al Thanyah Fifth", "n": 147}]
+        row = next(c for c in self.rows("communities.csv") if c["name"] == "Jumeirah Park")
+        self.assertEqual((row["top_area"], row["share_in_top_area"]), ("Al Thanyah Fifth", "0.75"))
 
     def test_a_failed_page_keeps_the_old_files_and_uses_the_export(self):
         self.fail_on = "/communities/dubai-marina.json"
