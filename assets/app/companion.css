@@ -15,7 +15,8 @@
 .ck{background:var(--panel);border-radius:12px;padding:20px 22px}
 .ck-head h2{margin:0 0 4px}
 .ck-head p{margin:0 0 14px;color:var(--muted);font-size:15px}
-.ck-form{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.4fr) minmax(0,1fr) auto;gap:12px;align-items:end}
+.ck-form{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;gap:12px;align-items:end} /* area, rent, Check: the home is the map's Home picker */
+.ck-others{margin:2px 0 6px;font-size:13.5px}.ck-others .link{font-size:13.5px}
 .ck-form .field input,.ck-form .field select{width:100%}
 .ck-form .opt{font-weight:400}
 .ck-form .btn{padding:11px 22px;font-size:19px}
@@ -74,9 +75,8 @@
 
   #companion{padding-top:14px}
   .ck{padding:16px}
-  .ck-form{grid-template-columns:1fr 1fr}
+  .ck-form{grid-template-columns:minmax(0,1fr) auto}
   .ck-form .ck-area{grid-column:1/-1}
-  .ck-form .btn{grid-column:1/-1}
   .ck-remind,.set-grid{grid-template-columns:1fr}
 }
 
@@ -118,3 +118,7 @@
 /* "What does this mean?": the fixed explanations, folded under the answer. */
 .ck-more{margin:8px 0 10px;font-size:13.5px}.ck-more summary{color:var(--gold-ink);font-weight:600;cursor:pointer}
 .ck-more p{margin:6px 0 0;color:var(--muted)}
+/* Phones: the figure and the verdict first; nearby, rank and owner figures fold under "More about this area"
+   (open on wider screens). */
+.ck-moreinfo summary{color:var(--gold-ink);font-weight:600;cursor:pointer;font-size:14px;margin:4px 0}
+@media (min-width:861px){.ck-moreinfo summary{display:none}}

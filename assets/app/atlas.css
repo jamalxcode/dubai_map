@@ -429,3 +429,13 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 .mapNote{position:absolute;z-index:1100;left:50%;transform:translateX(-50%);bottom:76px;max-width:calc(100% - 32px);background:var(--espresso);color:var(--ivory);padding:8px 12px;border-radius:8px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
 @media (max-width:860px){.leaflet-control-zoom a.near{font-size:12px!important;line-height:36px!important}}
 @media (max-width:400px){.leaflet-control-zoom a.near{font-size:11px!important;line-height:32px!important;padding:0 7px}}
+/* The zoom bar is as wide as its widest button (All Dubai, Near me) at every screen size; the size rules
+   above fix only the height. */
+.leaflet-control-zoom.leaflet-bar a{width:auto!important;min-width:32px}
+/* Tablet widths (861–1,099 px, one column): the compact header, so the rent check and map start higher. */
+@media (min-width:861px) and (max-width:1099px){
+  .band .wrap{padding-top:54px;padding-bottom:20px;gap:20px}
+  .band h1{font-size:44px}
+  .band p{font-size:15px;margin-top:8px}
+  .big .num{font-size:60px}
+}

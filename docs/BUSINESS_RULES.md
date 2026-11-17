@@ -72,7 +72,8 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Yields | One decimal everywhere (7.0%) | `atlas.js pct`, `companion.js`, `share_pages.py` |
 | Home picker | All homes, each home size (from the homes data), then other property types with data ("Flats, any size"); studios are a size, not offered again as a type | `atlas.js buildHome` |
 | Table finder | Filters the table's rows by area, DLD area, master project or building; never the map | `atlas.js draw` |
-| One home choice | The rent check's home and the map's Home picker stay in step: a check sets the map to the home checked; a home picked on the map re-checks the current area when it has that home (Flats and other types don't re-check) | `atlas.js setMapHome`, `companion.js` |
+| One home choice | The rent check has no home field: it uses the map's Home picker (a size, else all homes); when the area lacks that home it checks the area's most common one and the map follows; a home picked on the map re-checks the area | `atlas.js setMapHome`, `companion.js pickUnit` |
+| Usage counts | GoatCounter events by feature name only, at most with the choice made (view, home size, sort column): views, names button, home, All Dubai, Near me, sort, legend fold, CSV, table finder and rent range (once a visit each), a shared map link opened from elsewhere; plus the rent check's check, save and share. Never what was typed, never a position | `atlas.js countUse`, `companion.js count` |
 | Area rank | "Dearer than X% of N areas" = the share of areas (with 30+ contracts for that home) whose median is lower | `insights.js rankAmong` |
 | Hidden labels | A label under a button or the legend with no free spot within two label-steps joins its nearest neighbour, and merging runs again | `labels.js` rule 3 |
 | Display names | All-capitals names in title case, acronyms kept; registered names for search, links and storage | `i18n.js T.place`, `share_pages.place` |

@@ -61,6 +61,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Labels placed only on zoom drift under buttons after a pan.** *Rule:* place them again after every move, except while a breakdown is open (redrawing closes it).
 - **A test that runs at one moment misses the others.** "No label under a button" was only checked after "All Dubai", while labels hid under the bar at page start on phones. *Rule:* check layout invariants at the start of every run, in every language.
 - **Data spelling leaks into the interface.** All-capitals names from the source looked like shouting. *Rule:* normalise for display (`T.place`), never for search or storage.
+- **Size rules for one screen width can fight later additions.** A phone rule fixed the zoom buttons' width, so a new "Near me" button was clipped. *Rule:* fix only the dimension that matters (height for touch); let width follow the content, and test that no button's text overflows.
+- **Critique rounds reach diminishing returns.** After four rounds the findings were small. *Rule:* count which features are used, then cut or improve based on that.
 
 ## Accessibility
 

@@ -48,7 +48,6 @@
             <input id="ckArea" list="ckAreas" placeholder="${T('e.g. JVC, Business Bay, Al Qusais')}" enterkeyhint="search" required aria-describedby="ckTitle">
           </label>
           <datalist id="ckAreas"></datalist>
-          <label class="field ck-unit">${T('Home')}<select id="ckUnit" disabled><option value="">${T('Pick an area first')}</option></select></label>
           <label class="field ck-rent"><span>${T('Your yearly rent')} <span class="opt">${T('(optional)')}</span></span>
             <input id="ckRent" type="text" inputmode="numeric" placeholder="${T('e.g. 75,000')}">
           </label>
@@ -70,19 +69,14 @@
     el('ckAreas').innerHTML = opts.join('');
   }
 
-  function fillUnits(area, keep) {
-    const sel = el('ckUnit');
-    const units = RI.unitOptions(area);
-    sel.disabled = !area;
-    if (!area) { sel.innerHTML = `<option value="">${T('Pick an area first')}</option>`; return ''; }
-    sel.innerHTML = units.map(u => `<option value="${esc(u.u)}">${esc(U(u.u))}</option>`).join('') +
-      (area.median_kind === 'unit' ? '' : `<option value="">${T('All homes')}</option>`);  // no all-homes median published
-    // Keep the visitor's choice when the new area has it; otherwise its most common home,
-    // the fairest default for comparing areas.
-    const allHomes = area.median_kind !== 'unit';
-    const choice = keep === '' && allHomes ? '' : units.some(u => u.u === keep) ? keep : (units[0] ? units[0].u : '');
-    sel.value = choice;
-    return choice;
+  // The check has no home picker of its own: it uses the map's Home picker (one control for the page).
+  // A home size of the map's choice, or '' (all homes) for all homes and the other property types.
+  const mapUnit = () => { const [k, u] = (el('home') ? el('home').value : 'homes|').split('|'); return k === 'homes' ? u || '' : ''; };
+  // The home to check: the one asked for when the area has it; otherwise its most common home, the
+  // fairest default for comparing areas (older districts publish no all-homes median).
+  function pickUnit(area, keep) {
+    const units = RI.unitOptions(area), allHomes = area.median_kind !== 'unit';
+    return keep === '' && allHomes ? '' : units.some(u => u.u === keep) ? keep : (units[0] ? units[0].u : '');
   }
 
   const rentValue = () => { const n = parseInt(el('ckRent').value.replace(/[^\d]/g, ''), 10); return n > 0 ? n : null; };
@@ -107,7 +101,7 @@
     const area = resolveArea(areaText);
     if (!area) { current = null; return; }
     el('ckArea').value = area.label;
-    const u = fillUnits(area, unit != null ? unit : (el('ckUnit').disabled ? null : el('ckUnit').value));
+    const u = pickUnit(area, unit != null ? unit : mapUnit());
     if (rent !== undefined) el('ckRent').value = rent ? rent.toLocaleString('en-AE') : '';
     current = { area, unit: u, rent: rentValue() };
     // One home choice for the page: the map shows the home just checked.
@@ -188,6 +182,7 @@
     out.innerHTML = `
       <div class="ck-answer">
         <p class="ck-what">${T('{what} in {area}', { what: esc(what), area: `<b>${esc(T.place(area.label))}</b>` })}</p>
+        ${(() => { const others = RI.unitOptions(area).filter(o => o.u !== unit); return others.length ? `<p class="ck-others"><span class="muted">${T('Other homes here:')}</span> ${others.map(o => `<button type="button" class="link" data-unit="${esc(o.u)}">${esc(US(o.u))}</button>`).join(' · ')}${unit && area.median_kind !== 'unit' ? ` · <button type="button" class="link" data-unit="">${T('All homes')}</button>` : ''}</p>` : ''; })()}
         <p class="ck-big"><i class="keyChip" aria-hidden="true" style="--c:${window.priceKey(unit).color(f.median)}"></i><bdi>${aed(f.median)}</bdi> <span>${T('a year')}</span></p>
         <p class="muted">${f.n == null
           ? T('Median for this home type, {period}. Source: Continental Club Property (CC BY 4.0), which gives {n} for the whole area but no count per home type.', { period: area.through ? T('to {d}', { d: dateText(area.through) }) : period, n: plural(area.n, 'contract') })
@@ -195,7 +190,7 @@
         ${AGG && /^[3-9]-bedroom/.test(unit) ? `<p class="muted">${T('Dubai Data groups homes by bedrooms: in villa communities this figure may include villas and townhouses.')}</p>` : ''}
         ${f.p25 != null && f.p75 != null ? `<p class="muted ck-range">${T('The middle half of these tenants pay <b>{a}</b> to <b>{b}</b>.', { a: aed(f.p25), b: aed(f.p75) })}</p>` : ''}
         ${verdictHtml}
-        ${finds.length ? `<ul class="ck-finds">${finds.join('')}</ul>` : ''}
+        ${finds.length ? `<details class="ck-moreinfo"${PHONE.matches ? '' : ' open'}><summary>${T('More about this area')}</summary><ul class="ck-finds">${finds.join('')}</ul></details>` : ''}
         <details class="ck-more"><summary>${T('What does this mean?')}</summary>
           <p>${T('The median is the middle contract: half of these tenants pay more and half less. Size, floor, view and building all move the price.')}</p>
           ${f.p25 == null ? `<p>${T('No range yet: the open sources publish only the middle figure. Ranges arrive with contract-level data.')}</p>` : ''}
@@ -392,7 +387,6 @@
     PHONE.addEventListener('change', () => compact(PHONE.matches && !current));
     form.addEventListener('submit', e => { e.preventDefault(); check(); });
     el('ckArea').addEventListener('change', () => check());
-    el('ckUnit').addEventListener('change', () => check());
     let t;
     el('ckRent').addEventListener('input', () => { const n = rentValue(); const txt = n ? n.toLocaleString('en-AE') : ''; if (el('ckRent').value !== txt) el('ckRent').value = txt;
       clearTimeout(t); t = setTimeout(() => { if (current) { current.rent = rentValue(); render(); remember(); } }, 350); });
@@ -448,8 +442,7 @@
       }
     });
     // The map's Home picker is the check's too: picking a home there re-checks the current area for it.
-    addEventListener('atlas:home', e => { if (current && (e.detail.unit === '' ? current.area.median_kind !== 'unit' : RI.unitOptions(current.area).some(u => u.u === e.detail.unit)))
-      check({ areaText: current.area.label, unit: e.detail.unit, quiet: true }); });
+    addEventListener('atlas:home', e => { if (current) check({ areaText: current.area.label, unit: e.detail.unit, quiet: true }); });
     map.on('popupopen', onPopup);
     document.addEventListener('click', onPopupClick); // the map's pop-up, or the phone sheet that shows its content
     let mv;

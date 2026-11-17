@@ -456,7 +456,18 @@ Data rebuilt after merging (daily pull for the trend file, placement job for the
 9. **Near me** in the zoom bar.
 10. **Sources:** "Figures from" and "Checked against".
 
+## Decision on 2026-11-17 (forty-second pass): the fourth interface critique, and counting use
+
+1. **Near me fits:** the zoom bar is as wide as its widest button at every size (phone rules had fixed the width).
+2. **One Home control, really:** the rent check's own Home list is gone; it uses the map's picker, and "Other homes here" links under the result switch both.
+3. **Tablet header:** the compact header at 861–1,099 px.
+4. **Freshness wording:** "checked for new data three times a day".
+5. **Phone check result:** nearby, rank and owner figures fold under "More about this area".
+6. **Counting use:** GoatCounter events for the map views, names button, Home picker, All Dubai, Near me, table sorting, legend folding, CSV, table finder and rent range, and shared map links opened from elsewhere, by feature name only. The plan: after a few weeks, remove what nobody uses rather than polishing further.
+
 ## Change log
+
+- 2026-11-17: Fourth interface critique: Near me fits, the check uses the map's Home picker, compact tablet header, plainer freshness line, folded findings on phones, and feature-use counts.
 
 - 2026-11-17: Third interface critique: no labels under buttons, single ellipsis, aligned figures, title-case names, grouped and sortable table, mixed-sizes note, map links, Near me, sources split.
 

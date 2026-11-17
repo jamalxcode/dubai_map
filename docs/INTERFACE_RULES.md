@@ -20,7 +20,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 | Width | Layout | Where |
 |---|---|---|
 | 1,100 px and up | Two panes: inputs scroll on the left (`minmax(440px,34vw)`), the map fills the window height on the right and stays put | `atlas.css` |
-| 861–1,099 px | One column: title, rent check, filters, map, figures, table | `atlas.css` |
+| 861–1,099 px | One column: title, rent check, filters, map, figures, table; the compact header (44 px title, 60 px figure) | `atlas.css` |
 | 860 px and below (phones, fold phones open or closed) | One column, map in the top half of the first screen: the header shows the title and the figure only (no tagline), the rent check folds to one line until tapped, the home picker and rent range share one row; the legend starts folded; area breakdowns as a bottom sheet | `atlas.css`, `companion.css`, `atlas.js` |
 | 400 px and below | Smaller title (30 px) and map buttons (32 px); photos 80% of the sheet width | `atlas.css` |
 | 320 px | The narrowest screen supported and tested (no sideways scrolling, the sheet fits) | `tests/ui-check.mjs` |
@@ -57,7 +57,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 ## 5. Map controls
 
-- Top left: one bar, **+**, **−**, **All Dubai** (back to the whole city) and **Near me** (where the browser offers location: moves the map to the visitor at zoom 14 and marks the spot with an oxblood dot; outside Dubai it says so and stays; the position is used on the device only, never sent or stored), each as wide as the bar. 40 px at full size, 36 px at 860 px and below, 32 px at 400 px and below.
+- Top left: one bar, as wide as its widest button at every size, **+**, **−**, **All Dubai** (back to the whole city) and **Near me** (where the browser offers location: moves the map to the visitor at zoom 14 and marks the spot with an oxblood dot; outside Dubai it says so and stays; the position is used on the device only, never sent or stored), each as wide as the bar. 40 px at full size, 36 px at 860 px and below, 32 px at 400 px and below.
 - Top right: one bar, **Rent · Sale price · Yield** (what the labels show; a view appears only when the data has it; the only place to pick it), then **A+ع**: place names in English and Arabic together. Without it, place names follow the page language. Shown only when the vector map loaded; remembered (`mapBoth`).
 - Bottom right on phones: **i** folds the map credits away (two wrapped lines covered the map); one tap shows them. Wide screens show the credits as always.
 - **The address keeps the map:** `?home=homes:1-bedroom apartments&view=sale&at=25.08,55.15,13` is written as the map changes (no reload; other parameters kept), and a link with it opens that map. A resumed rent check uses the link's home.
@@ -66,9 +66,9 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 ## 6. The rent check
 
-- Fields: area (search with nicknames, DLD names and typos), home, optional yearly rent (written with thousands separators as you type), **Check**.
-- **One home choice for the page:** the check's Home and the map's Home picker use the same names and stay in step. A check sets the map's picker to the home checked; picking a home on the map re-checks the current area for it (when the area has that home).
-- Result: what was checked, the big figure with a small chip in its price colour, what it is and how many contracts, the middle half when known, the verdict if a rent was entered, up to four findings ("Dearer than 64% of 126 areas…"), a folded **What does this mean?** (what a median is, why there is no range yet), one primary button and plain links (Save · Show on the map · Share · Dubai Data page). The links wrap as one group, never leaving a dangling separator.
+- Fields: area (search with nicknames, DLD names and typos), optional yearly rent (written with thousands separators as you type), **Check**. No home field: the check uses the map's **Home** picker.
+- **One Home control for the page:** a check uses the map's picker (when the area lacks that home, its most common one, and the map follows); picking a home on the map re-checks the current area; **Other homes here:** under the result lists the area's other homes as links, which switch both.
+- Result: what was checked, the big figure with a small chip in its price colour, what it is and how many contracts, the middle half when known, the verdict if a rent was entered, up to four findings ("Dearer than 64% of 126 areas…"; on phones folded under **More about this area**, open on wider screens), a folded **What does this mean?** (what a median is, why there is no range yet), one primary button and plain links (Save · Show on the map · Share · Dubai Data page). The links wrap as one group, never leaving a dangling separator.
 - Wide screens: a check flies the map to the area (zoom 14) and opens its breakdown. Narrower screens: "Show on the map" does it.
 - Remembered in the browser only: the last check, recent checks, saved areas, the map view.
 
@@ -76,7 +76,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 - **Filters:** one **Home** picker (all homes, each home size, then other property types with data, such as "Flats, any size"; a type already covered by a size, studios, isn't offered twice) and a **Rent range (AED)** (one label over Min – Max). They drive the map, so on wide screens they sit right under the header, above the rent check; on phones the rent check comes first. The map starts on 1-bedroom apartments. With one home size picked, the table names it in its subtitle and drops its unit column.
 - **Table:** short headers (Rent, Contracts, Sale price, Yield; the subtitle says medians in AED). Every header but Unit sorts the table (▼ highest first, click again for ▲; Area sorts A–Z); the header carries `aria-sort`. Until one is clicked the view's own column leads; a new view resets it. Consecutive rows of the same area show its name once (kept for screen readers), so All homes reads as one block per area. At 600 px and below only the area, the view's own figure and contracts show; the CSV keeps every column.
 - **Table finder:** a search box above the table, next to Download CSV, filters the table's rows only; the map keeps every area.
-- **Key figures:** three in big type, lined up on one row (subgrid: label, figure, caption) (contracts in the last 12 months, the share of them on the map, areas on the map), then one small line: "Data to 16 Nov 2026 · updated 17 Nov, 09:00 Kuwait time · new data is looked for three times a day".
+- **Key figures:** three in big type, lined up on one row (subgrid: label, figure, caption) (contracts in the last 12 months, the share of them on the map, areas on the map), then one small line: "Data to 16 Nov 2026 · updated 17 Nov, 09:00 (Kuwait time) · checked for new data three times a day".
 - **About the data:** the sources in use listed once, plainly, split into **Figures from** and **Checked against**; every source's run status folded under **Data health**; licences and credits in "What this is not". No repeated footer.
 - **Yields:** always one decimal (7.0%, 8.9%), on the map, in breakdowns, the table, the rent check and area pages.
 

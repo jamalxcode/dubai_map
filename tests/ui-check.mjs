@@ -278,6 +278,16 @@ try {
     check(after.rows < before.rows && after.rows >= 1 && after.pts === before.pts, `${name}: the table finder narrows the table (${before.rows} → ${after.rows} rows) and leaves the map alone`);
     await page.fill('#search', '');
     await page.waitForTimeout(300);
+    // The zoom bar's buttons (All Dubai, Near me) fit their bar.
+    const clipped = await page.evaluate(() => [...document.querySelectorAll('.leaflet-control-zoom a')].filter(a => a.scrollWidth > a.clientWidth + 1).map(a => a.textContent));
+    check(!clipped.length, `${name}: the zoom bar's buttons fit${clipped.length ? ': ' + clipped.join(', ') : ''}`);
+    // Feature use is counted (a stand-in counter here): a view change and a table sort.
+    await page.evaluate(() => { window.__ev = []; window.goatcounter = { count: e => window.__ev.push(e.path.replace(/^.*\/event\//, '')) }; });
+    await page.click('.viewSw button[data-m="sale"]');
+    await page.click('.viewSw button[data-m="median"]');
+    await page.click('#thead button.sort[data-k="a"]');
+    const ev = await page.evaluate(() => window.__ev);
+    check(ev.includes('view-sale') && ev.includes('table-sort'), `${name}: feature use is counted, by name only (${ev.join(', ')})`);
     // Labels stay inside the map: none whose centre is on the map crosses its edge.
     const crossing = await page.evaluate(() => { const b = map.getContainer().getBoundingClientRect();
       return [...document.querySelectorAll('.rl')].filter(e => { const r = e.getBoundingClientRect(), cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
@@ -304,6 +314,8 @@ try {
     await page.waitForTimeout(400);
     const big = await page.$eval('.ck-big', e => e.textContent).catch(() => '');
     check(/AED\s*[\d,]+/.test(big), `${name}: rent check answers "jvc" (${big.trim().slice(0, 30)})`);
+    const more = await page.evaluate(() => { const d = document.querySelector('.ck-moreinfo'); return d ? d.open : null; });
+    check(more === (name !== 'phone'), `${name}: nearby, rank and owner figures are ${name === 'phone' ? 'folded under "More about this area"' : 'shown'} (${more})`);
     if (name === 'desktop') {
       // A breakdown opened near the top-right buttons must not sit under them (the map pans instead).
       const clear = await page.evaluate(async () => { map.closePopup(); const a = AREAS.find(x => x.lat != null && x.median);
@@ -329,12 +341,16 @@ try {
       check(near && c.z >= 13, `desktop: a rent check takes the map to the area (JVC; zoom ${c.z})`);
       check(!!(await page.$('.leaflet-popup-content')), 'desktop: and opens its breakdown');
       // One home choice for the page: the check set the map's picker; the map's picker re-checks the area.
-      const sync0 = await page.evaluate(() => [document.getElementById('home').value, document.getElementById('ckUnit').value]);
+      // One Home control for the page: the check has none of its own and follows the map's picker.
+      const sync0 = await page.evaluate(() => [!document.getElementById('ckUnit'), document.querySelector('.ck-what')?.textContent || '']);
       await page.selectOption('#home', 'homes|2-bedroom apartments');
       await page.waitForTimeout(400);
-      const sync1 = await page.evaluate(() => [document.getElementById('ckUnit').value, document.querySelector('.ck-what')?.textContent || '']);
-      check(sync0[0] === 'homes|' + sync0[1] && sync1[0] === '2-bedroom apartments' && /2-bedroom/.test(sync1[1]),
-        `desktop: the rent check and the map share one home choice (${sync0.join(' / ')} → ${sync1[0]})`);
+      const sync1 = await page.evaluate(() => document.querySelector('.ck-what')?.textContent || '');
+      await page.click('.ck-others button[data-unit="Studios"]');
+      await page.waitForTimeout(400);
+      const sync2 = await page.evaluate(() => [document.getElementById('home').value, document.querySelector('.ck-what')?.textContent || '']);
+      check(sync0[0] && /1-bedroom/.test(sync0[1]) && /2-bedroom/.test(sync1) && sync2[0] === 'homes|Studios' && /Studios/.test(sync2[1]),
+        `desktop: the rent check uses the map's Home picker, and "Other homes here" switches both (${sync2[0]})`);
       await page.selectOption('#home', 'homes|1-bedroom apartments');
       await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
       await page.click('.ck-actions [data-act="share"]');
@@ -397,6 +413,13 @@ try {
     const r = await page.evaluate(() => ({ z: map.getZoom(), c: map.getCenter(), you: !!document.querySelector('path.you'), note: document.querySelector('.mapNote:not([hidden])')?.textContent || '' }));
     if (where === 'London') check(!r.you && /outside Dubai/.test(r.note), `"Near me" from London says you seem to be outside Dubai and leaves the map`);
     else check(r.you && r.z === 14 && Math.abs(r.c.lat - 25.08) < 0.01, `"Near me" in Dubai Marina moves the map there and marks the spot (zoom ${r.z})`);
+    await page.context().close();
+  }
+  // Tablet width: the compact header, so the rent check starts in the top third of the screen.
+  {
+    const { page } = await open(browser, { width: 960, height: 800 });
+    const hb = await page.evaluate(() => Math.round(document.querySelector('.band').getBoundingClientRect().height));
+    check(hb <= 260, `960 px: the header is compact (${hb} px high)`);
     await page.context().close();
   }
   // Wallet-sized screens (fold phone covers, small phones): nothing sideways, the sheet fits, buttons stay small.

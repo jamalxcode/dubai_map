@@ -39,6 +39,9 @@ function odometer(el,value,prefix){
     if(FX)G.to(s,{y,duration:.9+i*.06,ease:'power3.out',overwrite:true});else s.style.transform='translateY('+y+')'});
 }
 
+// Which features get used (GoatCounter events: a feature's name and, at most, the choice made, such as the view
+// or the home size; nothing personal, nothing about the visitor). Same counter as the rent check's.
+const countUse=(what,title)=>{try{window.goatcounter&&window.goatcounter.count&&window.goatcounter.count({path:location.host+'/dubai_map/event/'+what,title:title||what,event:true})}catch(e){}};
 const map=L.map('map',{zoomControl:true,attributionControl:true}).setView([25.13,55.27],11);
 // A small merged label (2-3 areas) names its busiest area, e.g. "International City Phase 1 +1", so nearby
 // places stay findable by name when zoomed in; bigger groups cover a region and just count their areas.
@@ -71,7 +74,7 @@ function fitDubai(animate){const pts=(CACHE.homes||AREAS).filter(x=>x.lat!=null&
 // "All Dubai" is the third button of the zoom bar (+, −, All Dubai).
 {const a=L.DomUtil.create('a','fit',map.zoomControl.getContainer());
   a.href='#';a.role='button';a.textContent=T('All Dubai');a.title=T('Show all of Dubai');
-  L.DomEvent.on(a,'click',e=>{L.DomEvent.stop(e);fitDubai(true)})}
+  L.DomEvent.on(a,'click',e=>{L.DomEvent.stop(e);fitDubai(true);countUse('all-dubai')})}
 // "Near me": the map moves to where the visitor is (asked once by the browser). The position is used on this
 // device only, never sent or stored; outside Dubai, the map stays and says so.
 const mapNote=t=>{let n=document.querySelector('.mapNote');if(!n){n=document.createElement('div');n.className='mapNote';n.setAttribute('role','status');map.getContainer().parentNode.append(n)}
@@ -79,7 +82,7 @@ const mapNote=t=>{let n=document.querySelector('.mapNote');if(!n){n=document.cre
 let youAre=null;
 if(navigator.geolocation){const a=L.DomUtil.create('a','near',map.zoomControl.getContainer());
   a.href='#';a.role='button';a.textContent=T('Near me');a.title=T('Show where I am');
-  L.DomEvent.on(a,'click',e=>{L.DomEvent.stop(e);
+  L.DomEvent.on(a,'click',e=>{L.DomEvent.stop(e);countUse('near-me');
     navigator.geolocation.getCurrentPosition(p=>{const ll=[p.coords.latitude,p.coords.longitude];
       if(ll[0]<24.6||ll[0]>25.45||ll[1]<54.85||ll[1]>56.4){mapNote(T('You seem to be outside Dubai.'));return}
       if(youAre)youAre.remove();youAre=L.circleMarker(ll,{className:'you',radius:7,weight:3,interactive:false}).addTo(map);
@@ -130,10 +133,10 @@ L.Control.View=L.Control.extend({options:{position:'topright'},onAdd(){
   const g=L.DomUtil.create('div','views',d);g.setAttribute('role','group');g.setAttribute('aria-label',T('Map shows'));
   for(const [m,txt] of [['median',T('Rent')],['sale',T('Sale price')],['yield',T('Yield')]]){
     const b=L.DomUtil.create('button','',g);b.type='button';b.dataset.m=m;b.textContent=txt;
-    L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e);const sel=$('metric');if(sel.value===m)return;sel.value=m;sel.dispatchEvent(new Event('change'))})}
+    L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e);const sel=$('metric');if(sel.value===m)return;sel.value=m;sel.dispatchEvent(new Event('change'));countUse('view-'+m)})}
   const n=L.DomUtil.create('button','names',d);n.type='button';n.hidden=true;n.innerHTML='<span aria-hidden="true"><span lang="en">A</span>+<span lang="ar">ع</span></span><span class="vh">'+safe(T('Place names in English and Arabic'))+'</span>';
   n.title=T('Place names in English and Arabic');
-  L.DomEvent.on(n,'click',e=>{L.DomEvent.stop(e);mapBoth=!mapBoth;try{localStorage.setItem('mapBoth',mapBoth?'1':'0')}catch(_){}applyMapLang()});
+  L.DomEvent.on(n,'click',e=>{L.DomEvent.stop(e);mapBoth=!mapBoth;try{localStorage.setItem('mapBoth',mapBoth?'1':'0')}catch(_){}applyMapLang();if(mapBoth)countUse('map-names-both')});
   L.DomEvent.disableClickPropagation(d);return d}});
 const viewCtl=new L.Control.View().addTo(map);
 // Phones: the map credits fold behind an "i" button (two wrapped lines of credits covered the map's bottom);
@@ -272,7 +275,7 @@ async function init(){
   AGG=META.mode==='aggregate';
   const age=staleness(META,Date.now());
   // Freshness in one small line under the key figures, not in big type.
-  $('fresh').textContent=T('Data to {d} · updated {t} Kuwait time · new data is looked for three times a day',{d:age?niceDate(age.through):'—',
+  $('fresh').textContent=T('Data to {d} · updated {t} (Kuwait time) · checked for new data three times a day',{d:age?niceDate(age.through):'—',
     t:META.generated_at?new Date(META.generated_at).toLocaleString(T.locale,{timeZone:'Asia/Kuwait',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—'});
   $('updated').textContent=AGG?T('Median yearly rent by area and unit, last 12 months'):T('Contracts that started in the last 30 days, newest first');
   $('tableTitle').textContent=AGG?T('Rents by area'):T('Newest contracts');
@@ -319,7 +322,7 @@ async function setHome(k,u){
 }
 // The rent check shares this picker: a visitor's choice here becomes the check's home (companion.js listens),
 // and a check sets it here (window.setMapHome). Only the visitor's own change announces itself, so they don't loop.
-$('home').addEventListener('change',e=>{const [k,u]=e.target.value.split('|');setHome(k,u||'');
+$('home').addEventListener('change',e=>{const [k,u]=e.target.value.split('|');setHome(k,u||'');countUse('home',k+(u?': '+u:''));
   if(k==='homes')dispatchEvent(new CustomEvent('atlas:home',{detail:{unit:u||''}}))});
 window.setMapHome=unit=>{const v='homes|'+(unit||'');if(TYPE==='homes'&&$('unit').value===(unit||''))return;
   if(![...$('home').options].some(o=>o.value===v))return;$('home').value=v;setHome('homes',unit||'')};
@@ -533,7 +536,7 @@ addEventListener('keydown',e=>{
 const legendFolded=()=>{try{const v=localStorage.getItem('legendFolded');if(v)return v==='1'}catch(e){}return SHEET_MQ.matches};
 $('legend').addEventListener('click',e=>{if(!e.target.closest('.t'))return;const now=!$('legend').classList.contains('folded');
   try{localStorage.setItem('legendFolded',now?'1':'0')}catch(_){}
-  $('legend').classList.toggle('folded',now);e.target.closest('.t').setAttribute('aria-expanded',!now);popupMargins();renderLabels()});
+  $('legend').classList.toggle('folded',now);countUse(now?'legend-fold':'legend-unfold');e.target.closest('.t').setAttribute('aria-expanded',!now);popupMargins();renderLabels()});
 L.DomEvent.disableClickPropagation($('legend'));
 // The address keeps what the map shows (home, view, position), so a copied link opens the same map.
 // Written without reloading; other parameters (lang, area, unit) are kept.
@@ -544,6 +547,7 @@ function writeURL(){if(!$('home').options.length)return;clearTimeout(urlT);urlT=
 map.on('moveend',writeURL);
 function readURL(){
   const q=new URLSearchParams(location.search),v=q.get('view'),h=q.get('home'),at=(q.get('at')||'').split(',').map(Number);
+  if(q.get('at')&&document.referrer&&!document.referrer.startsWith(location.origin))countUse('map-link-opened'); // a shared map link, from elsewhere
   if(v&&[...$('metric').options].some(o=>o.value===v))$('metric').value=v;
   if(at.length===3&&at.every(isFinite)&&Math.abs(at[0]-25.1)<1&&Math.abs(at[1]-55.3)<1.2)map.setView([at[0],at[1]],Math.min(18,Math.max(8,at[2])),{animate:false});
   if(h){const [k,u='']=h.split(':');if([...$('home').options].some(o=>o.value===k+'|'+u)){
@@ -619,15 +623,17 @@ function table(){
 
 let typing,SORT=null; // SORT: {k, dir} once a column header is clicked; a new view goes back to its own order
 $('thead').addEventListener('click',e=>{const b=e.target.closest('button.sort');if(!b)return;const k=b.dataset.k;
-  SORT=SORT&&SORT.k===k?{k,dir:-SORT.dir}:{k,dir:k==='c'?1:-1};table();$('thead').querySelector('button[data-k="'+k+'"]').focus()});
+  SORT=SORT&&SORT.k===k?{k,dir:-SORT.dir}:{k,dir:k==='c'?1:-1};countUse('table-sort','sort: '+k);table();$('thead').querySelector('button[data-k="'+k+'"]').focus()});
 ['search','min','max'].forEach(id=>$(id).addEventListener('input',()=>{clearTimeout(typing);typing=setTimeout(()=>{animateLabels=true;draw()},150)}));
+// Counted once per visit each: the table finder and the rent range (not what was typed).
+const once=new Set();['search','min','max'].forEach(id=>$(id).addEventListener('change',()=>{const k=id==='search'?'table-find':'rent-range';if(!once.has(k)){once.add(k);countUse(k)}}));
 $('metric').addEventListener('change',()=>{SORT=null;animateLabels=true;draw()});
 const csvCell=x=>{const s=String(x??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
 $('export').onclick=()=>{
   const [head,keys,name]=AGG?[['area','dld_area','unit','median_yearly_rent_aed','contracts_12m','median_sale_price_aed','gross_yield_pct'],['c','ar','u','a','n','s','y'],'dubai-real-estate-by-area.csv']
     :[['start','end','yearly_rent_aed','size_sqm','unit','new_or_renewal','dld_area','area','master_project','building','type'],['s','e','a','sq','u','t','ar','c','mp','p','k'],'dubai-ejari-rents.csv'];
   const url=URL.createObjectURL(new Blob([[head.join(','),...view.map(r=>keys.map(k=>csvCell(r[k])).join(','))].join('\r\n')],{type:'text/csv;charset=utf-8'}));
-  const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+  const a=document.createElement('a');a.href=url;a.download=name;a.click();countUse('csv');setTimeout(()=>URL.revokeObjectURL(url),1000)};
 $('staleX').onclick=()=>{$('stale').classList.remove('on');try{sessionStorage.setItem('staleHidden',(staleness(META,Date.now())||{}).through||'')}catch(e){}map.invalidateSize()};
 
 let lenis=null;
