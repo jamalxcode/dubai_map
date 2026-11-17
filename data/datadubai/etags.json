@@ -9,6 +9,7 @@
   "huggingface:data/areas.csv": "\"a3f2c872c8666c4de8b78a6377300550aa1d1dfb\"",
   "huggingface:data/communities.csv": "\"1aa18a9580be70cf4403d609e2209bb26af99b16\"",
   "huggingface:data/community_bedrooms.csv": "\"c13227bfbcd70ef56cb56d7bad51345d47640b35\"",
+  "huggingface:data/community_monthly.csv": "\"95ddc07aca2f50b5767314199fae233461c6d0b4\"",
   "huggingface:data/projects.csv": "\"d8693d1bbae44f607954e3e2f0b2f2d47b0bc016\"",
   "huggingface:data/rents_by_community.csv": "\"669b20bb9744fdaf4f730db6771e6fb6c3873b6f\""
 }
