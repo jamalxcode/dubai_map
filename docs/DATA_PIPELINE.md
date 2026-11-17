@@ -25,6 +25,8 @@ Generated files (the `GENERATED` list in `scripts/data-branch.sh`):
 | `outlines.json` | Official community outlines, simplified, one set per map area |
 | `changes.json` | What changed since the previous publication: the biggest moves, unconfirmed jumps, new and gone areas (feeds the rent check's "since your last visit") |
 | `history/<date>.json` | Our own rent history: every area's medians for each publication (about 30 KB each), named by the date the data runs to |
+| `history/ccp/<date>.json` | The same for the older districts (Continental Club), by Continental Club's own date |
+| `runs.jsonl` | One line per pull (the last 300): when, how long, each source's state, how far the data runs |
 | `state.json` | Each source's state: ok, failed with the reason, or off, and when it last ran |
 | `datadubai/` | Dubai Data's files as last fetched (CSV export or rebuilt from the live pages), with ETags |
 | `crosscheck/` | The cross-check sources' figures (and the older districts from Continental Club) |
@@ -47,12 +49,15 @@ Generated files (the `GENERATED` list in `scripts/data-branch.sh`):
    - **Cross-checks** (`collector/fetch_crosscheck.py`, at most once a day): dubairealestatedata.com and continentalclub.ae. Continental Club also supplies the **56 older districts** (Deira, Bur Dubai, Karama…) that Dubai Data doesn't cover.
    - **Placing new areas** (`collector/geocode_missing.py`): an area with no map point gets a careful OpenStreetMap look-up, at most 10 per pull. A point is only accepted after checks (inside Dubai, a place rather than a shop or road, a close name match).
 3. **Build** (`collector/build.py`): turns the raw files into what the page shows (section 4), compares them with our own history (section 5), and writes a summary to the run's page on GitHub: what changed since the previous publication, unconfirmed jumps, and where the cross-check sources differ by more than 15%.
+   Before reading Dubai Data's files the build checks they still have the columns it uses; a renamed column stops the run with a message naming it (the previous data stays published).
+   **Backup:** if Dubai Data's figures are more than 10 days old while Continental Club's are current, every area is built from Continental Club alone, by official DLD area (1-bedroom medians, fewer areas), and the page says so in its warning sign. It switches back by itself when Dubai Data publishes again.
 4. **Check before publishing** (`tests/test_data.py`): the files must be well-formed, the counts must add up, and the placed contracts must match the total. If anything looks broken, nothing is saved.
-5. **Save:** commit the generated files to the `data` branch.
+5. **Log** (`scripts/run_log.py`): one line per pull in `runs.jsonl`, and the hours at which Dubai Data's publications were first seen, in the run's summary.
+6. **Save:** commit the generated files to the `data` branch.
    - Files are only added or updated, never deleted.
    - If nothing changed, nothing is committed.
    - If another job saved in the meantime, this one puts its change on top and retries.
-6. **Deploy, only if a file the page loads changed** (`areas*.json`, `latest.json`, `meta.json`, `outlines.json`: the `PAGE_FILES` list).
+7. **Deploy, only if a file the page loads changed** (`areas*.json`, `latest.json`, `meta.json`, `outlines.json`: the `PAGE_FILES` list).
    - `.github/workflows/pages.yml` builds the site from `main`'s code plus the `data` branch's JSON (not the raw archive).
    - It also writes an area page for every area (`a/<area>/`, `scripts/share_pages.py`) and `sitemap.xml`, then publishes to GitHub Pages.
    - If only internal state changed, such as "last checked" times, there's no deploy.
@@ -71,11 +76,12 @@ Generated files (the `GENERATED` list in `scripts/data-branch.sh`):
 
 ## 5. Our own history
 
-Dubai Data replaces its medians with each publication, so the build keeps a snapshot of every area's medians per publication (`collector/history.py`, `data/history/<date>.json`; the older districts run to their own dates and are left out). From the snapshots:
+Dubai Data replaces its medians with each publication, so the build keeps a snapshot of every area's medians per publication (`collector/history.py`, `data/history/<date>.json`), and a separate series for the older districts by Continental Club's own date (`data/history/ccp/`). From the snapshots:
 
 - **Change over time:** each area and home size gets its change against the snapshot about a year back, or, until there is a year of history, the oldest one at least four weeks back. The breakdown shows "Rent +6.5% since 14 Nov 2025".
 - **Unconfirmed jumps:** a median (from at least 30 contracts) that moved more than 40% since the previous publication is published but marked: dashed on the map, with a note in its breakdown. The mark clears by itself when the next publication stays close to it.
 - **What changed** (`changes.json`, and the run summary): moves of 5% or more, the jumps, new and gone areas.
+- **Industrial zones:** areas whose name says "Industrial" are mostly staff accommodation; they are flagged (`staff`), noted on the page, and left out of the rent check's "same home for less nearby" and rank.
 - **Sources that differ:** where a cross-check source is more than 15% away from our figure, the area's breakdown says so, with their figure.
 
 The first snapshot is the publication to 16 Nov 2026, so changes appear from mid-December (four weeks later), and year-on-year from November 2027.
@@ -89,7 +95,7 @@ The first snapshot is the publication to 16 Nov 2026, so changes appear from mid
 
 ## 7. After the pull
 
-- **`freshness.yml` runs every 6 hours** (`scripts/check_fresh.py`). It fails, and GitHub emails the owner, if the data is more than 7 days old or the pulls stop. Busy areas still missing a map point are listed as warnings, without an email.
+- **`freshness.yml` runs every 6 hours** (`scripts/check_fresh.py`). It fails, and GitHub emails the owner, if the data is more than 10 days old, the pulls stop, fewer than 80% of the week's pulls succeeded, a source fails, or the backup source is in use. Each problem also opens its own GitHub issue (label `data-alert`), closed with a note when it is no longer seen, so every outage leaves a record. Busy areas still missing a map point are listed as warnings, without an email.
 - **The weekly "Place unplaced areas" job** (`geocode.yml`) refreshes the Municipality community list and outlines, rebuilds, saves and deploys.
 - **In the browser,** the page loads only the small JSON files. It's static, so visitors never touch the sources.
 

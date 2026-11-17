@@ -349,6 +349,9 @@ try {
         const d = document.createElement('div'); d.innerHTML = h; return d.textContent; });
       check(/Rent \+6\.5% since 14 Nov 2025/.test(notes) && /waiting for the next update to confirm/.test(notes) && /Other sources differ by more than 15%/.test(notes) && /AED 52,000/.test(notes),
         'desktop: a breakdown shows the change since an earlier update, an unconfirmed jump, and sources that differ');
+      const staffNote = await page.evaluate(() => { const a = AREAS.find(x => x.lat != null); const d = document.createElement('div');
+        d.innerHTML = popup(Object.assign({}, a, { staff: true })); return d.textContent; });
+      check(/industrial zone: most homes here are staff accommodation/.test(staffNote), 'desktop: an industrial zone says its homes are mostly staff accommodation');
       // One Home control for the page: the check has none of its own and follows the map's picker.
       const sync0 = await page.evaluate(() => [!document.getElementById('ckUnit'), document.querySelector('.ck-what')?.textContent || '']);
       await page.selectOption('#home', 'homes|2-bedroom apartments');
@@ -404,6 +407,18 @@ try {
     check(!errors.length, `${name}: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await axe(page, name);
     await page.context().close();
+  }
+  // Backup source in use (Dubai Data stuck): the warning sign says so.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    await page.route(/data\/meta\.json/, async r => { const res = await r.fetch(); const m = await res.json();
+      m.backup = { since: '2026-11-01', days: 16, through: '2026-11-15' }; await r.fulfill({ response: res, json: m }); });
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    const banner = await page.evaluate(() => { const e = document.getElementById('stale'); return e.classList.contains('on') ? e.textContent : ''; });
+    check(/Backup figures in use/.test(banner) && /Continental Club/.test(banner), 'backup source: the warning sign says the figures come from Continental Club for now');
+    await ctx.close();
   }
   // A link with the map's state opens that map: home, view and position.
   {

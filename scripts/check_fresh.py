@@ -6,14 +6,19 @@ Run by .github/workflows/freshness.yml every 6 hours, after loading the data bra
   * the live site doesn't show the latest saved data (a failed deploy) or is down;
   * a source that should be working reports a failure;
   * a cross-check source suddenly disagrees with our figures (a broken import or page);
+  * fewer than 80% of the last week's pulls succeeded;
+  * the backup source is in use (Dubai Data stuck);
   * (listed, not failing) a busy area can't be placed on the map.
+Each problem also gets its own GitHub issue (label "data-alert"), opened when it first appears and
+closed with a note when it is no longer seen, so outages leave a record (sync_issues).
 Standard library only. `problems()` is pure, so the rules are unit-tested.
 """
 import json
 import os
+import re
 import sys
 import urllib.request
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = os.environ.get("SITE_URL") or "https://jamalxcode.github.io/dubai_map/"
@@ -24,6 +29,8 @@ MAX_SITE_LAG_HOURS = 2       # saved data not yet on the site
 CROSSCHECK_FLOOR = {"Dubai Real Estate Data": 0.5, "Continental Club Property": 0.7}
 MIN_MATCHED = 5
 MAX_UNPLACED = 1000          # contracts in an area the map can't place
+MIN_WEEK_SUCCESS = 0.8       # share of the last 7 days' pulls that must succeed
+ALERT_LABEL = "data-alert"
 
 
 def _when(s):
@@ -34,11 +41,16 @@ def _when(s):
         return None
 
 
-def problems(meta, site_meta, last_run, now):
+def problems(meta, site_meta, last_run, now, week_runs=None):
     """Everything that looks broken, as plain sentences. Empty list: all fine.
     meta: data/meta.json from the data branch. site_meta: the live site's copy, or an error
-    string. last_run: the newest completed pull run ({conclusion, created_at}) or None."""
+    string. last_run: the newest completed pull run ({conclusion, created_at}) or None.
+    week_runs: the last 7 days' completed pull runs, if known."""
     out = []
+    if meta.get("backup"):
+        b = meta["backup"]
+        out.append(f"Backup source in use: Dubai Data has not updated since {b.get('since')} ({b.get('days')} days), "
+                   "so the map is built from Continental Club alone. Check datadubai.ae and its export.")
     through = meta.get("data_through") or meta.get("newest_start_date")
     try:
         age = (now.date() - date.fromisoformat(through)).days
@@ -57,6 +69,11 @@ def problems(meta, site_meta, last_run, now):
         if hours is None or hours > MAX_PULL_HOURS:
             out.append(f"The latest pull started {hours:.0f} h ago (expected every 8 h): is cron-job.org still running and its token valid?"
                        if hours is not None else "The latest pull has no start time.")
+
+    if week_runs:
+        ok = sum(1 for r in week_runs if r.get("conclusion") == "success")
+        if ok / len(week_runs) < MIN_WEEK_SUCCESS:
+            out.append(f"Only {ok} of {len(week_runs)} pulls in the last 7 days succeeded: see the pull's run history.")
 
     if isinstance(site_meta, str):
         out.append(f"The live site's data could not be read: {site_meta}")
@@ -88,10 +105,47 @@ def warnings(meta):
             for u in meta.get("unmatched_areas") or [] if (u.get("n") or 0) >= MAX_UNPLACED]
 
 
-def fetch_json(url, headers=None):
-    req = urllib.request.Request(url, headers={"User-Agent": "dubai_map freshness check", **(headers or {})})
+def fetch_json(url, headers=None, data=None, method=None):
+    req = urllib.request.Request(url, headers={"User-Agent": "dubai_map freshness check", **(headers or {})},
+                                 data=json.dumps(data).encode() if data is not None else None, method=method)
     with urllib.request.urlopen(req, timeout=30) as r:
-        return json.loads(r.read().decode("utf-8"))
+        body = r.read().decode("utf-8")
+        return json.loads(body) if body else {}
+
+
+def alert_key(text):
+    """A stable name for a problem, so the same problem keeps one issue while its numbers change:
+    the sentence without numbers, dates and links, first eight words."""
+    t = re.sub(r"https?://\S+|\([^)]*\)|[\d,.:%]+", " ", text.lower())
+    return " ".join(re.findall(r"[a-z']+", t)[:8])
+
+
+def sync_issues(found, api, run_url=""):
+    """One open issue per current problem; issues for problems no longer seen are closed with a note.
+    api(method, path, body=None) calls the GitHub API for this repository. Returns (opened, closed)."""
+    open_issues = api("GET", f"issues?state=open&labels={ALERT_LABEL}&per_page=100") or []
+    by_key = {}
+    for i in open_issues:
+        m = re.search(r"<!-- alert:(.+?) -->", i.get("body") or "")
+        if m:
+            by_key[m.group(1)] = i
+    now_keys, opened, closed = set(), [], []
+    for text in found:
+        k = alert_key(text)
+        now_keys.add(k)
+        if k in by_key:
+            continue
+        title = "Data alert: " + (text if len(text) <= 90 else text[:87].rsplit(" ", 1)[0] + "…")
+        api("POST", "issues", {"title": title, "labels": [ALERT_LABEL],
+                               "body": f"{text}\n\nFirst seen by the freshness check{': ' + run_url if run_url else ''}. "
+                                       f"This issue closes itself when the problem is no longer seen.\n\n<!-- alert:{k} -->"})
+        opened.append(k)
+    for k, i in by_key.items():
+        if k not in now_keys:
+            api("POST", f"issues/{i['number']}/comments", {"body": f"No longer seen by the freshness check{': ' + run_url if run_url else ''}. Closing."})
+            api("PATCH", f"issues/{i['number']}", {"state": "closed", "state_reason": "completed"})
+            closed.append(k)
+    return opened, closed
 
 
 def main():
@@ -107,9 +161,28 @@ def main():
         runs = fetch_json(f"https://api.github.com/repos/{REPO}/actions/workflows/daily-ejari.yml/runs?status=completed&per_page=1",
                           {"Accept": "application/vnd.github+json", **({"Authorization": f"Bearer {token}"} if token else {})})
         last_run = (runs.get("workflow_runs") or [None])[0]
+        since = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        week = fetch_json(f"https://api.github.com/repos/{REPO}/actions/workflows/daily-ejari.yml/runs?status=completed&per_page=100&created=%3E{since}",
+                          {"Accept": "application/vnd.github+json", **({"Authorization": f"Bearer {token}"} if token else {})})
+        week_runs = week.get("workflow_runs") or []
     except Exception as e:  # noqa: BLE001
         print(f"(could not read workflow runs: {e})")
-    found = problems(meta, site_meta, last_run, datetime.now(timezone.utc))
+        week_runs = None
+    found = problems(meta, site_meta, last_run, datetime.now(timezone.utc), week_runs)
+    if os.environ.get("ALERT_ISSUES") == "1" and token:
+        def api(method, path, body=None):
+            return fetch_json(f"https://api.github.com/repos/{REPO}/{path}", {"Accept": "application/vnd.github+json",
+                              "Authorization": f"Bearer {token}"}, data=body, method=method)
+        try:
+            try:
+                api("POST", "labels", {"name": ALERT_LABEL, "color": "9A3B00", "description": "Opened and closed by the freshness check"})
+            except Exception:  # noqa: BLE001  (already there)
+                pass
+            run = os.environ.get("GITHUB_RUN_ID")
+            opened, closed = sync_issues(found, api, f"https://github.com/{REPO}/actions/runs/{run}" if run else "")
+            print(f"issues: {len(opened)} opened, {len(closed)} closed")
+        except Exception as e:  # noqa: BLE001  (issues are a convenience; the check's result stands)
+            print(f"(could not update issues: {e})")
     report = "\n".join(f"- {p}" for p in found) or "- All fine: data fresh, pulls running, site current, sources agree."
     notes = warnings(meta)
     if notes:

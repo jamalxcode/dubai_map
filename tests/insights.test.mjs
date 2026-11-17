@@ -130,3 +130,12 @@ test('ranges travel with the figure when a source has them, and are absent other
   assert.equal(RI.unitFigure(a, 'Studios').p75, 50000);
   assert.equal(RI.unitFigure(a, '1-bedroom apartments').p25, undefined);
 });
+
+test('industrial zones (mostly staff accommodation) are left out of comparisons', () => {
+  const jvc = AREAS[0];
+  const staff = Object.assign({}, AREAS[2], { label: 'Jabal Ali Industrial First', staff: true, lat: jvc.lat + 0.01, lng: jvc.lng });
+  const pool = AREAS.concat([staff]);
+  assert.ok(!RI.cheaperNearby(pool, jvc, '1-bedroom apartments').some(c => c.area.staff), 'never suggested as the same home for less');
+  assert.deepEqual(RI.rankAmong(pool, jvc, '1-bedroom apartments'), RI.rankAmong(AREAS, jvc, '1-bedroom apartments'), 'not counted in the rank');
+  assert.equal(RI.rankAmong(pool, staff, '1-bedroom apartments'), null, 'and not ranked itself');
+});

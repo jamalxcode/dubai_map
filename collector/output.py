@@ -21,6 +21,7 @@ AREA_DEFAULTS = {
     "rent_change": None,  # {since, pct}: the median against our own snapshot about a year back (history.py)
     "unconfirmed": None,  # {from, pct}: moved more than 40% since the previous publication, until confirmed
     "disagree": [],       # [{source, unit, ours, theirs, pct}]: cross-check sources more than 15% away
+    "staff": False,       # official name says "Industrial": mostly staff accommodation (noted; left out of comparisons)
 }
 
 
@@ -37,6 +38,8 @@ def shrink_problem(old, new):
     """Why the new build looks broken compared with the last one, or None if it is fine.
     Only compares builds in the same mode: switching source legitimately changes the counts."""
     if not old or old.get("mode") != new.get("mode"):
+        return None
+    if bool(old.get("backup")) != bool(new.get("backup")):  # switching to or from the backup source changes the counts
         return None
     for key, what in (("contracts_last_12m", "contracts"), ("mapped_last_12m", "contracts on the map"),
                       ("n_areas", "areas")):

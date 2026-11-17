@@ -7,6 +7,7 @@
 import csv
 import json
 import os
+import re
 import statistics
 import sys
 from collections import Counter, defaultdict
@@ -199,14 +200,57 @@ def source_status(state, own=None):
     return out
 
 
+# The columns the build reads from each Dubai Data file: a renamed column fails the run with a clear
+# message (the previous data stays published) instead of a bare KeyError.
+REQUIRED = {
+    "rents_by_community.csv": ["name", "url", "contracts", "rent_median", "yield_pct"],
+    "communities.csv": ["name", "price_median", "psf_median", "top_area"],
+    "community_bedrooms.csv": ["community", "label", "n_rents", "rent_median", "yield_pct"],
+    "areas.csv": ["name", "url"],
+    "projects.csv": ["community", "lat", "lng"],
+}
+# Dubai Data older than this while Continental Club is current: the map is built from Continental Club
+# alone (by official DLD area) until Dubai Data publishes again. Same limit as the freshness alarm.
+BACKUP_DAYS = 10
+# Areas whose name says "Industrial": their rents are mostly staff accommodation, so they are
+# noted on the page and left out of "same home for less nearby" and the rank (insights.js).
+STAFF = re.compile(r"\bindustrial\b", re.I)
+
+
+def read_checked(d, name):
+    """A Dubai Data file's rows, after checking it still has the columns the build reads."""
+    with open(os.path.join(d, name), encoding="utf-8") as f:
+        rows = csv.DictReader(f)
+        missing = [c for c in REQUIRED.get(name, []) if c not in (rows.fieldnames or [])]
+        if missing:
+            sys.exit(f"not publishing: Dubai Data's {name} no longer has {', '.join(missing)} "
+                     f"(columns now: {', '.join(rows.fieldnames or [])}). The previous files are kept.")
+        return list(rows)
+
+
+def backup_reason(state, today=None):
+    """Why to build from Continental Club alone, or None: Dubai Data stuck for BACKUP_DAYS while
+    Continental Club's figures are current."""
+    today = today or store.today_dubai()
+    dd = fetch_datadubai.data_through()
+    ccp = ((state.get("crosscheck") or {}).get("ccp") or {}).get("through")
+    if not dd or not ccp or not ccp_areas.load_rows():
+        return None
+    age = (today - date.fromisoformat(dd)).days
+    if age > BACKUP_DAYS and (today - date.fromisoformat(ccp)).days <= BACKUP_DAYS:
+        return {"since": dd, "days": age, "through": ccp}
+    return None
+
+
 def build_aggregate(now, state, own=None):
     """Community medians from Dubai Data (CC BY 4.0) when we have no own contracts."""
     d = fetch_datadubai.out_dir()
     rents_path = os.path.join(d, "rents_by_community.csv")
     if not os.path.exists(rents_path):
         return False
-    read = lambda n: list(csv.DictReader(open(os.path.join(d, n), encoding="utf-8")))  # noqa: E731
-    rents = read("rents_by_community.csv")
+    read = lambda n: read_checked(d, n)  # noqa: E731
+    backup = backup_reason(state)
+    rents = [] if backup else read("rents_by_community.csv")
     comms = {c["name"]: c for c in read("communities.csv")}
     beds = defaultdict(list)
     for b in read("community_bedrooms.csv"):
@@ -252,6 +296,9 @@ def build_aggregate(now, state, own=None):
             table.append({"c": name, "u": u["u"], "a": u["median"], "n": u["n"], "y": u["yield"], "s": u.get("sale"),
                           "ar": ", ".join(areas[-1]["dld_areas"]), "url": r["url"], "m": 1 if pt else 0})
     through = fetch_datadubai.data_through()
+    if backup:  # Dubai Data is stuck: every area comes from Continental Club below, by official DLD area
+        through = backup["through"]
+        print(f"BACKUP: Dubai Data is {backup['days']} days old (to {backup['since']}); building from Continental Club alone")
     # Older districts Dubai Data doesn't publish (Deira, Bur Dubai, Karama…), from Continental Club.
     ccp_through = ((state.get("crosscheck") or {}).get("ccp") or {}).get("through")
     extra, extra_unplaced, extra_table = ccp_areas.older_districts(areas, load_dm_points(), ccp_through)
@@ -259,10 +306,15 @@ def build_aggregate(now, state, own=None):
     unplaced += extra_unplaced
     table += extra_table
     areas.sort(key=lambda a: -a["n"])
+    for a in areas:
+        # The area's own name only: a residential community inside an industrial DLD area (Downtown Jabal Ali,
+        # in Jabal Ali Industrial Second) is not staff housing.
+        a["staff"] = bool(STAFF.search(a["label"] or ""))
     # Our own history (history.py): change over time, unconfirmed jumps; and where the cross-check
     # sources differ by more than 15% (shown in the area's breakdown).
-    snaps = history.load_all()
+    snaps, ccp_snaps = history.load_all(), history.load_all("ccp")
     history.annotate(areas, snaps, through)
+    history.annotate(areas, ccp_snaps, ccp_through, series="ccp")
     gaps = crosscheck.gaps(areas, state)
     for a in areas:
         a["disagree"] = gaps.get(a["label"], [])
@@ -277,13 +329,13 @@ def build_aggregate(now, state, own=None):
         sub.sort(key=lambda a: -a["n"])
         counts[t] = sum(a["n"] for a in sub)
         files[f"areas_{t}.json"] = {"generated_at": now, "from": None, "to": through, "type": t, "areas": sub}
-    ch = history.changes(areas, snaps, through)
+    ch = history.merge_changes(history.changes(areas, snaps, through), history.changes(areas, ccp_snaps, ccp_through, series="ccp"))
     files["changes.json"] = {"generated_at": now, **ch}
     shapes = area_outlines(areas, load_dm_points())
     if shapes:
         files["outlines.json"] = shapes
     files["meta.json"] = {
-        "mode": "aggregate", "generated_at": now,
+        "mode": "aggregate", "generated_at": now, "backup": backup,
         "contracts_last_12m": total, "mapped_last_12m": sum(a["n"] for a in areas if a["lat"] is not None),
         "n_areas": len(areas),
         "newest_start_date": through, "data_through": through,
@@ -300,7 +352,10 @@ def build_aggregate(now, state, own=None):
                   (f" Older districts ({len(extra)} DLD areas): {ccp_areas.NAME}, CC BY 4.0." if extra else ""),
     }
     publish(files)
-    history.save(history.snapshot(areas, through))  # after publishing: a refused build leaves no snapshot
+    # After publishing (a refused build leaves no snapshot). The main series only from Dubai Data's own figures.
+    if not backup:
+        history.save(history.snapshot(areas, through))
+    history.save(history.snapshot(areas, ccp_through, series="ccp"), series="ccp")
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
             f.write(history.summary_markdown(ch, gaps))

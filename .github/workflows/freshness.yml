@@ -11,6 +11,7 @@ on:
 permissions:
   actions: write    # read the pull's runs, and keep this schedule switched on
   contents: read
+  issues: write     # one issue per problem, closed when it is gone (label data-alert)
 
 jobs:
   check:
@@ -25,5 +26,5 @@ jobs:
       - name: Load the published data (data branch)
         run: scripts/data-branch.sh load
       - name: Check
-        env: { GH_TOKEN: "${{ github.token }}" }
+        env: { GH_TOKEN: "${{ github.token }}", ALERT_ISSUES: "1" }
         run: python3 scripts/check_fresh.py

@@ -12,7 +12,8 @@ latest figures. After every build, the figures are saved as data/history/<data-t
     the new figure stays close to it;
   * what changed: the moves since the previous publication, for the run's summary and changes.json.
 
-Older districts (Continental Club) are left out: their figures run to their own dates.
+Two series, since their figures run to different dates: the main one (Dubai Data, history/<date>.json)
+and the older districts from Continental Club (history/ccp/<date>.json, by Continental Club's own date).
 """
 import json
 import os
@@ -28,42 +29,46 @@ MOVED = 0.05           # changes.json lists moves of at least this much
 MAX_MOVED = 40
 
 
-def folder():
-    return os.path.join(store.DATA, "history")
+def folder(series="main"):
+    return os.path.join(store.DATA, "history", *([] if series == "main" else [series]))
 
 
-def snapshot(areas, through):
+def in_series(a, series):
+    return (a.get("source") == "ccp") == (series == "ccp")
+
+
+def snapshot(areas, through, series="main"):
     """The medians to keep: per area, the headline median and count, and each home size's."""
     out = {}
     for a in areas:
-        if a.get("source") == "ccp" or not a.get("median"):
+        if not in_series(a, series) or not a.get("median"):
             continue
         out[a["label"]] = {"m": a["median"], "n": a.get("n") or 0,
                            "u": {u["u"]: [u["median"], u.get("n")] for u in a.get("by_unit") or [] if u.get("median")}}
     return {"through": through, "areas": out}
 
 
-def save(snap):
-    if not snap.get("through"):
+def save(snap, series="main"):
+    if not snap.get("through") or not snap.get("areas"):
         return None
-    os.makedirs(folder(), exist_ok=True)
-    path = os.path.join(folder(), snap["through"] + ".json")
+    os.makedirs(folder(series), exist_ok=True)
+    path = os.path.join(folder(series), snap["through"] + ".json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(snap, f, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
         f.write("\n")
     return path
 
 
-def load_all():
-    """Every snapshot, oldest first."""
+def load_all(series="main"):
+    """Every snapshot of a series, oldest first."""
     try:
-        names = sorted(n for n in os.listdir(folder()) if n.endswith(".json"))
+        names = sorted(n for n in os.listdir(folder(series)) if n.endswith(".json"))
     except OSError:
         return []
     out = []
     for n in names:
         try:
-            with open(os.path.join(folder(), n), encoding="utf-8") as f:
+            with open(os.path.join(folder(series), n), encoding="utf-8") as f:
                 out.append(json.load(f))
         except (OSError, ValueError):
             continue
@@ -94,13 +99,13 @@ def previous(snaps, through):
     return before[-1] if before else None
 
 
-def annotate(areas, snaps, through):
-    """Add rent_change and unconfirmed to areas (and chg / unconfirmed to their home sizes), in place."""
+def annotate(areas, snaps, through, series="main"):
+    """Add rent_change and unconfirmed to a series' areas (and chg / unconfirmed to their home sizes), in place."""
     if not through:
         return
     base, prev = baseline(snaps, through), previous(snaps, through)
     for a in areas:
-        if a.get("source") == "ccp":
+        if not in_series(a, series):
             continue
         b = base and base["areas"].get(a["label"])
         p = prev and prev["areas"].get(a["label"])
@@ -115,25 +120,28 @@ def annotate(areas, snaps, through):
             pu = p and p["u"].get(u["u"])
             if bu and bu[0]:
                 u["chg"] = {"since": base["through"], "pct": _pct(u["median"], bu[0])}
-            if pu and pu[0] and (u.get("n") or 0) >= MIN_N and abs(u["median"] - pu[0]) / pu[0] > JUMP:
+            un = u.get("n") or (a.get("n") or 0 if series == "ccp" else 0)  # older districts: one count per area
+            if pu and pu[0] and un >= MIN_N and abs(u["median"] - pu[0]) / pu[0] > JUMP:
                 u["unconfirmed"] = {"from": pu[0], "pct": _pct(u["median"], pu[0])}
 
 
-def changes(areas, snaps, through):
-    """What changed since the previous publication: the biggest moves (from MIN_N contracts), the
-    unconfirmed jumps, and areas that appeared or disappeared."""
+def changes(areas, snaps, through, series="main"):
+    """What changed since the previous publication: the biggest moves (from MIN_N contracts; the older
+    districts give one count per area, used for each size), the unconfirmed jumps, and areas that
+    appeared or disappeared."""
     prev = previous(snaps, through) if through else None
     out = {"through": through, "previous": prev and prev["through"], "moved": [], "unconfirmed": [], "new_areas": [], "gone_areas": []}
     if not prev:
         return out
-    now = {a["label"]: a for a in areas if a.get("source") != "ccp" and a.get("median")}
+    now = {a["label"]: a for a in areas if in_series(a, series) and a.get("median")}
     for label, a in now.items():
         p = prev["areas"].get(label)
         if not p:
             out["new_areas"].append(label)
             continue
-        figs = [("", a["median"], a.get("n") or 0, p["m"])] + [
-            (u["u"], u["median"], u.get("n") or 0, p["u"].get(u["u"], [None])[0]) for u in a.get("by_unit") or [] if u.get("median")]
+        # Older districts' headline is one of their sizes (1 bed), so only the sizes are listed for them.
+        figs = ([("", a["median"], a.get("n") or 0, p["m"])] if series == "main" else []) + [
+            (u["u"], u["median"], u.get("n") or (a.get("n") or 0 if series == "ccp" else 0), p["u"].get(u["u"], [None])[0]) for u in a.get("by_unit") or [] if u.get("median")]
         for unit, m, n, old in figs:
             if not old or n < MIN_N or m == old:
                 continue
@@ -147,8 +155,9 @@ def changes(areas, snaps, through):
     out["moved"].sort(key=lambda r: -abs(r["pct"]))
     out["moved"] = out["moved"][:MAX_MOVED]
     out["new_areas"].sort()
-    out["up"] = sum(1 for r in out["moved"] if r["pct"] > 0 and not r["unit"])
-    out["down"] = sum(1 for r in out["moved"] if r["pct"] < 0 and not r["unit"])
+    head = lambda r: not r["unit"] or (series == "ccp" and r["unit"] == "1-bedroom apartments")  # noqa: E731
+    out["up"] = sum(1 for r in out["moved"] if r["pct"] > 0 and head(r))
+    out["down"] = sum(1 for r in out["moved"] if r["pct"] < 0 and head(r))
     return out
 
 
@@ -170,3 +179,16 @@ def summary_markdown(ch, gaps=None):
         lines += [f"- {label}: " + "; ".join(f"{g['source']} {g['unit']} AED {g['theirs']:,} ({g['pct']:+.1f}%)" for g in v)
                   for label, v in sorted(gaps.items())[:15]]
     return "\n".join(lines) + "\n"
+
+
+def merge_changes(main, ccp):
+    """One changes.json: the main series, with the older districts' moves added (their own dates in
+    previous_ccp / through_ccp)."""
+    out = dict(main)
+    for k in ("moved", "unconfirmed", "new_areas", "gone_areas"):
+        out[k] = main.get(k, []) + ccp.get(k, [])
+    out["moved"] = sorted(out["moved"], key=lambda r: -abs(r["pct"]))[:MAX_MOVED]
+    out["through_ccp"], out["previous_ccp"] = ccp.get("through"), ccp.get("previous")
+    out["up"] = main.get("up", 0) + ccp.get("up", 0)
+    out["down"] = main.get("down", 0) + ccp.get("down", 0)
+    return out

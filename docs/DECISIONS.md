@@ -480,7 +480,18 @@ The owner saw a breakdown cut off at the top of the map and under the Rent / Sal
 
 After merging, the pull was started by hand so the new fields went live (guard, pull and deploy jobs all succeeded), and Tests were rerun against the rebuilt data branch (passed). That run saved the first snapshot (`history/2026-11-16.json`) and the first `changes.json` (nothing to compare yet), and found 11 areas where a cross-check source differs by more than 15% (La Mer, Uptown Mirdif and Sobha Hartland among them).
 
+## Decision on 2026-11-17 (forty-fifth pass): data pull, second review
+
+1. **Industrial zones** (mostly staff accommodation) were showing as the cheapest homes and being suggested as "the same home for less". They are flagged by their own name (not their DLD area: Downtown Jabal Ali sits in Jabal Ali Industrial Second and is residential), noted, and left out of comparisons. Nine areas today.
+2. **Backup source:** if Dubai Data is stuck for more than 10 days while Continental Club is current, the map is rebuilt from Continental Club alone, with a warning sign; it switches back by itself. A current map with fewer areas beats a stale one.
+3. **Older districts' history:** their own snapshot series by Continental Club's date.
+4. **Alerts as GitHub issues:** opened and closed by the freshness check, keyed by the problem without its numbers, so one outage is one issue.
+5. **Run log** (`runs.jsonl`) and publication hours in the run summary; a week below 80% successful pulls is a problem. The page doesn't show the run log: it would change every run and trigger a deploy each time.
+6. **Column checks** on Dubai Data's files: a renamed column stops the run with its name.
+
 ## Change log
+
+- 2026-11-17: Industrial zones flagged and left out of comparisons; Continental Club backup when Dubai Data is stuck; older districts' history; alerts as GitHub issues; run log; column checks.
 
 - 2026-11-17: README rewritten: shorter, current (home picker, map links, Near me, rent history, house rules), owner's checklist folded.
 

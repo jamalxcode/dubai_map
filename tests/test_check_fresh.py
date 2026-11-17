@@ -71,3 +71,35 @@ class RuleTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AlertTests(unittest.TestCase):
+    def test_week_success_and_backup(self):
+        runs = [{"conclusion": "success"}] * 15 + [{"conclusion": "failure"}] * 6
+        self.assertIn("Only 15 of 21 pulls", cf.problems(META, SITE, RUN, NOW, runs)[0])
+        self.assertEqual(cf.problems(META, SITE, RUN, NOW, [{"conclusion": "success"}] * 20 + [{"conclusion": "failure"}]), [])
+        self.assertIn("Backup source in use", cf.problems(dict(META, backup={"since": "2026-11-01", "days": 15}), SITE, RUN, NOW)[0])
+
+    def test_same_problem_same_key_while_its_numbers_change(self):
+        a = "Data is 11 days old (runs to 2026-11-05); the sources have stopped updating or the pull is stuck."
+        b = "Data is 12 days old (runs to 2026-11-06); the sources have stopped updating or the pull is stuck."
+        self.assertEqual(cf.alert_key(a), cf.alert_key(b))
+        self.assertNotEqual(cf.alert_key(a), cf.alert_key("Source Dubai Data is failing: HTTP 503"))
+
+    def test_issues_open_once_and_close_when_gone(self):
+        calls, issues = [], []
+        def api(method, path, body=None):
+            calls.append((method, path))
+            if method == "GET":
+                return [i for i in issues if i["state"] == "open"]
+            if method == "POST" and path == "issues":
+                issues.append({"number": len(issues) + 1, "state": "open", **body})
+            if method == "PATCH":
+                issues[int(path.split("/")[1]) - 1]["state"] = "closed"
+            return {}
+        stale = ["Data is 11 days old (runs to 2026-11-05); the sources have stopped updating or the pull is stuck."]
+        self.assertEqual(len(cf.sync_issues(stale, api)[0]), 1)
+        self.assertEqual(cf.sync_issues(["Data is 12 days old (runs to 2026-11-06); the sources have stopped updating or the pull is stuck."], api), ([], []), "still the same problem: no second issue")
+        self.assertEqual(len(cf.sync_issues([], api)[1]), 1, "gone: closed")
+        self.assertEqual(issues[0]["state"], "closed")
+        self.assertIn(("POST", "issues/1/comments"), calls, "with a note")

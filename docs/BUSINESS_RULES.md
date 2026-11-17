@@ -82,6 +82,12 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Sources differ | A cross-check figure more than 15% from ours is shown in the area's breakdown with the source's figure | `crosscheck.gaps` |
 | Late timer runs | A scheduled run steps aside when a pull succeeded in the last 3 hours | `daily-ejari.yml` guard |
 | Live page retry | Failed community pages get one more try after 30 s; not after HTTP 429 or 403 | `fetch_datadubai.fetch_live` |
+| Industrial zones | An area whose own name contains "Industrial" is flagged `staff` (mostly staff accommodation): noted in its breakdown and the rent check, left out of "same home for less nearby" and the rank. A residential community inside an industrial DLD area is not flagged | `build.py STAFF`, `insights.js` |
+| Backup source | Dubai Data's figures more than 10 days old and Continental Club's at most 10: every area from Continental Club, `meta.backup` set, warning sign on the page, no main-series snapshot; the size guard doesn't compare across the switch | `build.backup_reason`, `output.shrink_problem` |
+| Source columns | Each Dubai Data file must keep the columns the build reads, or the run stops naming the missing one | `build.REQUIRED` |
+| Older districts' history | Their own snapshot series by Continental Club's date; jumps judged with the area's contract count | `history.py` (series "ccp") |
+| Alerts as issues | One issue per problem (key: the sentence without numbers, dates and links), closed with a note when gone | `check_fresh.sync_issues` |
+| Week of pulls | Fewer than 80% of the last 7 days' pulls succeeding is a problem | `check_fresh.MIN_WEEK_SUCCESS` |
 | Hidden labels | A label under a button or the legend with no free spot within two label-steps joins its nearest neighbour, and merging runs again | `labels.js` rule 3 |
 | Display names | All-capitals names in title case, acronyms kept; registered names for search, links and storage | `i18n.js T.place`, `share_pages.place` |
 | Table order | Clicked header (descending first, Area A–Z), else the view's column; areas with no figure last | `atlas.js table` |

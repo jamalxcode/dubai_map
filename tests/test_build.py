@@ -263,6 +263,41 @@ class AggregateBuildTests(TempData):
         self.assertEqual(self.load("changes.json")["unconfirmed"][0]["area"], "Alpha")
         self.assertIsNone(self.load("areas_flat.json")["areas"][0]["unconfirmed"], "the mark is for the all-homes median only")
 
+    CCP = ("area,unit,median,n\nJabal Ali Industrial First,Studios,35000,1279\nJabal Ali Industrial First,1-bedroom apartments,30000,1279\n"
+           "Abu Hail,Studios,30000,2567\nAbu Hail,1-bedroom apartments,35000,2567\nArea A,1-bedroom apartments,69000,900\n")
+
+    def ccp_state(self, through):
+        self.write("crosscheck/ccp.csv", self.CCP)
+        self.write("state.json", json.dumps({"crosscheck": {"ccp": {"state": "ok", "through": through}}}))
+
+    def test_industrial_zones_are_marked_and_older_districts_keep_a_history(self):
+        self.ccp_state("2026-10-28")  # older than Dubai Data's figures: no backup
+        with mock.patch("builtins.print"), mock.patch.object(build.store, "today_dubai", return_value=build.date(2026, 10, 31)):
+            build.main()
+        areas = {a["label"]: a for a in self.load("areas.json")["areas"]}
+        self.assertTrue(areas["Jabal Ali Industrial First"]["staff"])
+        self.assertFalse(areas["Abu Hail"]["staff"])
+        self.assertIsNone(self.load("meta.json")["backup"])
+        self.assertTrue(os.path.exists(os.path.join(self.tmp, "history", "ccp", "2026-10-28.json")), "the older districts' own series")
+        self.assertNotIn("Abu Hail", self.load("history/2026-10-29.json")["areas"], "kept apart from the main series")
+
+    def test_backup_from_continental_club_when_dubai_data_is_stuck(self):
+        self.ccp_state("2026-11-15")
+        with mock.patch("builtins.print"), mock.patch.object(build.store, "today_dubai", return_value=build.date(2026, 11, 17)):
+            build.main()
+        meta, areas = self.load("meta.json"), self.load("areas.json")["areas"]
+        self.assertEqual(meta["backup"], {"since": "2026-10-29", "days": 19, "through": "2026-11-15"})
+        self.assertEqual(meta["data_through"], "2026-11-15")
+        self.assertEqual({a["source"] for a in areas}, {"ccp"}, "every area from Continental Club")
+        self.assertIn("Area A", {a["label"] for a in areas}, "including DLD areas Dubai Data used to cover")
+        self.assertFalse(os.path.exists(os.path.join(self.tmp, "history", "2026-11-15.json")), "no main snapshot from backup figures")
+
+    def test_a_renamed_column_stops_the_build_with_a_clear_message(self):
+        self.write("datadubai/rents_by_community.csv", "name,url,contracts,median_rent,yield_pct\nAlpha,https://x/a/,100,60000,6.5\n")
+        with mock.patch("builtins.print"), self.assertRaises(SystemExit) as e:
+            build.main()
+        self.assertIn("rents_by_community.csv no longer has rent_median", str(e.exception))
+
     def test_flats_typical_is_contract_weighted(self):
         area = {"label": "X", "n": 100, "median": 1, "by_unit": [
             {"u": "1-bedroom apartments", "n": 30, "median": 60000, "yield": 7.0},

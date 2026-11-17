@@ -69,6 +69,8 @@ jobs:
     outputs:
       changed: ${{ steps.save.outputs.changed }}
     steps:
+      - name: Note the start time (for the run log)
+        run: echo "RUN_STARTED=$(date -u +%s)" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - name: Keep this schedule switched on (GitHub turns off quiet scheduled workflows after 60 days)
         # Data commits go to the data branch, so main can be quiet for weeks. A disabled workflow can't be
@@ -112,6 +114,8 @@ jobs:
         run: python3 collector/build.py
       - name: Check the data before publishing (stops the commit if it looks broken)
         run: python3 -m unittest discover -s tests -p "test_data.py" -v
+      - name: Log this run (data/runs.jsonl, last 300) and when Dubai Data publishes
+        run: python3 scripts/run_log.py
       - name: Save the data (data branch; nothing is saved if nothing changed)
         id: save
         run: |

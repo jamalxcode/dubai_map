@@ -182,6 +182,7 @@
     out.innerHTML = `
       <div class="ck-answer">
         <p class="ck-what">${T('{what} in {area}', { what: esc(what), area: `<b>${esc(T.place(area.label))}</b>` })}</p>
+        ${area.staff ? `<p class="muted ck-staff">${T('An industrial zone: most homes here are staff accommodation, so this figure is not a guide to rents in residential areas.')}</p>` : ''}
         ${(() => { const others = RI.unitOptions(area).filter(o => o.u !== unit); return others.length ? `<p class="ck-others"><span class="muted">${T('Other homes here:')}</span> ${others.map(o => `<button type="button" class="link" data-unit="${esc(o.u)}">${esc(US(o.u))}</button>`).join(' · ')}${unit && area.median_kind !== 'unit' ? ` · <button type="button" class="link" data-unit="">${T('All homes')}</button>` : ''}</p>` : ''; })()}
         <p class="ck-big"><i class="keyChip" aria-hidden="true" style="--c:${window.priceKey(unit).color(f.median)}"></i><bdi>${aed(f.median)}</bdi> <span>${T('a year')}</span></p>
         <p class="muted">${f.n == null

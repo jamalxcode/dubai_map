@@ -283,7 +283,11 @@ async function init(){
   $('tableTitle').textContent=AGG?T('Rents by area'):T('Newest contracts');
   if(AGG){const o=$('metric').querySelector('option[value=median_sqm]');o.value='yield';o.textContent=T('Yield')}
   if(!AREAS.some(a=>a.sale_median||a.by_unit.some(u=>u.sale))){const o=$('metric').querySelector('option[value=sale]');if(o)o.remove()}
-  if(age&&age.stale){
+  // Backup source in use (build.py: Dubai Data stuck for 10+ days): say so, plainly, in the warning sign.
+  if(META.backup){
+    $('staleText').innerHTML='<b>'+T('Backup figures in use.')+'</b> '+safe(T('Dubai Data has not updated since {d}, so every area now comes from Continental Club Property, by official DLD area: 1-bedroom medians, and fewer areas than usual.',{d:niceDate(META.backup.since)}));
+    $('stale').classList.add('on');setTimeout(()=>map.invalidateSize(),0);
+  }else if(age&&age.stale){
     $('staleText').innerHTML='<b>'+T('This data is {n} days old',{n:age.days})+'</b> '+safe(T('(to {d}).',{d:niceDate(age.through)}))+'<span class="more"> '+
       (AGG?T('Dubai Data has not published a newer update yet, so changes since then are not shown.'):T('The daily update has not brought in newer contracts, so changes since then are not shown.'))+'</span>';
     let hidden=false;try{hidden=sessionStorage.getItem('staleHidden')===age.through}catch(e){}
@@ -406,6 +410,7 @@ function popup(a){
       ['https://www.google.com/search?tbm=isch&q='+encodeURIComponent(a.label+' Dubai'),T('Photos on Google')]]
       .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+'</p>'+
     (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
+    (a.staff?'<p class="staff"><small>'+T('An industrial zone: most homes here are staff accommodation, so rents run well below homes elsewhere. It is left out of comparisons with other areas.')+'</small></p>':'')+
     ((a.disagree||[]).length?'<p class="differ"><small>'+T('Other sources differ by more than 15%:')+' '+a.disagree.map(d=>T('{source}, {unit}: AED {theirs} (ours is {pct}%)',{source:safe(d.source),unit:safe(T.unit(d.unit)),theirs:fmt(d.theirs),pct:(d.pct>0?'+':'')+d.pct})).join('; ')+'. '+T('They count differently (new contracts only, or by DLD area), so treat both as a guide.')+'</small></p>':'')+
     '<small>'+T('DLD area: {list}. The point is an approximate reference for the area, not a building.',{list:a.dld_areas.map(safe).join(', ')})+(a.url?' <a href="'+safe(a.url)+'" target="_blank" rel="noopener">'+T('Dubai Data page')+'</a>':'')+'</small>';
 }

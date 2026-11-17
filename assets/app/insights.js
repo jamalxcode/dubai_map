@@ -96,7 +96,7 @@
     if (!here || area.lat == null) return [];
     const out = [];
     for (const a of areas) {
-      if (a === area || a.lat == null) continue;
+      if (a === area || a.lat == null || a.staff) continue; // industrial zones: mostly staff accommodation, not a like-for-like home
       const f = unitFigure(a, unit);
       if (!f || (f.n ?? a.n) < minContracts || f.median >= here.median * 0.97) continue;
       const d = km(area, a);
@@ -111,7 +111,9 @@
   function rankAmong(areas, area, unit) {
     const here = unitFigure(area, unit);
     if (!here) return null;
-    const meds = areas.map(a => [a, unitFigure(a, unit)]).filter(([a, f]) => f && (f.n ?? a.n) >= 30).map(([, f]) => f.median);
+    // Ranked among homes like it: industrial zones (mostly staff accommodation) are left out.
+    if (area.staff) return null;
+    const meds = areas.map(a => [a, unitFigure(a, unit)]).filter(([a, f]) => f && !a.staff && (f.n ?? a.n) >= 30).map(([, f]) => f.median);
     if (meds.length < 5) return null;
     const dearer = meds.filter(m => m > here.median).length;
     const cheaper = meds.filter(m => m < here.median).length;
