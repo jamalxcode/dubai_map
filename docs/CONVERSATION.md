@@ -203,6 +203,10 @@ The key now spans the 5th to 95th percentile (AED 38k to 120k for 1-bedroom, ins
 
 Those were the merged group labels (oxblood background). They now use the price key like every other label; a gold stacked-card outline and "avg" show they cover several areas.
 
+### 17 Nov · "in dark mode, the price labels don't follow the price color key"
+
+The dark cards turned the blue tints grey-brown. Price labels now stay light ivory cards in dark mode, with the same tints and dials as in light mode, so prices match the key in both themes.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

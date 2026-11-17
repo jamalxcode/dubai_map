@@ -346,6 +346,10 @@ The owner: remove edge cases that distort the key; the top 5% should not set the
 
 The owner spotted brown/dark prices that didn't follow the key: the merged "N areas" labels, which had an oxblood background from the thirty-first pass. Every price now follows the key: group labels are ivory with the same price-colour tint, edge and dial as single ones, and a gold stacked-card outline plus "avg" marks them as several areas. Oxblood stays for the header, buttons and selected states. Rule: anything showing a price uses only the price key for its colour.
 
+## Decision on 2026-11-17 (thirty-fourth pass): price labels look the same in dark mode
+
+The owner: in dark mode the price labels don't follow the price key. They were dark cards with a 30% tint, which turned the blues into greys and browns on the dark map. In dark mode price labels now stay light ivory cards with the same 35% tint, dial and edge as in light mode, so each price shows exactly its key colour, in both themes, against any map. Text contrast is the light-mode values (espresso on every tint, at least 4.75:1). Leader lines and dots are light too. Rule: prices look the same in both themes; only the page around them changes.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
@@ -388,6 +392,8 @@ The owner spotted brown/dark prices that didn't follow the key: the merged "N ar
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-17: Dark mode price labels stay light cards so prices match the key in both themes.
 
 - 2026-11-17: Group labels coloured by the price key; a gold stacked-card outline marks them.
 

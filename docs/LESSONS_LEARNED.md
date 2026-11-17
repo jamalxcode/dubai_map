@@ -36,6 +36,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 ## Interface
 
+- **A tint depends on what's under it.** A 30% blue tint on a dark card reads grey-brown, not blue. *Rule:* price labels are light cards in both themes, so a price looks the same as its key colour everywhere.
+
 - **A brand colour on a price reads as a price.** Oxblood group labels looked like a seventh, off-key price colour. *Rule:* anything that shows a price takes its colour only from the price key; mark other differences (groups) with shape or outline.
 
 - **Measure before redesigning.** Every layout change started from pixel measurements (where the filters end, how wide the pop-up is) and was checked the same way after. The phone pop-up was 351 px wide on 320 px screens; we only knew because we measured.
