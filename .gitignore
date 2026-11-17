@@ -12,6 +12,8 @@ __pycache__/
 /data/crosscheck/
 /data/osm_area_points.csv
 /data/dm_communities.csv
+/data/dm_outlines.json
+/data/outlines.json
 
 node_modules/
 /a/
