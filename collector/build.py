@@ -236,7 +236,7 @@ def build_aggregate(now, state, own=None):
         if not pt:
             unplaced.append({"area": name, "n": n})
         by_unit = [{"u": b["label"], "n": int(float(b["n_rents"] or 0)), "median": round(float(b["rent_median"])),
-                    "yield": _num(b["yield_pct"])} for b in beds.get(name, [])]
+                    "yield": _num(b["yield_pct"]), "sale": _num(b.get("price_median"))} for b in beds.get(name, [])]
         areas.append(output.area(
             label=name, lat=pt[0] if pt else None, lng=pt[1] if pt else None,
             dld_areas=sorted(set(dld_areas.get(r["url"], []))) or ([c["top_area"]] if c.get("top_area") else []),
@@ -328,7 +328,10 @@ def aggregate_type(area, t):
     else:
         value, kind = round(sum(u["median"] for u in units) / len(units) / 500) * 500, "typical"
     ys = [(u["yield"], u["n"]) for u in units if u.get("yield") is not None]
-    return dict(area, n=n, median=value, median_kind=kind, by_unit=units,
+    # Sale price for this type: the bedroom medians weighted like the rent (by rent contracts); one unit: its median.
+    ss = [(u["sale"], u["n"] or 1) for u in units if u.get("sale")]
+    sale = (ss[0][0] if len(ss) == 1 else round(sum(v * k for v, k in ss) / sum(k for _, k in ss) / 1000) * 1000) if ss else None
+    return dict(area, n=n, median=value, median_kind=kind, by_unit=units, sale_median=sale,
                 yield_pct=round(sum(y * k for y, k in ys) / sum(k for _, k in ys), 2) if ys else None)
 
 

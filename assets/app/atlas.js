@@ -45,7 +45,9 @@ const map=L.map('map',{zoomControl:true,attributionControl:true}).setView([25.13
 // Rent dial: share of the top of the key (the 95th percentile of what is shown; dearer areas show a full dial), in its key colour.
 // Only for rents, not counts or yields. LABEL.top is set by draw().
 const share=v=>Math.min(100,Math.max(0,Math.round(v/(LABEL.top||v||1)*100)));
-const pie=(v,metric)=>metric==='median'&&v>0?'<i class="pie" aria-hidden="true" style="--p:'+share(v)+'%"></i>':'';
+// The three map views (rent, sale price, gross yield) each get the key, a dial and shading; counts and rent per m² don't.
+const VIEWS=['median','sale','yield'];
+const pie=(v,metric)=>VIEWS.includes(metric)&&v>0?'<i class="pie" aria-hidden="true" style="--p:'+share(v)+'%"></i>':'';
 // The price key: six colours in equal steps between the 5th and 95th percentile of what is shown, so a few
 // extreme areas don't stretch the key. Values below the 5th percentile take the lowest colour, above the
 // 95th the highest (and a full dial). `vals` must be sorted ascending.
@@ -115,6 +117,19 @@ L.Control.MapLang=L.Control.extend({options:{position:'topright'},onAdd(){
     L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e);mapLang=l;try{localStorage.setItem('mapLang',l)}catch(_){}applyMapLang()})}
   L.DomEvent.disableClickPropagation(d);return d}});
 const langCtl=new L.Control.MapLang().addTo(map);
+// What the map shows: rent, sale price or gross yield. Same as the "Labels show" menu, one tap away on the map.
+// Each view has its own key (5th to 95th percentile of its values). A view shows only when the data has it.
+L.Control.View=L.Control.extend({options:{position:'topright'},onAdd(){
+  const d=L.DomUtil.create('div','leaflet-bar viewSw');d.setAttribute('role','group');d.setAttribute('aria-label',T('Map shows'));
+  for(const [m,txt] of [['median',T('Rent')],['sale',T('Sale price')],['yield',T('Yield')]]){
+    const b=L.DomUtil.create('button','',d);b.type='button';b.dataset.m=m;b.textContent=txt;
+    L.DomEvent.on(b,'click',e=>{L.DomEvent.stop(e);const sel=$('metric');if(sel.value===m)return;sel.value=m;sel.dispatchEvent(new Event('change'))})}
+  L.DomEvent.disableClickPropagation(d);return d}});
+const viewCtl=new L.Control.View().addTo(map);
+function syncViews(){
+  const sel=$('metric'),have=new Set([...sel.options].map(o=>o.value));
+  viewCtl.getContainer().querySelectorAll('button').forEach(b=>{b.hidden=!have.has(b.dataset.m);b.setAttribute('aria-pressed',b.dataset.m===sel.value)});
+}
 // OpenStreetMap tile usage policy: this exact HTTPS URL, visible attribution, no bulk or offline use.
 function rasterBase(){if(map._osm)return;map._osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:OSM_ATTR}).addTo(map);langCtl.getContainer().hidden=true}
 const loadScript=src=>new Promise((ok,fail)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=fail;document.head.append(s)});
@@ -139,7 +154,7 @@ async function vectorBase(){
 const layer=L.layerGroup().addTo(map);
 let POINTS=[],LABEL={},animateLabels=true;
 const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
-function labelText(v,metric){return metric==='yield'?Number(v).toFixed(1)+'%':metric==='n'?T('{n} contracts',{n:compact(v)}):metric==='median_sqm'?'AED '+fmt(v)+'/m²':'AED '+compact(v)}
+function labelText(v,metric){return metric==='sale'?'AED '+compact(v):metric==='yield'?Number(v).toFixed(1)+'%':metric==='n'?T('{n} contracts',{n:compact(v)}):metric==='median_sqm'?'AED '+fmt(v)+'/m²':'AED '+compact(v)}
 
 // Labels that would overlap at this zoom merge into one label with the contract-weighted average.
 function renderLabels(){
@@ -147,7 +162,7 @@ function renderLabels(){
   const {metric,colorOf}=LABEL;
   // Where labels go (merging, splitting, avoiding the controls) is decided in labels.js, in pixels.
   const size=(members,val)=>{const single=members.length===1,top=labelText(val,metric)+(single||metric==='n'?'':' '+T('avg')),sub=single?members[0].a.label:groupName(members);
-    return {w:Math.max(top.length*8.4+(metric==='median'?14:0),Math.min(sub.length,26)*5.8)+26,h:38}};
+    return {w:Math.max(top.length*8.4+(VIEWS.includes(metric)?14:0),Math.min(sub.length,26)*5.8)+26,h:38}};
   const items=POINTS.map(p=>{const pt=map.latLngToLayerPoint([p.a.lat,p.a.lng]);return Object.assign({x:pt.x,y:pt.y,lat:p.a.lat,lng:p.a.lng},p)});
   const box=map.getContainer().getBoundingClientRect();
   const blocks=[...map.getContainer().parentNode.querySelectorAll('.leaflet-control,.legend')].map(e=>e.getBoundingClientRect())
@@ -159,7 +174,7 @@ function renderLabels(){
     if(moved){L.polyline([[c.lat,c.lng],pos],{className:'leader',weight:1.5,interactive:false}).addTo(layer);
       L.circleMarker([c.lat,c.lng],{className:'leader dot',radius:3,weight:1.5,interactive:false}).addTo(layer)}
     // Rent labels fill from the start in proportion to the rent (the top price pulled = full), a second cue next to the dial.
-    const fill=metric==='median'&&c.val>0?';--f:'+share(c.val)+'%':'';
+    const fill=VIEWS.includes(metric)&&c.val>0?';--f:'+share(c.val)+'%':'';
     const html='<div class="rl'+(c.single?'':' grp')+(fill?' rent':'')+'" style="--c:'+colorOf(c.val)+fill+'" tabindex="0"><b>'+pie(c.val,metric)+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">'+T('avg')+'</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
     const m=L.marker(pos,{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
@@ -183,15 +198,16 @@ map.on('zoomend',renderLabels);
 // The headline number: contract-weighted average of what is on screen.
 function viewStat(){
   const metric=LABEL.metric,b=map.getBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0);
-  const what=metric==='n'?T('Contracts'):metric==='median_sqm'?T('Average rent per m²'):metric==='yield'?T('Average gross yield'):T('Average yearly rent');
+  const what=metric==='n'?T('Contracts'):metric==='median_sqm'?T('Average rent per m²'):metric==='yield'?T('Average gross yield'):metric==='sale'?T('Average sale price'):T('Average yearly rent');
   $('medLabel').textContent=T('{what} in view',{what})+(vis.length?' · '+T.count(vis.length,'area')+T(', ')+($('unit').value?T.unit($('unit').value):TYPENAME()).toLowerCase():'');
   if(!vis.length||!N){odometer($('med'),null);$('medPie').hidden=true;
     const perUnitOnly=!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'&&a.lat!=null&&b.contains([a.lat,a.lng]));
     $('medLabel').textContent=perUnitOnly?T('Areas here have figures per unit only: pick a unit (e.g. 1 bed) to see them.'):T('Nothing to show here for {type}. Zoom out to see more.',{type:TYPENAME().toLowerCase()});return}
   const v=metric==='n'?N:vis.reduce((s,p)=>s+p.v*p.n,0)/N;
-  const mp=$('medPie');mp.hidden=metric!=='median';mp.style.setProperty('--p',share(v)+'%');mp.style.setProperty('--c',LABEL.colorOf?LABEL.colorOf(v):'var(--b3)');
+  const mp=$('medPie');mp.hidden=!VIEWS.includes(metric);mp.style.setProperty('--p',share(v)+'%');mp.style.setProperty('--c',LABEL.colorOf?LABEL.colorOf(v):'var(--b3)');
   if(metric==='yield'){$('med').textContent=v.toFixed(1)+'%';$('med')._sig=null;return}
-  odometer($('med'),metric==='n'?v:Math.round(v/(metric==='median_sqm'?1:100))*(metric==='median_sqm'?1:100),metric==='n'?'':'AED ');
+  const step=metric==='median_sqm'?1:metric==='sale'?1000:100;
+  odometer($('med'),metric==='n'?v:Math.round(v/step)*step,metric==='n'?'':'AED ');
 }
 map.on('moveend',viewStat);
 
@@ -213,6 +229,7 @@ async function init(){
   $('updated').textContent=AGG?T('Median yearly rent by area and unit, last 12 months'):T('Contracts that started in the last 30 days, newest first');
   $('tableTitle').textContent=AGG?T('Rents by area'):T('Newest contracts');
   if(AGG){const o=$('metric').querySelector('option[value=median_sqm]');o.value='yield';o.textContent=T('Gross rental yield')}
+  if(!AREAS.some(a=>a.sale_median||a.by_unit.some(u=>u.sale))){const o=$('metric').querySelector('option[value=sale]');if(o)o.remove()}
   if(age&&age.stale){
     $('staleText').innerHTML='<b>'+T('This data is {n} days old',{n:age.days})+'</b> '+safe(T('(to {d}).',{d:niceDate(age.through)}))+'<span class="more"> '+
       (AGG?T('Dubai Data has not published a newer update yet, so changes since then are not shown.'):T('The daily update has not brought in newer contracts, so changes since then are not shown.'))+'</span>';
@@ -274,6 +291,7 @@ function areaValue(a,metric,unit){
   if(metric==='n')return u?u.n:a.n;
   if(metric==='median_sqm')return u?null:a.median_sqm;
   if(metric==='yield')return u?u.yield:a.yield_pct;
+  if(metric==='sale')return u?u.sale:a.sale_median;
   return u?u.median:a.median;
 }
 function spark(monthly){
@@ -434,8 +452,9 @@ function draw(){
   LABEL={metric,colorOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
-  $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?'≤ '+f(sc.lo):'')+'</span><span>'+(vals.length?'≥ '+f(sc.hi):'')+'</span></div>';
-  if(metric==='median')$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%;--c:var(--b5)"></i>'+T('Dial: share of {top}; 95% of areas pay less',{top:'AED '+compact(LABEL.top)})+'</div>');
+  $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='sale'?T('Median sale price'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?'≤ '+f(sc.lo):'')+'</span><span>'+(vals.length?'≥ '+f(sc.hi):'')+'</span></div>';
+  if(VIEWS.includes(metric))$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%;--c:var(--b5)"></i>'+T('Dial: share of {top}; 95% of areas are below it',{top:labelText(LABEL.top,metric)})+'</div>');
+  syncViews();
   if(!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts (no all-homes median): pick a unit to see them')+'</div>');
   const inArea=AREAS.filter(match);
   odometer($('n12'),inArea.reduce((s,a)=>s+a.n,0));odometer($('mapped'),shown.reduce((s,a)=>s+a.n,0));

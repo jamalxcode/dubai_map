@@ -270,3 +270,13 @@ class TopAreaPointTests(unittest.TestCase):
         self.assertIsNone(build.top_area_point({}, self.DM))
         self.assertIsNone(build.top_area_point({"top_area": "Wadi Al Safa 7", "share_in_top_area": "n/a"}, self.DM))
 
+
+class SaleByUnitTests(unittest.TestCase):
+    def test_type_sale_is_the_rent_weighted_bedroom_median(self):
+        area = {"label": "X", "n": 100, "median": 1, "source": None, "by_unit": [
+            {"u": "1-bedroom apartments", "n": 300, "median": 60000, "yield": 6.0, "sale": 1000000},
+            {"u": "2-bedroom apartments", "n": 100, "median": 90000, "yield": 5.0, "sale": 2000000}]}
+        got = build.aggregate_type(area, "flat")
+        self.assertEqual(got["sale_median"], 1250000)
+        self.assertIsNone(build.aggregate_type(dict(area, by_unit=[dict(u, sale=None) for u in area["by_unit"]]), "flat")["sale_median"])
+

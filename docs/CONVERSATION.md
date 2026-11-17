@@ -207,6 +207,10 @@ Those were the merged group labels (oxblood background). They now use the price 
 
 The dark cards turned the blue tints grey-brown. Price labels now stay light ivory cards in dark mode, with the same tints and dials as in light mode, so prices match the key in both themes.
 
+### 17 Nov · "add a rent button view, sale price view, and gross yield button view on the map … key needs to change according to value also, apply the 5% edge case rule"
+
+A Rent · Sale price · Yield switch on the map; each view has its own key from the 5th to 95th percentile of its values (1-bedroom today: rent AED 38k-120k, sale AED 660k-2.75M, yield 5.2%-8.6%), and the legend, dials and headline follow. Sale prices per bedroom count added to the data build.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

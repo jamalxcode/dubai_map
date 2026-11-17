@@ -125,6 +125,20 @@ try {
       `${name}: the key runs from the 5th to the 95th percentile (AED ${Math.round(scale.p05 / 1000)}k to ${Math.round(scale.p95 / 1000)}k, not ${Math.round(scale.min / 1000)}k to ${Math.round(scale.max / 1000)}k); the extremes keep the end colours`);
     const fills = await page.evaluate(() => [...document.querySelectorAll('.rl.rent')].map(e => parseFloat(e.style.getPropertyValue('--f'))));
     check(fills.length >= 10 && fills.every(f => f > 0 && f <= 100), `${name}: rent labels are shaded in proportion to the rent (${fills.slice(0, 4).join('%, ')}%…)`);
+    // Map views: rent, sale price, gross yield; each its own key (5th-95th percentile), legend and labels.
+    const views = {};
+    for (const m of ['sale', 'yield', 'median']) {
+      await page.click(`.viewSw button[data-m="${m}"]`);
+      await page.waitForTimeout(300);
+      views[m] = await page.evaluate(() => { const vals = POINTS.map(p => p.v).sort((a, b) => a - b);
+        return { metric: LABEL.metric, top: LABEL.top, p95: vals[Math.round(.95 * (vals.length - 1))], title: document.querySelector('#legend .t').textContent,
+          label: document.querySelector('.rl b')?.textContent || '', select: document.getElementById('metric').value }; });
+    }
+    check(views.sale.metric === 'sale' && views.sale.top === views.sale.p95 && /M|k/.test(views.sale.label) && /sale|البيع/i.test(views.sale.title) && views.sale.select === 'sale',
+      `${name}: "Sale price" switches the map, its key (top AED ${Math.round(views.sale.top / 1000)}k) and legend`);
+    check(views.yield.metric === 'yield' && views.yield.top === views.yield.p95 && /%/.test(views.yield.label),
+      `${name}: "Yield" shows gross yields with their own key (top ${views.yield.top}%)`);
+    check(views.median.metric === 'median' && views.median.top !== views.sale.top, `${name}: "Rent" switches back`);
     const z0 = await page.evaluate(() => map.getZoom());
     await page.click('.leaflet-control-zoom-in');
     await page.waitForTimeout(400);

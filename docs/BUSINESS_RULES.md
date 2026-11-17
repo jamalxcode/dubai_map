@@ -62,6 +62,7 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Rule | Value | Where |
 |---|---|---|
 | Starting view | 1-bedroom apartments, the one measure every area has | `atlas.js fillUnits` |
+| Map views | Rent (median yearly rent), Sale price (median sale price, from DLD sales), Gross yield (Dubai Data's, within property class and bedroom count). Per bedroom count where a unit is picked; for Flats/Studios a contract-weighted "typical" of the bedroom figures. Each view has its own key, trimmed to the 5th-95th percentile of its values, with its own dial top. Older districts (Continental Club) have rents only, so they show in the rent view only | `atlas.js VIEWS`, `areaValue`; `build.py aggregate_type` |
 | "All units" | Only areas with an all-homes median; per-unit-only areas (older districts) appear once a unit is picked | `atlas.js areaValue` |
 | Merging | Labels that would overlap merge into one, showing the contract-weighted average (the total for counts) at the weighted centre; the busiest merge first | `assets/app/labels.js` |
 | Splitting | A merged label of up to 3 areas comes apart when each label fits at its own point or just beside it (a thin line joins a moved label to its point) | `labels.js MAX_SPLIT` |

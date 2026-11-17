@@ -25,7 +25,7 @@
     filters: 'التصفية', ptype: 'نوع العقار', done: 'تم',
     'f.search': 'المجتمع أو المبنى', 'f.search.ph': 'مثلًا: JVC أو Marina أو Karama',
     'f.unit': 'الوحدة', 'f.metric': 'ما تعرضه العلامات',
-    'm.median': 'الإيجار السنوي الوسيط', 'm.sqm': 'الإيجار لكل م² سنويًا', 'm.n': 'عدد العقود',
+    'm.median': 'الإيجار السنوي الوسيط', 'm.sale': 'سعر البيع الوسيط', 'm.sqm': 'الإيجار لكل م² سنويًا', 'm.n': 'عدد العقود',
     'f.min': 'أدنى إيجار (درهم)', 'f.max': 'أعلى إيجار (درهم)', any: 'أي مبلغ',
     hide: 'إخفاء هذا التنبيه', facts: 'أرقام رئيسية',
     'd.n12': 'العقود، آخر 12 شهرًا', 'd.mapped': 'على الخريطة', 'd.data': 'البيانات',
@@ -45,7 +45,13 @@
 
   // Text the scripts build (atlas.js, companion.js), keyed by its English.
   const AR = {
-    'Dial: share of {top}; 95% of areas pay less': 'المؤشر: نسبة من {top}؛ 95% من المناطق تدفع أقل',
+    'Average sale price': 'متوسط سعر البيع',
+    'Median sale price': 'سعر البيع الوسيط',
+    'Yield': 'العائد',
+    'Sale price': 'سعر البيع',
+    'Rent': 'الإيجار',
+    'Map shows': 'تعرض الخريطة',
+    'Dial: share of {top}; 95% of areas are below it': 'المؤشر: نسبة من {top}؛ 95% من المناطق أقل منه',
     'Photos taken near this point, from Wikimedia Commons. Tap one to see it large, with its author and licence.': 'صور التُقطت قرب هذه النقطة، من ويكيميديا كومنز. اضغط على صورة لعرضها بحجم كبير مع مصوّرها وترخيصها.',
     'Photo {i} of {n}': 'الصورة {i} من {n}',
     'View on Wikimedia Commons': 'عرضها على ويكيميديا كومنز',

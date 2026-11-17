@@ -28,6 +28,7 @@ Then one clear next step: compare, save, set a reminder or see it on the map. On
 - Every price wears the **price key**, from the palest blue (cheapest) to deep navy (dearest). A little **dial** and the label's shading show the rent as a share of the **top of the key**. The key ignores the most extreme 5% at each end, so one palace-priced area can't wash everything else out; those areas simply wear the deepest or palest blue.
 - Too crowded to read? Labels **merge** into one oxblood label with the contract-weighted average. Zoom in and they come apart. Two neighbours that only just collide get their own labels, one moved aside with a thin line to its spot. **Labels never overlap.** Ever. A test checks.
 - The big number up top is the **average rent of whatever is on screen**, rolling like an odometer as you pan.
+- Switch the whole map between **Rent, Sale price and Yield** with one tap: the labels, the blues and the key all follow, each view with its own scale.
 - Filter by **property type** (Homes, Flats, Studios), **unit**, rent range, or switch the labels to rent per m² or contract counts. Labour camps and whole-building leases never sneak into home rents.
 
 ### 📸 Drill down and see the place

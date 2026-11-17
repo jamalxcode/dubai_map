@@ -398,3 +398,11 @@ html.viewerOpen,html.viewerOpen body{overflow:hidden}
 .leaflet-bar a:hover{background:var(--hover)}
 /* Dials on (light) price labels keep a dark track in dark mode too. */
 :root[data-theme="dark"] .rl .pie{--pie-track:rgba(43,33,24,.16)}
+/* Map view switch (atlas.js): rent, sale price or gross yield; same look as the language button. */
+.viewSw{display:flex;background:var(--legend);overflow:hidden}
+.viewSw button{border:0;border-inline-end:1px solid var(--line);background:none;color:var(--text);font:600 13px/1 var(--body);padding:0 10px;height:34px;cursor:pointer}
+.viewSw button:last-child{border-inline-end:0}
+.viewSw button[hidden]{display:none}
+.viewSw button[aria-pressed="true"]{background:var(--sign);color:var(--on-sign)}
+.viewSw button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+@media (max-width:400px){.viewSw button{padding:0 7px;font-size:12px;height:32px}}

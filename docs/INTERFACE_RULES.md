@@ -51,7 +51,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 ## 5. Map controls
 
 - Top left: zoom + and −, **All Dubai** (back to the whole city). 40 px at full size, 36 px at 860 px and below, 32 px at 400 px and below.
-- Top right: base map language, **English · عربي · Both**, shown only when the vector map loaded; starts in the page's language; remembered (`mapLang`).
+- Top right: **Rent · Sale price · Yield** (what the labels show, same as the "Labels show" menu; a view appears only when the data has it), and the base map language, **English · عربي · Both**, shown only when the vector map loaded; starts in the page's language; remembered (`mapLang`).
 - Bottom left: legend (what the labels show, the band ramp, the dial note).
 - The map container stays left to right in Arabic (it is a picture of the world); its legend and breakdowns read right to left.
 
