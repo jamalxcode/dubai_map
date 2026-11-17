@@ -415,6 +415,26 @@ try {
     else check(r.you && r.z === 14 && Math.abs(r.c.lat - 25.08) < 0.01, `"Near me" in Dubai Marina moves the map there and marks the spot (zoom ${r.z})`);
     await page.context().close();
   }
+  // A full breakdown (all homes, photos) opened near the top-right buttons stays whole inside the map and clear of
+  // every control, at window sizes where it is taller than the clear space (it scrolls inside instead).
+  for (const vp of [{ width: 960, height: 620 }, { width: 1100, height: 680 }, { width: 1350, height: 760 }, { width: 1440, height: 900 }]) {
+    const { page } = await open(browser, vp);
+    await page.selectOption('#home', 'homes|');
+    await page.evaluate(() => document.getElementById('map').scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(300);
+    const fit = await page.evaluate(async () => {
+      const a = AREAS.find(x => x.label === 'International City Phase 1') || AREAS.find(x => x.lat != null && x.by_unit.length > 3);
+      const s = map.getSize(); map.setView([a.lat, a.lng], 14, { animate: false }); map.panBy([-s.x * .35, s.y * .4], { animate: false });
+      L.popup({ maxWidth: 320 }).setLatLng([a.lat, a.lng]).setContent(popup(a)).openOn(map);
+      await new Promise(r => setTimeout(r, 1200)); // photos arrive (stubbed), the card re-fits
+      const m = map.getContainer().getBoundingClientRect(), pr = document.querySelector('.leaflet-popup-content-wrapper').getBoundingClientRect();
+      const hits = [...document.querySelectorAll('.leaflet-control,.legend')].map(e => e.getBoundingClientRect())
+        .filter(c => c.width && pr.left < c.right && c.left < pr.right && pr.top < c.bottom && c.top < pr.bottom).length;
+      return { inside: pr.top >= m.top - 1 && pr.bottom <= m.bottom + 1 && pr.left >= m.left - 1 && pr.right <= m.right + 1, hits, h: Math.round(pr.height), mh: Math.round(m.height) };
+    });
+    check(fit.inside && fit.hits === 0, `${vp.width}×${vp.height}: a full breakdown stays inside the map and clear of its buttons (${fit.h} px card, ${fit.mh} px map, ${fit.hits} overlaps)`);
+    await page.context().close();
+  }
   // Tablet width: the compact header, so the rent check starts in the top third of the screen.
   {
     const { page } = await open(browser, { width: 960, height: 800 });

@@ -241,6 +241,10 @@ All ten items done in one pass (decisions, forty-first pass): labels never hidde
 
 All five items plus the usage counting done (decisions, forty-second pass): Near me no longer clipped; the rent check uses the map's Home picker ("Other homes here" links switch both); compact tablet header; plainer freshness line; findings folded on phones; feature use counted in GoatCounter so the next changes can follow what visitors actually use.
 
+### 17 Nov · [screenshot] "there are still overlaps, fix it"
+
+A tall breakdown ran under the map's bar and off the top of the map. Fixed (decisions, forty-third pass): the card is capped at the clear space and scrolls inside, and re-fits when its photos arrive.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

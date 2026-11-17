@@ -64,6 +64,9 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Size rules for one screen width can fight later additions.** A phone rule fixed the zoom buttons' width, so a new "Near me" button was clipped. *Rule:* fix only the dimension that matters (height for touch); let width follow the content, and test that no button's text overflows.
 - **Critique rounds reach diminishing returns.** After four rounds the findings were small. *Rule:* count which features are used, then cut or improve based on that.
 
+
+- **Panning can't fit a card taller than the space.** Pan margins kept short breakdowns clear, but a full one was taller than the map's clear area, and photos made it grow after opening. *Rule:* cap a pop-up's height at the clear space, re-fit after any content that loads later, and test the tallest content on short windows.
+
 ## Accessibility
 
 - **Brand colours aren't always text colours.** The brand taupe and gold fail 4.5:1 as small text on cream. *Rule:* compute contrast before applying a palette; keep the brand shade for lines and fills and use a deeper shade of the same hue for text.

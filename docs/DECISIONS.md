@@ -465,7 +465,13 @@ Data rebuilt after merging (daily pull for the trend file, placement job for the
 5. **Phone check result:** nearby, rank and owner figures fold under "More about this area".
 6. **Counting use:** GoatCounter events for the map views, names button, Home picker, All Dubai, Near me, table sorting, legend folding, CSV, table finder and rent range, and shared map links opened from elsewhere, by feature name only. The plan: after a few weeks, remove what nobody uses rather than polishing further.
 
+## Decision on 2026-11-17 (forty-third pass): breakdowns taller than the map
+
+The owner saw a breakdown cut off at the top of the map and under the Rent / Sale price / Yield bar. A full breakdown (all homes, trend, six units, photos) is about 510 px tall: on shorter maps it didn't fit between the buttons and the legend, so Leaflet's pan couldn't clear both, and photos arriving after it opened made it taller still. Now the card's height is capped at the clear space (its content scrolls), and it re-fits once the photos load. A browser check opens one near the buttons at four window sizes; it failed at all four before the fix.
+
 ## Change log
+
+- 2026-11-17: Breakdowns never taller than the clear space on the map; re-fit after photos load.
 
 - 2026-11-17: Fourth interface critique: Near me fits, the check uses the map's Home picker, compact tablet header, plainer freshness line, folded findings on phones, and feature-use counts.
 

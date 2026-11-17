@@ -435,8 +435,10 @@ async function loadPhotos(e){
   box.innerHTML='<div class="strip">'+ph.map((p,i)=>'<a href="'+safe(p.page)+'" target="_blank" rel="noopener" data-i="'+i+'" data-big="'+safe(p.big)+'" data-title="'+safe(p.title)+'" data-credit="'+safe(p.author+(p.lic?', '+p.lic:''))+'" title="'+safe(p.title+' · '+p.author+(p.lic?' · '+p.lic:''))+'">'+
     '<img src="'+safe(p.src)+'" alt="'+safe(p.title)+'" loading="lazy" onerror="this.parentNode.remove()"><span>'+safe(p.author)+(p.lic?', '+safe(p.lic):'')+'</span></a>').join('')+'</div>'+
     '<small>'+T('Photos taken near this point, from Wikimedia Commons. Tap one to see it large, with its author and licence.')+'</small>';
+  refitPopup(e.popup);box.querySelectorAll('img').forEach(i=>i.addEventListener('load',()=>refitPopup(e.popup),{once:true}));
 }
 map.on('popupopen',loadPhotos);
+map.on('popupopen',e=>{popupMargins();e.popup.options.maxHeight=L.Popup.prototype.options.maxHeight;refitPopup(e.popup)});
 // Pop-ups keep clear of the map's buttons and legend (Leaflet draws controls above pop-ups): the map pans so the
 // whole card sits inside these margins, measured from the controls as they are now. Pop-ups read their options
 // from this shared object, so updating it covers every pop-up, bound or opened later.
@@ -446,10 +448,16 @@ function popupMargins(){
   const left=Math.max(0,...rects('.leaflet-top.leaflet-left .leaflet-control').map(r=>r.right-box.left));
   const top=Math.max(0,...rects('.leaflet-top.leaflet-right .leaflet-control').map(r=>r.bottom-box.top));
   const bottom=Math.max(0,...rects('.legend').map(r=>box.bottom-r.top));
-  const o=L.Popup.prototype.options;
-  o.autoPanPaddingTopLeft=L.point(left+10,top+10);o.autoPanPaddingBottomRight=L.point(10,Math.min(bottom,box.height/3)+10);
+  const o=L.Popup.prototype.options,bot=Math.min(bottom,box.height/3)+10;
+  o.autoPanPaddingTopLeft=L.point(left+10,top+10);o.autoPanPaddingBottomRight=L.point(10,bot);
+  // A breakdown never grows taller than the clear space (minus its tip and the label under it): beyond that its
+  // content scrolls inside, so the map can always pan the whole card into view.
+  o.maxHeight=Math.max(160,Math.floor(box.height-(top+10)-bot-44));
 }
 map.whenReady(()=>setTimeout(popupMargins,0));addEventListener('resize',popupMargins);
+// Re-lay out and pan an open breakdown after its content changed size (photos arriving): Leaflet only
+// checks the size when content is set through it.
+function refitPopup(p){try{if(p&&p.isOpen()&&!SHEET_MQ.matches){p._updateLayout();p._updatePosition();p._adjustPan()}}catch(e){}}
 
 // Phones and fold phones (860 px and narrower): an area's breakdown slides up from the bottom of the
 // screen, full width and scrollable, instead of a small pop-up on the map. The Leaflet pop-up stays
