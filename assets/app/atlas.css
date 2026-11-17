@@ -149,7 +149,7 @@ button,input,select{font:inherit;color:inherit}
 .rl b{display:inline-block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums;background:var(--c,var(--b3));color:var(--on,var(--espresso));
   padding:3px 6px 2px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(43,33,24,.22)}
 .rl small{padding-inline-start:3px}
-.rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted)} /* names are shortened in atlas.js (labelName), not cut here */
 .rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--gold),0 4px 10px rgba(20,20,20,.25)}
 /* Dark mode: price labels stay light ivory cards, so each badge shows exactly its key colour against the dark
    map, but smaller and softer (a thin edge, no gold stack) so they don't glare. Same contrast as light mode. */
@@ -165,7 +165,10 @@ button,input,select{font:inherit;color:inherit}
 /* Facts under the map */
 .facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:22px 0 0;border-top:3px solid var(--text)}
 .fresh{margin:8px 0 0;font-size:13px;color:var(--muted)}
-.facts div{padding:12px 16px 4px 0;display:flex;flex-direction:column}.facts dd{margin-top:auto!important}
+/* The three figures line up: each column shares the row tracks (label, figure, caption). */
+.facts{grid-template-rows:auto auto auto}
+.facts div{padding:12px 16px 4px 0;display:grid;grid-row:span 3;grid-template-rows:subgrid;align-content:start}
+.facts dt{align-self:end}.facts dd{display:contents}
 .facts dt{font-size:13px;color:var(--muted)}
 .facts dd{margin:2px 0 0;font:700 30px/1.05 var(--cond);font-variant-numeric:tabular-nums}
 .facts dd small{display:block;font:400 13px/1.4 var(--body);color:var(--muted);margin-top:3px}
@@ -412,3 +415,17 @@ html.viewerOpen,html.viewerOpen body{overflow:hidden}
   .leaflet-control-attribution{display:none}
   .creditsOpen .leaflet-control-attribution{display:block;max-width:calc(100vw - 60px)}
 }
+
+/* Sortable table headers; an area's later rows in a run leave its name out (kept for screen readers). */
+th button.sort{all:unset;cursor:pointer;display:inline;font:inherit;color:inherit}
+th button.sort:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+th .arr{font-size:9px;margin-inline-start:3px;color:var(--muted)}
+tr.cont td{border-top:0}
+tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
+.about .srcH{margin:10px 0 4px;font-size:13px;font-weight:600;color:var(--muted)}.about .srcH:first-child{margin-top:0}
+/* Near me: the visitor's position, and short notes on the map. */
+.leaflet-interactive.you{stroke:#FFFCF5;fill:var(--oxblood);fill-opacity:1}
+.leaflet-control-zoom a.near{font:600 13px/40px var(--body)!important;padding:0 10px;white-space:nowrap;border-top:1px solid #ccc}
+.mapNote{position:absolute;z-index:1100;left:50%;transform:translateX(-50%);bottom:76px;max-width:calc(100% - 32px);background:var(--espresso);color:var(--ivory);padding:8px 12px;border-radius:8px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+@media (max-width:860px){.leaflet-control-zoom a.near{font-size:12px!important;line-height:36px!important}}
+@media (max-width:400px){.leaflet-control-zoom a.near{font-size:11px!important;line-height:32px!important;padding:0 7px}}

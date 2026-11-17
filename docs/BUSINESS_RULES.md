@@ -74,6 +74,11 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Table finder | Filters the table's rows by area, DLD area, master project or building; never the map | `atlas.js draw` |
 | One home choice | The rent check's home and the map's Home picker stay in step: a check sets the map to the home checked; a home picked on the map re-checks the current area when it has that home (Flats and other types don't re-check) | `atlas.js setMapHome`, `companion.js` |
 | Area rank | "Dearer than X% of N areas" = the share of areas (with 30+ contracts for that home) whose median is lower | `insights.js rankAmong` |
+| Hidden labels | A label under a button or the legend with no free spot within two label-steps joins its nearest neighbour, and merging runs again | `labels.js` rule 3 |
+| Display names | All-capitals names in title case, acronyms kept; registered names for search, links and storage | `i18n.js T.place`, `share_pages.place` |
+| Table order | Clicked header (descending first, Area A–Z), else the view's column; areas with no figure last | `atlas.js table` |
+| Map links | `home`, `view`, `at` (lat, lng, zoom; only accepted near Dubai) in the address | `atlas.js writeURL`, `readURL` |
+| Near me | Dubai box 24.6–25.45 °N, 54.85–56.4 °E (Hatta included); outside it, a note and no move | `atlas.js` |
 | Labels inside the map | A label whose point is on screen is kept fully inside the map's edges from the start of placement; labels are placed again after a pan, except while a breakdown is open | `labels.js` (rule 0), `atlas.js` |
 | Never overlap | No two labels overlap at any zoom (browser-checked at the start, zoom 13 and zoom 14) | `tests/ui-check.mjs` |
 | Price badges | Each label's figure sits on its band's blue; espresso type on bands 1–4, ivory on 5–6. The rent check shows the same colour as a chip, from the key for the home type checked | `atlas.js scaleFor`, `INK`, `priceKey` |

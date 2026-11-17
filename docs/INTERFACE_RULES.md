@@ -43,6 +43,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 ## 4. Map labels
 
 - Each area: the figure (`AED 65k`) on a badge in its price-key colour, with the area name underneath on an ivory card.
+- **Names as shown:** names registered in capitals ("TOWN SQUARE") show in title case ("Town Square"), keeping acronyms (JLT, JVC, DIFC…) (`T.place`, the same rule on area pages); search, links and saved areas keep the registered name. Names are shortened once in the script (single areas at 28 letters, groups at 22 plus "+N"); the CSS doesn't cut them again.
 - Labels never overlap. Overlapping labels merge into a group label coloured by the price key like any other (their contract-weighted average), marked by a gold stacked-card outline; every group names its busiest area and how many others it holds ("JLT +12").
 - Label boxes are measured as drawn (a hidden label with the same styles, re-measured once the fonts load), so placement holds in both themes and languages.
 - A group of up to 3 comes apart when each label fits at its point or just beside it; a moved label has a thin line to a dot at its point.
@@ -56,10 +57,11 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 ## 5. Map controls
 
-- Top left: one bar, **+**, **−** and **All Dubai** (back to the whole city), each as wide as the bar. 40 px at full size, 36 px at 860 px and below, 32 px at 400 px and below.
+- Top left: one bar, **+**, **−**, **All Dubai** (back to the whole city) and **Near me** (where the browser offers location: moves the map to the visitor at zoom 14 and marks the spot with an oxblood dot; outside Dubai it says so and stays; the position is used on the device only, never sent or stored), each as wide as the bar. 40 px at full size, 36 px at 860 px and below, 32 px at 400 px and below.
 - Top right: one bar, **Rent · Sale price · Yield** (what the labels show; a view appears only when the data has it; the only place to pick it), then **A+ع**: place names in English and Arabic together. Without it, place names follow the page language. Shown only when the vector map loaded; remembered (`mapBoth`).
 - Bottom right on phones: **i** folds the map credits away (two wrapped lines covered the map); one tap shows them. Wide screens show the credits as always.
-- Bottom left: legend. Its title is a button that folds the notes away, leaving the colour bar and its values (remembered, `legendFolded`; phones start folded).
+- **The address keeps the map:** `?home=homes:1-bedroom apartments&view=sale&at=25.08,55.15,13` is written as the map changes (no reload; other parameters kept), and a link with it opens that map. A resumed rent check uses the link's home.
+- Bottom left: legend. With All homes picked it adds "Mixed home sizes: pick one for a fair comparison". Its title is a button that folds the notes away, leaving the colour bar and its values (remembered, `legendFolded`; phones start folded).
 - The map container stays left to right in Arabic (it is a picture of the world); its legend and breakdowns read right to left.
 
 ## 6. The rent check
@@ -72,10 +74,10 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 - **The table follows the map view:** its title and subtitle change, it gains a sale price column, and in the sale and yield views it is sorted by that column, highest first. The rent check adds the median sale price for owners.
 - **Filters:** one **Home** picker (all homes, each home size, then other property types with data, such as "Flats, any size"; a type already covered by a size, studios, isn't offered twice) and a **Rent range (AED)** (one label over Min – Max). They drive the map, so on wide screens they sit right under the header, above the rent check; on phones the rent check comes first. The map starts on 1-bedroom apartments. With one home size picked, the table names it in its subtitle and drops its unit column.
-- **Table:** short headers (Rent, Contracts, Sale price, Yield; the subtitle says medians in AED). At 600 px and below only the area, the view's own figure and contracts show; the CSV keeps every column.
+- **Table:** short headers (Rent, Contracts, Sale price, Yield; the subtitle says medians in AED). Every header but Unit sorts the table (▼ highest first, click again for ▲; Area sorts A–Z); the header carries `aria-sort`. Until one is clicked the view's own column leads; a new view resets it. Consecutive rows of the same area show its name once (kept for screen readers), so All homes reads as one block per area. At 600 px and below only the area, the view's own figure and contracts show; the CSV keeps every column.
 - **Table finder:** a search box above the table, next to Download CSV, filters the table's rows only; the map keeps every area.
-- **Key figures:** three in big type (contracts in the last 12 months, the share of them on the map, areas on the map), then one small line: "Data to 16 Nov 2026 · updated 17 Nov, 09:00 Kuwait time · new data is looked for three times a day".
-- **About the data:** the sources in use listed once, plainly; every source's run status folded under **Data health**; licences and credits in "What this is not". No repeated footer.
+- **Key figures:** three in big type, lined up on one row (subgrid: label, figure, caption) (contracts in the last 12 months, the share of them on the map, areas on the map), then one small line: "Data to 16 Nov 2026 · updated 17 Nov, 09:00 Kuwait time · new data is looked for three times a day".
+- **About the data:** the sources in use listed once, plainly, split into **Figures from** and **Checked against**; every source's run status folded under **Data health**; licences and credits in "What this is not". No repeated footer.
 - **Yields:** always one decimal (7.0%, 8.9%), on the map, in breakdowns, the table, the rent check and area pages.
 
 ## 7. Area breakdown (drilling down)

@@ -221,6 +221,13 @@
     'Typical of {n}, {period}.': 'القيمة المعتادة من {n}، {period}.',
     'Typical yearly rent': 'الإيجار السنوي المعتاد',
     'Typical {v}': 'المعتاد {v}',
+    'Mixed home sizes: pick one for a fair comparison.': 'أحجام مساكن مختلطة: اختر حجمًا واحدًا لمقارنة عادلة.',
+    'Figures from': 'الأرقام من',
+    'Checked against': 'مُقارنة مع',
+    'Near me': 'بالقرب مني',
+    'Show where I am': 'أظهر موقعي',
+    'You seem to be outside Dubai.': 'يبدو أنك خارج دبي.',
+    'Your location isn’t available. Check that this site may use it.': 'موقعك غير متاح. تأكّد من السماح لهذا الموقع باستخدامه.',
     '{unit}: median {aed} a year from {n}': '{unit}: الوسيط {aed} سنويًا من {n}',
     '{unit}: median {aed} a year': '{unit}: الوسيط {aed} سنويًا',
     'median sale price AED {v}': 'سعر البيع الوسيط {v} درهم',
@@ -327,6 +334,14 @@
   };
 
   // "Villas, Commercial and Everything" / "الفلل، التجاري والكل".
+  // Area names as shown: names registered all in capitals ("TOWN SQUARE") in title case ("Town Square"),
+  // keeping acronyms and words with digits; others as registered. Search and storage keep the registered name.
+  const ACRONYMS = new Set(['JLT', 'JVC', 'JVT', 'JBR', 'DIFC', 'DMCC', 'MBR', 'DSO', 'IMPZ', 'DIP', 'DHCC', 'DIC', 'DMC', 'UAE', 'II', 'III', 'IV', 'DXB']);
+  T.place = name => {
+    const n = String(name ?? '');
+    if (!/[A-Z]{2}/.test(n) || /[a-z]/.test(n)) return n;
+    return n.replace(/[A-Z][A-Z'’]*/g, w => ACRONYMS.has(w) ? w : w[0] + w.slice(1).toLowerCase());
+  };
   T.list = items => items.length < 2 ? items.join('')
     : items.slice(0, -1).join(T(', ')) + (LANG === 'ar' ? ' و' : ' and ') + items[items.length - 1];
 

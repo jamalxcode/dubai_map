@@ -131,7 +131,7 @@
       <div class="ck-empty">
         <p><b>${some.length ? T('Several areas match “{q}”.', { q: esc(text) }) : T('No area called “{q}” in the data.', { q: esc(text) })}</b>
         ${pick.length ? (some.length ? T('Which one?') : T('Did you mean:')) : T('Try the area name on your Ejari contract (for example <i>Al Barsha South Fourth</i> for JVC), or find it on the map.')}</p>
-        ${pick.length ? `<div class="chips">${pick.map(h => `<button type="button" class="chip" data-area="${esc(h.area.label)}">${esc(h.area.label)}</button>`).join('')}</div>` : ''}
+        ${pick.length ? `<div class="chips">${pick.map(h => `<button type="button" class="chip" data-area="${esc(h.area.label)}">${esc(T.place(h.area.label))}</button>`).join('')}</div>` : ''}
         <p class="muted">${T('Some areas are missing until daily contract data is switched on.')}</p>
       </div>`;
   }
@@ -175,7 +175,7 @@
     const cheaper = facts.find(x => x.kind === 'cheaper'), rank = facts.find(x => x.kind === 'rank'), tr = facts.find(x => x.kind === 'trend');
     const finds = [];
     if (cheaper) finds.push(`<li><b>${T('Same home for less nearby:')}</b> ` + cheaper.items.map(c =>
-      `<button type="button" class="link" data-area="${esc(c.area.label)}" data-unit="${esc(unit)}">${esc(c.area.label)}</button> ${aed(c.median)} <span class="muted">(${T('{km} km, {s} less', { km: c.km, s: short(c.saving) })})</span>`).join(T(', ')) + '</li>');
+      `<button type="button" class="link" data-area="${esc(c.area.label)}" data-unit="${esc(unit)}">${esc(T.place(c.area.label))}</button> ${aed(c.median)} <span class="muted">(${T('{km} km, {s} less', { km: c.km, s: short(c.saving) })})</span>`).join(T(', ')) + '</li>');
     if (tr) finds.push(`<li><b>${T('Trend:')}</b> ${T(tr.pct > 0 ? 'the median is up {pct}% from {from} to {to}.' : 'the median is down {pct}% from {from} to {to}.', { pct: Math.abs(tr.pct), from: esc(tr.from), to: esc(tr.to) })}</li>`);
     if (rank) finds.push(`<li>${T('Dearer than <b>{pct}%</b> of {of} areas with figures for {what}.', { pct: rank.dearerThanPct, of: rank.of, what: esc(what.toLowerCase()) })}</li>`);
     if (f.sale || f.yield != null) finds.push(`<li class="muted">${f.sale && f.yield != null ? T('For owners: median sale price {sale}, gross rental yield {v}%.', { sale: aed(f.sale), v: Number(f.yield).toFixed(1) })
@@ -187,7 +187,7 @@
     if (area.url) secondary.push(`<a href="${esc(area.url)}" target="_blank" rel="noopener">${T('Dubai Data page')}</a>`);
     out.innerHTML = `
       <div class="ck-answer">
-        <p class="ck-what">${T('{what} in {area}', { what: esc(what), area: `<b>${esc(area.label)}</b>` })}</p>
+        <p class="ck-what">${T('{what} in {area}', { what: esc(what), area: `<b>${esc(T.place(area.label))}</b>` })}</p>
         <p class="ck-big"><i class="keyChip" aria-hidden="true" style="--c:${window.priceKey(unit).color(f.median)}"></i><bdi>${aed(f.median)}</bdi> <span>${T('a year')}</span></p>
         <p class="muted">${f.n == null
           ? T('Median for this home type, {period}. Source: Continental Club Property (CC BY 4.0), which gives {n} for the whole area but no count per home type.', { period: area.through ? T('to {d}', { d: dateText(area.through) }) : period, n: plural(area.n, 'contract') })
@@ -220,7 +220,7 @@
       const v = f && RI.verdict(s.rent, f.median);
       return `<li>
         <button type="button" class="mine-main" data-area="${esc(s.area)}" data-unit="${esc(s.unit)}" data-rent="${s.rent || ''}">
-          <b>${esc(s.area)}</b> <span class="muted">${esc(s.unit ? U(s.unit) : T('All homes'))}</span>
+          <b>${esc(T.place(s.area))}</b> <span class="muted">${esc(s.unit ? U(s.unit) : T('All homes'))}</span>
           <span class="mine-fig">${f ? aed(f.median) : T('no figure now')}${ch && ch.pct !== 0 ? ` <small class="${ch.pct > 0 ? 'up' : 'down'}">${T('{sign}{pct}% since {when}', { sign: ch.pct > 0 ? '+' : '', pct: ch.pct, when: esc(dateText(ch.since)) || T('saved') })}</small>` : ch ? ` <small class="muted">${T('no change since saved')}</small>` : ''}</span>
           ${v ? `<small class="muted">${T('You pay {rent} ({how})', { rent: aed(s.rent), how: v.word === 'about' ? T('about the median') : T(v.word === 'below' ? '{pct}% below' : '{pct}% above', { pct: Math.abs(v.pct) }) })}</small>` : ''}
           ${s.renews ? `<small class="muted">${T('Renews {d}', { d: esc(dateText(s.renews)) })}</small>` : ''}
@@ -368,7 +368,7 @@
   function onPopup(e) {
     const content = e.popup.getContent();
     if (typeof content !== 'string' || content.includes('ck-popact')) return;
-    const m = content.match(/<span class="t">([^<]*)<\/span>/);
+    const m = content.match(/<span class="t" data-label="([^"]*)">/);
     const label = m && new DOMParser().parseFromString(m[1], 'text/html').body.textContent;
     if (!label || !BY_LABEL[label]) return; // group popups list several areas: no single check
     e.popup.setContent(content + `<p class="ck-popact"><button type="button" class="btn primary" data-check="${esc(label)}">${T('Check a rent here')}</button></p>`);
@@ -468,8 +468,11 @@
     wire();
     // Resume: a link's own area wins, then the last check; the map comes back where it was left.
     const qs = new URLSearchParams(location.search);
-    if (store.view && !qs.get('area')) map.setView([store.view.lat, store.view.lng], store.view.z, { animate: false });
-    const start = qs.get('area') ? { area: qs.get('area'), unit: qs.get('unit') || '', rent: null } : store.last;
+    if (store.view && !qs.get('area') && !qs.get('at')) map.setView([store.view.lat, store.view.lng], store.view.z, { animate: false });
+    const start = qs.get('area') ? { area: qs.get('area'), unit: qs.get('unit') || '', rent: null } : store.last && { ...store.last };
+    // A link's home (?home=homes:…) is the page's home choice, so a resumed check uses it too.
+    const linkHome = (qs.get('home') || '').split(':');
+    if (start && linkHome[0] === 'homes' && !qs.get('unit')) start.unit = linkHome[1] || '';
     if (start && BY_LABEL[start.area]) check({ areaText: start.area, unit: start.unit, rent: start.rent, quiet: true });
     renderMine();
     showWhatsNew();

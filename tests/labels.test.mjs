@@ -70,3 +70,16 @@ test('a label at the edge of the map slides inside when the spot is free; one of
   assert.equal(edge.x, 395, 'its point is unchanged, so a line joins them');
   assert.equal(away.lx, 900, 'a label whose point is off screen is not pulled in');
 });
+
+test('a label under a map button with no free spot joins its nearest neighbour; nothing overlaps or stays hidden', () => {
+  const view = { x0: 0, y0: 0, x1: 300, y1: 200 };
+  // A button fills the top-right corner; a crowd of labels leaves no free spot beside the one under it.
+  const blocks = [{ x: 250, y: 25, w: 100, h: 50 }];
+  const pts = [item('Under', 250, 25, 60000, 50)];
+  for (let x = 50; x <= 250; x += 100) for (let y = 75; y <= 175; y += 50) pts.push(item(`P${x},${y}`, x, y));
+  const cl = RL.place(pts, size, { view, blocks });
+  const hidden = cl.filter(c => Math.abs(c.lx - 250) * 2 < c.w + 100 && Math.abs(c.ly - 25) * 2 < c.h + 50);
+  assert.equal(hidden.length, 0, 'none sits under the button');
+  assert.equal(overlaps(cl), 0);
+  assert.ok(cl.some(c => c.members.some(m => m.a.label === 'Under')), 'its area is still on the map, in a group');
+});

@@ -443,7 +443,22 @@ Data rebuilt after merging (daily pull for the trend file, placement job for the
 9. **Labels inside the map:** a label whose point is on screen starts inside the edges (rule 0 in labels.js, tested), so crowded edges merge instead of cutting labels; labels are placed again after a pan (not while a breakdown is open), which also keeps them clear of the buttons after the map moves.
 10. **Breakdown polish:** its tip sits above the label so the label stays visible; the × is 32 px.
 
+## Decision on 2026-11-17 (forty-first pass): the third interface critique, all ten done
+
+1. **No label under a button:** a label with no free spot near its point (now two label-steps out) joins its nearest neighbour and merging runs again (labels.js rule 3, tested). Labels were hiding under the map bar and legend on phones in both languages; the start of every run (and the Arabic runs) is now checked.
+2. **One ellipsis:** names are shortened once in the script; the CSS cut is gone.
+3. **Key figures line up** (CSS subgrid).
+4. **Names in capitals** show in title case on labels, breakdowns, the table, the rent check and area pages; the registered spelling stays for search, links and storage.
+5. **All homes table:** an area's name shows once over its units.
+6. **Wide All homes key:** a note says sizes are mixed and points to the picker (kept the visitor's choice rather than switching it for them).
+7. **Sortable table headers** (`aria-sort`, arrows).
+8. **Map links:** home, view and position live in the address.
+9. **Near me** in the zoom bar.
+10. **Sources:** "Figures from" and "Checked against".
+
 ## Change log
+
+- 2026-11-17: Third interface critique: no labels under buttons, single ellipsis, aligned figures, title-case names, grouped and sortable table, mixed-sizes note, map links, Near me, sources split.
 
 - 2026-11-17: Second interface critique: one home choice for the check and the map, breakdown leads with the picked home, a shorter check result, a phone-sized table, sources once, a freshness line, a rent-range field, folding map credits on phones, labels kept inside the map.
 

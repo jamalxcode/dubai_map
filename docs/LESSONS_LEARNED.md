@@ -59,6 +59,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Fixing labels after placement fails in crowded places.** Sliding edge labels back in after merging found no free spot, because neighbours had filled it. *Rule:* put constraints (inside the map) into placement from the start, so merging accounts for them.
 - **A control's choice must not split in two.** The rent check's own Home list drifted from the map's picker after the controls were merged once. *Rule:* when two places show the same choice, they share one state (`setMapHome`, `atlas:home`).
 - **Labels placed only on zoom drift under buttons after a pan.** *Rule:* place them again after every move, except while a breakdown is open (redrawing closes it).
+- **A test that runs at one moment misses the others.** "No label under a button" was only checked after "All Dubai", while labels hid under the bar at page start on phones. *Rule:* check layout invariants at the start of every run, in every language.
+- **Data spelling leaks into the interface.** All-capitals names from the source looked like shouting. *Rule:* normalise for display (`T.place`), never for search or storage.
 
 ## Accessibility
 

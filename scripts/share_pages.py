@@ -23,6 +23,16 @@ SITE = os.environ.get("SITE_URL") or "https://jamalxcode.github.io/dubai_map/"
 IMAGE = SITE + "assets/share.png"
 
 
+
+ACRONYMS = {"JLT", "JVC", "JVT", "JBR", "DIFC", "DMCC", "MBR", "DSO", "IMPZ", "DIP", "DHCC", "DIC", "DMC", "UAE", "II", "III", "IV", "DXB"}
+
+
+def place(name):
+    """An area name as shown: all-capitals names in title case, keeping acronyms (same rule as T.place in i18n.js)."""
+    if not re.search(r"[A-Z]{2}", name) or re.search(r"[a-z]", name):
+        return name
+    return re.sub(r"[A-Z][A-Z'’]*", lambda m: m.group(0) if m.group(0) in ACRONYMS else m.group(0)[0] + m.group(0)[1:].lower(), name)
+
 def slug(s):
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
@@ -73,7 +83,8 @@ def page(a, through):
     """A real page per area (figures in the HTML, so search engines and link previews can read them), with a
     button to open the area on the map. No automatic redirect: the page is useful on its own."""
     med, what = headline(a)
-    title = f"{a['label']} rents: {aed(med)} a year for a {what}" if med else f"{a['label']} rents"
+    name = place(a["label"])
+    title = f"{name} rents: {aed(med)} a year for a {what}" if med else f"{name} rents"
     when = nice_date(a.get("through") or through)
     desc = ("Median yearly rent from Ejari contracts registered with the Dubai Land Department"
             + (f", to {when}" if when else "") + ". Every home type, sale prices and yields, on the map.")
@@ -124,10 +135,10 @@ footer{{max-width:760px;margin:0 auto;padding:0 20px 30px}} footer a{{color:#2B2
 </head><body>
 <header><a href="../../">Dubai Real Estate Atlas</a></header>
 <main>
-<h1>{e(a["label"])}</h1>
+<h1>{e(name)}</h1>
 <p class=sub>{"DLD area: " + dld + ". " if dld else ""}What tenants actually pay, from registered contracts{", to " + e(when) if when else ""}.</p>
 <ul>{"".join(summary)}</ul>
-<a class=btn href="{e(target)}">Open {e(a["label"])} on the map</a>
+<a class=btn href="{e(target)}">Open {e(name)} on the map</a>
 {_units(a, e)}
 </main>
 <footer><p>Medians from {e(source)}. Not asking prices, and not the RERA rental index. An independent tool, not an official DLD service.

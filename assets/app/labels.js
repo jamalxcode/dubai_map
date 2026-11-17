@@ -15,7 +15,8 @@
  *      total for counts) at the weighted centre. The busiest areas merge first.
  *   2. A merged label of up to three areas comes apart again when every one of its labels fits
  *      at its own point or just beside it (above, below, left, right, diagonally).
- *   3. A label under a map button or the legend steps aside to the nearest free spot.
+ *   3. A label under a map button or the legend steps aside to the nearest free spot (beside its point,
+ *      else up to two label-steps further out); with no free spot it joins its nearest neighbour.
  *   0. With `view` ({ x0, y0, x1, y1 }, layer pixels), a label whose point is on screen is kept fully
  *      inside the edges from the start (so crowded edges merge rather than cut labels off), and later
  *      moves never take it back out.
@@ -53,7 +54,7 @@
     // 1. Merge. After a merge the grown label is checked again from its own place in the list,
     //    instead of starting the whole scan over; passes repeat until nothing overlaps.
     let cl = items.map(p => make([p]));
-    for (let again = true; again;) {
+    const mergeAll = () => { for (let again = true; again;) {
       again = false;
       cl.sort((p, q) => q.N - p.N);
       for (let i = 0; i < cl.length; i++) {
@@ -66,14 +67,17 @@
           }
         }
       }
-    }
+    } };
+    mergeAll();
 
     const spots = c => [[0, 0], [0, -(c.h + pad)], [0, c.h + pad], [c.w / 2 + 10, 0], [-(c.w / 2 + 10), 0],
       [c.w / 2, -(c.h + pad)], [-c.w / 2, -(c.h + pad)], [c.w / 2, c.h + pad], [-c.w / 2, c.h + pad]];
-    const fit = (c, others) => {
-      for (const [dx, dy] of spots(c)) {
-        const t = Object.assign({}, c, { lx: c.x + dx, ly: c.y + dy });
-        if (!others.some(o => hit(t, o)) && !onBlock(t) && !outside(t)) return t;
+    const fit = (c, others, rings = 1) => {
+      for (let k = 1; k <= rings; k++) {
+        for (const [dx, dy] of spots(c)) {
+          const t = Object.assign({}, c, { lx: c.x + dx * k, ly: c.y + dy * k });
+          if (!others.some(o => hit(t, o)) && !onBlock(t) && !outside(t)) return t;
+        }
       }
       return null;
     };
@@ -91,11 +95,23 @@
       if (parts.length === c.members.length) { cl.splice(i, 1, ...parts); i += parts.length - 1; }
     }
 
-    // 3. Out from under the map's buttons and legend.
-    for (let i = 0; i < cl.length; i++) {
-      if (!onBlock(cl[i])) continue;
-      const t = fit(cl[i], cl.filter((_, j) => j !== i));
-      if (t) cl[i] = t;
+    // 3. Out from under the map's buttons and legend: beside its point, else up to two label-steps further
+    //    out (a line joins it to its point). A label with no free spot joins its nearest neighbour, and the
+    //    merging runs again, so nothing is left hidden under a button and nothing overlaps.
+    for (let round = 0; round < 6; round++) {
+      for (let i = 0; i < cl.length; i++) {
+        if (!onBlock(cl[i])) continue;
+        const t = fit(cl[i], cl.filter((_, j) => j !== i), 2);
+        if (t) cl[i] = t;
+      }
+      const stuck = cl.findIndex(c => onBlock(c) && onScreen(c));
+      if (stuck < 0 || cl.length < 2) break;
+      const c = cl[stuck], d = o => (o.x - c.x) ** 2 + (o.y - c.y) ** 2;
+      let near = -1;
+      cl.forEach((o, j) => { if (j !== stuck && (near < 0 || d(o) < d(cl[near]))) near = j; });
+      const both = make(c.members.concat(cl[near].members));
+      cl = cl.filter((_, j) => j !== stuck && j !== near).concat([both]);
+      mergeAll();
     }
 
     return cl;

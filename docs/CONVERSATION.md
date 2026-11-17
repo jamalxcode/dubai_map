@@ -233,6 +233,10 @@ All seven items done in one pass (decisions, thirty-ninth pass): duplicate contr
 
 All ten items done in one pass (decisions, fortieth pass): the check and the map share one home choice; the breakdown leads with the picked home; a shorter check result with "What does this mean?"; a phone-sized table; sources listed once with "Data health" folded; three key figures and a freshness line; a single rent-range field; map credits behind "i" on phones; labels kept inside the map and re-placed after pans; the breakdown's tip above its label and a bigger ×.
 
+### 17 Nov · "critique the user interface, how can it be made better?" (third round) → "do it all, merge on main"
+
+All ten items done in one pass (decisions, forty-first pass): labels never hidden under the map's buttons (they join a neighbour instead), one ellipsis, aligned key figures, title-case names, the table grouped by area and sortable by any column, a mixed-sizes note on the All homes key, links that keep the map's state, a Near me button, and sources split into "Figures from" and "Checked against".
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

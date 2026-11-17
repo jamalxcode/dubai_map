@@ -44,6 +44,7 @@ On a phone the breakdown slides up from the bottom with the photos first, sized 
 ### 🌍 English or Arabic, your choice
 - The whole site in **Arabic**, right to left, from the **عربي** button, a `?lang=ar` link, or a phone set to Arabic.
 - Street and place names on the map follow your language, and one button (**A+ع**) shows both at once. No more half-Arabic, half-English maps.
+- **Near me** puts you on the map (your position never leaves your phone), and every map you look at has its own link: copy the address and a friend sees the same homes, view and spot.
 
 ### 💾 It remembers you (and only you)
 - **My areas:** save areas and see how their rent moves since you saved them.

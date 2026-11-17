@@ -31,8 +31,8 @@ const BASE = `http://127.0.0.1:${server.address().port}/`;
 const failures = [];
 const check = (ok, what) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) failures.push(what); };
 
-async function open(browser, viewport, colorScheme = 'light', query = '') {
-  const page = await (await browser.newContext({ viewport, colorScheme })).newPage();
+async function open(browser, viewport, colorScheme = 'light', query = '', ctx = {}) {
+  const page = await (await browser.newContext({ viewport, colorScheme, ...ctx })).newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.route(/tile\.openstreetmap\.org/, r => r.abort()); // no tile load on every test run
@@ -58,6 +58,12 @@ async function open(browser, viewport, colorScheme = 'light', query = '') {
   return { page, errors };
 }
 
+// Labels under the map's buttons or legend, by their text.
+const underControls = page => page.evaluate(() => {
+  const blocks = [...document.querySelectorAll('.leaflet-control,.legend')].map(e => e.getBoundingClientRect()).filter(r => r.width);
+  return [...document.querySelectorAll('.rl')].filter(e => { const a = e.getBoundingClientRect();
+    return blocks.some(b => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom); }).map(e => e.textContent);
+});
 const overlaps = page => page.evaluate(() => {
   const r = [...document.querySelectorAll('.rl')].map(e => e.getBoundingClientRect());
   let n = 0;
@@ -86,6 +92,13 @@ try {
     const start = await overlaps(page);
     check(start.labels >= 10, `${name}: map shows rent labels (${start.labels})`);
     check(start.overlaps === 0, `${name}: no labels overlap at the start (${start.overlaps})`);
+    const under0 = await underControls(page);
+    check(!under0.length, `${name}: at the start no label sits under the map's buttons or legend${under0.length ? ': ' + under0.join(', ') : ''}`);
+    const labelNames = await page.evaluate(() => [...document.querySelectorAll('.rl small')].map(e => e.textContent));
+    check(labelNames.every(t => !/…\s*…|\.\.\./.test(t)) && !labelNames.some(t => /\b(TOWN SQUARE|DAMAC HILLS|LA MER)\b/.test(t)),
+      `${name}: label names are shortened once and all-capitals names show in title case`);
+    const tops = await page.evaluate(() => ['n12', 'mapped', 'nAreas'].map(id => { const r = document.createRange(); r.selectNodeContents(document.getElementById(id)); return Math.round(r.getClientRects()[0]?.top ?? -1); }));
+    check(tops.every(t => Math.abs(t - tops[0]) <= 2), `${name}: the three key figures line up (${tops.join(', ')})`);
     check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${name}: no sideways scrolling`);
     if (name === 'desktop') {
       const pane = await page.evaluate(() => { const r = document.querySelector('.mapWrap').getBoundingClientRect(); return { left: r.left, top: r.top, h: r.height / innerHeight }; });
@@ -233,6 +246,30 @@ try {
     }
     await page.selectOption('#home', 'homes|1-bedroom apartments');
     await page.waitForTimeout(300);
+    // All homes: an area's rows show its name once; the key says sizes are mixed. Headers sort the table.
+    await page.selectOption('#home', 'homes|');
+    await page.waitForTimeout(300);
+    const grouped = await page.evaluate(() => ({ cont: document.querySelectorAll('#rows tr.cont').length, blank: [...document.querySelectorAll('#rows tr.cont td.w')].every(td => !td.offsetHeight || td.querySelector('.vh')),
+      note: /Mixed home sizes/.test(document.getElementById('legend').textContent) }));
+    check(grouped.cont > 10 && grouped.blank && grouped.note, `${name}: with all homes, each area's name shows once over its units (${grouped.cont} follow-on rows), and the key notes mixed sizes`);
+    await page.click('#thead button.sort[data-k="n"]');
+    const s1 = await page.evaluate(() => ({ sort: document.querySelector('#thead th[aria-sort="descending"] .sort')?.dataset.k, n: [...document.querySelectorAll('#rows tr')].slice(0, 20).map(tr => +tr.children[3].textContent.replace(/,/g, '')) }));
+    await page.click('#thead button.sort[data-k="n"]');
+    const s2 = await page.evaluate(() => ({ sort: document.querySelector('#thead th[aria-sort="ascending"] .sort')?.dataset.k, n: [...document.querySelectorAll('#rows tr')].slice(0, 20).map(tr => +tr.children[3].textContent.replace(/,/g, '')) }));
+    check(s1.sort === 'n' && s1.n.every((v, i) => !i || v <= s1.n[i - 1]) && s2.sort === 'n' && s2.n.every((v, i) => !i || v >= s2.n[i - 1]),
+      `${name}: clicking "Contracts" sorts the table, highest first, then lowest first`);
+    await page.selectOption('#home', 'homes|1-bedroom apartments');
+    await page.waitForTimeout(300);
+    if (name === 'desktop') {
+      check(await page.evaluate(() => document.querySelectorAll('#inUse .srcH').length >= 1 && document.querySelectorAll('#inUse ul li').length >= 1),
+        'desktop: sources are listed as "Figures from" (and "Checked against")');
+      // The address keeps the map's state.
+      await page.click('.viewSw button[data-m="sale"]');
+      await page.waitForTimeout(700);
+      const qs = await page.evaluate(() => location.search);
+      check(/view=sale/.test(qs) && /home=homes:1-bedroom/.test(qs) && /at=25\.\d+,55\.\d+,\d+/.test(qs), `desktop: the address keeps the home, view and map position (${decodeURIComponent(qs)})`);
+      await page.click('.viewSw button[data-m="median"]');
+    }
     // The finder above the table filters the table only; the map keeps every area.
     const before = await page.evaluate(() => ({ rows: document.querySelectorAll('#rows tr').length, pts: POINTS.length }));
     await page.fill('#search', 'marina');
@@ -317,6 +354,9 @@ try {
     await page.waitForFunction(() => gl || map._osm, null, { timeout: 15000 }).catch(() => {});
     check(await page.evaluate(() => !gl || /name:ar/.test(JSON.stringify(gl.getLayoutProperty('place_label', 'text-field')))), `${name}: map place names start in Arabic`);
     check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${name}: no sideways scrolling`);
+    await page.waitForTimeout(500);
+    const underAr = await underControls(page);
+    check(!underAr.length, `${name}: no label sits under the map's buttons or legend${underAr.length ? ': ' + underAr.join(', ') : ''}`);
     await page.click('#ckArea');
     await page.fill('#ckArea', 'jvc');
     await page.press('#ckArea', 'Enter');
@@ -339,6 +379,24 @@ try {
     check(!english.length, `${name}: no English interface text left${english.length ? ': ' + english.join(' | ') : ''}`);
     check(!errors.length, `${name}: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await axe(page, name);
+    await page.context().close();
+  }
+  // A link with the map's state opens that map: home, view and position.
+  {
+    const { page, errors } = await open(browser, { width: 1350, height: 900 }, 'light', '?home=homes:Studios&view=yield&at=25.08,55.15,13');
+    const st = await page.evaluate(() => ({ home: document.getElementById('home').value, view: LABEL.metric, z: map.getZoom(), c: map.getCenter() }));
+    check(st.home === 'homes|Studios' && st.view === 'yield' && st.z === 13 && Math.abs(st.c.lat - 25.08) < 0.01, `a link with ?home=…&view=…&at=… opens that map (${st.home}, ${st.view}, zoom ${st.z})`);
+    check(!errors.length, `link state: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await page.context().close();
+  }
+  // Near me: in Dubai the map moves there and marks it; elsewhere it says so and stays.
+  for (const [where, geolocation] of [['Dubai Marina', { latitude: 25.08, longitude: 55.14 }], ['London', { latitude: 51.5, longitude: -0.12 }]]) {
+    const { page } = await open(browser, { width: 390, height: 844 }, 'light', '', { geolocation, permissions: ['geolocation'] });
+    await page.click('.leaflet-control-zoom a.near');
+    await page.waitForTimeout(700);
+    const r = await page.evaluate(() => ({ z: map.getZoom(), c: map.getCenter(), you: !!document.querySelector('path.you'), note: document.querySelector('.mapNote:not([hidden])')?.textContent || '' }));
+    if (where === 'London') check(!r.you && /outside Dubai/.test(r.note), `"Near me" from London says you seem to be outside Dubai and leaves the map`);
+    else check(r.you && r.z === 14 && Math.abs(r.c.lat - 25.08) < 0.01, `"Near me" in Dubai Marina moves the map there and marks the spot (zoom ${r.z})`);
     await page.context().close();
   }
   // Wallet-sized screens (fold phone covers, small phones): nothing sideways, the sheet fits, buttons stay small.
