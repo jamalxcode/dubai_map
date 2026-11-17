@@ -478,6 +478,8 @@ The owner saw a breakdown cut off at the top of the map and under the Rent / Sal
 5. **Schedule:** late GitHub timer runs step aside after a recent successful pull; Dubai Data's publication times are logged.
 6. **Retry:** failed live pages get one more try, so one hiccup doesn't throw away a fresh publication.
 
+After merging, the pull was started by hand so the new fields went live (guard, pull and deploy jobs all succeeded), and Tests were rerun against the rebuilt data branch (passed). That run saved the first snapshot (`history/2026-11-16.json`) and the first `changes.json` (nothing to compare yet), and found 11 areas where a cross-check source differs by more than 15% (La Mer, Uptown Mirdif and Sobha Hartland among them).
+
 ## Change log
 
 - 2026-11-17: Rent history snapshots, unconfirmed-jump marks, sources-differ notes, changes.json and run summaries, a guard for late timer runs, one retry for failed live pages, publication times logged.

@@ -66,6 +66,9 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Panning can't fit a card taller than the space.** Pan margins kept short breakdowns clear, but a full one was taller than the map's clear area, and photos made it grow after opening. *Rule:* cap a pop-up's height at the clear space, re-fit after any content that loads later, and test the tallest content on short windows.
 - **A source that replaces its figures erases the past.** Dubai Data's medians are overwritten each publication. *Rule:* keep our own dated snapshot of what we publish; history can't be rebuilt later.
 - **A total-size guard misses single bad figures.** *Rule:* also compare each figure with the previous publication, and mark big jumps visibly instead of silently publishing them.
+- **The session can't always reach the live site.** The session's network refused github.io, so the live files couldn't be fetched directly. *Rule:* verify a deploy through the Actions API (each job's result) and the data branch's latest commit, and say plainly when the live page itself wasn't checked.
+- **A new data field isn't live until the data is rebuilt.** *Rule:* after merging, start the pull (or "Place unplaced areas") by hand, wait for its deploy job, then rerun Tests on the rebuilt data branch.
+- **Escaping inside heredoc scripts bites.** A `rstrip('\\n')` written through a shell heredoc stripped the wrong characters and left a stray blank line. *Rule:* in generated edit scripts prefer plain string replacement and check the diff.
 
 ## Accessibility
 
