@@ -16,7 +16,13 @@
     }
   },
   "datadubai": {
-    "last_ok_at": "2026-11-17T18:17:23+00:00",
+    "last_ok_at": "2026-11-17T19:42:58+00:00",
+    "last_pull": {
+      "at": "2026-11-17T19:42:58+00:00",
+      "export_files_updated": 0,
+      "live": "current",
+      "through": "2026-11-16"
+    },
     "live_checked_at": "2026-11-17T18:00:19+00:00",
     "state": "ok",
     "status": "ok",
