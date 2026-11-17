@@ -10,39 +10,41 @@
 html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}
 .lenis [data-lenis-prevent]{overscroll-behavior:contain}.lenis.lenis-smooth iframe{pointer-events:none}
 
-/* Tokens: the brand palette (ink black, cream, gold, taupe, soft white) for text and surfaces, and the
-   price key (six steps, deep purple to yellow) for prices only. Contrast checked to WCAG AA: brand taupe
-   (#8B8378) and gold (#B98A2F) are too light for small text on cream, so text uses a deeper taupe
-   (--muted) and a deeper gold (--gold-ink); gold itself is for accents, fills and text on ink. */
+/* Tokens: the "golden note" palette for text and surfaces (Oxblood primary field, Ivory paper and type,
+   Gold Leaf accents, Espresso deep text, Warm Gray secondary text) and a six-step blue scale for prices only.
+   Contrast checked to WCAG AA: warm gray (3.5:1) and gold leaf (2.2:1) are too light for small text on
+   ivory, so text uses a deeper warm gray (--muted) and a deeper gold (--gold-ink); gold leaf itself is for
+   accents, frames and fills, text on oxblood (5.7:1), and carries espresso type (6.5:1). */
 :root{
-  --ink:#141414;--cream:#F7F2E9;--gold:#B98A2F;--taupe:#8B8378;--soft:#EDE6D8;
-  --sign:var(--ink);     /* primary actions and the selected state */
-  --sign-ink:#2E2A25;    /* primary action, hovered */
-  --on-sign:var(--cream);
-  --gold-ink:#7D5C1C;    /* gold as text, underline or focus ring on cream (5.5:1) */
+  --oxblood:#521825;--ivory:#F6F1E7;--gold:#C9A227;--espresso:#2B2118;--warmgray:#8A7F72;
+  --ink:var(--espresso);--cream:var(--ivory);--soft:#ECE4D4;--taupe:var(--warmgray); /* names used across the CSS */
+  --sign:var(--oxblood); /* primary actions, the selected state, group labels */
+  --sign-ink:#3E111B;    /* primary action, hovered */
+  --on-sign:var(--ivory);
+  --gold-ink:#735B12;    /* gold as text, underline or focus ring on ivory (5.8:1) */
   --focus:var(--gold-ink);
-  --caution:var(--gold); /* the stale-data warning: ink on gold (5.9:1) */
-  --band:var(--ink);--band-text:var(--cream);--band-muted:#D9D1C3;
-  /* Light theme (default): cream paper */
-  --bg:var(--cream);--text:var(--ink);--panel:var(--soft);--line:#D6CDBD;--muted:#655E54;--hover:#F1EBDF;
-  --label:#FFFDF8;--legend:rgba(255,253,248,.95);--map-bg:var(--soft);--disabled:#A39B8F;--ok:#1C6B3A;--bad:#9A3B00;
-  --small-on-fill:#4A443B; /* small text on a shaded label (5.5:1 or more on every price colour) */
-  --fill-mix:25%;
+  --caution:var(--gold); /* the stale-data warning: espresso on gold (6.5:1) */
+  --band:var(--oxblood);--band-text:var(--ivory);--band-muted:#E8DCCB;
+  /* Light theme (default): ivory paper */
+  --bg:var(--ivory);--text:var(--espresso);--panel:var(--soft);--line:#D9CFBE;--muted:#655B51;--hover:#F0E9DC;
+  --label:#FFFCF5;--legend:rgba(255,252,245,.95);--map-bg:var(--soft);--disabled:#A59A8C;--ok:#1C6B3A;--bad:#9A3B00;
+  --small-on-fill:#4A3F35; /* small text on a shaded label (4.75:1 or more on every price colour) */
+  --fill-mix:35%;
   --tiles:grayscale(.85) contrast(.95) brightness(1.04) sepia(.08);
-  --b1:#3E0751;--b2:#424483;--b3:#41768C;--b4:#51A686;--b5:#8FCF63;--b6:#F9E855; /* the price key, low to high */
+  --b1:#EFF3FF;--b2:#C6DBEF;--b3:#9ECAE1;--b4:#6BAED6;--b5:#2171B5;--b6:#084594; /* prices: blue, lowest to highest */
   color-scheme:light;
   --cond:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --body:"Barlow",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
   font:400 16px/1.5 var(--body);color:var(--text);background:var(--bg);
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
-/* Dark theme: ink paper, cream type, gold actions. The price key stays the same. */
+/* Dark theme: espresso paper, ivory type, gold-leaf actions, the oxblood header. The price scale stays. */
 :root[data-theme="dark"]{
-  --sign:var(--gold);--sign-ink:#CFA14A;--on-sign:var(--ink);--gold-ink:#D2A851;--focus:#D2A851;
-  --band:#1F1C18;--band-muted:#D9D1C3;
-  --bg:var(--ink);--text:var(--cream);--panel:#221F1B;--line:#3A352D;--muted:#ABA294;--hover:#1C1A17;
-  --label:#1F1C18;--legend:rgba(31,28,24,.94);--map-bg:#1A1815;--disabled:#5E584F;--ok:#7FD39B;--bad:#FFB27A;
-  --small-on-fill:#E3DBCD;--fill-mix:30%;
+  --sign:var(--gold);--sign-ink:#D9B547;--on-sign:var(--espresso);--gold-ink:var(--gold);--focus:var(--gold);
+  --band:var(--oxblood);--band-muted:#E8DCCB;
+  --bg:#1E1712;--text:var(--ivory);--panel:#2A211A;--line:#43372C;--muted:#B3A898;--hover:#251D17;
+  --label:#2A211A;--legend:rgba(42,33,26,.94);--map-bg:#221A14;--disabled:#62574C;--ok:#7FD39B;--bad:#FFB27A;
+  --small-on-fill:#E6DCCB;--fill-mix:30%;
   --tiles:invert(1) hue-rotate(180deg) grayscale(.8) brightness(.82) contrast(.9);
   color-scheme:dark;
 }
@@ -135,7 +137,7 @@ button,input,select{font:inherit;color:inherit}
 .legend{position:absolute;z-index:500;left:12px;bottom:12px;background:var(--legend);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px}
 .legend .t{font-weight:600;margin-bottom:5px}
 .legend .ramp{display:flex;gap:2px}
-.legend .ramp i{display:block;width:44px;height:8px}
+.legend .ramp i{display:block;width:44px;height:8px;box-shadow:inset 0 0 0 1px rgba(43,33,24,.18)} /* outlined: the lowest step is almost paper-white */
 .legend .ramp i:first-child{border-radius:4px 0 0 4px}.legend .ramp i:last-child{border-radius:0 4px 4px 0}
 .legend .ends{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:3px;font-variant-numeric:tabular-nums}
 .leaflet-control-zoom a{color:var(--text)!important}
@@ -154,13 +156,13 @@ button,input,select{font:inherit;color:inherit}
 .rl b{display:block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums}
 .rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted);max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--gold),0 4px 10px rgba(20,20,20,.25)}
-/* The shaded part of a rent label is a tint of its price-key colour (25% in light, 30% in dark). */
+/* The shaded part of a rent label is a tint of its price colour (35% in light, 30% in dark). */
 .rl.rent{background:linear-gradient(90deg,color-mix(in srgb,var(--c) var(--fill-mix),var(--label)) var(--f),var(--label) var(--f))}
 /* Small area names on shaded labels: colours checked by hand to stay above 4.5:1 on every tint. */
 .rl.rent small{color:var(--small-on-fill)}
-/* Group labels: ink, cream type, a gold edge; shaded with a 35% tint of their price colour. */
-.rl.grp{background:var(--ink);color:var(--cream);border-left-color:var(--c,var(--b3));box-shadow:0 0 0 1.5px var(--gold),0 2px 8px rgba(20,20,20,.3)}
-.rl.grp.rent{background:linear-gradient(90deg,color-mix(in srgb,var(--c) 35%,var(--ink)) var(--f),var(--ink) var(--f))}
+/* Group labels: oxblood, ivory type, a gold-leaf edge; shaded with a 30% tint of their price colour. */
+.rl.grp{background:var(--oxblood);color:var(--ivory);border-left-color:var(--c,var(--b3));box-shadow:0 0 0 1.5px var(--gold),0 2px 8px rgba(20,20,20,.3)}
+.rl.grp.rent{background:linear-gradient(90deg,color-mix(in srgb,var(--c) 30%,var(--oxblood)) var(--f),var(--oxblood) var(--f))}
 .rl.grp small,.rl.grp.rent small{color:var(--cream)}
 .rl .avg{font:600 13px/1 var(--cond);margin-inline-start:3px;opacity:.85}
 
@@ -372,15 +374,15 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .areaSheet .pics .strip img{height:150px}
 }
 /* Photo viewer (all screens). */
-.viewer{position:fixed;inset:0;z-index:1300;background:rgba(20,20,20,.95);display:flex;align-items:center;justify-content:center;padding:56px 12px calc(12px + env(safe-area-inset-bottom))}
+.viewer{position:fixed;inset:0;z-index:1300;background:rgba(30,23,18,.95);display:flex;align-items:center;justify-content:center;padding:56px 12px calc(12px + env(safe-area-inset-bottom))}
 .viewer[hidden]{display:none}
 .viewer figure{margin:0;max-width:min(100%,1000px);display:flex;flex-direction:column;align-items:center;gap:10px}
 .viewer img{max-width:100%;max-height:calc(100svh - 190px);max-height:calc(100vh - 190px);object-fit:contain;border-radius:6px;background:#222}
 .viewer figcaption{color:var(--cream);font-size:13.5px;line-height:1.45;text-align:center;max-width:640px}
-.viewer figcaption a{color:#E2C27A}
-.viewer .vCount{display:block;color:#ABA294;font-size:12px}
+.viewer figcaption a{color:#C9A227}
+.viewer .vCount{display:block;color:#B3A898;font-size:12px}
 .viewer button{position:absolute;border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:50%;width:44px;height:44px;font-size:28px;line-height:1;cursor:pointer}
-.viewer button:focus-visible{outline:2px solid #E2C27A;outline-offset:2px}
+.viewer button:focus-visible{outline:2px solid #C9A227;outline-offset:2px}
 .viewer .vX{top:10px;inset-inline-end:10px}
 .viewer .vPrev{inset-inline-start:8px;top:50%;transform:translateY(-50%)}
 .viewer .vNext{inset-inline-end:8px;top:50%;transform:translateY(-50%)}

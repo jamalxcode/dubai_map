@@ -275,7 +275,7 @@ function spark(monthly){
   const pts=(monthly||[]).filter(m=>m.median);if(pts.length<3)return '';
   const vs=pts.map(m=>m.median),lo=Math.min(...vs),hi=Math.max(...vs),w=230,h=40;
   const d=pts.map((m,i)=>(i?'L':'M')+(i*w/(pts.length-1)).toFixed(1)+','+(h-4-(hi===lo?.5:(m.median-lo)/(hi-lo))*(h-8)).toFixed(1)).join('');
-  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+T('Monthly median rent')+'"><path d="'+d+'" fill="none" stroke="#B98A2F" stroke-width="2"/></svg><br><small>'+safe(T('Monthly median, {a} to {b}',{a:pts[0].m,b:pts.at(-1).m}))+'</small><br>';
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+T('Monthly median rent')+'"><path d="'+d+'" fill="none" stroke="#C9A227" stroke-width="2"/></svg><br><small>'+safe(T('Monthly median, {a} to {b}',{a:pts[0].m,b:pts.at(-1).m}))+'</small><br>';
 }
 function popup(a){
   const types=Object.entries(a.reg_types||{}).map(([k,v])=>safe(k)+' '+fmt(v)).join(', ');
@@ -430,7 +430,7 @@ function draw(){
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
   $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?f(vals[0]):'')+'</span><span>'+(vals.length?f(vals.at(-1)):'')+'</span></div>';
-  if(metric==='median')$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%;--c:var(--b4)"></i>'+T('Dial: share of the top price, {top}',{top:'AED '+compact(LABEL.top)})+'</div>');
+  if(metric==='median')$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%;--c:var(--b5)"></i>'+T('Dial: share of the top price, {top}',{top:'AED '+compact(LABEL.top)})+'</div>');
   if(!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts (no all-homes median): pick a unit to see them')+'</div>');
   const inArea=AREAS.filter(match);
   odometer($('n12'),inArea.reduce((s,a)=>s+a.n,0));odometer($('mapped'),shown.reduce((s,a)=>s+a.n,0));

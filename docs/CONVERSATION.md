@@ -191,6 +191,10 @@ All pulls since the changes ran on time and succeeded (cron-job.org at 05:17, 21
 
 Brand palette applied to text and surfaces (cream paper, ink type and header, gold accents; dark mode ink paper with gold actions), with taupe and gold deepened where small text needed WCAG AA. The six-step price key now colours prices (label edges, shading, dials, legend), each colour a sixth of the areas shown. Dials and shading are a share of the top price pulled (AED 279k for 1-bedroom today) instead of AED 100k. Share image redrawn.
 
+### 17 Nov · "update prices to this color" (six blues) and "update website to golden note colors"
+
+Prices now use six blues (palest = lowest, deep navy = highest); the site uses oxblood, ivory, gold leaf, espresso and warm gray, with warm gray and gold deepened where small text needed WCAG AA. Label tints recomputed for the blues. The cheapest areas barely tint (the lightest blue is near the paper colour); the figure carries the value.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

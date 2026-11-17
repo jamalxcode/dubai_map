@@ -329,6 +329,15 @@ The owner gave two palettes: a brand palette for text (Ink Black #141414, Cream 
 - **Top price pulled:** dials and shading are now a rent's share of the dearest area shown (AED 279k for 1-bedroom today), named in the legend, instead of a fixed AED 100k. The rent check uses the dearest area for the home type checked.
 - **Share image** redrawn in the brand palette. The collaborator's map styles (detailed by day, dark at night) are kept.
 
+## Decision on 2026-11-17 (thirty-first pass): "golden note" for the site, blues for prices
+
+The owner replaced both palettes: prices in a six-step blue scale (#EFF3FF lowest … #084594 highest) and the site in "golden note": Oxblood #521825 (primary field, 45%), Ivory #F6F1E7 (type and paper), Gold Leaf #C9A227 (icons and accents), Espresso #2B2118 (deep text), Warm Gray #8A7F72 (secondary text).
+
+- **Roles:** oxblood for the header, primary buttons, selected states and group labels; ivory paper with espresso text; gold leaf for the header frame, highlighted words, link underlines and the warning sign; dark mode is espresso paper with ivory text and gold-leaf actions under the same oxblood header.
+- **Contrast kept at WCAG AA:** warm gray (3.5:1) and gold leaf (2.2:1) are too light for small text on ivory, so text uses #655B51 (5.9:1) and #735B12 (5.8:1). Label tints recomputed for the blues: 35% in light with #4A3F35 (at least 4.75:1), 30% in dark with #E6DCCB (at least 4.56:1), 30% over oxblood with ivory (at least 5.2:1).
+- **Lightest blue:** #EFF3FF is almost the label's ivory, so the cheapest areas barely tint; the figure carries the value, and the legend swatches are outlined so step 1 stays visible.
+- The scale still tops out at the top price pulled. Share image redrawn. The night map style (cool blue-grey, from the parallel session) is unchanged.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
@@ -371,6 +380,8 @@ The owner gave two palettes: a brand palette for text (Ink Black #141414, Cream 
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-17: "Golden note" palette (oxblood, ivory, gold leaf, espresso, warm gray) for the site; six blues for prices.
 
 - 2026-11-17: Brand palette (ink, cream, gold, taupe, soft white) for text and surfaces; six-step price key for prices; dials and shading scaled to the top price pulled.
 

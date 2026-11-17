@@ -29,19 +29,19 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 ## 3. Colour and type
 
-- **Brand palette (text and surfaces):** Ink Black `#141414` (wordmark, header, primary actions, body text), Cream `#F7F2E9` (page ground), Gold `#B98A2F` (accents: header frame, highlighted words, focus rings, link underlines, dark-mode actions, the stale-data warning), Taupe `#8B8378` (lines), Soft White `#EDE6D8` (panels). Tokens on `:root` (`--ink`, `--cream`, `--gold`, `--taupe`, `--soft`).
-- **Contrast adjustments:** brand taupe (3.4:1) and gold (2.8:1) are too light for small text on cream, so secondary text is a deeper taupe `#655E54` (5.7:1) and gold as text on cream is `#7D5C1C` (5.5:1). Gold carries ink text (5.9:1) and reads on ink (5.9:1).
-- **Price key (prices only):** six steps, low to high: `#3E0751`, `#424483`, `#41768C`, `#51A686`, `#8FCF63`, `#F9E855`. Each colour holds a sixth of the areas shown. The same key in light and dark. Used for label edges, label shading, dials and the legend ramp; never for text.
+- **Brand palette, "golden note" (text and surfaces):** Oxblood `#521825` (primary field: header, primary buttons, selected states, group labels), Ivory `#F6F1E7` (paper and type on oxblood), Gold Leaf `#C9A227` (icons and accents: header frame, highlighted words, link underlines, focus on dark, dark-mode actions, the stale-data warning), Espresso `#2B2118` (deep text), Warm Gray `#8A7F72` (secondary, lines). Tokens: `--oxblood`, `--ivory`, `--gold`, `--espresso`, `--warmgray` (older names `--ink`, `--cream` map to espresso and ivory).
+- **Contrast adjustments:** warm gray (3.5:1) and gold leaf (2.2:1) are too light for small text on ivory, so secondary text is a deeper warm gray `#655B51` (5.9:1) and gold as text on ivory is `#735B12` (5.8:1). Gold leaf reads on oxblood (5.7:1) and carries espresso type (6.5:1).
+- **Prices: six blues, lowest to highest:** `#EFF3FF`, `#C6DBEF`, `#9ECAE1`, `#6BAED6`, `#2171B5`, `#084594`. Each colour holds a sixth of the areas shown; the same scale in light and dark; label edges, shading, dials and the legend ramp, never text. The lowest step is almost paper-white, so legend swatches are outlined.
 - **Scale:** dials and shading show a rent's share of the top price pulled (the legend names it, e.g. "share of the top price, AED 279k").
 - **Dark mode:** follows the device until the visitor picks; remembered (`theme`). The base map switches with it: OpenFreeMap **Liberty** (detailed, in colour) by day, OpenFreeMap **Dark** lifted to the site's night colours (`tuneDark` in atlas.js) at night. The CSS invert filter is only for the OpenStreetMap fallback tiles.
-- **Contrast:** WCAG AA (4.5:1) in light, dark and Arabic, checked by axe on every push. Shaded labels use a 25% tint of their price colour (30% in dark, 35% on ink group labels); small text on them is `#4A443B` (light, 5.5:1 or more on every tint), `#E3DBCD` (dark, 5.2:1 or more) and cream on groups (5.9:1 or more), checked by hand because axe can't measure text on a gradient.
+- **Contrast:** WCAG AA (4.5:1) in light, dark and Arabic, checked by axe on every push. Shaded labels use a 35% tint of their price colour (30% in dark and on oxblood group labels); small text on them is `#4A3F35` (light, 4.75:1 or more on every tint), `#E6DCCB` (dark, 4.56:1 or more) and ivory on groups (5.2:1 or more), checked by hand because axe can't measure text on a gradient.
 - **Type:** Barlow (text) and Barlow Condensed (headings, figures), served from the site. Arabic letters come from the device's Arabic font; numbers stay in Barlow. No letter-spacing in Arabic (it breaks letter joining).
 - **Figures:** tabular numbers; AED written before the amount; Western digits in both languages.
 
 ## 4. Map labels
 
 - Each area: `AED 65k` plus the area name, with an edge, a dial and shading in its price-key colour; the dial and shading show its share of the top price pulled.
-- Labels never overlap. Overlapping labels merge into an ink group label with a gold edge (contract-weighted average, "avg"); groups of 2–3 name their busiest area ("Al Barsha First +1"), bigger ones count ("12 areas").
+- Labels never overlap. Overlapping labels merge into an oxblood group label with a gold-leaf edge (contract-weighted average, "avg"); groups of 2–3 name their busiest area ("Al Barsha First +1"), bigger ones count ("12 areas").
 - A group of up to 3 comes apart when each label fits at its point or just beside it; a moved label has a thin line to a dot at its point.
 - Labels keep clear of the zoom buttons, the language button and the legend, and are re-placed when a control appears.
 - Labels are keyboard buttons: Tab to one, Enter or Space opens it; the spoken name is the visible text.
@@ -90,7 +90,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 - Loading: "Loading rents…"; a shimmer where photos will appear.
 - Errors offer a way forward: "Try again", suggestions for an unknown area, the units that have figures.
-- Stale data: a gold warning sign when the data is more than 7 days behind; hideable for the visit.
+- Stale data: a gold-leaf warning sign when the data is more than 7 days behind; hideable for the visit.
 - Empty: a message that says what to change ("Clear the search or widen the rent range").
 
 ## 11. Accessibility
