@@ -45,7 +45,7 @@
 
   // Text the scripts build (atlas.js, companion.js), keyed by its English.
   const AR = {
-    'Dial: share of the top price, {top}': 'المؤشر: نسبة من أعلى سعر، {top}',
+    'Dial: share of {top}; 95% of areas pay less': 'المؤشر: نسبة من {top}؛ 95% من المناطق تدفع أقل',
     'Photos taken near this point, from Wikimedia Commons. Tap one to see it large, with its author and licence.': 'صور التُقطت قرب هذه النقطة، من ويكيميديا كومنز. اضغط على صورة لعرضها بحجم كبير مع مصوّرها وترخيصها.',
     'Photo {i} of {n}': 'الصورة {i} من {n}',
     'View on Wikimedia Commons': 'عرضها على ويكيميديا كومنز',

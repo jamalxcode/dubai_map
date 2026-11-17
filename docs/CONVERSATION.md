@@ -195,6 +195,10 @@ Brand palette applied to text and surfaces (cream paper, ink type and header, go
 
 Prices now use six blues (palest = lowest, deep navy = highest); the site uses oxblood, ivory, gold leaf, espresso and warm gray, with warm gray and gold deepened where small text needed WCAG AA. Label tints recomputed for the blues. The cheapest areas barely tint (the lightest blue is near the paper colour); the figure carries the value.
 
+### 17 Nov · "remove edge cases that might distort the key, so top 5% is not considered as max, and low 5% is not considered as low, but it will keep the color of highest and lowest"
+
+The key now spans the 5th to 95th percentile (AED 38k to 120k for 1-bedroom, instead of 35k to 279k), in six equal steps; the extremes take the palest or deepest blue and the dearest show a full dial. Legend ends read "≤" and "≥".
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

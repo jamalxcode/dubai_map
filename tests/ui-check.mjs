@@ -117,10 +117,12 @@ try {
     await page.waitForTimeout(300);
     const pies = await page.evaluate(() => document.querySelectorAll('.rl .pie').length);
     check(pies >= 10, `${name}: rent labels show the rent dial (${pies})`);
-    const scale = await page.evaluate(() => { const vals = POINTS.map(p => p.v); return { top: LABEL.top, max: Math.max(...vals),
-      bands: new Set(vals.map(v => LABEL.colorOf(v))).size, note: document.querySelector('#legend .note')?.textContent || '' }; });
-    check(scale.top === scale.max && scale.bands === 6 && /279k|\d+k/.test(scale.note),
-      `${name}: the price key tops out at the top price pulled (AED ${Math.round(scale.top / 1000)}k) and uses all six colours`);
+    const scale = await page.evaluate(() => { const vals = POINTS.map(p => p.v).sort((a, b) => a - b);
+      const p95 = vals[Math.round(.95 * (vals.length - 1))], p05 = vals[Math.round(.05 * (vals.length - 1))];
+      return { top: LABEL.top, p95, p05, max: vals.at(-1), min: vals[0], topColour: LABEL.colorOf(vals.at(-1)), lowColour: LABEL.colorOf(vals[0]),
+        ends: document.querySelector('#legend .ends')?.textContent || '' }; });
+    check(scale.top === scale.p95 && scale.top < scale.max && scale.topColour === 'var(--b6)' && scale.lowColour === 'var(--b1)' && /≤.*≥/.test(scale.ends),
+      `${name}: the key runs from the 5th to the 95th percentile (AED ${Math.round(scale.p05 / 1000)}k to ${Math.round(scale.p95 / 1000)}k, not ${Math.round(scale.min / 1000)}k to ${Math.round(scale.max / 1000)}k); the extremes keep the end colours`);
     const fills = await page.evaluate(() => [...document.querySelectorAll('.rl.rent')].map(e => parseFloat(e.style.getPropertyValue('--f'))));
     check(fills.length >= 10 && fills.every(f => f > 0 && f <= 100), `${name}: rent labels are shaded in proportion to the rent (${fills.slice(0, 4).join('%, ')}%…)`);
     const z0 = await page.evaluate(() => map.getZoom());

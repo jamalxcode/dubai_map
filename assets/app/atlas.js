@@ -42,22 +42,27 @@ function odometer(el,value,prefix){
 const map=L.map('map',{zoomControl:true,attributionControl:true}).setView([25.13,55.27],11);
 // A small merged label (2-3 areas) names its busiest area, e.g. "International City Phase 1 +1", so nearby
 // places stay findable by name when zoomed in; bigger groups cover a region and just count their areas.
-// Rent dial: share of the top price pulled (the dearest area for what is shown), in its price-key colour.
+// Rent dial: share of the top of the key (the 95th percentile of what is shown; dearer areas show a full dial), in its key colour.
 // Only for rents, not counts or yields. LABEL.top is set by draw().
 const share=v=>Math.min(100,Math.max(0,Math.round(v/(LABEL.top||v||1)*100)));
 const pie=(v,metric)=>metric==='median'&&v>0?'<i class="pie" aria-hidden="true" style="--p:'+share(v)+'%"></i>':'';
-// Price key bands: six colours, each holding a sixth of the areas shown (so every colour is used), low to high.
-function bandsFor(vals){
-  const cuts=[1,2,3,4,5].map(k=>vals[Math.floor(k/6*(vals.length-1))]).filter(v=>v!=null);
-  return v=>BANDS[Math.min(5,cuts.filter(c=>v>c).length)];
+// The price key: six colours in equal steps between the 5th and 95th percentile of what is shown, so a few
+// extreme areas don't stretch the key. Values below the 5th percentile take the lowest colour, above the
+// 95th the highest (and a full dial). `vals` must be sorted ascending.
+const TRIM=.05;
+function scaleFor(vals){
+  const at=q=>vals.length?vals[Math.round(q*(vals.length-1))]:0;
+  const lo=at(TRIM),hi=Math.max(at(1-TRIM),lo+1);
+  const colorOf=v=>BANDS[v<=lo?0:v>=hi?5:Math.min(5,Math.floor((v-lo)/(hi-lo)*6))];
+  return {lo,hi,colorOf};
 }
 // The same scale for any home type, for the rent check (assets/app/companion.js): top price and colour.
 const SCALES={};
 window.priceKey=unit=>{
   const k=TYPE+'|'+(unit||'');if(SCALES[k])return SCALES[k];
   const vals=(CACHE.homes||AREAS).map(a=>areaValue(a,'median',unit||'')).filter(v=>v>0).sort((a,b)=>a-b);
-  const colorOf=bandsFor(vals),top=vals.at(-1)||1;
-  return SCALES[k]={top,color:colorOf,share:v=>Math.min(100,Math.round(v/top*100))};
+  const sc=scaleFor(vals),top=sc.hi||1;
+  return SCALES[k]={top,color:sc.colorOf,share:v=>Math.min(100,Math.round(v/top*100))};
 };
 // "All Dubai": back to the whole city (placed areas, leaving out far-off Hatta so the city isn't a dot).
 function fitDubai(animate){const pts=(CACHE.homes||AREAS).filter(x=>x.lat!=null&&x.lng<55.7).map(x=>[x.lat,x.lng]);
@@ -425,12 +430,12 @@ function draw(){
     // Weight for averages: the unit's contracts; where a source gives none per unit, a rough share of the area total.
     const n=bu?(bu.n!=null?bu.n:Math.round(a.n/Math.max(1,a.by_unit.length)))||0:a.n;POINTS.push({a,v,n})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
-  const colorOf=bandsFor(vals);
-  LABEL={metric,colorOf,top:vals.at(-1)||1};renderLabels();viewStat();
+  const sc=scaleFor(vals),colorOf=sc.colorOf;
+  LABEL={metric,colorOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
-  $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?f(vals[0]):'')+'</span><span>'+(vals.length?f(vals.at(-1)):'')+'</span></div>';
-  if(metric==='median')$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%;--c:var(--b5)"></i>'+T('Dial: share of the top price, {top}',{top:'AED '+compact(LABEL.top)})+'</div>');
+  $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?'≤ '+f(sc.lo):'')+'</span><span>'+(vals.length?'≥ '+f(sc.hi):'')+'</span></div>';
+  if(metric==='median')$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%;--c:var(--b5)"></i>'+T('Dial: share of {top}; 95% of areas pay less',{top:'AED '+compact(LABEL.top)})+'</div>');
   if(!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts (no all-homes median): pick a unit to see them')+'</div>');
   const inArea=AREAS.filter(match);
   odometer($('n12'),inArea.reduce((s,a)=>s+a.n,0));odometer($('mapped'),shown.reduce((s,a)=>s+a.n,0));

@@ -338,6 +338,10 @@ The owner replaced both palettes: prices in a six-step blue scale (#EFF3FF lowes
 - **Lightest blue:** #EFF3FF is almost the label's ivory, so the cheapest areas barely tint; the figure carries the value, and the legend swatches are outlined so step 1 stays visible.
 - The scale still tops out at the top price pulled. Share image redrawn. The night map style (cool blue-grey, from the parallel session) is unchanged.
 
+## Decision on 2026-11-17 (thirty-second pass): a key that extreme areas can't stretch
+
+The owner: remove edge cases that distort the key; the top 5% should not set the maximum nor the bottom 5% the minimum, but they keep the highest and lowest colours. The key now runs from the 5th to the 95th percentile of what is shown (for 1-bedroom today AED 38k to 120k, against a raw 35k to 279k). The six blues are equal price steps across that range; below it the palest, above it the deepest. Dials and shading are a share of the 95th percentile, full above it, so a typical 70k area now fills about 58% instead of a quarter. The legend reads "≤ AED 38k … ≥ AED 120k" and names the dial's top. The rent check uses the same trimmed scale for the home type checked. Applies to every measure the labels can show.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
@@ -380,6 +384,8 @@ The owner replaced both palettes: prices in a six-step blue scale (#EFF3FF lowes
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-17: Price key trimmed to the 5th–95th percentile; extremes keep the end colours.
 
 - 2026-11-17: "Golden note" palette (oxblood, ivory, gold leaf, espresso, warm gray) for the site; six blues for prices.
 

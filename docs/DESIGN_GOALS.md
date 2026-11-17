@@ -22,7 +22,7 @@ These are the goals the owner set while building the project (see [CONVERSATION.
 - ✅ Clicking a group zooms in until it splits. Clicking a single community shows its unit-by-unit breakdown.
 - ✅ One headline number for the screen: **Average rent in view**, updated as you pan and zoom.
 - ✅ The unit-type filter (studio, 1-bed…) and the measure selector (rent, gross yield, contract count) drive the labels and the headline number.
-- 🔶 Secondary cues only, in six blues (palest to deep navy): a coloured edge, a small dial and a shaded box showing the rent's share of the top price pulled. The text carries the information, in the "golden note" palette (oxblood, ivory, gold leaf, espresso, warm gray).
+- 🔶 Secondary cues only, in six blues (palest to deep navy): a coloured edge, a small dial and a shaded box showing the rent's share of the top of the key (the 95th percentile, so extreme areas don't stretch it). The text carries the information, in the "golden note" palette (oxblood, ivory, gold leaf, espresso, warm gray).
 
 ## 3. Be a good citizen with data sources: never get blocked
 
