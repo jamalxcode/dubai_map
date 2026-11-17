@@ -471,6 +471,8 @@ The owner saw a breakdown cut off at the top of the map and under the Rent / Sal
 
 ## Change log
 
+- 2026-11-17: Added DATA_PIPELINE.md, how the data is pulled, organised, stored and published.
+
 - 2026-11-17: Breakdowns never taller than the clear space on the map; re-fit after photos load.
 
 - 2026-11-17: Fourth interface critique: Near me fits, the check uses the map's Home picker, compact tablet header, plainer freshness line, folded findings on phones, and feature-use counts.

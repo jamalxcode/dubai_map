@@ -13,6 +13,7 @@ Read before changing behaviour:
 - `docs/DESIGN_GOALS.md`: the owner's goals; a change that conflicts with a goal needs the goal updated first.
 - `docs/DECISIONS.md`: why things are the way they are (numbered passes); add a pass for each piece of work.
 - `docs/CONVERSATION.md`: the owner's requests, in order, and the open items.
+- `docs/DATA_PIPELINE.md`: how a pull fetches, builds, checks, saves and deploys the data. Keep it in step with the workflows and collectors.
 
 ## Commands
 

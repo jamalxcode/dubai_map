@@ -225,6 +225,7 @@ How the site got here is written down, conversation and all:
 |---|---|
 | [**Design goals**](docs/DESIGN_GOALS.md) | What it's for, and the ideas still on the table |
 | [**Business rules**](docs/BUSINESS_RULES.md) | Every data rule and threshold, with where it lives in the code |
+| [**Data pipeline**](docs/DATA_PIPELINE.md) | How the data is pulled, organised and stored, and what happens after every pull |
 | [**Interface rules**](docs/INTERFACE_RULES.md) | Layouts, colours, labels, sheets, motion: how it looks and behaves |
 | [**Lessons learned**](docs/LESSONS_LEARNED.md) | Every pitfall we hit, and the rule it left behind |
 | [**Decisions**](docs/DECISIONS.md) | Why things are the way they are, pass by pass |
