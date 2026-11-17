@@ -245,7 +245,7 @@ def build_aggregate(now, state, own=None):
             sale_psf=_num(c.get("psf_median")), url=r["url"], by_unit=by_unit,
         ))
         for u in by_unit or [{"u": "All units", "n": n, "median": round(med_rent), "yield": _num(r["yield_pct"])}]:
-            table.append({"c": name, "u": u["u"], "a": u["median"], "n": u["n"], "y": u["yield"],
+            table.append({"c": name, "u": u["u"], "a": u["median"], "n": u["n"], "y": u["yield"], "s": u.get("sale"),
                           "ar": ", ".join(areas[-1]["dld_areas"]), "url": r["url"], "m": 1 if pt else 0})
     through = fetch_datadubai.data_through()
     # Older districts Dubai Data doesn't publish (Deira, Bur Dubai, Karama…), from Continental Club.

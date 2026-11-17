@@ -65,6 +65,6 @@ def older_districts(existing, dm, through=None):
             source="ccp", through=through,
         ))
         for u in units:
-            table.append({"c": label, "u": u["u"], "a": u["median"], "n": None, "y": None,
+            table.append({"c": label, "u": u["u"], "a": u["median"], "n": None, "y": None, "s": None,
                           "ar": name, "url": URL, "m": 1 if pt else 0})
     return areas, unplaced, table

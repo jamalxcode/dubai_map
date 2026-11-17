@@ -6,7 +6,7 @@ Run by .github/workflows/freshness.yml every 6 hours, after loading the data bra
   * the live site doesn't show the latest saved data (a failed deploy) or is down;
   * a source that should be working reports a failure;
   * a cross-check source suddenly disagrees with our figures (a broken import or page);
-  * a busy area can't be placed on the map.
+  * (listed, not failing) a busy area can't be placed on the map.
 Standard library only. `problems()` is pure, so the rules are unit-tested.
 """
 import json
@@ -65,11 +65,6 @@ def problems(meta, site_meta, last_run, now):
         if saved and live and (saved - live).total_seconds() / 3600 > MAX_SITE_LAG_HOURS:
             out.append(f"The live site shows data built {live:%d %b %H:%M}, the saved data is from {saved:%d %b %H:%M} UTC: a deploy failed.")
 
-    for u in meta.get("unmatched_areas") or []:
-        if (u.get("n") or 0) >= MAX_UNPLACED:
-            out.append(f"{u.get('area')} ({u['n']:,} contracts) is not on the map: the daily OpenStreetMap look-up found "
-                       "no believable point. Add it to data/area_locations.csv or data/dld_dm_aliases.csv.")
-
     for s in meta.get("sources") or []:
         name, state = s.get("name", ""), s.get("state")
         if s.get("kind") == "cross-check":
@@ -83,6 +78,14 @@ def problems(meta, site_meta, last_run, now):
         elif state == "failed":
             out.append(f"Source {name} is failing: {s.get('status')}")
     return out
+
+
+def warnings(meta):
+    """Known, slow-moving issues: listed in the run summary, but they don't fail the check (no email every
+    6 hours about something only a person can fix). Today: busy areas the map can't place."""
+    return [f"{u.get('area')} ({u['n']:,} contracts) is not on the map yet: add a reviewed point to "
+            "data/area_locations.csv or an alias to data/dld_dm_aliases.csv."
+            for u in meta.get("unmatched_areas") or [] if (u.get("n") or 0) >= MAX_UNPLACED]
 
 
 def fetch_json(url, headers=None):
@@ -108,6 +111,9 @@ def main():
         print(f"(could not read workflow runs: {e})")
     found = problems(meta, site_meta, last_run, datetime.now(timezone.utc))
     report = "\n".join(f"- {p}" for p in found) or "- All fine: data fresh, pulls running, site current, sources agree."
+    notes = warnings(meta)
+    if notes:
+        report += "\n\nKnown issues (not failing the check):\n" + "\n".join(f"- {w}" for w in notes)
     print(report)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:

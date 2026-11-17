@@ -45,6 +45,17 @@
 
   // Text the scripts build (atlas.js, companion.js), keyed by its English.
   const AR = {
+    'For owners: median sale price {sale}.': 'للملاك: سعر البيع الوسيط {sale}.',
+    'For owners: median sale price {sale}, gross rental yield {v}%.': 'للملاك: سعر البيع الوسيط {sale}، والعائد الإيجاري الإجمالي {v}%.',
+    'Median sale price (AED)': 'سعر البيع الوسيط (درهم)',
+    'Gross rental yield by area and unit': 'العائد الإيجاري الإجمالي حسب المنطقة والوحدة',
+    'Median sale price by area and unit, from registered sales': 'سعر البيع الوسيط حسب المنطقة والوحدة، من المبيعات المسجلة',
+    'Yields by area': 'العوائد حسب المنطقة',
+    'Sale prices by area': 'أسعار البيع حسب المنطقة',
+    'Dashed: fewer than {n} contracts': 'الإطار المتقطع: أقل من {n} عقود',
+    'Older districts have rents only, so they show in the rent view.': 'المناطق القديمة لها إيجارات فقط، لذا تظهر في عرض الإيجار.',
+    'Italic rows: fewer than {n} contracts, so treat them as a rough guide.': 'الصفوف المائلة: أقل من {n} عقود، فاعتبرها تقديرًا تقريبيًا.',
+    'Fewer than {n} contracts: a thin figure': 'أقل من {n} عقود: رقم ضعيف الدلالة',
     'Average sale price': 'متوسط سعر البيع',
     'Median sale price': 'سعر البيع الوسيط',
     'Yield': 'العائد',

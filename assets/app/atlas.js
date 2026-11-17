@@ -52,6 +52,7 @@ const pie=(v,metric)=>VIEWS.includes(metric)&&v>0?'<i class="pie" aria-hidden="t
 // extreme areas don't stretch the key. Values below the 5th percentile take the lowest colour, above the
 // 95th the highest (and a full dial). `vals` must be sorted ascending.
 const TRIM=.05;
+const THIN=10; // fewer contracts than this: shown, but marked as a thin figure
 function scaleFor(vals){
   const at=q=>vals.length?vals[Math.round(q*(vals.length-1))]:0;
   const lo=at(TRIM),hi=Math.max(at(1-TRIM),lo+1);
@@ -175,7 +176,7 @@ function renderLabels(){
       L.circleMarker([c.lat,c.lng],{className:'leader dot',radius:3,weight:1.5,interactive:false}).addTo(layer)}
     // Rent labels fill from the start in proportion to the rent (the top price pulled = full), a second cue next to the dial.
     const fill=VIEWS.includes(metric)&&c.val>0?';--f:'+share(c.val)+'%':'';
-    const html='<div class="rl'+(c.single?'':' grp')+(fill?' rent':'')+'" style="--c:'+colorOf(c.val)+fill+'" tabindex="0"><b>'+pie(c.val,metric)+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">'+T('avg')+'</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
+    const html='<div class="rl'+(c.single?'':' grp')+(fill?' rent':'')+(g.every(o=>o.thin)?' thin':'')+'" style="--c:'+colorOf(c.val)+fill+'" tabindex="0"><b>'+pie(c.val,metric)+safe(labelText(c.val,metric))+(c.single||metric==='n'?'':'<span class="avg">'+T('avg')+'</span>')+'</b><small>'+safe(c.single?g[0].a.label:groupName(g))+'</small></div>';
     const m=L.marker(pos,{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
     // Keyboard: the label is a button. Enter or Space opens its breakdown, or zooms into a group.
@@ -310,7 +311,7 @@ function popup(a){
     (a.median_sqm?T('AED {v} per m² a year',{v:fmt(a.median_sqm)})+'<br>':'')+
     (a.yield_pct!=null?T('Gross yield {v}%',{v:a.yield_pct})+(a.sale_median?T(', median sale price AED {v}',{v:fmt(a.sale_median)}):'')+'<br>':'')+
     (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+
-    (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>':'')+
+    (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr'+(u.n!=null&&u.n<THIN?' class="thin" title="'+safe(T('Fewer than {n} contracts: a thin figure',{n:THIN}))+'"':'')+'><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>'+(a.by_unit.some(u=>u.n!=null&&u.n<THIN)?'<small>'+T('Italic rows: fewer than {n} contracts, so treat them as a rough guide.',{n:THIN})+'</small><br>':''):'')+
     (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<table><tr><th>'+T('Busiest buildings')+'</th><th>n</th><th>'+T('Median')+'</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
     (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'')+
     // See the place: Google links (open a new tab; Google allows these links without a key) and free photos
@@ -446,13 +447,18 @@ function draw(){
   const shown=AREAS.filter(a=>a.lat!=null&&match(a));
   POINTS=[];for(const a of shown){const v=areaValue(a,metric,unit);if(v==null)continue;const bu=unit?(a.by_unit.find(u=>u.u===unit)||{}):null;
     // Weight for averages: the unit's contracts; where a source gives none per unit, a rough share of the area total.
-    const n=bu?(bu.n!=null?bu.n:Math.round(a.n/Math.max(1,a.by_unit.length)))||0:a.n;POINTS.push({a,v,n})}
+    const n=bu?(bu.n!=null?bu.n:Math.round(a.n/Math.max(1,a.by_unit.length)))||0:a.n;
+    // Thin: a figure from fewer than THIN contracts (where the source gives a count) is drawn dashed and italic.
+    const thin=bu?(bu.n!=null&&bu.n<THIN):a.n<THIN;POINTS.push({a,v,n,thin})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
   const sc=scaleFor(vals),colorOf=sc.colorOf;
   LABEL={metric,colorOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
   $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='sale'?T('Median sale price'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?'≤ '+f(sc.lo):'')+'</span><span>'+(vals.length?'≥ '+f(sc.hi):'')+'</span></div>';
+  if(metric!=='median'&&AREAS.some(a=>a.lat!=null&&areaValue(a,'median',unit)!=null&&areaValue(a,metric,unit)==null))
+    $('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts have rents only, so they show in the rent view.')+'</div>');
+  if(POINTS.some(p=>p.thin))$('legend').insertAdjacentHTML('beforeend','<div class="note"><span class="thinMark"></span>'+T('Dashed: fewer than {n} contracts',{n:THIN})+'</div>');
   if(VIEWS.includes(metric))$('legend').insertAdjacentHTML('beforeend','<div class="note"><i class="pie" aria-hidden="true" style="--p:60%;--c:var(--b5)"></i>'+T('Dial: share of {top}; 95% of areas are below it',{top:labelText(LABEL.top,metric)})+'</div>');
   syncViews();
   if(!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts (no all-homes median): pick a unit to see them')+'</div>');
@@ -467,9 +473,14 @@ function table(){
   const tb=$('rows');tb.replaceChildren();
   const cell=(tr,v,r)=>{const td=document.createElement('td');td.textContent=v;if(r)td.className='r';tr.append(td)};
   if(AGG){
-    $('thead').innerHTML='<tr><th>'+T('Area')+'</th><th>'+T('DLD area')+'</th><th>'+T('Unit')+'</th><th class="r">'+T('Median yearly rent (AED)')+'</th><th class="r">'+T('Contracts')+'</th><th class="r">'+T('Gross yield')+'</th></tr>';
-    for(const r of view){const tr=document.createElement('tr');cell(tr,r.c);cell(tr,r.ar);cell(tr,T.unit(r.u));cell(tr,fmt(r.a),1);cell(tr,fmt(r.n),1);cell(tr,r.y!=null?r.y+'%':'',1);tb.append(tr)}
-    if(!view.length)tb.innerHTML='<tr><td colspan="6">'+T('No areas match. Clear the search or widen the rent range.')+'</td></tr>';
+    const m=$('metric').value;
+    $('tableTitle').textContent=m==='sale'?T('Sale prices by area'):m==='yield'?T('Yields by area'):T('Rents by area');
+    $('updated').textContent=m==='sale'?T('Median sale price by area and unit, from registered sales'):m==='yield'?T('Gross rental yield by area and unit'):T('Median yearly rent by area and unit, last 12 months');
+    $('thead').innerHTML='<tr><th>'+T('Area')+'</th><th>'+T('DLD area')+'</th><th>'+T('Unit')+'</th><th class="r">'+T('Median yearly rent (AED)')+'</th><th class="r">'+T('Contracts')+'</th><th class="r">'+T('Median sale price (AED)')+'</th><th class="r">'+T('Gross yield')+'</th></tr>';
+    // The view's own column leads: rows sorted by it, highest first, when sale price or yield is shown.
+    const key=m==='sale'?'s':m==='yield'?'y':null,rows=key?[...view].sort((x,y)=>(y[key]??-1)-(x[key]??-1)):view;
+    for(const r of rows){const tr=document.createElement('tr');cell(tr,r.c);cell(tr,r.ar);cell(tr,T.unit(r.u));cell(tr,fmt(r.a),1);cell(tr,fmt(r.n),1);cell(tr,r.s?fmt(r.s):'',1);cell(tr,r.y!=null?r.y+'%':'',1);tb.append(tr)}
+    if(!view.length)tb.innerHTML='<tr><td colspan="7">'+T('No areas match. Clear the search or widen the rent range.')+'</td></tr>';
     return;
   }
   $('thead').innerHTML='<tr><th>'+T('Start')+'</th><th>'+T('Area')+'</th><th>'+T('Building')+'</th><th>'+T('Unit')+'</th><th class="r">'+T('Yearly rent (AED)')+'</th><th class="r">m²</th><th class="r">'+T('AED per m²')+'</th><th>'+T('New or renewal')+'</th></tr>';
@@ -484,7 +495,7 @@ let typing;
 ['unit','metric'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='unit')unitChosen=true;animateLabels=true;draw()}));
 const csvCell=x=>{const s=String(x??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
 $('export').onclick=()=>{
-  const [head,keys,name]=AGG?[['area','dld_area','unit','median_yearly_rent_aed','contracts_12m','gross_yield_pct'],['c','ar','u','a','n','y'],'dubai-rents-by-area.csv']
+  const [head,keys,name]=AGG?[['area','dld_area','unit','median_yearly_rent_aed','contracts_12m','median_sale_price_aed','gross_yield_pct'],['c','ar','u','a','n','s','y'],'dubai-real-estate-by-area.csv']
     :[['start','end','yearly_rent_aed','size_sqm','unit','new_or_renewal','dld_area','area','master_project','building','type'],['s','e','a','sq','u','t','ar','c','mp','p','k'],'dubai-ejari-rents.csv'];
   const url=URL.createObjectURL(new Blob([[head.join(','),...view.map(r=>keys.map(k=>csvCell(r[k])).join(','))].join('\r\n')],{type:'text/csv;charset=utf-8'}));
   const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
@@ -530,4 +541,7 @@ function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{l
 $('theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark',true);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let saved;try{saved=localStorage.getItem('theme')}catch(_){}if(!saved)setTheme(e.matches?'dark':'light',false)});
 paintToggle();
-init().finally(vectorBase); // the base map comes after the rent data, whatever happened to it
+// The base map comes after the rent data, and only once the map is on (or near) the screen: on phones the map
+// sits below the first screen, so MapLibre (1 MB) isn't fetched by visitors who never scroll to it.
+init().finally(()=>{const el=$('map');if(!('IntersectionObserver' in window))return vectorBase();
+  const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();vectorBase()}},{rootMargin:'400px'});io.observe(el)});

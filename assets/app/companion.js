@@ -178,7 +178,8 @@
       `<button type="button" class="link" data-area="${esc(c.area.label)}" data-unit="${esc(unit)}">${esc(c.area.label)}</button> ${aed(c.median)} <span class="muted">(${T('{km} km, {s} less', { km: c.km, s: short(c.saving) })})</span>`).join(T(', ')) + '</li>');
     if (tr) finds.push(`<li><b>${T('Trend:')}</b> ${T(tr.pct > 0 ? 'the median is up {pct}% from {from} to {to}.' : 'the median is down {pct}% from {from} to {to}.', { pct: Math.abs(tr.pct), from: esc(tr.from), to: esc(tr.to) })}</li>`);
     if (rank) finds.push(`<li>${T('Cheaper than <b>{pct}%</b> of {of} areas with figures for {what}.', { pct: rank.cheaperThanPct, of: rank.of, what: esc(what.toLowerCase()) })}</li>`);
-    if (f.yield != null) finds.push(`<li class="muted">${T('For owners: gross rental yield {v}%.', { v: f.yield })}</li>`);
+    if (f.sale || f.yield != null) finds.push(`<li class="muted">${f.sale && f.yield != null ? T('For owners: median sale price {sale}, gross rental yield {v}%.', { sale: aed(f.sale), v: f.yield })
+      : f.sale ? T('For owners: median sale price {sale}.', { sale: aed(f.sale) }) : T('For owners: gross rental yield {v}%.', { v: f.yield })}</li>`);
     const secondary = [];
     if (step.id !== 'save' && savedIdx < 0) secondary.push(`<button type="button" class="link" data-act="save">${T('Save to My areas')}</button>`);
     if (step.id !== 'map') secondary.push(`<button type="button" class="link" data-act="map">${T('Show on the map')}</button>`);
