@@ -257,6 +257,10 @@ Rebuilt and re-tested right after merging (first snapshot saved, 11 areas where 
 
 Recorded here, in the decisions (forty-fourth pass) and the lessons. The two open items need the owner: see items 1 and 3 below for the steps.
 
+### 17 Nov · "cleanup readme, make it an interesting and informative read"
+
+Rewritten from 260 to about 190 lines: what it does, where the numbers come from, how it works, run it yourself, the owner's checklist folded away, what's next, the paper trail, licences and privacy; stale facts updated.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

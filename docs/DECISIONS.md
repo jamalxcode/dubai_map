@@ -482,6 +482,8 @@ After merging, the pull was started by hand so the new fields went live (guard, 
 
 ## Change log
 
+- 2026-11-17: README rewritten: shorter, current (home picker, map links, Near me, rent history, house rules), owner's checklist folded.
+
 - 2026-11-17: Rent history snapshots, unconfirmed-jump marks, sources-differ notes, changes.json and run summaries, a guard for late timer runs, one retry for failed live pages, publication times logged.
 
 - 2026-11-17: Added DATA_PIPELINE.md, how the data is pulled, organised, stored and published.

@@ -5,128 +5,91 @@
 
 **👉 [jamalxcode.github.io/dubai_map](https://jamalxcode.github.io/dubai_map/)** · [بالعربية](https://jamalxcode.github.io/dubai_map/?lang=ar)
 
-Every rent in Dubai is registered in **Ejari**. Half a million contracts a year, area by area, studio to villa. This site turns them into a map you can read in two seconds: the rent is written right on the map, in big letters, where the homes are. Then it helps with the question you came with: *am I paying too much?*
+Every rent in Dubai is registered in **Ejari**: over half a million contracts a year, area by area, studio to villa. This site turns them into a map you can read in two seconds, with the rent written right where the homes are, and then helps with the question you came with: *am I paying too much?*
 
-It is free, has no ads, needs no account, sets no cookies and runs on a few small files and three scheduled jobs a day.
+Free, no ads, no account, no cookies. One static page, a few small data files, and a robot that refreshes them three times a day.
 
 ---
 
-## ✨ What you can do with it
+## ✨ What it does
 
 ### 🔍 Check a rent in five seconds
-Type an area: "JVC", "marina", "Al Barsha South Fourth", or even a typo. Pick the home and, if you like, what you pay. You get:
+Type an area: "JVC", "marina", "Al Barsha South Fourth", even a typo. Add what you pay, if you like. You get:
 
-- the **median yearly rent** for that home, and how many contracts it comes from;
-- **your verdict:** "7% above the median (AED 5,000 a year more)", with the honest caveat that half pay more and half less;
-- **the same home for less nearby:** "Dubai Sports City, AED 56,000, 2.3 km away";
-- **where the area ranks:** "cheaper than 93% of areas for a 1-bedroom".
+- the **median yearly rent** for your kind of home, and how many contracts it comes from;
+- **your verdict**: "21% above the median (AED 15,000 a year more)";
+- **the same home for less nearby**: "Discovery Gardens, AED 60,000, 4.6 km away";
+- **where the area ranks**: "dearer than 84% of 126 areas for a 1-bedroom".
 
-Then one clear next step: compare, save, set a reminder or see it on the map. On a wide screen the map flies to the area by itself.
+One button for the next step (compare, save, set a reminder), and on a wide screen the map flies to the area by itself.
 
 ### 🗺️ Read the city at a glance
-- Every area shows its rent **as text**: `AED 65k · Jumeirah Village Circle`. No colour legends to decode.
-- Every price sits on a **badge in its price-key colour**, from the palest blue (cheapest) to deep navy (dearest), so you can read the city from across the room. The key has a value at every step, and ignores the most extreme 5% at each end, so one palace-priced area can't wash everything else out; those areas simply wear the deepest or palest blue.
-- Too crowded to read? Labels **merge** into one, named after the busiest area and how many more it holds ("JLT +12"), with their contract-weighted typical rent. Zoom in and they come apart. Two neighbours that only just collide get their own labels, one moved aside with a thin line to its spot. **Labels never overlap.** Ever. A test checks.
-- The big number up top is the **typical rent of whatever is on screen**, rolling like an odometer as you pan.
-- Areas are **shaded inside their official boundaries** in the same blues, so the city reads at a glance even zoomed out.
-- Figures that rest on **fewer than 10 contracts** are drawn dashed and italic, so you know which ones to take with a pinch of salt.
-- Switch the whole map between **Rent, Sale price and Yield** with one tap: the labels, the blues and the key all follow, each view with its own scale.
-- One **Home** picker (all homes, studios, 1-bed, 2-bed… or flats of any size) and a rent range: that's all the filtering there is. Labour camps and whole-building leases never sneak into home rents.
+- **Prices are written on the map**, each on a badge in its price colour, from the palest blue (cheapest) to deep navy (dearest). The key has a value at every step and ignores the most extreme 5% at each end, so one palace-priced area can't wash out the rest.
+- **Rent, Sale price or Yield:** one tap switches the labels, the colours and the key.
+- **One Home picker** (all homes, studios, 1-bed, 2-bed… or flats of any size) and a rent range. That's all the filtering there is.
+- **Labels never overlap**, and never hide under a button. Crowded areas merge into one label named after the busiest ("JLT +12"); zoom in and they come apart. Tests check this in English and Arabic, from 320 px phones to wide screens.
+- **Official boundaries**, shaded in the same blues, and a big number up top: the typical rent of whatever is on screen, rolling like an odometer as you pan.
+- **Honest about weak figures:** anything from fewer than 10 contracts, or a big jump not yet confirmed, is drawn dashed and says why.
 
-### 📸 Drill down and see the place
-Tap an area for its full breakdown: every bedroom count, contracts, yield, the DLD areas it covers, and a **24-month sale price trend** with the change on a year ago. Plus:
+### 📸 Drill down
+Tap an area for every home size, contracts, yield, sale price and a **24-month sale-price trend**. Plus freely licensed **photos taken nearby** (each credited to its photographer) and one-tap links to **Google Maps, Street View and Google photos**. Where other sources disagree with ours by more than 15%, the card says so. On a phone it all slides up from the bottom, photos first.
 
-- **photos taken nearby**, freely licensed from Wikimedia Commons, each credited to its photographer. Tap one for full screen and swipe through;
-- one-tap links to **Google Maps, Street View and Google photos** of the area.
+### 🌍 Made for Dubai
+- **English or Arabic**, right to left, map place names included (or both at once with **A+ع**).
+- **Near me** puts you on the map; your position never leaves your phone.
+- **Every map has its own link:** copy the address and a friend sees the same homes, view and spot. Every area has its own page too (`/a/dubai-marina/`), which previews nicely in WhatsApp.
 
-On a phone the breakdown slides up from the bottom with the photos first, sized for everything down to a folded phone's cover screen.
+### 💾 Remembers you, and only you
+Save areas and watch their rent move. Get a calendar reminder before your lease renews. See what changed since your last visit. All of it stays **in your browser**: download it, import it, delete it.
 
-### 🌍 English or Arabic, your choice
-- The whole site in **Arabic**, right to left, from the **عربي** button, a `?lang=ar` link, or a phone set to Arabic.
-- Street and place names on the map follow your language, and one button (**A+ع**) shows both at once. No more half-Arabic, half-English maps.
-- **Near me** puts you on the map (your position never leaves your phone), and every map you look at has its own link: copy the address and a friend sees the same homes, view and spot.
-
-### 💾 It remembers you (and only you)
-- **My areas:** save areas and see how their rent moves since you saved them.
-- **Reminders in your own calendar:** "your lease renews in 60 days, check the market first", or a check-up every 3, 6 or 12 months. A calendar file, not an app or push spam.
-- **"New figures since your last visit"**, only when the data actually moved.
-- All of it stays **in your browser**. Download it, import it, delete it. Nothing is sent anywhere.
-
-### 📤 Share it
-**Share** on any result opens your phone's share sheet. Every area has its own page (`/a/dubai-marina/`) with all its figures, which search engines can find too; pasted into WhatsApp it previews as *"Dubai Marina rents: AED 90,000 a year for a 1-bedroom apartment"*.
-
-### ♿ Works for everyone
-Oxblood, ivory and gold leaf for everything you read; blues only for prices. Keyboard-friendly (map labels are real buttons), WCAG 2.1 AA contrast in light, dark and Arabic, checked automatically on every change. Dark mode follows your phone. Motion switches off if your device asks.
+### ♿ For everyone
+Keyboard-friendly (map labels are real buttons), WCAG 2.1 AA contrast in light, dark and Arabic, checked automatically on every change. Dark mode follows your phone; motion switches off if your device asks.
 
 ---
 
 ## 🧭 Where the numbers come from
 
-| Source | What it gives us | Status |
+| Source | What it gives | Status |
 |---|---|---|
-| **[Dubai Data](https://datadubai.ae/)** (CC BY 4.0) | Medians per community and bedroom count, from DLD's Ejari feed, about 3 days behind | ✅ In use, read daily |
-| **[Continental Club Property](https://continentalclub.ae/data-center/)** (CC BY 4.0) | The older districts Dubai Data skips: Deira, Bur Dubai, Karama, Al Qusais… (56 DLD areas) | ✅ In use |
-| **[Dubai Pulse / data.dubai](https://data.dubai) API** (Dubai open-data licence) | Every contract, so ranges, trends, rent per m², new vs renewal, busiest buildings | ⏳ Ready; waiting for the free API key |
+| **[Dubai Data](https://datadubai.ae/)** (CC BY 4.0) | Medians per community and bedroom count, from DLD's Ejari feed, a few days behind | ✅ Main source, checked three times a day |
+| **[Continental Club Property](https://continentalclub.ae/data-center/)** (CC BY 4.0) | The older districts Dubai Data skips: Deira, Bur Dubai, Karama, Al Qusais… (56 DLD areas) | ✅ In use, and a cross-check |
+| **[dubairealestatedata.com](https://www.dubairealestatedata.com/rents)** (CC BY 4.0) | An independent second opinion | 🔁 Cross-check |
+| **[Dubai Pulse / data.dubai](https://data.dubai) API** | Every contract: ranges, rent per m², new vs renewal, busiest buildings | ⏳ Code ready, waiting for the API key |
 | **DLD's own open-data service** | The same, from the source | ⛔ Off until DLD agrees in writing |
-| **[dubairealestatedata.com](https://www.dubairealestatedata.com/rents)** (CC BY 4.0) | An independent second opinion | 🔁 Cross-check only |
-| **Manual CSV** in `data/inbox/` | Anything you're allowed to republish | 📥 Always imported |
 
-Today: **534,143 contracts** from the last 12 months across **158 areas**, 99.5% of them on the map.
+Right now: **534,835 contracts** from the last 12 months across **158 areas**, over 99% of them on the map, data to 16 Nov 2026.
 
-**Honesty rules.**
+**House rules**
 - **Not asking prices**, and not the RERA rental index (that's the allowed-increase calculator, a different thing).
-- **Medians, never invented numbers.** When no range is published, the page says so instead of guessing.
-- **Cross-checked:** if a second source suddenly disagrees, an alarm goes off.
-- **Map points are area references, never buildings.** Every point comes from an official or checked source; nothing is placed by guesswork. The one area we can't place yet (Al Twar Fifth) is listed, not faked.
+- **Medians, never invented numbers.** No range published? The page says so instead of guessing.
+- **Map points are area references, never buildings**, and never guessed. The one busy area without a checked point (Al Twar Fifth) is listed, not faked.
+- **Big jumps are marked, not hidden**, until the next publication confirms them.
 
 ---
 
-## ⚙️ The engine room
+## ⚙️ How it works
 
 ```
- cron-job.org ──► GitHub Actions (05:17 · 13:17 · 21:17 Kuwait)
+ cron-job.org ──► GitHub Actions, 06:17 · 14:17 · 22:17 UAE time
                    │
-                   ├─ fetch:  Dubai Data · Continental Club · Dubai Pulse (with a key)
-                   ├─ place:  Dubai Municipality points, reviewed aliases, OpenStreetMap
-                   ├─ check:  data tests · never publish a catalog 30% smaller than the last
-                   ├─ save:   generated data → the `data` branch
-                   └─ deploy: GitHub Pages (only when a page file changed)
+                   ├─ fetch    Dubai Data · Continental Club · cross-checks · Dubai Pulse (with a key)
+                   ├─ place    Dubai Municipality points · reviewed aliases · checked OpenStreetMap results
+                   ├─ build    areas, home sizes, outlines, trends · compare with our own rent history
+                   ├─ check    data tests · never publish a catalog 30% smaller than the last
+                   ├─ save     everything generated → the `data` branch, one dated commit per change
+                   └─ deploy   GitHub Pages, only when something the page shows changed
 
- every 6 h ──► freshness check: stale data? stopped pulls? failed deploy? a source disagreeing?
-              an area with 1,000+ contracts off the map? → GitHub emails the owner
+ every 6 h ──► freshness check: old data or stopped pulls → GitHub emails the owner
 ```
 
-**Polite by design.**
-- **Sources:** each one is asked at most every 6 hours, with small paced pages, bounded retries and an honest User-Agent; then it stops until next time.
-- **What we never do:** CAPTCHA pages, listing portals or VPNs.
-- **Terms:** every source's terms and robots.txt were read first.
+A few things worth knowing:
 
-**Built to not break quietly.**
-- **Schedules:** each workflow switches its own schedule back on (GitHub turns quiet ones off after 60 days).
-- **Bad runs:** a failed pull republishes nothing smaller.
-- **Missing pieces:** every missing piece trips the freshness check.
+- **It keeps its own history.** Dubai Data replaces its figures with each publication, so every build saves a small snapshot of every area's rents. From mid-December 2026 the site can say "rent +6% since…", and from November 2027, year on year.
+- **It's polite.** Each source is asked at most every 6 hours, a page a second, with an honest User-Agent. No CAPTCHA tricks, no listing portals, no VPNs. Every source's terms were read first.
+- **It doesn't break quietly.** A bad run publishes nothing smaller than the last good one; a failed source shows up under "Data health"; stale data sends an email. Each pull writes a summary of what changed on its GitHub page.
+- **It's tiny.** No build step, standard-library Python, libraries and fonts served from the site. Running cost: a free GitHub account.
 
-**Tiny and owned.**
-- **One static page, no build step.**
-- **Collectors:** standard-library Python, nothing to install.
-- **Libraries and fonts** are served from the site itself.
-- **Cost:** a free GitHub account.
-
-### Under the hood
-
-```
-index.html              markup only
-assets/app/atlas.js     the map, labels, filters, breakdowns, photos, phone breakdown sheet
-assets/app/labels.js    label placement (pure, unit-tested: no two labels may overlap)
-assets/app/insights.js  rent-check logic (pure, unit-tested)
-assets/app/companion.js rent check, My areas, reminders, sharing
-assets/app/i18n.js      English ⇄ Arabic
-assets/vendor/          Leaflet, MapLibre, GSAP, Lenis (unchanged copies)
-collector/              the Python jobs: fetch, place, build
-scripts/                data-branch.sh, freshness check, share pages, share image
-```
-
-Built with [Leaflet](https://leafletjs.com/) and [MapLibre](https://maplibre.org/) on [OpenFreeMap](https://openfreemap.org) tiles (OpenStreetMap data), [GSAP](https://gsap.com/) and [Lenis](https://lenis.darkroom.engineering/) for motion, and our own plain-JS takes on two [React Bits](https://reactbits.dev/) effects (the rolling counter and the title).
+The full story of a pull is in **[docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md)**.
 
 ---
 
@@ -138,97 +101,65 @@ python3 collector/build.py         # rebuild the page files
 python3 -m http.server 8080        # open http://localhost:8080
 ```
 
-**Tests:** three suites, all run by GitHub on every push.
+Three test suites, all run by GitHub on every push:
 
 ```sh
-python3 -m unittest discover -s tests      # collectors, build, freshness rules, data checks
+python3 -m unittest discover -s tests      # collectors, build, history, freshness rules, data checks
 node --test tests/*.test.mjs               # rent-check logic, label placement, translations, page wiring
 npm i --no-save playwright axe-core && node tests/ui-check.mjs
-                                           # the real page in Chromium: 80+ checks from 320 px phones
-                                           # to desktop, English and Arabic, plus WCAG checks (axe)
+                                           # the real page in Chromium: 130+ checks, phones to desktop,
+                                           # English and Arabic, plus accessibility (axe)
 ```
 
-### Owner's checklist
+```
+index.html              markup only
+assets/app/atlas.js     the map, labels, filters, breakdowns, photos
+assets/app/labels.js    label placement (pure, tested: no overlaps, nothing under a button)
+assets/app/insights.js  rent-check logic (pure, tested)
+assets/app/companion.js rent check, My areas, reminders, sharing
+assets/app/i18n.js      English ⇄ Arabic
+collector/              the Python jobs: fetch, place, build, history
+scripts/                data branch, freshness check, area pages, share image
+```
 
 <details>
-<summary><b>⏰ The timer (cron-job.org)</b></summary>
+<summary><b>Owner's checklist</b></summary>
 
-GitHub's own schedules can run hours late, so [cron-job.org](https://console.cron-job.org/) starts the pull, with GitHub's schedule as a backup.
+**The timer.** GitHub's own schedule runs hours late, so [cron-job.org](https://console.cron-job.org/) starts the pull (GitHub's schedule is the backup, and steps aside after a recent pull). It sends `POST https://api.github.com/repos/jamalxcode/dubai_map/actions/workflows/daily-ejari.yml/dispatches` with `{"ref":"main"}` at 02:17, 10:17 and 18:17 UTC, using a fine-grained token with **Actions: read and write**. Renew the token before it expires; the freshness check emails you if pulls stop.
 
-- **Token:** a fine-grained GitHub token for `jamalxcode/dubai_map`, permission **Actions: read and write**.
-- **Jobs:** `POST https://api.github.com/repos/jamalxcode/dubai_map/actions/workflows/daily-ejari.yml/dispatches` with body `{"ref":"main"}` and headers `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `Content-Type: application/json`, at **02:17, 10:17 and 18:17 UTC**. GitHub answers `204`.
-- **Renewal:** renew the token before it expires; the freshness check emails you if pulls stop.
-</details>
+**Contract-level data.** Request **`dld_rent_contracts-open-api`** on [data.dubai](https://data.dubai) (outside the UAE the sign-up page may refuse: write to help@digitaldubai.ae with the support ID it shows). Add the key and secret as the repository secrets `DUBAI_PULSE_KEY` and `DUBAI_PULSE_SECRET`, then run **Actions → Daily Ejari pull** with "force" ticked. The map switches to our own contracts once they cover 43 of the last 52 weeks.
 
-<details>
-<summary><b>🔑 Switching on contract-level data (the free Dubai Pulse key)</b></summary>
+**Manual import.** A rent-contracts CSV you're allowed to republish (Dubai Pulse's open CSV, for example) committed to `data/inbox/` is imported by the next pull and removed from the inbox.
 
-1. Sign up at **[data.dubai](https://data.dubai)** and request access to **`dld_rent_contracts-open-api`**. You get an API key and secret.
-   - **Outside the UAE**, the sign-up page may show "The requested URL was rejected": write to help@digitaldubai.ae with the support ID it shows. The owner's request has been waiting since 16 Nov.
-   - The API itself is reachable from anywhere.
-2. Add them in **Settings → Secrets and variables → Actions** as `DUBAI_PULSE_KEY` and `DUBAI_PULSE_SECRET`.
-3. Run **Actions → Daily Ejari pull** with "force" ticked. A `403` means the key works but the dataset isn't granted yet.
+**Placing an area.** Map points come from, in order: hand-checked points (`data/area_locations.csv`), Dubai Data's community table with checked points, Dubai Municipality's official communities (with reviewed spellings in `data/dld_dm_aliases.csv`), and, last, OpenStreetMap results that pass the checks. To place an area by hand, add a checked `lat,lng` to `data/area_locations.csv`.
 
-How the pull works:
-- **Paging:** 500-row pages, 4 seconds apart, at most 120 pages.
-- **Window:** contract start dates from 3 days back to 14 ahead, plus a rolling slice of the last 60 days for late registrations.
-- **When it takes over:** the map switches to our own contracts once they cover 43 of the last 52 weeks (and 1,000 home contracts). Dropping a year of Dubai Pulse's CSV into `data/inbox/` gets there at once.
-</details>
-
-<details>
-<summary><b>📥 No key yet? Manual import</b></summary>
-
-Upload a CSV of Ejari contracts to `data/inbox/`. The next run imports it, deletes it from the inbox and rebuilds. Only use files you may republish:
-- **Fine:** Dubai Pulse's open CSV.
-- **Not without DLD's OK:** exports from DLD's website, which are personal use only.
-</details>
-
-<details>
-<summary><b>📍 How areas get onto the map</b></summary>
-
-First match wins:
-1. **Hand-checked points:** `data/area_locations.csv`.
-2. **Dubai Data's area → community table**, with checked points in `data/community_locations.csv`. A community without its own point, lying at least 90% inside one DLD area, takes that area's official point.
-3. **Official Dubai Municipality communities:** `data/dm_communities.csv`, each point guaranteed inside its official boundary, plus reviewed DLD spellings in `data/dld_dm_aliases.csv`.
-4. **OpenStreetMap, as a last resort:** a result counts only if it is inside Dubai, is a real place (not a shop or road) and its name matches, in English or as tagged.
-
-**When it runs:** every Sunday; new areas are also looked up during the daily pull.
-</details>
-
-<details>
-<summary><b>🌿 Where things live</b></summary>
-
-- **`main`**: code, page, workflows, hand-kept inputs.
-- **`data`**: everything the jobs generate (contract archive, source mirrors, map points, the JSON the page loads).
-
-`scripts/data-branch.sh load` copies it into `./data`; `save` commits back, adding and updating only.
+**Where things live.** `main` holds the code and hand-kept inputs; the `data` branch holds everything the jobs generate.
 </details>
 
 ---
 
 ## 🗺️ What's next
 
-- **Contract-level detail** (ranges, trends, rent per m², new vs renewal): the moment the Dubai Pulse key arrives.
-- **Street View inside the breakdown:** needs a free Google Maps Embed key.
-- **Building-level drill-down:** photos and Street View at registered projects.
-- **Arabic area names**, **shaded community outlines**, and one day **other cities** in the region.
+- **Contract-level detail** (ranges, rent per m², new vs renewal, monthly trends) the day the Dubai Pulse key arrives.
+- **Rent change over time** from our own history, showing from mid-December.
+- **Street View inside the breakdown** (needs a free Google Maps Embed key), **Arabic area names**, and one day **other cities** in the region.
 
-The full list, with what each idea needs, is in [docs/DESIGN_GOALS.md](docs/DESIGN_GOALS.md#ideas-on-the-table).
+More ideas, and what each needs, in [docs/DESIGN_GOALS.md](docs/DESIGN_GOALS.md#ideas-on-the-table).
 
 ---
 
 ## 📚 The paper trail
 
-How the site got here is written down, conversation and all:
+Every decision is written down, conversation and all:
 
 | | |
 |---|---|
 | [**Design goals**](docs/DESIGN_GOALS.md) | What it's for, and the ideas still on the table |
-| [**Business rules**](docs/BUSINESS_RULES.md) | Every data rule and threshold, with where it lives in the code |
-| [**Data pipeline**](docs/DATA_PIPELINE.md) | How the data is pulled, organised and stored, and what happens after every pull |
-| [**Interface rules**](docs/INTERFACE_RULES.md) | Layouts, colours, labels, sheets, motion: how it looks and behaves |
-| [**Lessons learned**](docs/LESSONS_LEARNED.md) | Every pitfall we hit, and the rule it left behind |
+| [**Data pipeline**](docs/DATA_PIPELINE.md) | How the data is pulled, organised, stored and published |
+| [**Business rules**](docs/BUSINESS_RULES.md) | Every data rule and threshold, and where it lives in the code |
+| [**Interface rules**](docs/INTERFACE_RULES.md) | Layouts, colours, labels, motion: how it looks and behaves |
 | [**Decisions**](docs/DECISIONS.md) | Why things are the way they are, pass by pass |
+| [**Lessons learned**](docs/LESSONS_LEARNED.md) | Every pitfall hit, and the rule it left behind |
 | [**Conversation**](docs/CONVERSATION.md) | The owner's requests, in order, and the open items |
 | [**CLAUDE.md**](CLAUDE.md) | Notes for coding sessions |
 
@@ -238,23 +169,18 @@ How the site got here is written down, conversation and all:
 
 | What | Terms | How we comply |
 |---|---|---|
-| Dubai Data, Continental Club Property, dubairealestatedata.com | CC BY 4.0 | Credited on the page and in each breakdown; "reshaped" note |
-| Ejari via Dubai Pulse | Dubai open-data licence | Source credited |
-| DLD open-data service | DLD website terms (personal, noncommercial without written agreement) | Off until DLD agrees |
-| Dubai Municipality communities | DM open data, credit DM | Credited |
-| OpenStreetMap data (base map, some area points) | ODbL; [tile](https://operations.osmfoundation.org/policies/tiles/) and [Nominatim](https://operations.osmfoundation.org/policies/nominatim/) policies | © OpenStreetMap contributors shown; Nominatim at 1 request/s, cached; OSM tiles only as a fallback |
-| OpenFreeMap tiles | Free, no key, attribution | "OpenFreeMap © OpenMapTiles" shown on the map |
-| Wikimedia Commons photos | Each photo's own licence (mostly CC BY-SA) | Author and licence on every photo, linked to its page |
-| Google Maps / Street View / Images | [Maps URLs](https://developers.google.com/maps/documentation/urls/get-started), no key | Links only; nothing copied or embedded |
-| Leaflet · MapLibre · RTL text plugin · Lenis | BSD-2 · BSD-3 · BSD-2 · MIT | Licences in `assets/vendor/` |
-| GSAP | Standard "no charge" licence | Not used in a no-code tool |
+| Dubai Data, Continental Club Property, dubairealestatedata.com | CC BY 4.0 | Credited on the page and in breakdowns, with a "reshaped" note |
+| Ejari via Dubai Pulse | Dubai open-data licence | Credited |
+| DLD open-data service | DLD website terms | Off until DLD agrees in writing |
+| Dubai Municipality communities | DM open data | Credited |
+| OpenStreetMap data | ODbL; [tile](https://operations.osmfoundation.org/policies/tiles/) and [Nominatim](https://operations.osmfoundation.org/policies/nominatim/) policies | © OpenStreetMap contributors shown; Nominatim at 1 request a second, cached; OSM tiles only as a fallback |
+| OpenFreeMap tiles | Free, attribution | "OpenFreeMap © OpenMapTiles" on the map |
+| Wikimedia Commons photos | Each photo's licence (mostly CC BY-SA) | Author and licence on every photo, linked to its page |
+| Google Maps, Street View, Images | [Maps URLs](https://developers.google.com/maps/documentation/urls/get-started), no key | Links only; nothing copied or embedded |
+| Leaflet · MapLibre · RTL text plugin · Lenis · GSAP | BSD-2 · BSD-3 · BSD-2 · MIT · GSAP standard licence | Licences in `assets/vendor/` |
 | Barlow fonts | SIL OFL 1.1 | Self-hosted, licence included |
-| React Bits ideas | MIT + Commons Clause | Our own versions, credited |
+| React Bits ideas (rolling counter, title) | MIT + Commons Clause | Our own versions, credited |
 
-**Privacy.**
-- **No cookies, no accounts, no personal data on any server.**
-- **Visit counts:** GoatCounter counts visits, rent checks, saves and shares, with the area name, and stores nothing in your browser.
-- **Your data stays with you:** your saved areas, checks and settings stay in your browser.
-- **Third-party requests:** the base map, photos (only when you open a breakdown) and the counter load from their own servers, which see your IP address like any website.
+**Privacy.** No cookies, no accounts, nothing personal on any server. GoatCounter counts visits and which features are used (by name only, never what you type or where you are). Your saved areas and settings stay in your browser. The base map, photos (when you open a breakdown) and the counter load from their own servers, which see your IP address like any website.
 
 *Independent tool. Not an official DLD or RERA service. Not legal or financial advice.*
