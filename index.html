@@ -42,18 +42,20 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
   </div>
 </header>
 
-<section class="wrap" id="companion" aria-labelledby="ckTitle"></section>
-
+<!-- The filters drive the map, so on wide screens they come right under the header (phones order them in CSS). -->
 <nav class="controls" aria-label="Filters" data-t-aria="filters">
   <div class="wrap">
     <label class="field f-home"><span data-t="f.home">Home</span><select id="home"></select></label>
-    <label class="field f-num"><span data-t="f.min">Min rent (AED)</span><input id="min" type="number" min="0" inputmode="numeric" placeholder="0"></label>
-    <label class="field f-num"><span data-t="f.max">Max rent (AED)</span><input id="max" type="number" min="0" inputmode="numeric" placeholder="Any" data-t-ph="any"></label>
+    <div class="field f-range" role="group" aria-labelledby="rangeLbl"><span id="rangeLbl" data-t="f.range">Rent range (AED)</span>
+      <div class="pair"><input id="min" type="number" min="0" inputmode="numeric" placeholder="Min" data-t-ph="ph.min" aria-label="Min rent (AED)" data-t-aria="f.min"><span aria-hidden="true">–</span><input id="max" type="number" min="0" inputmode="numeric" placeholder="Max" data-t-ph="ph.max" aria-label="Max rent (AED)" data-t-aria="f.max"></div></div>
     <!-- State behind the home picker and the map's Rent / Sale price / Yield bar (atlas.js). -->
     <select id="unit" hidden aria-hidden="true" tabindex="-1"><option value="">All units</option></select>
     <select id="metric" hidden aria-hidden="true" tabindex="-1"><option value="median">Rent</option><option value="sale">Sale price</option><option value="median_sqm">Rent per m²</option></select>
   </div>
 </nav>
+
+<section class="wrap" id="companion" aria-labelledby="ckTitle"></section>
+
 
 <div class="wrap staleWrap">
 <div class="stale" id="stale" role="status"><span id="staleText"></span><button class="x" id="staleX" type="button" aria-label="Hide this warning" data-t-aria="hide">×</button></div>
@@ -64,9 +66,9 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
     <dl class="facts">
       <div><dt data-t="d.n12">Contracts, last 12 months</dt><dd id="n12">—</dd></div>
       <div><dt data-t="d.mapped2">On the map</dt><dd id="mapped">—</dd></div>
-      <div><dt id="newestLabel">Newest contract start</dt><dd id="newest">—</dd></div>
-      <div><dt data-t="d.updated">Last updated</dt><dd id="fresh">—</dd></div>
+      <div><dt data-t="d.areas">Areas on the map</dt><dd id="nAreas">—</dd></div>
     </dl>
+    <p class="fresh" id="fresh">—</p>
   </section>
 
   <section class="wrap" aria-labelledby="tableTitle">
@@ -87,8 +89,9 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
       </div>
       <div>
         <h3 data-t="a.where">Where the numbers come from</h3>
-        <ul id="sources"><li data-t="loading">Loading…</li></ul>
+        <ul id="inUse"><li data-t="loading">Loading…</li></ul>
         <details id="unmatchedBox"><summary data-t="a.unm">Areas not on the map yet (<span id="unmatchedN">0</span>)</summary><p class="muted" data-t="a.unm2">They are in the table. Map points are added from Dubai Municipality and OpenStreetMap.</p><ul id="unmatched"></ul></details>
+        <details id="healthBox"><summary data-t="a.health">Data health</summary><p class="muted" data-t="a.health2">Every source the collectors try, and how its last run went.</p><ul id="sources"></ul></details>
       </div>
       <div>
         <h3 data-t="a.not">What this is not</h3>

@@ -46,7 +46,8 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 - Labels never overlap. Overlapping labels merge into a group label coloured by the price key like any other (their contract-weighted average), marked by a gold stacked-card outline; every group names its busiest area and how many others it holds ("JLT +12").
 - Label boxes are measured as drawn (a hidden label with the same styles, re-measured once the fonts load), so placement holds in both themes and languages.
 - A group of up to 3 comes apart when each label fits at its point or just beside it; a moved label has a thin line to a dot at its point.
-- Labels keep clear of the zoom bar, the view bar and the legend, and are re-placed when a control appears or the legend folds.
+- Labels keep clear of the zoom bar, the view bar and the legend, and are re-placed when a control appears, the legend folds or the map is panned (not while a breakdown is open; then once it closes).
+- A label whose point is on the map stays fully inside its edges (a line joins it to its point if it had to slide); crowded edges merge rather than cut labels off.
 - **Thin figures** (fewer than 10 contracts): a dashed outline (the price colour darkened slightly) and an italic figure; same colours and contrast.
 - **Community outlines** under the labels: official boundaries, filled with the area's price colour at 32% and outlined at 70%, redrawn with every view, filter and type change.
 - Labels are keyboard buttons: Tab to one, Enter or Space opens it; the spoken name is the visible text.
@@ -57,26 +58,31 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 - Top left: one bar, **+**, **−** and **All Dubai** (back to the whole city), each as wide as the bar. 40 px at full size, 36 px at 860 px and below, 32 px at 400 px and below.
 - Top right: one bar, **Rent · Sale price · Yield** (what the labels show; a view appears only when the data has it; the only place to pick it), then **A+ع**: place names in English and Arabic together. Without it, place names follow the page language. Shown only when the vector map loaded; remembered (`mapBoth`).
+- Bottom right on phones: **i** folds the map credits away (two wrapped lines covered the map); one tap shows them. Wide screens show the credits as always.
 - Bottom left: legend. Its title is a button that folds the notes away, leaving the colour bar and its values (remembered, `legendFolded`; phones start folded).
 - The map container stays left to right in Arabic (it is a picture of the world); its legend and breakdowns read right to left.
 
 ## 6. The rent check
 
-- Fields: area (search with nicknames, DLD names and typos), home, optional yearly rent, **Check**.
-- Result: what was checked, the big figure with a small chip in its price colour, what it is and how many contracts, the range or "no range yet", the verdict if a rent was entered, up to four findings, one primary button and plain links (Save · Show on the map · Share · Dubai Data page). The links wrap as one group, never leaving a dangling separator.
+- Fields: area (search with nicknames, DLD names and typos), home, optional yearly rent (written with thousands separators as you type), **Check**.
+- **One home choice for the page:** the check's Home and the map's Home picker use the same names and stay in step. A check sets the map's picker to the home checked; picking a home on the map re-checks the current area for it (when the area has that home).
+- Result: what was checked, the big figure with a small chip in its price colour, what it is and how many contracts, the middle half when known, the verdict if a rent was entered, up to four findings ("Dearer than 64% of 126 areas…"), a folded **What does this mean?** (what a median is, why there is no range yet), one primary button and plain links (Save · Show on the map · Share · Dubai Data page). The links wrap as one group, never leaving a dangling separator.
 - Wide screens: a check flies the map to the area (zoom 14) and opens its breakdown. Narrower screens: "Show on the map" does it.
 - Remembered in the browser only: the last check, recent checks, saved areas, the map view.
 
 - **The table follows the map view:** its title and subtitle change, it gains a sale price column, and in the sale and yield views it is sorted by that column, highest first. The rent check adds the median sale price for owners.
-- **Filters:** one **Home** picker (all homes, each home size, then other property types with data, such as "Flats, any size"; a type already covered by a size, studios, isn't offered twice) and a min and max rent. The map starts on 1-bedroom apartments. With one home size picked, the table names it in its subtitle and drops its unit column.
+- **Filters:** one **Home** picker (all homes, each home size, then other property types with data, such as "Flats, any size"; a type already covered by a size, studios, isn't offered twice) and a **Rent range (AED)** (one label over Min – Max). They drive the map, so on wide screens they sit right under the header, above the rent check; on phones the rent check comes first. The map starts on 1-bedroom apartments. With one home size picked, the table names it in its subtitle and drops its unit column.
+- **Table:** short headers (Rent, Contracts, Sale price, Yield; the subtitle says medians in AED). At 600 px and below only the area, the view's own figure and contracts show; the CSV keeps every column.
 - **Table finder:** a search box above the table, next to Download CSV, filters the table's rows only; the map keeps every area.
-- **Key figures:** contracts in the last 12 months; the share of them placed on the map ("99.4% of these contracts, in 155 areas"); how far the data runs; when the page's data was last updated (Kuwait time; new data is looked for three times a day).
+- **Key figures:** three in big type (contracts in the last 12 months, the share of them on the map, areas on the map), then one small line: "Data to 16 Nov 2026 · updated 17 Nov, 09:00 Kuwait time · new data is looked for three times a day".
+- **About the data:** the sources in use listed once, plainly; every source's run status folded under **Data health**; licences and credits in "What this is not". No repeated footer.
 - **Yields:** always one decimal (7.0%, 8.9%), on the map, in breakdowns, the table, the rent check and area pages.
 
 ## 7. Area breakdown (drilling down)
 
 - **Content order:** the area's name; photos taken nearby and the Google links (Maps, Street View, Photos); the median and contracts; the sale price trend (24-month line, change on a year ago); range; rent per m²; yield; unit table; busiest buildings; sources; "Check a rent here".
-- **Wide screens:** a Leaflet pop-up, up to 320 px wide. It never opens under the map's buttons or the legend: Leaflet draws controls above pop-ups, so the pop-up's pan margins are measured from the controls (left column, top-right stack, legend) and the map pans to clear them (`popupMargins` in `atlas.js`, rechecked on resize, language button and redraw).
+- **The picked home leads:** with a home size picked, the breakdown starts with that home's figure (the one on the label), with its yield and sale price, highlights its row in the unit table, and gives the all-homes figures in a smaller block under it.
+- **Wide screens:** a Leaflet pop-up, up to 320 px wide, its tip just above the label so the label stays visible; a 32 px × close button. It never opens under the map's buttons or the legend: Leaflet draws controls above pop-ups, so the pop-up's pan margins are measured from the controls (left column, top-right stack, legend) and the map pans to clear them (`popupMargins` in `atlas.js`, rechecked on resize, language button and redraw).
 - **Trend lines** (rent by month, sale price per sq ft) carry a small scale: lowest and highest value at the left (thousands as "k" above 10,000), first, middle and last month underneath, in 10 px muted text; drawn left to right in Arabic too.
 - **860 px and below:** a bottom sheet, full width (capped at 640 px, centred), at most 80% of the screen high, scrolling on its own; photos and links move to the top; links become 40 px chips. Closes with ×, swipe down, Escape or a tap on the map. The pop-up stays open but hidden and its content moves into the sheet, so everything that hooks into pop-ups works in both.
 - **Photos:** up to 4, a grid on wide screens, a swipeable row on phones (about 72–80% of the width, 150–170 px high). Each shows its author and licence. A photo that fails to load disappears; no photos means no strip.

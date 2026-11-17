@@ -72,6 +72,9 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Yields | One decimal everywhere (7.0%) | `atlas.js pct`, `companion.js`, `share_pages.py` |
 | Home picker | All homes, each home size (from the homes data), then other property types with data ("Flats, any size"); studios are a size, not offered again as a type | `atlas.js buildHome` |
 | Table finder | Filters the table's rows by area, DLD area, master project or building; never the map | `atlas.js draw` |
+| One home choice | The rent check's home and the map's Home picker stay in step: a check sets the map to the home checked; a home picked on the map re-checks the current area when it has that home (Flats and other types don't re-check) | `atlas.js setMapHome`, `companion.js` |
+| Area rank | "Dearer than X% of N areas" = the share of areas (with 30+ contracts for that home) whose median is lower | `insights.js rankAmong` |
+| Labels inside the map | A label whose point is on screen is kept fully inside the map's edges from the start of placement; labels are placed again after a pan, except while a breakdown is open | `labels.js` (rule 0), `atlas.js` |
 | Never overlap | No two labels overlap at any zoom (browser-checked at the start, zoom 13 and zoom 14) | `tests/ui-check.mjs` |
 | Price badges | Each label's figure sits on its band's blue; espresso type on bands 1–4, ivory on 5–6. The rent check shows the same colour as a chip, from the key for the home type checked | `atlas.js scaleFor`, `INK`, `priceKey` |
 | Colour bands | Six blues (palest → deep navy, low → high) in equal steps between the 5th and 95th percentile of what is shown, so extreme areas don't stretch the key; below the 5th percentile: the palest, above the 95th: the deepest. The legend writes a value at all seven step edges | `atlas.js scaleFor` |

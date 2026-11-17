@@ -114,7 +114,8 @@
     const meds = areas.map(a => [a, unitFigure(a, unit)]).filter(([a, f]) => f && (f.n ?? a.n) >= 30).map(([, f]) => f.median);
     if (meds.length < 5) return null;
     const dearer = meds.filter(m => m > here.median).length;
-    return { cheaperThanPct: Math.round(dearer / meds.length * 100), of: meds.length };
+    const cheaper = meds.filter(m => m < here.median).length;
+    return { cheaperThanPct: Math.round(dearer / meds.length * 100), dearerThanPct: Math.round(cheaper / meds.length * 100), of: meds.length };
   }
 
   /** Rent trend from the monthly medians (only when contract-level data is in use). */

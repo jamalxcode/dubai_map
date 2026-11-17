@@ -61,3 +61,12 @@ test('no overlaps on a dense random city, and it stays quick', () => {
   assert.equal(cl.reduce((s, c) => s + c.members.length, 0), 400, 'every area is in exactly one label');
   assert.ok(Date.now() - t0 < 1500, `placed 400 areas in ${Date.now() - t0} ms`);
 });
+
+test('a label at the edge of the map slides inside when the spot is free; one off screen stays put', () => {
+  const view = { x0: 0, y0: 0, x1: 400, y1: 300 };
+  const cl = RL.place([item('Edge', 395, 150), item('Away', 900, 150)], size, { view });
+  const edge = cl.find(c => c.members[0].a.label === 'Edge'), away = cl.find(c => c.members[0].a.label === 'Away');
+  assert.ok(edge.lx + edge.w / 2 <= 400, 'inside the right edge');
+  assert.equal(edge.x, 395, 'its point is unchanged, so a line joins them');
+  assert.equal(away.lx, 900, 'a label whose point is off screen is not pulled in');
+});

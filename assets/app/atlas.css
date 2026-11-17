@@ -90,7 +90,11 @@ button,input,select{font:inherit;color:inherit}
 /* Filters: one home picker and a rent range, on one row (wrapping on the narrowest phones). */
 .controls{border-bottom:1px solid var(--line);background:var(--bg);position:relative;z-index:5}
 .controls .wrap{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;padding-top:14px;padding-bottom:14px}
-.controls .f-home{flex:1 1 170px;min-width:0}.controls .f-home select{width:100%}.controls .f-num{flex:0 1 120px;min-width:84px}
+.controls .f-home{flex:1 1 170px;min-width:0}.controls .f-home select{width:100%}
+/* Rent range: one label over two boxes (Min – Max). */
+.controls .f-range{flex:0 1 240px;min-width:0}
+.f-range .pair{display:flex;align-items:center;gap:6px}.f-range .pair input{width:100%;min-width:0;flex:1 1 0}
+.f-range .pair span{color:var(--muted)}
 .field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;color:var(--muted)}
 .field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;font-size:15px;min-width:0;color:var(--text)}
 .field input:focus,.field select:focus{border-color:var(--gold-ink);outline:none;box-shadow:0 0 0 3px rgba(185,138,47,.35)}
@@ -159,8 +163,9 @@ button,input,select{font:inherit;color:inherit}
 .rl.grp{box-shadow:0 0 0 1.5px var(--gold),3px 3px 0 0 var(--label),3px 3px 0 1.5px var(--gold),0 3px 9px rgba(20,20,20,.22)} /* a stack of cards: several areas */
 
 /* Facts under the map */
-.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:22px 0 0;border-top:3px solid var(--text)}
-.facts div{padding:12px 16px 4px 0}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:22px 0 0;border-top:3px solid var(--text)}
+.fresh{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.facts div{padding:12px 16px 4px 0;display:flex;flex-direction:column}.facts dd{margin-top:auto!important}
 .facts dt{font-size:13px;color:var(--muted)}
 .facts dd{margin:2px 0 0;font:700 30px/1.05 var(--cond);font-variant-numeric:tabular-nums}
 .facts dd small{display:block;font:400 13px/1.4 var(--body);color:var(--muted);margin-top:3px}
@@ -220,13 +225,12 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .big{text-align:start}
   .controls .wrap{padding-top:8px;padding-bottom:8px;gap:6px 8px}
   .controls .field{font-size:11.5px;gap:2px}.controls .field input,.controls .field select{padding:7px 9px;font-size:14px}
-  .controls .f-home{flex:1 1 120px}.controls .f-num{flex:0 1 80px;min-width:68px} /* home and rent range on one row */
+  .controls .f-home{flex:1 1 140px}.controls .f-range{flex:1 1 150px} /* home and rent range on one row */
   .legend{font-size:11px}.legend .t{font-size:12px;margin-bottom:3px}
   .controls{position:static;z-index:auto}
   .mapWrap{height:62svh;min-height:340px}
   .legend{left:8px;bottom:8px;padding:6px 8px}.legend .ramp i{width:26px}
-  .facts{grid-template-columns:1fr 1fr}
-  .facts dd{font-size:26px}
+  .facts dd{font-size:24px}
   .about .wrap{grid-template-columns:1fr;gap:28px}
   .tableHead{margin-top:32px}
 }
@@ -249,7 +253,6 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .big{text-align:start}
   .big .num{font-size:58px}
   .controls .wrap{gap:12px}
-  .facts{grid-template-columns:1fr 1fr}
   .about .wrap{grid-template-columns:1fr;gap:28px}
   /* Compact left pane: big and bold, but the title, rent check and filters fit the first screen. */
   .band::after{inset:6px}
@@ -340,7 +343,6 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
   .leaflet-bar a.fit{font-size:12px!important;width:auto!important}
 }
 @media (max-width:400px){
-  .controls .f-num{flex-basis:72px}
   .leaflet-control-zoom a,.leaflet-bar a.fit{width:32px!important;height:32px!important;line-height:32px!important;font-size:18px!important}
   .leaflet-bar a.fit{font-size:11px!important;padding:0 7px}
   .leaflet-touch .leaflet-bar,.leaflet-touch .leaflet-control-layers{border-width:1px}
@@ -394,3 +396,19 @@ html.viewerOpen,html.viewerOpen body{overflow:hidden}
 .leaflet-popup-content .trend{margin:6px 0 2px}.leaflet-popup-content .trend small{display:block}
 .leaflet-popup-content .trend svg{display:block;max-width:100%;margin-top:2px}
 .leaflet-popup-content .trend .up{color:var(--ok)}.leaflet-popup-content .trend .down{color:var(--bad)}
+
+/* Breakdown: the picked home leads, its row highlighted; a 32 px close button. */
+.leaflet-popup-content .lead{margin:0 0 4px;font-size:14px;line-height:1.4}
+.leaflet-popup-content .allh{margin:0 0 4px;font-size:12px;line-height:1.4;color:var(--muted)}.leaflet-popup-content .allh b{font-weight:600}
+.areaSheet .body .lead{font-size:15px}.areaSheet .body .allh{font-size:13px}
+.leaflet-popup-content tr.pick td{background:var(--hover);font-weight:600}
+.leaflet-container a.leaflet-popup-close-button{width:32px;height:32px;font:24px/30px var(--body);color:var(--muted)}
+/* Table on phones: only the view's own figure and contracts (the CSV has every column). */
+@media (max-width:600px){.tableWrap .opt{display:none}}
+/* Map credits: folded behind "i" on phones, one tap to read them. */
+.leaflet-bar.credits{display:none;width:28px;height:28px;border:0;border-radius:50%;background:var(--legend);color:var(--text);font:700 italic 15px/28px Georgia,serif;cursor:pointer;padding:0}
+@media (max-width:860px){
+  .leaflet-bar.credits{display:block}
+  .leaflet-control-attribution{display:none}
+  .creditsOpen .leaflet-control-attribution{display:block;max-width:calc(100vw - 60px)}
+}

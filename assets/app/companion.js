@@ -75,7 +75,7 @@
     const units = RI.unitOptions(area);
     sel.disabled = !area;
     if (!area) { sel.innerHTML = `<option value="">${T('Pick an area first')}</option>`; return ''; }
-    sel.innerHTML = units.map(u => `<option value="${esc(u.u)}">${esc(US(u.u))}</option>`).join('') +
+    sel.innerHTML = units.map(u => `<option value="${esc(u.u)}">${esc(U(u.u))}</option>`).join('') +
       (area.median_kind === 'unit' ? '' : `<option value="">${T('All homes')}</option>`);  // no all-homes median published
     // Keep the visitor's choice when the new area has it; otherwise its most common home,
     // the fairest default for comparing areas.
@@ -110,6 +110,8 @@
     const u = fillUnits(area, unit != null ? unit : (el('ckUnit').disabled ? null : el('ckUnit').value));
     if (rent !== undefined) el('ckRent').value = rent ? rent.toLocaleString('en-AE') : '';
     current = { area, unit: u, rent: rentValue() };
+    // One home choice for the page: the map shows the home just checked.
+    if (window.setMapHome) window.setMapHome(u);
     render();
     store = RI.remember(store, { area: area.label, unit: u, rent: current.rent, at: new Date().toISOString() });
     save();
@@ -168,16 +170,14 @@
           ? T('You pay {rent}: <b>about the same as</b> the median.', vars)
           : v.word === 'below' ? T('You pay {rent}: <b>{pct}% below</b> the median ({diff} a year less).', vars)
             : T('You pay {rent}: <b>{pct}% above</b> the median ({diff} a year more).', vars)) +
-        `<br><small>${f.p25 != null && f.p75 != null
-          ? (rent < f.p25 ? T('That is in the cheapest quarter.') : rent > f.p75 ? T('That is in the dearest quarter.') : T('That is within the middle half.'))
-          : T('Half of these tenants pay more and half less.')} ${T('Size, floor, view and building all move the price.')}</small></p>`;
+        (f.p25 != null && f.p75 != null ? `<br><small>${rent < f.p25 ? T('That is in the cheapest quarter.') : rent > f.p75 ? T('That is in the dearest quarter.') : T('That is within the middle half.')}</small>` : '') + '</p>';
     }
     const cheaper = facts.find(x => x.kind === 'cheaper'), rank = facts.find(x => x.kind === 'rank'), tr = facts.find(x => x.kind === 'trend');
     const finds = [];
     if (cheaper) finds.push(`<li><b>${T('Same home for less nearby:')}</b> ` + cheaper.items.map(c =>
       `<button type="button" class="link" data-area="${esc(c.area.label)}" data-unit="${esc(unit)}">${esc(c.area.label)}</button> ${aed(c.median)} <span class="muted">(${T('{km} km, {s} less', { km: c.km, s: short(c.saving) })})</span>`).join(T(', ')) + '</li>');
     if (tr) finds.push(`<li><b>${T('Trend:')}</b> ${T(tr.pct > 0 ? 'the median is up {pct}% from {from} to {to}.' : 'the median is down {pct}% from {from} to {to}.', { pct: Math.abs(tr.pct), from: esc(tr.from), to: esc(tr.to) })}</li>`);
-    if (rank) finds.push(`<li>${T('Cheaper than <b>{pct}%</b> of {of} areas with figures for {what}.', { pct: rank.cheaperThanPct, of: rank.of, what: esc(what.toLowerCase()) })}</li>`);
+    if (rank) finds.push(`<li>${T('Dearer than <b>{pct}%</b> of {of} areas with figures for {what}.', { pct: rank.dearerThanPct, of: rank.of, what: esc(what.toLowerCase()) })}</li>`);
     if (f.sale || f.yield != null) finds.push(`<li class="muted">${f.sale && f.yield != null ? T('For owners: median sale price {sale}, gross rental yield {v}%.', { sale: aed(f.sale), v: Number(f.yield).toFixed(1) })
       : f.sale ? T('For owners: median sale price {sale}.', { sale: aed(f.sale) }) : T('For owners: gross rental yield {v}%.', { v: Number(f.yield).toFixed(1) })}</li>`);
     const secondary = [];
@@ -193,11 +193,13 @@
           ? T('Median for this home type, {period}. Source: Continental Club Property (CC BY 4.0), which gives {n} for the whole area but no count per home type.', { period: area.through ? T('to {d}', { d: dateText(area.through) }) : period, n: plural(area.n, 'contract') })
           : T(isTypical ? 'Typical of {n}, {period}.' : 'Median of {n}, {period}.', { n: plural(f.n, 'contract'), period })}${savedIdx >= 0 ? ` <span class="tag">${T('Saved')}</span>` : ''}</p>
         ${AGG && /^[3-9]-bedroom/.test(unit) ? `<p class="muted">${T('Dubai Data groups homes by bedrooms: in villa communities this figure may include villas and townhouses.')}</p>` : ''}
-        <p class="muted ck-range">${f.p25 != null && f.p75 != null
-          ? T('The middle half of these tenants pay <b>{a}</b> to <b>{b}</b>.', { a: aed(f.p25), b: aed(f.p75) })
-          : T('No range yet: the open sources publish only the middle figure (half pay more, half less). Ranges arrive with contract-level data.')}</p>
+        ${f.p25 != null && f.p75 != null ? `<p class="muted ck-range">${T('The middle half of these tenants pay <b>{a}</b> to <b>{b}</b>.', { a: aed(f.p25), b: aed(f.p75) })}</p>` : ''}
         ${verdictHtml}
         ${finds.length ? `<ul class="ck-finds">${finds.join('')}</ul>` : ''}
+        <details class="ck-more"><summary>${T('What does this mean?')}</summary>
+          <p>${T('The median is the middle contract: half of these tenants pay more and half less. Size, floor, view and building all move the price.')}</p>
+          ${f.p25 == null ? `<p>${T('No range yet: the open sources publish only the middle figure. Ranges arrive with contract-level data.')}</p>` : ''}
+        </details>
         <div class="ck-actions">
           <button type="button" class="btn primary" data-act="${step.id}">${step.label}</button>
           ${secondary.length ? `<span class="ck-links">${secondary.join('<span class="sep" aria-hidden="true">·</span>')}</span>` : ''}
@@ -392,7 +394,8 @@
     el('ckArea').addEventListener('change', () => check());
     el('ckUnit').addEventListener('change', () => check());
     let t;
-    el('ckRent').addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { if (current) { current.rent = rentValue(); render(); remember(); } }, 350); });
+    el('ckRent').addEventListener('input', () => { const n = rentValue(); const txt = n ? n.toLocaleString('en-AE') : ''; if (el('ckRent').value !== txt) el('ckRent').value = txt;
+      clearTimeout(t); t = setTimeout(() => { if (current) { current.rent = rentValue(); render(); remember(); } }, 350); });
     const remember = () => { store = RI.remember(store, { area: current.area.label, unit: current.unit, rent: current.rent, at: new Date().toISOString() }); save(); };
 
     el('companion').addEventListener('click', e => {
@@ -444,6 +447,9 @@
         }).catch(() => alert(T('That file is not a Dubai Real Estate Atlas export.')));
       }
     });
+    // The map's Home picker is the check's too: picking a home there re-checks the current area for it.
+    addEventListener('atlas:home', e => { if (current && (e.detail.unit === '' ? current.area.median_kind !== 'unit' : RI.unitOptions(current.area).some(u => u.u === e.detail.unit)))
+      check({ areaText: current.area.label, unit: e.detail.unit, quiet: true }); });
     map.on('popupopen', onPopup);
     document.addEventListener('click', onPopupClick); // the map's pop-up, or the phone sheet that shows its content
     let mv;

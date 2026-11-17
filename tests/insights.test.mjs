@@ -52,7 +52,7 @@ test('cheaper nearby: same unit, close, trustworthy, best value first', () => {
 });
 
 test('rank among areas and insights only include what the data supports', () => {
-  assert.deepEqual(RI.rankAmong(AREAS, AREAS[0], '1-bedroom apartments'), { cheaperThanPct: 33, of: 6 });
+  assert.deepEqual(RI.rankAmong(AREAS, AREAS[0], '1-bedroom apartments'), { cheaperThanPct: 33, dearerThanPct: 50, of: 6 });
   const facts = RI.insights(AREAS, AREAS[0], '1-bedroom apartments', 80000).map(f => f.kind);
   assert.deepEqual(facts, ['verdict', 'cheaper', 'rank', 'yield']);
   assert.deepEqual(RI.insights(AREAS, AREAS[0], '1-bedroom apartments', null).map(f => f.kind), ['cheaper', 'rank', 'yield']);

@@ -114,3 +114,7 @@
   .ck-remind,.set-grid{grid-template-columns:1fr}
   .mine-list{grid-template-columns:1fr}
 }
+
+/* "What does this mean?": the fixed explanations, folded under the answer. */
+.ck-more{margin:8px 0 10px;font-size:13.5px}.ck-more summary{color:var(--gold-ink);font-weight:600;cursor:pointer}
+.ck-more p{margin:6px 0 0;color:var(--muted)}

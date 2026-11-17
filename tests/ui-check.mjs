@@ -189,6 +189,9 @@ try {
       await page.keyboard.press('Enter');
       await page.waitForTimeout(300);
       check(!!(await page.$('.leaflet-popup-content')), `${name}: Enter on a map label opens its breakdown`);
+      const lead = await page.evaluate(() => { const c = [...document.querySelectorAll('.leaflet-popup-content')].find(e => e.querySelector('.t')); return { lead: c.querySelector('.lead')?.textContent || '', pick: c.querySelector('tr.pick td')?.textContent || '', all: !!c.querySelector('.allh') }; });
+      check(/^1-bedroom apartments: median AED/.test(lead.lead) && lead.pick === '1-bedroom apartments' && lead.all,
+        `${name}: the breakdown leads with the picked home's figure, highlights its row, then all homes`);
       await page.waitForSelector('.leaflet-popup-content .pics .strip img', { timeout: 5000 }).catch(() => {});
       const see = await page.evaluate(() => ({
         links: [...document.querySelectorAll('.leaflet-popup-content .see a')].map(a => a.href),
@@ -238,6 +241,24 @@ try {
     check(after.rows < before.rows && after.rows >= 1 && after.pts === before.pts, `${name}: the table finder narrows the table (${before.rows} → ${after.rows} rows) and leaves the map alone`);
     await page.fill('#search', '');
     await page.waitForTimeout(300);
+    // Labels stay inside the map: none whose centre is on the map crosses its edge.
+    const crossing = await page.evaluate(() => { const b = map.getContainer().getBoundingClientRect();
+      return [...document.querySelectorAll('.rl')].filter(e => { const r = e.getBoundingClientRect(), cx = (r.left + r.right) / 2, cy = (r.top + r.bottom) / 2;
+        return cx > b.left && cx < b.right && cy > b.top && cy < b.bottom && (r.left < b.left - 1 || r.right > b.right + 1 || r.top < b.top - 1 || r.bottom > b.bottom + 1); }).map(e => e.textContent); });
+    check(!crossing.length, `${name}: no label on the map is cut off by its edge${crossing.length ? ': ' + crossing.join(', ') : ''}`);
+    // Key figures in big type, freshness in one small line; sources listed once, run status folded away.
+    check(await page.evaluate(() => /^\d+$/.test(document.getElementById('nAreas').textContent) && /Kuwait/.test(document.getElementById('fresh').textContent)
+      && document.querySelectorAll('#inUse li').length >= 1 && !!document.querySelector('#healthBox:not([open]) #sources') && !document.getElementById('foot').textContent.trim()),
+      `${name}: key figures, one freshness line, sources once (status folded under "Data health")`);
+    if (name === 'phone') {
+      const vis = await page.evaluate(() => [...document.querySelectorAll('#thead th')].filter(t => t.offsetParent).map(t => t.textContent));
+      check(vis.length === 3, `phone: the table shows the area, the view's figure and contracts only (${vis.join(' | ')})`);
+      const cr0 = await page.evaluate(() => getComputedStyle(document.querySelector('.leaflet-control-attribution')).display);
+      await page.click('.leaflet-bar.credits');
+      const cr1 = await page.evaluate(() => getComputedStyle(document.querySelector('.leaflet-control-attribution')).display);
+      check(cr0 === 'none' && cr1 !== 'none', `phone: the map credits fold behind "i" and open with one tap`);
+      await page.click('.leaflet-bar.credits');
+    }
     // The rent check: a nickname finds the area and shows a figure.
     await page.evaluate(() => scrollTo(0, 0));
     await page.click('#ckArea');
@@ -270,6 +291,14 @@ try {
       const near = c.inView;
       check(near && c.z >= 13, `desktop: a rent check takes the map to the area (JVC; zoom ${c.z})`);
       check(!!(await page.$('.leaflet-popup-content')), 'desktop: and opens its breakdown');
+      // One home choice for the page: the check set the map's picker; the map's picker re-checks the area.
+      const sync0 = await page.evaluate(() => [document.getElementById('home').value, document.getElementById('ckUnit').value]);
+      await page.selectOption('#home', 'homes|2-bedroom apartments');
+      await page.waitForTimeout(400);
+      const sync1 = await page.evaluate(() => [document.getElementById('ckUnit').value, document.querySelector('.ck-what')?.textContent || '']);
+      check(sync0[0] === 'homes|' + sync0[1] && sync1[0] === '2-bedroom apartments' && /2-bedroom/.test(sync1[1]),
+        `desktop: the rent check and the map share one home choice (${sync0.join(' / ')} → ${sync1[0]})`);
+      await page.selectOption('#home', 'homes|1-bedroom apartments');
       await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
       await page.click('.ck-actions [data-act="share"]');
       await page.waitForTimeout(200);

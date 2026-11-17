@@ -56,6 +56,9 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Estimated label widths drift from drawn ones.** Character-count and canvas estimates missed the real fonts by 10+ px, so labels overlapped once names got longer. *Rule:* measure label boxes from a hidden label with the same styles, attached only while measuring (a probe left in the page was counted as a label by tests and keyboard focus).
 - **Two controls for one job confuse more than they help.** Two language switches, two view pickers and two area searches looked alike and did nearly the same thing. *Rule:* one control per job; a second entry point only when its scope is visibly different (the table finder filters only the table).
 - **`display:flex` beats the `hidden` attribute.** A `.field{display:flex}` rule kept a hidden field on screen. *Rule:* the page has `[hidden]{display:none!important}`.
+- **Fixing labels after placement fails in crowded places.** Sliding edge labels back in after merging found no free spot, because neighbours had filled it. *Rule:* put constraints (inside the map) into placement from the start, so merging accounts for them.
+- **A control's choice must not split in two.** The rent check's own Home list drifted from the map's picker after the controls were merged once. *Rule:* when two places show the same choice, they share one state (`setMapHome`, `atlas:home`).
+- **Labels placed only on zoom drift under buttons after a pan.** *Rule:* place them again after every move, except while a breakdown is open (redrawing closes it).
 
 ## Accessibility
 

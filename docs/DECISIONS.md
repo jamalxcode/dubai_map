@@ -430,7 +430,22 @@ Data rebuilt after merging (daily pull for the trend file, placement job for the
 6. **Wording:** "Placed on the map 531,593" became "On the map 99.4% of these contracts, in 155 areas"; "Data: Weekly" became "Last updated 17 Nov, 09:00, Kuwait time; new data is looked for three times a day". With one home size picked the table drops its unit column and names it in the subtitle.
 7. **Small items:** the legend folds to its colour bar (remembered; phones start folded); All Dubai is the third button of the zoom bar; label boxes are now measured from a hidden label drawn with the same styles (the old estimate let a label slip under the map's buttons).
 
+## Decision on 2026-11-17 (fortieth pass): the second interface critique, all ten done
+
+1. **One home choice:** the rent check's Home list and the map's Home picker stay in step (a check sets the map; the map re-checks the area), with the same long names ("1-bedroom apartments"). On wide screens the filters moved above the rent check, right under the header.
+2. **The breakdown leads with the label's figure:** with a home picked, its median, yield and sale price come first, its row is highlighted, and all-homes figures follow in a smaller block. The 1-bed label said 40k while the breakdown opened at 36,686 for all homes.
+3. **A shorter check result:** the fixed "no range yet" and "half pay more" paragraphs fold under "What does this mean?"; "Cheaper than 33% of areas" became "Dearer than 64% of 126 areas…" (the share with a lower median); the rent is written 85,000 as you type.
+4. **Table on phones:** short headers (Rent, Contracts, Sale price, Yield, "AED" in the subtitle); at 600 px and below only the area, the view's figure and contracts (no sideways scroll at 390 px). The CSV keeps every column.
+5. **Sources once:** a plain list of the sources in use; the collectors' status under a folded "Data health"; the footer's repeat removed.
+6. **Key figures:** contracts, share on the map, areas on the map in big type; freshness in one small line.
+7. **Rent range:** one label over Min – Max, so the phone row no longer wraps its labels.
+8. **Map credits on phones:** behind an "i" button, one tap to read them (still linked, as the licences ask).
+9. **Labels inside the map:** a label whose point is on screen starts inside the edges (rule 0 in labels.js, tested), so crowded edges merge instead of cutting labels; labels are placed again after a pan (not while a breakdown is open), which also keeps them clear of the buttons after the map moves.
+10. **Breakdown polish:** its tip sits above the label so the label stays visible; the × is 32 px.
+
 ## Change log
+
+- 2026-11-17: Second interface critique: one home choice for the check and the map, breakdown leads with the picked home, a shorter check result, a phone-sized table, sources once, a freshness line, a rent-range field, folding map credits on phones, labels kept inside the map.
 
 - 2026-11-17: Interface critique: one control per job (Home picker, one map bar, names follow the page, table finder), price badges, "typical", one-decimal yields, a shorter phone header, softer dark labels, a folding legend with step values, All Dubai in the zoom bar.
 

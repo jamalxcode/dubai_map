@@ -16,6 +16,9 @@
  *   2. A merged label of up to three areas comes apart again when every one of its labels fits
  *      at its own point or just beside it (above, below, left, right, diagonally).
  *   3. A label under a map button or the legend steps aside to the nearest free spot.
+ *   0. With `view` ({ x0, y0, x1, y1 }, layer pixels), a label whose point is on screen is kept fully
+ *      inside the edges from the start (so crowded edges merge rather than cut labels off), and later
+ *      moves never take it back out.
  * No two returned labels overlap, and none sits on a block unless there was no free spot.
  */
 (function (root, factory) {
@@ -27,7 +30,7 @@
 
   const MAX_SPLIT = 3;
 
-  function place(items, size, { pad = 6, sum = false, blocks = [] } = {}) {
+  function place(items, size, { pad = 6, sum = false, blocks = [], view = null } = {}) {
     const make = members => {
       const N = members.reduce((s, o) => s + o.n, 0);
       const w = o => (N ? o.n / N : 1 / members.length);
@@ -35,8 +38,15 @@
       const at = k => members.reduce((s, o) => s + o[k] * w(o), 0);
       const x = at('x'), y = at('y');
       const box = size(members, val);
-      return { members, N, val, lat: at('lat'), lng: at('lng'), single: members.length === 1, x, y, lx: x, ly: y, w: box.w, h: box.h };
+      return keepIn({ members, N, val, lat: at('lat'), lng: at('lng'), single: members.length === 1, x, y, lx: x, ly: y, w: box.w, h: box.h });
     };
+    // 0. Inside the map: a label whose point is on screen starts fully inside the edges (a line joins it to its
+    //    point if it had to slide), so crowded edges merge instead of cutting labels off.
+    const onScreen = c => view && c.x >= view.x0 && c.x <= view.x1 && c.y >= view.y0 && c.y <= view.y1;
+    const clampX = (c, x) => Math.min(Math.max(x, view.x0 + c.w / 2 + 2), view.x1 - c.w / 2 - 2);
+    const clampY = (c, y) => Math.min(Math.max(y, view.y0 + c.h / 2 + 2), view.y1 - c.h / 2 - 2);
+    function keepIn(c) { if (onScreen(c)) { c.lx = clampX(c, c.lx); c.ly = clampY(c, c.ly); } return c; }
+    const outside = t => onScreen(t) && (t.lx !== clampX(t, t.lx) || t.ly !== clampY(t, t.ly));
     const hit = (a, b) => Math.abs(a.lx - b.lx) * 2 < a.w + b.w + pad && Math.abs(a.ly - b.ly) * 2 < a.h + b.h + pad;
     const onBlock = c => blocks.some(b => hit(c, { lx: b.x, ly: b.y, w: b.w, h: b.h }));
 
@@ -63,7 +73,7 @@
     const fit = (c, others) => {
       for (const [dx, dy] of spots(c)) {
         const t = Object.assign({}, c, { lx: c.x + dx, ly: c.y + dy });
-        if (!others.some(o => hit(t, o)) && !onBlock(t)) return t;
+        if (!others.some(o => hit(t, o)) && !onBlock(t) && !outside(t)) return t;
       }
       return null;
     };
@@ -87,6 +97,7 @@
       const t = fit(cl[i], cl.filter((_, j) => j !== i));
       if (t) cl[i] = t;
     }
+
     return cl;
   }
 
