@@ -220,7 +220,7 @@
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
     const next = new Date(Date.parse(opts.date + 'T00:00:00Z') + 864e5).toISOString().slice(0, 10);
     const lines = [
-      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dubai Rent Atlas//EN', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dubai Real Estate Atlas//EN', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
       'UID:' + opts.uid, 'DTSTAMP:' + stamp, 'DTSTART;VALUE=DATE:' + ymd(opts.date), 'DTEND;VALUE=DATE:' + ymd(next),
       'SUMMARY:' + icsEsc(opts.title), 'DESCRIPTION:' + icsEsc(opts.details + (opts.url ? '\n' + opts.url : '')),
     ];

@@ -1,4 +1,4 @@
-name: Deploy Dubai Rent Atlas to GitHub Pages
+name: Deploy Dubai Real Estate Atlas to GitHub Pages
 
 # Code from main + data from the data branch. Runs when code changes (push to main),
 # when a data job saved new data (called from daily-ejari.yml / geocode.yml), or by hand.

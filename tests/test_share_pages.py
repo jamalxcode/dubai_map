@@ -24,7 +24,7 @@ class SharePageTests(unittest.TestCase):
 
     def test_page_leads_with_one_bedroom_and_forwards_to_the_map(self):
         html = sp.page(JVC, "2026-11-13")
-        self.assertIn("<title>Jumeirah Village Circle rents: AED 70,000 a year for a 1-bedroom apartment | Dubai Rent Atlas</title>", html)
+        self.assertIn("<title>Jumeirah Village Circle rents: AED 70,000 a year for a 1-bedroom apartment | Dubai Real Estate Atlas</title>", html)
         self.assertIn('property="og:image" content="https://jamalxcode.github.io/dubai_map/assets/share.png"', html)
         self.assertIn("to 13 Nov 2026", html)
         self.assertIn('url=../../?area=Jumeirah%20Village%20Circle"', html)

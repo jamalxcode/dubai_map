@@ -112,7 +112,7 @@ def main():
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
-            f.write("## Dubai Rent Atlas freshness\n\n" + report + "\n")
+            f.write("## Dubai Real Estate Atlas freshness\n\n" + report + "\n")
     sys.exit(1 if found else 0)
 
 

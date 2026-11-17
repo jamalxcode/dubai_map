@@ -406,3 +406,9 @@ html.viewerOpen,html.viewerOpen body{overflow:hidden}
 .viewSw button[aria-pressed="true"]{background:var(--sign);color:var(--on-sign)}
 .viewSw button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
 @media (max-width:400px){.viewSw button{padding:0 7px;font-size:12px;height:32px}}
+/* "Dubai Real Estate Atlas" is long: the language and theme buttons get their own row above the title
+   instead of sharing its line, at every width. */
+.band .wrap{padding-top:66px}
+.band h1{padding-inline-end:0}
+@media (max-width:860px){.band .wrap{padding-top:54px}}
+@media (min-width:1100px){.band .wrap{padding-top:52px}.band h1,:root[lang="ar"] .band h1{padding-inline-end:0}}

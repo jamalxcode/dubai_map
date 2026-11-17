@@ -1,4 +1,4 @@
-/* Map label placement for the Dubai Rent Atlas: no DOM, no Leaflet, so the rules are unit-tested
+/* Map label placement for the Dubai Real Estate Atlas: no DOM, no Leaflet, so the rules are unit-tested
  * (tests/labels.test.mjs). The page projects areas to pixels, asks for placements, then draws them.
  *
  *   RentLabels.place(items, size, { pad, sum, blocks })

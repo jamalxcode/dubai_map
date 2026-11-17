@@ -1,4 +1,4 @@
-# Dubai Rent Atlas: business rules
+# Dubai Real Estate Atlas: business rules
 
 **Last updated:** 2026-11-16 (Kuwait time)
 

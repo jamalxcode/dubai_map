@@ -61,20 +61,20 @@ def page(a, through):
     url = SITE + "a/" + slug(a["label"]) + "/"
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{e(title)} | Dubai Rent Atlas</title>
+<title>{e(title)} | Dubai Real Estate Atlas</title>
 <meta name="description" content="{e(desc)}">
 <link rel="canonical" href="{e(url)}">
-<meta property="og:type" content="website"><meta property="og:site_name" content="Dubai Rent Atlas">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Dubai Real Estate Atlas">
 <meta property="og:title" content="{e(title)}"><meta property="og:description" content="{e(desc)}">
 <meta property="og:url" content="{e(url)}"><meta property="og:image" content="{e(IMAGE)}">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Dubai Rent Atlas: what tenants actually pay, from Ejari contracts">
+<meta property="og:image:alt" content="Dubai Real Estate Atlas: what tenants actually pay, from Ejari contracts">
 <meta name="twitter:card" content="summary_large_image">
 <meta http-equiv="refresh" content="0;url={e(target)}">
 <script>(function(){{var u=new URLSearchParams(location.search).get('unit');
 location.replace({json.dumps(target)}+(u?'&unit='+encodeURIComponent(u):''))}})();</script>
 </head><body style="font-family:system-ui,sans-serif;padding:24px">
-<p><a href="{e(target)}">{e(title)}: open the Dubai Rent Atlas</a></p>
+<p><a href="{e(target)}">{e(title)}: open the Dubai Real Estate Atlas</a></p>
 </body></html>
 """
 

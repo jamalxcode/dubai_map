@@ -1,4 +1,4 @@
-# Dubai Rent Atlas: design notes, goals and decision log
+# Dubai Real Estate Atlas: design notes, goals and decision log
 
 **Last updated:** 2026-11-10  
 **Repository:** `jamalxcode/dubai_map`  
@@ -354,6 +354,10 @@ The owner: in dark mode the price labels don't follow the price key. They were d
 
 The owner asked for rent, sale price and gross yield buttons on the map, the key following the value, with the 5% edge rule. A **Rent · Sale price · Yield** switch sits on the map (top right), kept in step with the "Labels show" menu. Each view recolours the labels with the same blue scale, its own key trimmed to the 5th-95th percentile (today, 1-bedroom: rent AED 38k-120k, sale AED 660k-2.75M, yield 5.2%-8.6%), its own legend title and ends, dial top and headline ("Average sale price in view"). Sale prices per bedroom count now come through the build from Dubai Data (`by_unit.sale`); for Flats and Studios a rent-contract-weighted "typical" sale price, as for rents. The 56 older districts have rents only, so they appear in the rent view only. A view without data is hidden.
 
+## Decision on 2026-11-17 (thirty-sixth pass): renamed to Dubai Real Estate Atlas
+
+The owner renamed the site "Dubai Real Estate Atlas" (Arabic: أطلس دبي العقاري), which fits now that it shows sale prices and yields as well as rents. Changed everywhere a person sees it: page title, header, link previews and share text, area preview pages, calendar reminders, the export file name, the share image, the deploy workflow's name and the docs. Kept on purpose: the browser storage key (`rentAtlas`, so visitors keep their saved areas) and the calendar reminder IDs (so existing reminders aren't duplicated). The longer title gets its own row under the language and theme buttons at every width. The repository and site address (`dubai_map`) are unchanged.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
@@ -396,6 +400,8 @@ The owner asked for rent, sale price and gross yield buttons on the map, the key
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-17: Renamed to Dubai Real Estate Atlas.
 
 - 2026-11-17: Rent, sale price and yield views on the map, each with its own trimmed key.
 

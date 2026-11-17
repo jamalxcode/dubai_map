@@ -1,4 +1,4 @@
-# Dubai Rent Atlas: interface rules
+# Dubai Real Estate Atlas: interface rules
 
 **Last updated:** 2026-11-16 (Kuwait time)
 

@@ -4,7 +4,7 @@ Guidance for Claude Code sessions in this repository.
 
 ## Overview
 
-Dubai Rent Atlas (https://jamalxcode.github.io/dubai_map/) maps what tenants actually pay in yearly rent across Dubai, area by area, from Ejari contracts registered with the Dubai Land Department. Python collectors run in GitHub Actions three times a day and publish small JSON files; the site is a static page (no build step) in English and Arabic.
+Dubai Real Estate Atlas (https://jamalxcode.github.io/dubai_map/) maps what tenants actually pay in yearly rent across Dubai, area by area, from Ejari contracts registered with the Dubai Land Department. Python collectors run in GitHub Actions three times a day and publish small JSON files; the site is a static page (no build step) in English and Arabic.
 
 Read before changing behaviour:
 - `docs/BUSINESS_RULES.md`: every rule and threshold, with the file that applies it. Keep it in step with the code.

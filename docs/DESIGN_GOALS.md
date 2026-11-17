@@ -1,4 +1,4 @@
-# Dubai Rent Atlas: design goals
+# Dubai Real Estate Atlas: design goals
 
 **Last updated:** 2026-11-16 (Kuwait time)
 **Site:** https://jamalxcode.github.io/dubai_map/

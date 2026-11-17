@@ -302,7 +302,7 @@
       uid: 'market-check-every-' + months + '@dubai-rent-atlas',
       title: T('Check Dubai rents') + (first ? ': ' + first.area : ''),
       date: RI.addMonths(new Date().toISOString().slice(0, 10), months), everyMonths: months, alarmDays: 0,
-      details: T('A reminder you set on Dubai Rent Atlas to see how rents have moved. Delete this event to stop it.'),
+      details: T('A reminder you set on Dubai Real Estate Atlas to see how rents have moved. Delete this event to stop it.'),
       url: first ? siteUrl(first.area, first.unit) : location.origin + location.pathname,
     }), 'text/calendar');
   }
@@ -337,7 +337,7 @@
     const text = f ? T('{what} in {area}: {aed} a year (median), from Ejari contracts.', { what: unit ? U(unit) : T('All homes'), area: area.label, aed: aed(f.median) })
       : T('Rents in {area}, from Ejari contracts.', { area: area.label });
     if (navigator.share && matchMedia('(pointer:coarse)').matches) {
-      try { await navigator.share({ title: T('Dubai Rent Atlas'), text, url }); } catch { /* closed the sheet */ }
+      try { await navigator.share({ title: T('Dubai Real Estate Atlas'), text, url }); } catch { /* closed the sheet */ }
       return;
     }
     let ok = false;
@@ -410,7 +410,7 @@
         case 'clear-history': store.history = []; save(); renderMine(); break;
         case 'every-ics': everyIcs(); break;
         case 'seen': store.seenThrough = THROUGH; save(); el('ckNew').hidden = true; break;
-        case 'export': download('dubai-rent-atlas-my-data.json', JSON.stringify(store, null, 2), 'application/json'); break;
+        case 'export': download('dubai-real-estate-atlas-my-data.json', JSON.stringify(store, null, 2), 'application/json'); break;
         case 'wipe':
           if (confirm(T('Delete your saved areas, recent checks and settings from this browser?'))) {
             try { localStorage.removeItem(KEY); } catch (err) { /* nothing stored */ }
@@ -440,7 +440,7 @@
           for (const s of incoming.saved) if (RI.isSaved(store, s.area, s.unit) < 0) store.saved.push(s);
           store.saved = store.saved.slice(0, RI.MAX_SAVED); store.prefs = incoming.prefs;
           save(); renderMine();
-        }).catch(() => alert(T('That file is not a Dubai Rent Atlas export.')));
+        }).catch(() => alert(T('That file is not a Dubai Real Estate Atlas export.')));
       }
     });
     map.on('popupopen', onPopup);

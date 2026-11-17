@@ -1,4 +1,4 @@
-# Dubai Rent Atlas: lessons learned
+# Dubai Real Estate Atlas: lessons learned
 
 **Last updated:** 2026-11-16 (Kuwait time)
 

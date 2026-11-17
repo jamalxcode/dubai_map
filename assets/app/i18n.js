@@ -20,7 +20,7 @@
 
   // Fixed page text, by its data-t key (index.html).
   const STATIC = {
-    title: 'أطلس إيجارات دبي',
+    title: 'أطلس دبي العقاري',
     tagline: 'ما <b>يدفعه المستأجرون فعلًا</b> سنويًا، من عقود الإيجار المسجلة في نظام إيجاري لدى دائرة الأراضي والأملاك في دبي. وليست أسعارًا معروضة.',
     filters: 'التصفية', ptype: 'نوع العقار', done: 'تم',
     'f.search': 'المجتمع أو المبنى', 'f.search.ph': 'مثلًا: JVC أو Marina أو Karama',
@@ -71,7 +71,7 @@
     ', to {d}': '، حتى {d}',
     '<b>New figures since your last visit</b>: rents now run to {to} (was {from}).': '<b>أرقام جديدة منذ زيارتك الأخيرة</b>: تمتد الإيجارات الآن حتى {to} (كانت حتى {from}).',
     "<b>The rent data didn't load.</b> This is usually a brief network hiccup.": '<b>لم يتم تحميل بيانات الإيجار.</b> غالبًا ما يكون ذلك خللًا عابرًا في الشبكة.',
-    'A reminder you set on Dubai Rent Atlas to see how rents have moved. Delete this event to stop it.': 'تذكير ضبطته في أطلس إيجارات دبي لمتابعة تغيّر الإيجارات. احذف هذا الحدث لإيقافه.',
+    'A reminder you set on Dubai Real Estate Atlas to see how rents have moved. Delete this event to stop it.': 'تذكير ضبطته في أطلس دبي العقاري لمتابعة تغيّر الإيجارات. احذف هذا الحدث لإيقافه.',
     'AED per m²': 'درهم لكل م²',
     'AED {v} per m² a year': 'AED {v} لكل م² سنويًا',
     'Add to my calendar': 'أضف إلى تقويمي',
@@ -112,7 +112,7 @@
     'Dubai Data has not published a newer update yet, so changes since then are not shown.': 'لم تنشر Dubai Data تحديثًا أحدث بعد، لذا لا تظهر التغييرات منذ ذلك الحين.',
     'Dubai Data page': 'صفحة Dubai Data',
     'Dubai Land Department Ejari contracts': 'عقود إيجاري لدى دائرة الأراضي والأملاك في دبي',
-    'Dubai Rent Atlas': 'أطلس إيجارات دبي',
+    'Dubai Real Estate Atlas': 'أطلس دبي العقاري',
     'Everything': 'الكل',
     'Every 3 months': 'كل 3 أشهر',
     'Every 6 months': 'كل 6 أشهر',
@@ -188,7 +188,7 @@
     'Switch to dark mode': 'التبديل إلى الوضع الداكن',
     'Switch to light mode': 'التبديل إلى الوضع الفاتح',
     'Tell me what changed when I come back': 'أخبرني بما تغيّر عند عودتي',
-    'That file is not a Dubai Rent Atlas export.': 'هذا الملف ليس ملف تصدير من أطلس إيجارات دبي.',
+    'That file is not a Dubai Real Estate Atlas export.': 'هذا الملف ليس ملف تصدير من أطلس دبي العقاري.',
     'That is in the cheapest quarter.': 'هذا ضمن الربع الأرخص.',
     'That is in the dearest quarter.': 'هذا ضمن الربع الأغلى.',
     'That is within the middle half.': 'هذا ضمن النصف الأوسط.',
@@ -301,7 +301,7 @@
   // Translate the page's fixed text and wire the language button.
   if (doc) {
     if (LANG === 'ar') {
-      doc.title = 'أطلس إيجارات دبي | إيجاري';
+      doc.title = 'أطلس دبي العقاري | إيجاري';
       doc.querySelectorAll('[data-t]').forEach(el => { const v = STATIC[el.dataset.t]; if (v) el.innerHTML = v; });
       doc.querySelectorAll('[data-t-ph]').forEach(el => { const v = STATIC[el.dataset.tPh]; if (v) el.placeholder = v; });
       doc.querySelectorAll('[data-t-aria]').forEach(el => { const v = STATIC[el.dataset.tAria]; if (v) el.setAttribute('aria-label', v); });

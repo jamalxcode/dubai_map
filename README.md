@@ -1,4 +1,4 @@
-# 🗺️ Dubai Rent Atlas
+# 🗺️ Dubai Real Estate Atlas
 
 > **What does everyone else actually pay?**
 > Not what the listing says. Not what the agent hopes. What tenants *actually pay*, from rent contracts registered with the Dubai Land Department.
