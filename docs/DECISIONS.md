@@ -489,6 +489,8 @@ After merging, the pull was started by hand so the new fields went live (guard, 
 5. **Run log** (`runs.jsonl`) and publication hours in the run summary; a week below 80% successful pulls is a problem. The page doesn't show the run log: it would change every run and trigger a deploy each time.
 6. **Column checks** on Dubai Data's files: a renamed column stops the run with its name.
 
+After merging, the pull was started by hand (guard, pull and deploy succeeded): it saved the first older-districts snapshot (`history/ccp/2026-11-15.json`), the first `runs.jsonl` line and the `staff` flags. Tests were rerun on the rebuilt data (passed), and the freshness check was run once with its new issue permission: all fine, no issue opened.
+
 ## Change log
 
 - 2026-11-17: Industrial zones flagged and left out of comparisons; Continental Club backup when Dubai Data is stuck; older districts' history; alerts as GitHub issues; run log; column checks.

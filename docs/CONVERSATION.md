@@ -263,14 +263,18 @@ Rewritten from 260 to about 190 lines: what it does, where the numbers come from
 
 ### 17 Nov · "review data pulling and critique it, how can it be made better" → "do it all, merge on main"
 
-All six done (decisions, forty-fifth pass): industrial zones flagged and left out of comparisons; a Continental Club backup when Dubai Data is stuck; the older districts' own history; problems as GitHub issues that close themselves; a run log with publication hours and a weekly success check; clear errors when a source renames a column.
+Rebuilt and re-checked right after merging (first older-districts snapshot, run log started, freshness all fine). All six done (decisions, forty-fifth pass): industrial zones flagged and left out of comparisons; a Continental Club backup when Dubai Data is stuck; the older districts' own history; problems as GitHub issues that close themselves; a run log with publication hours and a weekly success check; clear errors when a source renames a column.
+
+### 17 Nov · "save to repo convo, decisions and lessons learned"
+
+Recorded: the rebuild and checks after the second data-pull review (decisions, forty-fifth pass), and two lessons.
 
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
 2. **Arabic area names**: from DLD's own Arabic field once contract-level data arrives (the interface is already in Arabic). A native speaker's read of the Arabic interface text would also help.
 3. **Areas off the map:** Al Twar Fifth (2,486 contracts, from Continental Club's older districts), Al Aryam (172) and Al Waha Villas (86). Al Twar Fifth is not in Dubai Municipality's community list (it stops at Al Twar Fourth) nor in OpenStreetMap, and coordinates are never guessed. Fix: the owner sends a checked point (a pin dropped on Al Twar Fifth in Makani, the DLD map or Google Maps, as `lat,lng`) and it goes into `data/area_locations.csv` as a reviewed point (a line like `al twar fifth,Al Twar Fifth,<lat>,<lng>,area`); or a newer copy of Dubai Municipality's community list that includes it. The freshness run lists them as warnings, without an email.
-4. **Old branches** to delete on GitHub (the session may not): `datadubai-daily`, `engagement`, `fix-tabs`, `mobile-redesign` (merged), `phone-map-first` (superseded), `probe-sources` (one-off probes); merged work branches from 17 Nov: `popup-clear`, `table-1100`, `ui-critique`, `ui-critique-2`, `ui-critique-3`, `ui-critique-4`, `popup-fit`, `docs-pipeline`, `pull-better`, `docs-record` (if pushed; most were merged locally and never pushed).
+4. **Old branches** to delete on GitHub (the session may not): `datadubai-daily`, `engagement`, `fix-tabs`, `mobile-redesign` (merged), `phone-map-first` (superseded), `probe-sources` (one-off probes). The work branches of 17 Nov were merged locally and never pushed, so there is nothing else to delete.
 4b. **Rent history** starts showing changes about four weeks after the first snapshot (16 Nov 2026), so from mid-December; year-on-year from November 2027.
 5a. **Street View inside the breakdown** (option 3): needs the owner's Google Maps Embed API key (free, billing enabled, restricted to the site's address).
 6. Expansion to other cities in the region (new source adapter per registry).

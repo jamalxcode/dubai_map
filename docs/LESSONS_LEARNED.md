@@ -71,6 +71,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Escaping inside heredoc scripts bites.** A `rstrip('\\n')` written through a shell heredoc stripped the wrong characters and left a stray blank line. *Rule:* in generated edit scripts prefer plain string replacement and check the diff.
 - **A name rule must look at the right name.** Flagging areas by their DLD areas' names caught Downtown Jabal Ali, a residential community inside an industrial DLD area. *Rule:* check a heuristic against the real data before shipping it, and prefer the narrowest field that carries the meaning.
 - **Anything shown on the page that changes every run means a deploy every run.** *Rule:* keep run-by-run bookkeeping (run logs) off the page files; report it in run summaries and alerts instead.
+- **A workflow's new permission is only proven by running it.** The freshness check gained `issues: write`; a missing permission would only show when a real problem appeared. *Rule:* after changing a workflow's permissions or secrets, run it once by hand and read its result.
+- **Ask the remote, not memory, what exists.** The open-items list named work branches to delete that had only ever existed locally. *Rule:* list remote branches (`git ls-remote --heads origin`) before writing them down for the owner.
 
 ## Accessibility
 
