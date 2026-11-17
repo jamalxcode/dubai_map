@@ -491,7 +491,13 @@ After merging, the pull was started by hand so the new fields went live (guard, 
 
 After merging, the pull was started by hand (guard, pull and deploy succeeded): it saved the first older-districts snapshot (`history/ccp/2026-11-15.json`), the first `runs.jsonl` line and the `staff` flags. Tests were rerun on the rebuilt data (passed), and the freshness check was run once with its new issue permission: all fine, no issue opened.
 
+## Decision on 2026-11-17 (forty-sixth pass): a data status page
+
+The owner asked for an update status page at its own address, with counts of total entries, what the last pull brought, what is rejected or pending and what is used. `status/` reads the data branch (`status.json`, `state.json`, `runs.jsonl`) and GitHub's public API live in the browser, so it shows the current state between deploys without redeploying the site on every pull. The collectors now record what each pull read; the build writes the counts. "Rejected" is shown as "Left out" with the reason for each kind (no median, already covered by Dubai Data, industrial zones kept out of comparisons), and "pending" as "Waiting".
+
 ## Change log
+
+- 2026-11-17: Data status page at status/: totals, the last pull per source, in use, left out, waiting, recent pulls, open alerts.
 
 - 2026-11-17: Industrial zones flagged and left out of comparisons; Continental Club backup when Dubai Data is stuck; older districts' history; alerts as GitHub issues; run log; column checks.
 

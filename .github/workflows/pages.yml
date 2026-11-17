@@ -38,6 +38,9 @@ jobs:
           cp data/areas*.json data/latest.json data/meta.json _site/data/
           cp data/outlines.json _site/data/ 2>/dev/null || true  # community outlines (optional: the map works without them)
           cp data/changes.json _site/data/ 2>/dev/null || true  # what changed since the previous publication (optional)
+          # The status page (status/) reads the data branch live; these copies are its fallback.
+          for f in status.json state.json runs.jsonl; do cp "data/$f" _site/data/ 2>/dev/null || true; done
+          mkdir -p _site/status && sed "s/__BUILD__/${GITHUB_SHA::7}/g" status/index.html > _site/status/index.html
           cp -r assets/fonts assets/app assets/vendor _site/assets/
           cp assets/share.png _site/assets/
           # One small page per area (a/<slug>/) so a shared link shows that area's figure in its preview.

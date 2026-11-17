@@ -232,6 +232,12 @@ class AggregateBuildTests(TempData):
         self.assertEqual([u["u"] for u in alpha["by_unit"]], ["Studios", "1-bedroom apartments"])
         self.assertEqual(alpha["dld_areas"], ["Area A"])
         self.assertEqual(len(table), 3, "Alpha by bedroom (2) + Beta all units (1)")
+        st = self.load("status.json")  # the status page's counts
+        self.assertEqual(st["totals"]["contracts"], 150)
+        self.assertEqual((st["sources"]["datadubai"]["communities"], st["sources"]["datadubai"]["used"], st["sources"]["datadubai"]["no_median"]), (3, 2, 1))
+        self.assertEqual(st["left_out"]["no_median"], [{"area": "Gamma", "n": 10}])
+        self.assertEqual(st["pending"]["unplaced"], [{"area": "Beta", "n": 50}])
+        self.assertEqual(st["totals"]["areas_on_map"], 1)
         self.assertIn("CC BY 4.0", meta["source"])
         # Flats and Studios come from the per-bedroom rows; no villa/commercial split exists.
         self.assertEqual({t["key"]: t["n"] for t in meta["property_types"]}, {"homes": 150, "flat": 40, "studio": 60})

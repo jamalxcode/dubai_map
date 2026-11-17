@@ -26,6 +26,7 @@ Generated files (the `GENERATED` list in `scripts/data-branch.sh`):
 | `changes.json` | What changed since the previous publication: the biggest moves, unconfirmed jumps, new and gone areas (feeds the rent check's "since your last visit") |
 | `history/<date>.json` | Our own rent history: every area's medians for each publication (about 30 KB each), named by the date the data runs to |
 | `history/ccp/<date>.json` | The same for the older districts (Continental Club), by Continental Club's own date |
+| `status.json` | The status page's counts: totals, what each source gave and what's used, left out and waiting |
 | `runs.jsonl` | One line per pull (the last 300): when, how long, each source's state, how far the data runs |
 | `state.json` | Each source's state: ok, failed with the reason, or off, and when it last ran |
 | `datadubai/` | Dubai Data's files as last fetched (CSV export or rebuilt from the live pages), with ETags |
@@ -97,6 +98,7 @@ The first snapshot is the publication to 16 Nov 2026, so changes appear from mid
 
 - **`freshness.yml` runs every 6 hours** (`scripts/check_fresh.py`). It fails, and GitHub emails the owner, if the data is more than 10 days old, the pulls stop, fewer than 80% of the week's pulls succeeded, a source fails, or the backup source is in use. Each problem also opens its own GitHub issue (label `data-alert`), closed with a note when it is no longer seen, so every outage leaves a record. Busy areas still missing a map point are listed as warnings, without an email.
 - **The weekly "Place unplaced areas" job** (`geocode.yml`) refreshes the Municipality community list and outlines, rebuilds, saves and deploys.
+- **The status page** (https://jamalxcode.github.io/dubai_map/status/, `status/index.html` + `assets/app/status.js`) shows, live: the totals (contracts, areas, figures, what's on the map), what each source pulled in the last pull, what each source gives and how much of it the map uses, what's left out (communities with no median, older-district areas Dubai Data already covers, industrial zones kept out of comparisons), what's waiting (areas without a map point, unconfirmed jumps, sources that differ, the Dubai Pulse key, DLD's permission), recent pulls and open alerts. It reads `status.json` (counts the build writes), `state.json` and `runs.jsonl` from the data branch, and GitHub's public API, in the visitor's browser, so it is current between deploys; the site's own copies are the fallback.
 - **In the browser,** the page loads only the small JSON files. It's static, so visitors never touch the sources.
 
 So after every pull, either:

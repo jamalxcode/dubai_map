@@ -408,6 +408,38 @@ try {
     await axe(page, name);
     await page.context().close();
   }
+  // The data status page (status/): totals, the last pull, recent runs and alerts, in English and Arabic.
+  for (const [name, viewport, q] of [['status desktop', { width: 1350, height: 900 }, ''], ['status phone', { width: 390, height: 844 }, ''], ['status Arabic phone', { width: 390, height: 844 }, '?lang=ar']]) {
+    const ctx = await browser.newContext({ viewport });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    // The data branch, served from ./data; GitHub's API, stubbed (two runs, no open alerts).
+    await page.route(/raw\.githubusercontent\.com\/.+\/data\/data\//, async r => {
+      const f = r.request().url().split('/data/data/')[1];
+      try { await r.fulfill({ body: await readFile(join(ROOT, 'data', f)), contentType: f.endsWith('.json') ? 'application/json' : 'text/plain' }); }
+      catch { await r.fulfill({ status: 404, body: 'not found' }); }
+    });
+    await page.route(/api\.github\.com\/repos\/.+\/actions\/workflows\/daily-ejari\.yml\/runs/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ workflow_runs: [
+      { run_started_at: '2026-11-17T18:00:00Z', created_at: '2026-11-17T18:00:00Z', updated_at: '2026-11-17T18:01:10Z', event: 'workflow_dispatch', conclusion: 'success', html_url: 'https://github.com/x/y/actions/runs/2' },
+      { run_started_at: '2026-11-17T10:17:00Z', created_at: '2026-11-17T10:17:00Z', updated_at: '2026-11-17T10:17:20Z', event: 'schedule', conclusion: 'success', html_url: 'https://github.com/x/y/actions/runs/1' }] }) }));
+    await page.route(/api\.github\.com\/repos\/.+\/issues/, r => r.fulfill({ contentType: 'application/json', body: '[]' }));
+    await page.goto(BASE + 'status/' + q);
+    await page.waitForFunction(() => window.statusState, null, { timeout: 15000 }).catch(() => {});
+    const st = await page.evaluate(() => ({ state: window.statusState, overall: document.getElementById('overall').textContent,
+      totals: document.querySelectorAll('#totals div').length, contracts: document.querySelector('#totals dd')?.textContent || '',
+      pulled: document.querySelectorAll('#pulled tr').length, used: document.querySelectorAll('#used tr').length, runs: document.querySelectorAll('#runs tr').length,
+      left: document.querySelectorAll('#left li').length, pending: document.querySelectorAll('#pending li').length, alerts: document.getElementById('alerts').textContent,
+      sideways: document.documentElement.scrollWidth > innerWidth, dir: document.documentElement.dir }));
+    check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 5 && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
+      `${name}: shows the totals (${st.contracts} contracts), what each source pulled, what's in use, left out and waiting, and recent pulls`);
+    check(/All fine|كل شيء/.test(st.overall) && /No open alerts|لا تنبيهات/.test(st.alerts), `${name}: says all is fine when the last pull worked and no alert is open`);
+    check(!st.sideways, `${name}: no sideways scrolling`);
+    if (q) check(st.dir === 'rtl', `${name}: reads right to left`);
+    check(!errors.length, `${name}: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await axe(page, name);
+    await ctx.close();
+  }
   // Backup source in use (Dubai Data stuck): the warning sign says so.
   {
     const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });

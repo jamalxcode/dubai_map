@@ -32,7 +32,18 @@ def entry(state, meta, now=None, started=None, event="", run_id=""):
     return {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
             "seconds": round(now - started) if started else None, "event": event, "run": run_id,
             "through": (meta or {}).get("data_through"), "backup": bool((meta or {}).get("backup")),
-            "areas": (meta or {}).get("n_areas"), "sources": sources}
+            "areas": (meta or {}).get("n_areas"), "sources": sources, "pulled": pulled(state)}
+
+
+def pulled(state):
+    """What this pull read from each source (the collectors record it in state.json)."""
+    st = state or {}
+    dd = (st.get("datadubai") or {}).get("last_pull") or {}
+    cc = st.get("crosscheck") or {}
+    p = st.get("pulse") or {}
+    return {"datadubai": {k: dd.get(k) for k in ("live", "pages", "export_files_updated", "through") if dd.get(k) is not None},
+            **{"crosscheck:" + k: {"rows": (v or {}).get("rows"), "through": (v or {}).get("through")} for k, v in cc.items()},
+            "pulse": {k: p.get(k) for k in ("rows", "added", "updated") if p.get(k) is not None}}
 
 
 def append(path, line, keep=KEEP):

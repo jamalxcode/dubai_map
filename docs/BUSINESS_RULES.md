@@ -88,6 +88,8 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Older districts' history | Their own snapshot series by Continental Club's date; jumps judged with the area's contract count | `history.py` (series "ccp") |
 | Alerts as issues | One issue per problem (key: the sentence without numbers, dates and links), closed with a note when gone | `check_fresh.sync_issues` |
 | Week of pulls | Fewer than 80% of the last 7 days' pulls succeeding is a problem | `check_fresh.MIN_WEEK_SUCCESS` |
+| Status counts | Written by each build to `status.json`: totals; Dubai Data communities read / used / without a median, bedroom rows with a median; Continental Club DLD areas read / used / already covered by Dubai Data; cross-check rows; unplaced areas, unconfirmed jumps, figures where sources differ | `build.status_counts` |
+| What a pull read | Dubai Data: live result, pages read, export files updated; cross-checks: rows; Dubai Pulse: rows, new, updated; logged per pull in `runs.jsonl` | collectors' `state.json`, `run_log.pulled` |
 | Hidden labels | A label under a button or the legend with no free spot within two label-steps joins its nearest neighbour, and merging runs again | `labels.js` rule 3 |
 | Display names | All-capitals names in title case, acronyms kept; registered names for search, links and storage | `i18n.js T.place`, `share_pages.place` |
 | Table order | Clicked header (descending first, Area A–Z), else the view's column; areas with no figure last | `atlas.js table` |

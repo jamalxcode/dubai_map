@@ -34,6 +34,7 @@ Standard-library Python only (3.12 in CI). Node 22 for tests.
 
 - `collector/`: `fetch_ejari.py` (Dubai Pulse API, needs `DUBAI_PULSE_KEY`/`_SECRET`), `fetch_dld.py` (off until DLD permits), `fetch_datadubai.py` (Dubai Data, CC BY 4.0), `fetch_crosscheck.py` + `crosscheck.py` (independent sources), `ccp_areas.py` (older districts from Continental Club), `geocode_missing.py` (OpenStreetMap last resort), `build.py` → `kinds.py`, `places.py`, `output.py`; shared `net.py` (polite HTTP) and `state.py` (source states).
 - `scripts/`: `data-branch.sh` (load/save the data branch), `check_fresh.py` (freshness alerts), `share_pages.py`, `share_image.mjs`.
+- `status/index.html` + `assets/app/status.js` + `status.css`: the data status page (reads `status.json`, `state.json`, `runs.jsonl` from the data branch and GitHub's API live; text through `T()`).
 - `index.html`: markup only. `assets/app/`: `atlas.js` + `atlas.css` (the page), `labels.js` (label placement, pure), `insights.js` (rent-check logic, pure) + `companion.js` + `companion.css` (rent check, My areas, reminders), `i18n.js` (Arabic). `assets/vendor/`: Leaflet, GSAP, Lenis, unchanged copies. `assets/fonts/`: Barlow.
 - Workflows: `daily-ejari.yml` (the pull; cron-job.org starts it), `geocode.yml` (weekly), `pages.yml` (deploy), `tests.yml`, `freshness.yml` (every 6 h).
 

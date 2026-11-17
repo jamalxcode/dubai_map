@@ -17,6 +17,7 @@ __pycache__/
 /data/changes.json
 /data/history/
 /data/runs.jsonl
+/data/status.json
 
 node_modules/
 /a/

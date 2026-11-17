@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 const read = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
 const require = createRequire(import.meta.url);
 const T = require('../assets/app/i18n.js'); // no document here: English, but the tables are exposed
-const code = read('assets/app/atlas.js') + read('assets/app/companion.js');
+const code = read('assets/app/atlas.js') + read('assets/app/companion.js') + read('assets/app/status.js');
 
 // Every string literal handed to T(...), including both arms of T(cond ? 'a' : 'b').
 function keys(src) {
@@ -28,7 +28,7 @@ test('every T() key in the page scripts has an Arabic translation', () => {
 });
 
 test('every fixed text key in index.html has an Arabic translation, and placeholders survive', () => {
-  const html = read('index.html');
+  const html = read('index.html') + read('status/index.html');
   const used = [...html.matchAll(/data-t(?:-ph|-aria)?="([^"]+)"/g)].map(m => m[1]);
   assert.ok(used.length > 30);
   assert.deepEqual(used.filter(k => !(k in T.STATIC)), []);

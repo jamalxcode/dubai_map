@@ -26,3 +26,11 @@ class RunLogTests(TempData):
 
     def test_publication_hours_in_kuwait_time(self):
         self.assertEqual(run_log.publication_hours(self.STATE), [("04:00", 1), ("05:00", 1)])
+
+    def test_what_each_source_read(self):
+        st = dict(self.STATE, datadubai=dict(self.STATE["datadubai"], last_pull={"live": "updated", "pages": 152, "export_files_updated": 1, "through": "2026-11-16"}),
+                  crosscheck={"ccp": {"state": "ok", "rows": 358, "through": "2026-11-15"}}, pulse={"state": "no_key"})
+        p = run_log.pulled(st)
+        self.assertEqual(p["datadubai"], {"live": "updated", "pages": 152, "export_files_updated": 1, "through": "2026-11-16"})
+        self.assertEqual(p["crosscheck:ccp"], {"rows": 358, "through": "2026-11-15"})
+        self.assertEqual(p["pulse"], {})

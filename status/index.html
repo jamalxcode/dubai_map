@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Data status | Dubai Real Estate Atlas</title>
+<meta name="description" content="How the Dubai Real Estate Atlas data is doing: the latest pulls, what each source gave, what is in use, left out or waiting.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#521825">
+<script>/* Theme and language before first paint, as on the map page. */
+(function(){var t;try{t=localStorage.getItem('theme')}catch(e){}
+if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+document.documentElement.dataset.theme=t;
+var q=new URLSearchParams(location.search).get('lang'),l;try{if(q==='ar'||q==='en')localStorage.setItem('lang',q);l=localStorage.getItem('lang')}catch(e){}
+l=q==='ar'||q==='en'?q:l==='ar'||l==='en'?l:/^ar\b/i.test((navigator.languages||[navigator.language||''])[0]||'')?'ar':'en';
+document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr'})();</script>
+<link rel="preload" href="../assets/fonts/barlow-condensed-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/app/atlas.css?v=__BUILD__">
+<link rel="stylesheet" href="../assets/app/status.css?v=__BUILD__">
+</head>
+<body class="statusPage">
+<header class="band">
+  <div class="topBtns"><div class="langSw" id="langSw" role="group" aria-label="Language"><button type="button" data-l="en" lang="en" aria-pressed="true">English</button><button type="button" data-l="ar" lang="ar" aria-pressed="false">عربي</button></div></div>
+  <div class="wrap">
+    <div>
+      <h1 data-t="s.title">Data status</h1>
+      <p data-t="s.tagline">How the atlas's data is doing, read live from the robot that refreshes it three times a day.</p>
+      <p class="back"><a href="../" data-t="s.back">← Back to the map</a></p>
+    </div>
+    <div class="big" aria-live="polite"><span class="num" id="overall">…</span><span class="cap" id="overallCap" data-t="loading">Loading…</span></div>
+  </div>
+</header>
+
+<main class="wrap" id="status">
+  <section aria-labelledby="hTotals">
+    <h2 id="hTotals" data-t="s.totals">In the data</h2>
+    <dl class="stats" id="totals"></dl>
+    <p class="muted" id="fresh"></p>
+  </section>
+
+  <section aria-labelledby="hLast">
+    <h2 id="hLast" data-t="s.last">The last pull</h2>
+    <p id="lastRun" class="lead"></p>
+    <div class="tblWrap"><table><thead><tr><th data-t="s.source">Source</th><th data-t="s.pulled">What it pulled</th><th data-t="s.state">State</th></tr></thead><tbody id="pulled"></tbody></table></div>
+  </section>
+
+  <section aria-labelledby="hUsed">
+    <h2 id="hUsed" data-t="s.used">In use on the map</h2>
+    <div class="tblWrap"><table><thead><tr><th data-t="s.source">Source</th><th class="r" data-t="s.read">Read</th><th class="r" data-t="s.inuse">In use</th><th data-t="s.note">Note</th></tr></thead><tbody id="used"></tbody></table></div>
+  </section>
+
+  <section aria-labelledby="hLeft">
+    <h2 id="hLeft" data-t="s.left">Left out</h2>
+    <ul id="left" class="list"></ul>
+  </section>
+
+  <section aria-labelledby="hPending">
+    <h2 id="hPending" data-t="s.pending">Waiting</h2>
+    <ul id="pending" class="list"></ul>
+  </section>
+
+  <section aria-labelledby="hRuns">
+    <h2 id="hRuns" data-t="s.runs">Recent pulls</h2>
+    <div class="tblWrap"><table><thead><tr><th data-t="s.when">When (Kuwait time)</th><th data-t="s.trigger">Started by</th><th data-t="s.result">Result</th><th class="r" data-t="s.took">Took</th></tr></thead><tbody id="runs"></tbody></table></div>
+    <p class="muted" id="pubHours"></p>
+  </section>
+
+  <section aria-labelledby="hAlerts">
+    <h2 id="hAlerts" data-t="s.alerts">Open alerts</h2>
+    <ul id="alerts" class="list"></ul>
+  </section>
+  <p class="muted foot" data-t="s.foot">Counts come from the data branch and GitHub's public run history, read when this page opens. Nothing here is about visitors.</p>
+</main>
+
+<script src="../assets/app/i18n.js?v=__BUILD__"></script>
+<script src="../assets/app/status.js?v=__BUILD__"></script>
+<!-- GoatCounter visit counts: no cookies, nothing stored in the browser, no personal data (not loaded on localhost). Same snippet as the map page. -->
+<script>
+  (function () {
+    if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return;
+    window.goatcounter = { endpoint: 'https://salacompany.goatcounter.com/count', path: function (p) { return location.host + p; } };
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://gc.zgo.at/count.js';
+    s.setAttribute('data-goatcounter', 'https://salacompany.goatcounter.com/count');
+    document.body.appendChild(s);
+  })();
+</script>
+</body></html>

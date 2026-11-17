@@ -93,6 +93,12 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 - **Photos:** up to 4, a grid on wide screens, a swipeable row on phones (about 72–80% of the width, 150–170 px high). Each shows its author and licence. A photo that fails to load disappears; no photos means no strip.
 - **Photo viewer (all screens):** tap a photo for a full-screen view at 960 px with title, author, licence and a link to its Commons page; arrows, swipes and the arrow keys move between photos (direction follows the language); Escape or × closes it and focus returns to the photo.
 
+## 7b. Data status page
+
+- Its own address, `status/` (linked from "Where the numbers come from" on the map page; not indexed by search engines). Same header, fonts, colours, language switch and dark mode as the map page.
+- A big verdict ("All fine" / "Needs a look": an open alert, a failed last pull or the backup source), then: In the data (five counts), The last pull (per source: what it pulled and its state), In use on the map (read / in use per source), Left out, Waiting, Recent pulls (linked to GitHub) and Open alerts.
+- Read live in the browser (data branch and GitHub's API); falls back to the site's copies. Browser-checked on desktop, phone and Arabic, with axe.
+
 ## 8. Language and direction
 
 - English and Arabic. Chosen by a `?lang=` link, else the saved choice, else the device; set before first paint to avoid a flash in the wrong direction.

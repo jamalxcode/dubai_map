@@ -1,0 +1,27 @@
+/* Data status page (status/): the map page's tokens and header (atlas.css), plus plain tables and lists. */
+.statusPage main{padding-top:8px;padding-bottom:48px}
+.statusPage .band .wrap{padding-top:58px;padding-bottom:22px}
+.statusPage .band h1{font-size:clamp(34px,6vw,56px)}
+.statusPage .band .back{margin-top:10px}
+.statusPage .band .back a{color:var(--band-text);text-decoration-color:var(--gold)}
+.statusPage .big .num{font-size:clamp(36px,6vw,64px)}
+.statusPage .big .num.good{color:var(--ivory)}
+.statusPage .big .num.bad{color:var(--gold)}
+.statusPage section{margin-top:28px}
+.statusPage h2{font-size:28px;margin-bottom:10px}
+.statusPage .lead{margin:0 0 8px}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin:0;border-top:3px solid var(--text)}
+.stats div{padding:10px 12px 4px 0}
+.stats dt{font-size:13px;color:var(--muted)}
+.stats dd{margin:2px 0 0;font:700 28px/1.05 var(--cond);font-variant-numeric:tabular-nums}
+.tblWrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.statusPage table td,.statusPage table th{white-space:normal;padding:9px 12px;vertical-align:top}
+.statusPage table th{position:static}
+.list{margin:0;padding-inline-start:20px}.list li{margin-bottom:6px}
+.st{font-weight:600}.st-ok{color:var(--ok)}.st-failed{color:var(--bad)}.st-no_key,.st-off,.st-standby,.st-not_run{color:var(--muted)}
+.statusPage .foot{margin-top:32px;font-size:13px}
+@media (max-width:860px){
+  .stats{grid-template-columns:1fr 1fr}
+  .statusPage .band .wrap{padding-top:54px}
+  .statusPage h2{font-size:24px}
+}

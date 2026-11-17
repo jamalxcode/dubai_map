@@ -66,15 +66,20 @@ def main(sleep=time.sleep):
     st = source_state.load()
     block = st.setdefault("datadubai", {})
     live_ok = False
+    pull = {"at": source_state.now_iso(), "live": "off"}  # what this pull did (shown on the status page)
     if os.environ.get("DATADUBAI_LIVE", "1") != "0":
         try:
             result = fetch_live(block, sleep=sleep)
             live_ok = True
+            pull["live"] = result.split(" ")[0]
+            if result == "updated":
+                pull["pages"] = block.get("live_pages")
             source_state.set_status(block, "ok")
             block["last_ok_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
             print(f"datadubai live: {result} (data through {data_through()})")
         except (net.StopForToday, net.AuthError, ValueError, KeyError, TypeError) as e:
             source_state.set_status(block, "failed", f"live pages: {e}")
+            pull["live"] = "failed"
             print(f"datadubai live failed ({e}); using the weekly export")
         source_state.save(st)
     try:
@@ -101,6 +106,9 @@ def main(sleep=time.sleep):
         json.dump(etags, fh, indent=2, sort_keys=True)
         fh.write("\n")
     print(f"datadubai: {changed} file(s) updated")
+    pull.update(export_files_updated=changed, through=data_through())
+    block["last_pull"] = pull
+    source_state.save(st)
 
 
 def fetch_live(block, sleep=time.sleep):
@@ -177,6 +185,7 @@ def fetch_live(block, sleep=time.sleep):
     _set_readme_through(os.path.join(out, "README.md"), through)
     block["live_checked_at"] = source_state.now_iso()
     block["through"] = through
+    block["live_pages"] = len(comms)
     # When each new publication was first seen (last 30), to learn when Dubai Data publishes.
     log = block.setdefault("published_seen", [])
     if not log or log[-1].get("through") != through:

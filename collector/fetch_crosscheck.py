@@ -117,6 +117,7 @@ def fetch_one(key, block):
         w.writeheader()
         w.writerows(rows)
     block["through"] = through_date(md)
+    block["rows"], block["areas"] = len(rows), len(areas)  # what this pull read (shown on the status page)
     return len(areas)
 
 

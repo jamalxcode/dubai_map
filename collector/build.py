@@ -228,6 +228,30 @@ def read_checked(d, name):
         return list(rows)
 
 
+def status_counts(now, through, state, rents, bed_rows, no_median, dd_areas, extra, areas, table, unplaced, ch, gaps, backup):
+    """The counts the status page shows (status/): what is in the data, what each source gave, what was
+    left out or waits, and what the map uses. Written with the data; the page reads it from the data branch."""
+    ccp_rows = ccp_areas.load_rows()
+    ccp_dld = {r["area"] for r in ccp_rows}
+    placed = [a for a in areas if a.get("lat") is not None]
+    blk = lambda k: ((state.get("crosscheck") or {}).get(k) or {})  # noqa: E731
+    return {
+        "generated_at": now, "through": through, "backup": backup,
+        "totals": {"contracts": sum(a["n"] for a in areas), "areas": len(areas), "figures": len(table),
+                   "areas_on_map": len(placed), "contracts_on_map": sum(a["n"] for a in placed)},
+        "sources": {
+            "datadubai": {"communities": len(rents), "used": dd_areas, "no_median": len(no_median),
+                          "bedroom_rows": len(bed_rows), "bedroom_rows_used": sum(1 for b in bed_rows if _num(b.get("rent_median")))},
+            "ccp": {"rows": len(ccp_rows), "dld_areas": len(ccp_dld), "used": len(extra),
+                    "covered_by_dubai_data": max(0, len(ccp_dld) - len(extra)), "through": blk("ccp").get("through")},
+            "crosscheck": {k: {"through": blk(k).get("through"), "rows": blk(k).get("rows")} for k in ("dred", "ccp")},
+        },
+        "left_out": {"no_median": sorted(no_median, key=lambda x: -x["n"]), "staff_areas": sum(1 for a in areas if a.get("staff"))},
+        "pending": {"unplaced": sorted(unplaced, key=lambda x: -x["n"]), "unconfirmed": ch.get("unconfirmed", []),
+                    "sources_differ": sum(len(v) for v in gaps.values())},
+    }
+
+
 def backup_reason(state, today=None):
     """Why to build from Continental Club alone, or None: Dubai Data stuck for BACKUP_DAYS while
     Continental Club's figures are current."""
@@ -253,9 +277,11 @@ def build_aggregate(now, state, own=None):
     rents = [] if backup else read("rents_by_community.csv")
     comms = {c["name"]: c for c in read("communities.csv")}
     beds = defaultdict(list)
-    for b in read("community_bedrooms.csv"):
+    bed_rows = [] if backup else read("community_bedrooms.csv")
+    for b in bed_rows:
         if _num(b["rent_median"]):
             beds[b["community"]].append(b)
+    no_median = []  # communities Dubai Data lists without a rent median: not shown
     dld_areas = defaultdict(list)
     for a in read("areas.csv"):
         dld_areas[a["url"]].append(a["name"])
@@ -272,6 +298,7 @@ def build_aggregate(now, state, own=None):
     for r in rents:
         name, n, med_rent = r["name"], int(float(r["contracts"] or 0)), _num(r["rent_median"])
         if not med_rent:
+            no_median.append({"area": name, "n": n})
             continue
         c = comms.get(name, {})
         pt = pts.get(name)
@@ -301,6 +328,7 @@ def build_aggregate(now, state, own=None):
         print(f"BACKUP: Dubai Data is {backup['days']} days old (to {backup['since']}); building from Continental Club alone")
     # Older districts Dubai Data doesn't publish (Deira, Bur Dubai, Karama…), from Continental Club.
     ccp_through = ((state.get("crosscheck") or {}).get("ccp") or {}).get("through")
+    dd_areas = len(areas)
     extra, extra_unplaced, extra_table = ccp_areas.older_districts(areas, load_dm_points(), ccp_through)
     areas += extra
     unplaced += extra_unplaced
@@ -331,6 +359,7 @@ def build_aggregate(now, state, own=None):
         files[f"areas_{t}.json"] = {"generated_at": now, "from": None, "to": through, "type": t, "areas": sub}
     ch = history.merge_changes(history.changes(areas, snaps, through), history.changes(areas, ccp_snaps, ccp_through, series="ccp"))
     files["changes.json"] = {"generated_at": now, **ch}
+    files["status.json"] = status_counts(now, through, state, rents, bed_rows, no_median, dd_areas, extra, areas, table, unplaced, ch, gaps, backup)
     shapes = area_outlines(areas, load_dm_points())
     if shapes:
         files["outlines.json"] = shapes

@@ -89,7 +89,7 @@ A few things worth knowing:
 - **It doesn't break quietly.** A bad run publishes nothing smaller than the last good one; a failed source shows up under "Data health"; stale data sends an email. Each pull writes a summary of what changed on its GitHub page.
 - **It's tiny.** No build step, standard-library Python, libraries and fonts served from the site. Running cost: a free GitHub account.
 
-The full story of a pull is in **[docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md)**.
+The live **[data status page](https://jamalxcode.github.io/dubai_map/status/)** shows the latest pulls, what each source gave, what's in use, left out or waiting, and any open alerts. The full story of a pull is in **[docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md)**.
 
 ---
 
