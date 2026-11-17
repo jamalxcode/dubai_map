@@ -225,6 +225,13 @@ try {
           .filter(c => c.width && pr.left < c.right && c.left < pr.right && pr.top < c.bottom && c.top < pr.bottom).length;
         map.closePopup(); return hits; });
       check(clear === 0, `desktop: a breakdown near the map's buttons isn't hidden under them (${clear} overlaps)`);
+      // The rents table fits the side pane without sideways scrolling, from the narrowest two-pane width up.
+      for (const w of [1100, 1350, 1920]) {
+        await page.setViewportSize({ width: w, height: 900 }); await page.waitForTimeout(200);
+        const [sw, cw] = await page.evaluate(() => { const e = document.querySelector('.tableWrap'); return [e.scrollWidth, e.clientWidth]; });
+        check(sw <= cw + 1, `desktop ${w}px: the rents table fits without scrolling sideways (${sw} in ${cw})`);
+      }
+      await page.setViewportSize(viewport); await page.waitForTimeout(200);
       await page.click('#ckArea'); await page.fill('#ckArea', 'jvc'); await page.press('#ckArea', 'Enter');
       await page.waitForTimeout(1300); // the fly to the area
       // The breakdown may pan the map to clear the buttons, so check JVC is in view rather than centred.

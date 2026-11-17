@@ -18,14 +18,14 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 | Width | Layout | Where |
 |---|---|---|
-| 1,100 px and up | Two panes: inputs scroll on the left (`minmax(420px,34vw)`), the map fills the window height on the right and stays put | `atlas.css` |
+| 1,100 px and up | Two panes: inputs scroll on the left (`minmax(440px,34vw)`), the map fills the window height on the right and stays put | `atlas.css` |
 | 861–1,099 px | One column: title, rent check, filters, map, figures, table | `atlas.css` |
 | 860 px and below (phones, fold phones open or closed) | One column, map in the top 60% of the first screen; filters in a sheet behind the **Filters** button; the rent check folds to one line until tapped; area breakdowns as a bottom sheet | `atlas.css`, `companion.css`, `atlas.js` |
 | 400 px and below | Smaller title (30 px) and map buttons (32 px); photos 80% of the sheet width | `atlas.css` |
 | 320 px | The narrowest screen supported and tested (no sideways scrolling, the sheet fits) | `tests/ui-check.mjs` |
 
 - No sideways scrolling at any width. Tables scroll inside their own box (keyboard-focusable).
-- **Area table:** the DLD area is a small muted second line under the area name (no column of its own); names, unit and headers wrap at word breaks, numbers never wrap; 8 px side padding. It fits without scrolling in the 440 px side column at 1,440 px and on phones from about 540 px.
+- **Area table:** the DLD area is a small muted second line under the area name (no column of its own); names, unit and headers wrap at word breaks, numbers never wrap; 8 px side padding. It fits without scrolling sideways in the side pane at every two-pane width (from 1,100 px: 12 px figures, 6 px side padding, the box reaching 8 px into the pane's margin) and on phones from about 540 px; a browser check measures it at 1,100, 1,350 and 1,920 px.
 - The order of content below 1,100 px follows the reading order, kept with `display:contents` and `order`.
 
 ## 3. Colour and type

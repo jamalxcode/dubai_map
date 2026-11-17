@@ -221,7 +221,9 @@ Nine items, all done and merged in three batches (decisions, thirty-seventh pass
 
 ### 17 Nov · "the info card gets obstructed sometimes" · "in the rents by area there's a lot of middle space and the right column gets truncated" · "put a small x and y scale on the trend line"
 
-All three done in one pass (decisions, thirty-eighth pass): the breakdown pans clear of the buttons and legend; the DLD area moved under the area name so the table fits; trend lines show lowest/highest value and first/middle/last month.
+Then "fix the table scroll at 1100 too": done, all six columns fit at every two-pane width.
+
+All done in one pass (decisions, thirty-eighth pass): the breakdown pans clear of the buttons and legend; the DLD area moved under the area name so the table fits; trend lines show lowest/highest value and first/middle/last month.
 
 ## Open items
 
