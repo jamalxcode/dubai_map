@@ -221,6 +221,7 @@ def build_aggregate(now, state, own=None):
         pts = {r["community"]: (float(r["lat"]), float(r["lng"])) for r in csv.DictReader(f)}
 
     dm_pts = load_dm_points()
+    trends = sale_trends(read("community_monthly.csv") if os.path.exists(os.path.join(fetch_datadubai.out_dir(), "community_monthly.csv")) else [])
     areas, table, unplaced = [], [], []
     for r in rents:
         name, n, med_rent = r["name"], int(float(r["contracts"] or 0)), _num(r["rent_median"])
@@ -243,6 +244,7 @@ def build_aggregate(now, state, own=None):
             n=n, median=round(med_rent),
             yield_pct=_num(r["yield_pct"]), sale_median=_num(c.get("price_median")),
             sale_psf=_num(c.get("psf_median")), url=r["url"], by_unit=by_unit,
+            sale_trend=trends.get(name, {}).get("trend", []), sale_yoy=trends.get(name, {}).get("yoy"),
         ))
         for u in by_unit or [{"u": "All units", "n": n, "median": round(med_rent), "yield": _num(r["yield_pct"])}]:
             table.append({"c": name, "u": u["u"], "a": u["median"], "n": u["n"], "y": u["yield"], "s": u.get("sale"),
@@ -293,6 +295,32 @@ def agg_kind(label):
     """Dubai Data unit label -> our type: "Studios" -> studio, "2-bedroom apartments" -> flat."""
     lab = label.lower()
     return "studio" if lab.startswith("studio") else "flat" if "apartment" in lab else None
+
+
+def sale_trends(rows, months=24, min_sales=5):
+    """Per community: monthly sale price per sq ft for the last `months` months with at least `min_sales`
+    sales, and the year-on-year change (mean of the last 3 such months against the same 3 calendar months
+    a year earlier). From Dubai Data's community_monthly.csv (built homes, outliers trimmed)."""
+    by = defaultdict(dict)
+    for r in rows:
+        try:
+            psf, n = float(r["median"]), int(float(r.get("n_sales") or r.get("n") or 0))
+        except (TypeError, ValueError):
+            continue
+        if n >= min_sales and psf > 0:
+            by[r["community"]][r["month"]] = (round(psf), n)
+    out = {}
+    for name, ms in by.items():
+        keys = sorted(ms)[-months:]
+        trend = [{"m": k, "psf": ms[k][0]} for k in keys]  # months with too few sales are already left out
+        last = keys[-3:]
+        prev = [f"{int(k[:4]) - 1}{k[4:]}" for k in last]
+        yoy = None
+        if len(last) == 3 and all(p in ms for p in prev):
+            a, b = sum(ms[k][0] for k in last) / 3, sum(ms[p][0] for p in prev) / 3
+            yoy = round((a - b) / b * 100, 1)
+        out[name] = {"trend": trend, "yoy": yoy}
+    return out
 
 
 TOP_AREA_SHARE = 0.9  # a community at least this much inside one DLD area may use that area's official point

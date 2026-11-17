@@ -47,7 +47,8 @@ MIRRORS = [
     ("github", "https://raw.githubusercontent.com/datadubai/dubai-real-estate-dld/main/"),
 ]
 FILES = ["README.md", "data/rents_by_community.csv", "data/community_bedrooms.csv",
-         "data/communities.csv", "data/areas.csv", "data/projects.csv"]
+         "data/communities.csv", "data/areas.csv", "data/projects.csv", "data/community_monthly.csv"]
+EXPORT_ONLY = ("projects.csv", "community_monthly.csv")  # not on the live pages: always from the export
 
 
 def out_dir():
@@ -83,7 +84,7 @@ def main(sleep=time.sleep):
     changed = 0
     # With fresh live files, only projects.csv (not on the live pages) comes from the export:
     # the export's older CSVs and README must not overwrite the newer live ones.
-    files = [f for f in FILES if f.endswith("projects.csv")] if live_ok else FILES
+    files = [f for f in FILES if f.endswith(EXPORT_ONLY)] if live_ok else FILES
     for f in files:
         dest = os.path.join(out, os.path.basename(f))
         for name, base in MIRRORS:

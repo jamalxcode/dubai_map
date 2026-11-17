@@ -14,6 +14,8 @@ AREA_DEFAULTS = {
     "label": None, "lat": None, "lng": None, "dld_areas": [], "n": 0, "median": None,
     "p25": None, "p75": None, "median_sqm": None, "reg_types": {}, "by_unit": [], "monthly": [],
     "top_projects": [], "yield_pct": None, "sale_median": None, "sale_psf": None, "url": None,
+    "sale_trend": [],  # monthly sale price per sq ft [{m, psf}], last 24 months (Dubai Data community_monthly)
+    "sale_yoy": None,  # % change in sale price per sq ft: last 3 months against the same 3 months a year before
     "source": None,   # None: the main source; "ccp": Continental Club older districts (ccp_areas.py)
     "through": None,  # set when an area's figures run to a different date than the rest
 }

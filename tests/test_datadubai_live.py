@@ -65,7 +65,7 @@ class LiveTests(TempData):
         areas = {a["name"]: a["url"] for a in self.rows("areas.csv")}
         self.assertEqual(areas["Al Barsha South Fourth"], "https://datadubai.ae/communities/jumeirah-village-circle/")
         self.assertIn("Some Area", areas, "the export's other areas are kept")
-        self.assertEqual(self.mirror_calls, ["huggingface:data/projects.csv"], "only projects.csv still comes from the export")
+        self.assertEqual(self.mirror_calls, ["huggingface:data/projects.csv", "huggingface:data/community_monthly.csv"], "only files the live pages lack still come from the export")
         self.assertEqual(len(self.calls), 4, "rents.json + one page per community")
 
     def test_share_in_top_area_for_a_split_community(self):

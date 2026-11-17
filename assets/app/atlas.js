@@ -301,6 +301,15 @@ function spark(monthly){
   const d=pts.map((m,i)=>(i?'L':'M')+(i*w/(pts.length-1)).toFixed(1)+','+(h-4-(hi===lo?.5:(m.median-lo)/(hi-lo))*(h-8)).toFixed(1)).join('');
   return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+T('Monthly median rent')+'"><path d="'+d+'" fill="none" stroke="#C9A227" stroke-width="2"/></svg><br><small>'+safe(T('Monthly median, {a} to {b}',{a:pts[0].m,b:pts.at(-1).m}))+'</small><br>';
 }
+// Sale price per sq ft, month by month (Dubai Data, months with at least 5 sales), and the change on a year ago.
+function saleTrend(a){
+  const t=a.sale_trend||[];if(t.length<6)return '';
+  const vs=t.map(x=>x.psf),lo=Math.min(...vs),hi=Math.max(...vs),w=230,h=36;
+  const d=t.map((x,i)=>(i?'L':'M')+(i*w/(t.length-1)).toFixed(1)+','+(h-3-(hi===lo?.5:(x.psf-lo)/(hi-lo))*(h-6)).toFixed(1)).join('');
+  const yoy=a.sale_yoy;
+  return '<div class="trend"><small>'+T('Sale price per sq ft, {a} to {b}',{a:t[0].m,b:t.at(-1).m})+(yoy!=null?' · <b class="'+(yoy>0?'up':yoy<0?'down':'')+'">'+T('{sign}{v}% on a year ago',{sign:yoy>0?'+':'',v:yoy})+'</b>':'')+'</small>'+
+    '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+safe(T('Sale price per sq ft, monthly'))+'"><path d="'+d+'" fill="none" stroke="var(--gold-ink)" stroke-width="2"/></svg></div>';
+}
 function popup(a){
   const types=Object.entries(a.reg_types||{}).map(([k,v])=>safe(k)+' '+fmt(v)).join(', ');
   const aed=v=>'<b>AED '+fmt(v)+'</b>';
@@ -310,7 +319,7 @@ function popup(a){
     (a.p25!=null?'<br>'+T('Middle half pay AED {a} to {b}',{a:fmt(a.p25),b:fmt(a.p75)}):'')+'<br>'+
     (a.median_sqm?T('AED {v} per m² a year',{v:fmt(a.median_sqm)})+'<br>':'')+
     (a.yield_pct!=null?T('Gross yield {v}%',{v:a.yield_pct})+(a.sale_median?T(', median sale price AED {v}',{v:fmt(a.sale_median)}):'')+'<br>':'')+
-    (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+
+    (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+saleTrend(a)+
     (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr'+(u.n!=null&&u.n<THIN?' class="thin" title="'+safe(T('Fewer than {n} contracts: a thin figure',{n:THIN}))+'"':'')+'><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>'+(a.by_unit.some(u=>u.n!=null&&u.n<THIN)?'<small>'+T('Italic rows: fewer than {n} contracts, so treat them as a rough guide.',{n:THIN})+'</small><br>':''):'')+
     (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<table><tr><th>'+T('Busiest buildings')+'</th><th>n</th><th>'+T('Median')+'</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
     (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'')+

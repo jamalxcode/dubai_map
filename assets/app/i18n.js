@@ -45,6 +45,9 @@
 
   // Text the scripts build (atlas.js, companion.js), keyed by its English.
   const AR = {
+    'Sale price per sq ft, monthly': 'سعر البيع الشهري لكل قدم مربعة',
+    '{sign}{v}% on a year ago': '{sign}{v}% مقارنة بالعام الماضي',
+    'Sale price per sq ft, {a} to {b}': 'سعر البيع لكل قدم مربعة، من {a} إلى {b}',
     'For owners: median sale price {sale}.': 'للملاك: سعر البيع الوسيط {sale}.',
     'For owners: median sale price {sale}, gross rental yield {v}%.': 'للملاك: سعر البيع الوسيط {sale}، والعائد الإيجاري الإجمالي {v}%.',
     'Median sale price (AED)': 'سعر البيع الوسيط (درهم)',

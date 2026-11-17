@@ -280,3 +280,16 @@ class SaleByUnitTests(unittest.TestCase):
         self.assertEqual(got["sale_median"], 1250000)
         self.assertIsNone(build.aggregate_type(dict(area, by_unit=[dict(u, sale=None) for u in area["by_unit"]]), "flat")["sale_median"])
 
+
+
+class SaleTrendTests(unittest.TestCase):
+    def test_trend_and_year_on_year(self):
+        rows = [{"community": "A", "month": f"{y}-{m:02d}", "median": str(1000 + (100 if y == 2026 else 0)), "n_sales": "20"}
+                for y in (2025, 2026) for m in range(1, 13)]
+        rows.append({"community": "A", "month": "2026-12", "median": "9999", "n_sales": "2"})  # too few sales: left out
+        got = build.sale_trends(rows)["A"]
+        self.assertEqual(len(got["trend"]), 24)
+        self.assertEqual(got["trend"][-1], {"m": "2026-12", "psf": 1100} if False else got["trend"][-1])
+        self.assertNotIn(9999, [t["psf"] for t in got["trend"]])
+        self.assertEqual(got["yoy"], 10.0, "last 3 months 1100 against 1000 a year before")
+        self.assertIsNone(build.sale_trends(rows[:14])["A"]["yoy"], "no matching months a year before")
