@@ -28,11 +28,13 @@ Then one clear next step: compare, save, set a reminder or see it on the map. On
 - Every price wears the **price key**, from the palest blue (cheapest) to deep navy (dearest). A little **dial** and the label's shading show the rent as a share of the **top of the key**. The key ignores the most extreme 5% at each end, so one palace-priced area can't wash everything else out; those areas simply wear the deepest or palest blue.
 - Too crowded to read? Labels **merge** into one oxblood label with the contract-weighted average. Zoom in and they come apart. Two neighbours that only just collide get their own labels, one moved aside with a thin line to its spot. **Labels never overlap.** Ever. A test checks.
 - The big number up top is the **average rent of whatever is on screen**, rolling like an odometer as you pan.
+- Areas are **shaded inside their official boundaries** in the same blues, so the city reads at a glance even zoomed out.
+- Figures that rest on **fewer than 10 contracts** are drawn dashed and italic, so you know which ones to take with a pinch of salt.
 - Switch the whole map between **Rent, Sale price and Yield** with one tap: the labels, the blues and the key all follow, each view with its own scale.
 - Filter by **property type** (Homes, Flats, Studios), **unit**, rent range, or switch the labels to rent per m² or contract counts. Labour camps and whole-building leases never sneak into home rents.
 
 ### 📸 Drill down and see the place
-Tap an area for its full breakdown: every bedroom count, contracts, yield, the DLD areas it covers. Plus:
+Tap an area for its full breakdown: every bedroom count, contracts, yield, the DLD areas it covers, and a **24-month sale price trend** with the change on a year ago. Plus:
 
 - **photos taken nearby**, freely licensed from Wikimedia Commons, each credited to its photographer. Tap one for full screen and swipe through;
 - one-tap links to **Google Maps, Street View and Google photos** of the area.
@@ -50,7 +52,7 @@ On a phone the breakdown slides up from the bottom with the photos first, sized 
 - All of it stays **in your browser**. Download it, import it, delete it. Nothing is sent anywhere.
 
 ### 📤 Share it
-**Share** on any result opens your phone's share sheet. Every area has its own link (`/a/dubai-marina/`), and pasted into WhatsApp it previews as *"Dubai Marina rents: AED 90,000 a year for a 1-bedroom apartment"*.
+**Share** on any result opens your phone's share sheet. Every area has its own page (`/a/dubai-marina/`) with all its figures, which search engines can find too; pasted into WhatsApp it previews as *"Dubai Marina rents: AED 90,000 a year for a 1-bedroom apartment"*.
 
 ### ♿ Works for everyone
 Oxblood, ivory and gold leaf for everything you read; blues only for prices. Keyboard-friendly (map labels are real buttons), WCAG 2.1 AA contrast in light, dark and Arabic, checked automatically on every change. Dark mode follows your phone. Motion switches off if your device asks.

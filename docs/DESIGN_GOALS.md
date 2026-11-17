@@ -103,11 +103,13 @@ Discussed with the owner, not built yet. What each needs:
 
 | Idea | Needs | Status |
 |---|---|---|
-| Contract-level data: ranges, trends, AED/m², new vs renewal, busiest buildings | Dubai Pulse API key (owner asked Digital Dubai support on 16 Nov) | ⏳ waiting; the code is ready |
+| Sale price trend and year-on-year change | Dubai Data community_monthly | ✅ done 17 Nov |
+| Area pages findable by search engines | real content + sitemap | ✅ done 17 Nov |
+| Contract-level data: ranges, rent trends, AED/m², new vs renewal, busiest buildings | Dubai Pulse API key (owner asked Digital Dubai support on 16 Nov) | ⏳ waiting; the code is ready |
 | Street View inside an area's breakdown | Owner's Google Maps Embed API key (free, billing switched on, restricted to the site) | ⏳ waiting for the key |
 | Building-level drill-down (photos and Street View at a project) | Dubai Data's project coordinates (105 of 723 projects have a real point) | ⏳ planned |
 | Arabic area names on the rent labels | DLD's own Arabic names (contract-level data) | ⏳ planned |
-| Community outlines shaded under the labels | Dubai Municipality community polygons | ⏳ planned |
+| Community outlines shaded under the labels | Dubai Municipality community polygons | ✅ done 17 Nov (111 of 155 areas; sub-communities share their DLD area's outline) |
 | Al Twar Fifth on the map | A reviewed point or alias (not in Municipality data or OpenStreetMap) | ⏳ flagged by the freshness check |
 | Other cities in the region | A source adapter and location file per registry | ⏳ later |
 | Private comparison of the owner's own units | Kept outside this public repo | ⏳ later |

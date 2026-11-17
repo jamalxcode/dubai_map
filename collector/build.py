@@ -5,6 +5,7 @@
   data/meta.json    freshness, counts, unmatched area names
 """
 import csv
+import json
 import os
 import statistics
 import sys
@@ -268,6 +269,9 @@ def build_aggregate(now, state, own=None):
         sub.sort(key=lambda a: -a["n"])
         counts[t] = sum(a["n"] for a in sub)
         files[f"areas_{t}.json"] = {"generated_at": now, "from": None, "to": through, "type": t, "areas": sub}
+    shapes = area_outlines(areas, load_dm_points())
+    if shapes:
+        files["outlines.json"] = shapes
     files["meta.json"] = {
         "mode": "aggregate", "generated_at": now,
         "contracts_last_12m": total, "mapped_last_12m": sum(a["n"] for a in areas if a["lat"] is not None),
@@ -321,6 +325,30 @@ def sale_trends(rows, months=24, min_sales=5):
             yoy = round((a - b) / b * 100, 1)
         out[name] = {"trend": trend, "yoy": yoy}
     return out
+
+
+def area_outlines(areas, dm):
+    """Each map area's official outlines: the Dubai Municipality communities of its DLD areas (dm maps a
+    normalised DLD name to its DM community row). A community claimed by several map areas goes to the
+    busiest. Returns {"areas": [{"label", "rings"}]} for data/outlines.json, or None without outlines."""
+    try:
+        with open(os.path.join(store.DATA, "dm_outlines.json"), encoding="utf-8") as f:
+            shapes = json.load(f)
+    except (OSError, ValueError):
+        return None
+    owner = {}
+    for a in areas:
+        if a.get("lat") is None:
+            continue
+        for d in a.get("dld_areas") or []:
+            row = dm.get(norm_area(d))
+            key = row and row.get("community")
+            if key in shapes and (key not in owner or a["n"] > owner[key]["n"]):
+                owner[key] = a
+    rings = defaultdict(list)
+    for key, a in owner.items():
+        rings[a["label"]] += shapes[key]
+    return {"areas": [{"label": k, "rings": v} for k, v in sorted(rings.items())]}
 
 
 TOP_AREA_SHARE = 0.9  # a community at least this much inside one DLD area may use that area's official point

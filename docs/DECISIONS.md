@@ -358,6 +358,20 @@ The owner asked for rent, sale price and gross yield buttons on the map, the key
 
 The owner renamed the site "Dubai Real Estate Atlas" (Arabic: أطلس دبي العقاري), which fits now that it shows sale prices and yields as well as rents. Changed everywhere a person sees it: page title, header, link previews and share text, area preview pages, calendar reminders, the export file name, the share image, the deploy workflow's name and the docs. Kept on purpose: the browser storage key (`rentAtlas`, so visitors keep their saved areas) and the calendar reminder IDs (so existing reminders aren't duplicated). The longer title gets its own row under the language and theme buttons at every width. The repository and site address (`dubai_map`) are unchanged.
 
+## Decision on 2026-11-17 (thirty-seventh pass): the fourth critique, all nine done
+
+1. **Thin figures:** 11 bedroom figures rest on fewer than 10 contracts. They stay on the map but get a dashed edge and outline and an italic figure (no fading, so contrast is unchanged), italic rows in breakdowns and area pages, and a legend note.
+2. **Rent-only areas:** in the sale and yield views the legend says the 56 older districts have rents only.
+3. **The table and rent check follow the view:** title, subtitle and sort change with the view; a sale price column (also in the CSV); the rent check adds the median sale price for owners.
+4. **Sale price trend:** the weekly export's `community_monthly.csv` (always taken from the export, like projects.csv) gives a 24-month line of sale price per sq ft and the change on a year ago in each breakdown (90 areas with a line, 70 with a change).
+5. **No alert fatigue:** unplaced busy areas are listed in the freshness run's summary as known issues; they no longer fail it (and email) every 6 hours.
+6. **Pale blue visible:** label edges and dials use the price colour darkened a little; the legend keeps the owner's exact colours.
+7. **MapLibre on demand:** it loads only when the map is on or near the screen. On a typical phone the map is on the first screen, so it still loads; it waits when the map is out of sight.
+8. **Area pages:** real pages with each area's figures, trend and sources, and a button to the map, instead of an instant redirect; `sitemap.xml` lists them. A shared link now opens the area's page, one tap from the map. English only for now.
+9. **Community outlines:** the placement job now also saves the Municipality outlines (simplified to about 40 m); the build gives each area the outlines of its DLD areas (`outlines.json`, 30 KB); the page shades them in the area's price colour for the current view. 111 of 155 placed areas have an outline: official boundaries don't separate sub-communities (JLT and DMCC share Al Thanyah Fifth), so a shared outline goes to the busiest.
+
+Data rebuilt after merging (daily pull for the trend file, placement job for the outlines), as the last lesson says.
+
 ## Prioritized next work
 
 **Status on 2026-11-16:** P0 is done (Dubai Data fallback, live Pages deploy, data checks and fixtures). P1 is built and tested; the daily feed waits for the Dubai Pulse key (DLD's own service is off until DLD agrees in writing). P2 item 6 is partly done: every area sits at a point inside its official Dubai Municipality community; shaded outlines are next. P2 item 7 is partly done (per-bedroom medians, rent dial and shading; ranges and trends wait for contract-level data). P3 item 10 is done: tests (Python, Node, Chromium + axe), phone layout, accessibility in light, dark and Arabic, and the front-end split with self-hosted libraries. Since 16 Nov the site is also in Arabic, shares with link previews, shows photos near each area and lets the visitor pick the base map's language.
@@ -400,6 +414,8 @@ The owner renamed the site "Dubai Real Estate Atlas" (Arabic: أطلس دبي ا
 - OSM copyright: https://www.openstreetmap.org/copyright
 
 ## Change log
+
+- 2026-11-17: Fourth critique: thin figures marked, view-aware table, sale trend, community outlines, real area pages with a sitemap, quieter alerts, visible pale blues, MapLibre on demand.
 
 - 2026-11-17: Renamed to Dubai Real Estate Atlas.
 

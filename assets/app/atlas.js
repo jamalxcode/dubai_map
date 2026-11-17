@@ -153,6 +153,19 @@ async function vectorBase(){
 }
 
 const layer=L.layerGroup().addTo(map);
+// Community outlines (official Dubai Municipality boundaries, data/outlines.json), shaded with each area's
+// price-key colour for the current view, under the labels. Loaded after the data; the map works without them.
+map.createPane('outlines');map.getPane('outlines').style.zIndex=390;map.getPane('outlines').style.pointerEvents='none';
+const outlineLayer=L.layerGroup().addTo(map);let OUTLINES=null;
+const cssVar=v=>{const m=/^var\((--[\w-]+)\)$/.exec(v||'');return m?getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim():v};
+function drawOutlines(){
+  outlineLayer.clearLayers();if(!OUTLINES||!LABEL.colorOf)return;
+  const byLabel=new Map(POINTS.map(p=>[p.a.label,p]));
+  for(const o of OUTLINES){const p=byLabel.get(o.label);if(!p)continue;
+    const col=cssVar(LABEL.colorOf(p.v));
+    L.polygon(o.rings.map(r=>r.map(([x,y])=>[y,x])),{pane:'outlines',interactive:false,color:col,weight:1,opacity:.7,fillColor:col,fillOpacity:.32}).addTo(outlineLayer)}
+}
+function loadOutlines(){getJSON('data/outlines.json').then(d=>{OUTLINES=d.areas||[];drawOutlines()}).catch(()=>{})}
 let POINTS=[],LABEL={},animateLabels=true;
 const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
 function labelText(v,metric){return metric==='sale'?'AED '+compact(v):metric==='yield'?Number(v).toFixed(1)+'%':metric==='n'?T('{n} contracts',{n:compact(v)}):metric==='median_sqm'?'AED '+fmt(v)+'/m²':'AED '+compact(v)}
@@ -461,7 +474,7 @@ function draw(){
     const thin=bu?(bu.n!=null&&bu.n<THIN):a.n<THIN;POINTS.push({a,v,n,thin})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
   const sc=scaleFor(vals),colorOf=sc.colorOf;
-  LABEL={metric,colorOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();
+  LABEL={metric,colorOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();drawOutlines();
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
   $('legend').innerHTML='<div class="t">'+(metric==='n'?T('Contracts'):metric==='yield'?T('Gross yield'):metric==='sale'?T('Median sale price'):metric==='median_sqm'?T('Rent per m²'):AREAS.some(a=>a.median_kind==='typical')?T('Typical yearly rent'):T('Median yearly rent'))+'</div><div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ends"><span>'+(vals.length?'≤ '+f(sc.lo):'')+'</span><span>'+(vals.length?'≥ '+f(sc.hi):'')+'</span></div>';
@@ -552,5 +565,5 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let sav
 paintToggle();
 // The base map comes after the rent data, and only once the map is on (or near) the screen: on phones the map
 // sits below the first screen, so MapLibre (1 MB) isn't fetched by visitors who never scroll to it.
-init().finally(()=>{const el=$('map');if(!('IntersectionObserver' in window))return vectorBase();
+init().finally(()=>{loadOutlines();const el=$('map');if(!('IntersectionObserver' in window))return vectorBase();
   const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();vectorBase()}},{rootMargin:'400px'});io.observe(el)});

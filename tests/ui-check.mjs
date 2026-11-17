@@ -139,6 +139,8 @@ try {
     check(views.yield.metric === 'yield' && views.yield.top === views.yield.p95 && /%/.test(views.yield.label),
       `${name}: "Yield" shows gross yields with their own key (top ${views.yield.top}%)`);
     check(views.median.metric === 'median' && views.median.top !== views.sale.top, `${name}: "Rent" switches back`);
+    const shapes = await page.waitForFunction(() => document.querySelectorAll('.leaflet-outlines-pane path').length, null, { timeout: 5000 }).then(h => h.jsonValue()).catch(() => 0);
+    check(shapes >= 50, `${name}: official community outlines are shaded under the labels (${shapes})`);
     const z0 = await page.evaluate(() => map.getZoom());
     await page.click('.leaflet-control-zoom-in');
     await page.waitForTimeout(400);

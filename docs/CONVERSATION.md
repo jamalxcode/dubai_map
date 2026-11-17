@@ -215,12 +215,15 @@ A Rent · Sale price · Yield switch on the map; each view has its own key from 
 
 Renamed everywhere visible (English and Arabic: أطلس دبي العقاري), including link previews, share text, reminders and the share image; saved areas and reminders keep working. The header buttons now sit on their own row above the longer title. The site address stays https://jamalxcode.github.io/dubai_map/.
 
+### 17 Nov · "critique the map app, how can it be made better?" → "do it all, merge on main"
+
+Nine items, all done and merged in three batches (decisions, thirty-seventh pass): thin figures marked; rent-only areas explained in the sale and yield views; the table and rent check follow the view; a 24-month sale price trend in each breakdown; unplaced areas no longer email every 6 hours; pale blues visible; MapLibre on demand; area pages as real content with a sitemap; official community outlines shaded under the labels.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.
 2. **Arabic area names**: from DLD's own Arabic field once contract-level data arrives (the interface is already in Arabic). A native speaker's read of the Arabic interface text would also help.
 3. **Al Twar Fifth** (2,480 contracts) is the only area off the map: not in Dubai Municipality's list (it stops at Al Twar Fourth) nor in OpenStreetMap. The freshness check flags it every 6 hours until a reviewed point goes into `data/area_locations.csv` (a line like `al twar fifth,Al Twar Fifth,<lat>,<lng>,area`) or an alias into `data/dld_dm_aliases.csv`. Al Aryam and Al Waha Villas are placed (26th pass).
 4. **Old branches** to delete on GitHub (the session may not): `datadubai-daily`, `engagement`, `fix-tabs`, `mobile-redesign` (merged), `phone-map-first` (superseded), `probe-sources` (one-off probes).
-5. Community outlines (shaded areas) from Dubai Municipality data.
 5a. **Street View inside the breakdown** (option 3): needs the owner's Google Maps Embed API key (free, billing enabled, restricted to the site's address).
 6. Expansion to other cities in the region (new source adapter per registry).

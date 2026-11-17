@@ -44,6 +44,9 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 - Labels never overlap. Overlapping labels merge into a group label coloured by the price key like any other, marked by a gold stacked-card outline and "avg" (contract-weighted average, "avg"); groups of 2–3 name their busiest area ("Al Barsha First +1"), bigger ones count ("12 areas").
 - A group of up to 3 comes apart when each label fits at its point or just beside it; a moved label has a thin line to a dot at its point.
 - Labels keep clear of the zoom buttons, the language button and the legend, and are re-placed when a control appears.
+- **Thin figures** (fewer than 10 contracts): dashed edge and outline, italic figure; same colours and contrast.
+- Edges and dials use the price colour darkened slightly (`color-mix` with espresso), so the palest blue still shows on an ivory label.
+- **Community outlines** under the labels: official boundaries, filled with the area's price colour at 32% and outlined at 70%, redrawn with every view, filter and type change.
 - Labels are keyboard buttons: Tab to one, Enter or Space opens it; the spoken name is the visible text.
 - Clicking a group zooms in until it splits; at full zoom it lists its areas.
 - Rules live in `assets/app/labels.js` (no DOM) and are unit-tested.
@@ -62,9 +65,11 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 - Wide screens: a check flies the map to the area (zoom 14) and opens its breakdown. Narrower screens: "Show on the map" does it.
 - Remembered in the browser only: the last check, recent checks, saved areas, the map view.
 
+- **The table follows the map view:** its title and subtitle change, it gains a sale price column, and in the sale and yield views it is sorted by that column, highest first. The rent check adds the median sale price for owners.
+
 ## 7. Area breakdown (drilling down)
 
-- **Content order:** the area's name; photos taken nearby and the Google links (Maps, Street View, Photos); the median and contracts; range; rent per m²; yield; unit table; busiest buildings; sources; "Check a rent here".
+- **Content order:** the area's name; photos taken nearby and the Google links (Maps, Street View, Photos); the median and contracts; the sale price trend (24-month line, change on a year ago); range; rent per m²; yield; unit table; busiest buildings; sources; "Check a rent here".
 - **Wide screens:** a Leaflet pop-up, up to 320 px wide.
 - **860 px and below:** a bottom sheet, full width (capped at 640 px, centred), at most 80% of the screen high, scrolling on its own; photos and links move to the top; links become 40 px chips. Closes with ×, swipe down, Escape or a tap on the map. The pop-up stays open but hidden and its content moves into the sheet, so everything that hooks into pop-ups works in both.
 - **Photos:** up to 4, a grid on wide screens, a swipeable row on phones (about 72–80% of the width, 150–170 px high). Each shows its author and licence. A photo that fails to load disappears; no photos means no strip.

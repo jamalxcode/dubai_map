@@ -72,6 +72,9 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Rent dial and shading | Fill = rent ÷ the top of the key (the 95th percentile of what is shown; the rent check uses the 95th percentile for the home type checked); dearer areas show a full dial | `atlas.js share`, `priceKey` |
 | Colour bands | Six blues (palest → deep navy, low → high) in equal steps between the 5th and 95th percentile of what is shown, so extreme areas don't stretch the key; below the 5th percentile: the palest, above the 95th: the deepest. Legend ends read "≤" and "≥" | `atlas.js scaleFor` |
 | Base map names | English: `name:en`, else `name_en`, else Latin, else the local name. Arabic: `name:ar`, else the local name. Both: the map style's own (Latin and local script). Starts in the page's language; the visitor's choice is remembered (`mapLang`). Road numbers are left alone | `atlas.js NAME_FIELD` |
+| Thin figures | A figure from fewer than 10 contracts (where the source gives a count) is still shown, with a dashed edge and outline and an italic figure on the map, italic rows in the breakdown and on area pages, and a legend note | `atlas.js THIN` |
+| Community outlines | Each map area is shaded inside the official Dubai Municipality outlines of its DLD areas, in its price-key colour for the current view; a DLD area shared by several map areas goes to the busiest (official boundaries don't separate sub-communities, so 44 of 155 areas have no outline of their own) | `build.area_outlines`, `dm_communities.write_outlines`, `atlas.js drawOutlines` |
+| Sale price trend | Monthly sale price per sq ft, last 24 months with at least 5 sales (Dubai Data community_monthly); year-on-year change = mean of the last 3 months against the same 3 months a year before | `build.sale_trends` |
 | Rent check moves the map | Wide screens (1,100 px and up): fly to the area at zoom 14 and open its breakdown. Not on narrower screens, not for a resumed check | `companion.js` |
 
 ## 6. The rent check
@@ -97,7 +100,7 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Rule | Value | Where |
 |---|---|---|
 | Yellow warning on the page | Data more than 7 days behind | `atlas.js staleness` |
-| Freshness check | Every 6 hours; fails (GitHub emails the owner) when: data more than 10 days old; no successful pull in 14 hours or the last one failed; the live site more than 2 hours behind the saved data; a source fails; a cross-check falls below its floor; an area with 1,000+ contracts is unplaced | `scripts/check_fresh.py` |
+| Freshness check | Every 6 hours; fails (GitHub emails the owner) when: data more than 10 days old; no successful pull in 14 hours or the last one failed; the live site more than 2 hours behind the saved data; a source fails; a cross-check falls below its floor. Known slow issues (an area with 1,000+ contracts the map can't place) are listed in the run summary but don't fail it | `scripts/check_fresh.py` |
 | Cross-checks | Agreement = within 15%. Floors: Dubai Real Estate Data 50%, Continental Club Property 70%, judged only with 5+ matched figures | `crosscheck.TOLERANCE`, `check_fresh.CROSSCHECK_FLOOR` |
 | What is compared | Dubai Real Estate Data (apartments only) against our studio-to-2-bedroom figure; Continental Club against the same unit size for a DLD area that maps to exactly one of ours. A source is never compared with itself | `collector/crosscheck.py` |
 | Schedules stay on | Every scheduled workflow re-enables itself (GitHub turns off quiet ones after 60 days) | workflows |
@@ -106,7 +109,7 @@ A point is a reference for the area, never a building; the page says so. Coordin
 
 | Rule | Value | Where |
 |---|---|---|
-| Area links | `a/<slug>/` per area, slug = name lower-cased, accents dropped, anything else → "-". Two areas with the same slug stop the deploy | `scripts/share_pages.py`, `companion.js slug` |
+| Area pages | `a/<slug>/` per area: a real page with the area's figures (every home type: rent, contracts, sale price, yield), its trend and sources, and a button to the map (no automatic redirect); listed in `sitemap.xml`. Slug: slug = name lower-cased, accents dropped, anything else → "-". Two areas with the same slug stop the deploy | `scripts/share_pages.py`, `companion.js slug` |
 | Preview figure | 1-bedroom median where known, else the area's own headline figure | `share_pages.headline` |
 | Share image | No made-up figures | `scripts/share_image.mjs` |
 | Language | `?lang=` link (remembered) → saved choice → device language; Arabic reads right to left, the map stays left to right | `index.html`, `assets/app/i18n.js` |

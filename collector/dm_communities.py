@@ -135,17 +135,61 @@ def build(sources):
                 continue  # outside Dubai: bad geometry, skip rather than mislead
             area_km2 = sum(abs(ring_area_centroid(r)[0]) for r in rings) * (111.32 ** 2) * math.cos(math.radians(lat))
             rows[key] = {"community": key, "comm_num": int(float(num)) if num not in (None, "") else "",
-                         "lat": f"{lat:.5f}", "lng": f"{lng:.5f}", "area_km2": f"{area_km2:.2f}", "source": name}
+                         "lat": f"{lat:.5f}", "lng": f"{lng:.5f}", "area_km2": f"{area_km2:.2f}", "source": name,
+                         "_rings": rings}
     return rows
 
 
 def write(rows, path=None):
     path = path or out_path()
     with open(path, "w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, ["community", "comm_num", "lat", "lng", "area_km2", "source"], lineterminator="\n")
+        w = csv.DictWriter(f, ["community", "comm_num", "lat", "lng", "area_km2", "source"], lineterminator="\n",
+                           extrasaction="ignore")
         w.writeheader()
         for k in sorted(rows):
             w.writerow(rows[k])
+
+
+def simplify(ring, tol=0.0004):
+    """Douglas-Peucker: drop points closer than `tol` degrees (about 40 m) to the simplified line."""
+    if len(ring) < 4:
+        return ring
+    def dist(p, a, b):
+        (x, y), (x1, y1), (x2, y2) = p, a, b
+        dx, dy = x2 - x1, y2 - y1
+        if dx == dy == 0:
+            return math.hypot(x - x1, y - y1)
+        t = max(0, min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)))
+        return math.hypot(x - (x1 + t * dx), y - (y1 + t * dy))
+    keep, stack = {0, len(ring) - 1}, [(0, len(ring) - 1)]
+    while stack:
+        i, j = stack.pop()
+        far, k = 0, None
+        for m in range(i + 1, j):
+            d = dist(ring[m], ring[i], ring[j])
+            if d > far:
+                far, k = d, m
+        if k is not None and far > tol:
+            keep.add(k)
+            stack += [(i, k), (k, j)]
+    return [ring[m] for m in sorted(keep)]
+
+
+def outlines_path():
+    return os.path.join(store.DATA, "dm_outlines.json")
+
+
+def write_outlines(rows, path=None):
+    """Simplified community outlines (about 40 m, 4 decimals) for the map's shading: {COMMUNITY: [ring, ...]}."""
+    out = {}
+    for k in sorted(rows):
+        rings = [[[round(x, 4), round(y, 4)] for x, y in simplify(r)] for r in rows[k].get("_rings") or []]
+        rings = [r for r in rings if len(r) >= 3 and abs(ring_area_centroid([tuple(p) for p in r])[0]) > 1e-7]
+        if rings:
+            out[k] = rings
+    with open(path or outlines_path(), "w", encoding="utf-8") as f:
+        json.dump(out, f, separators=(",", ":"))
+    return out
 
 
 def main(local_files=None):
@@ -164,6 +208,7 @@ def main(local_files=None):
         sys.exit(f"only {len(rows)} communities loaded; not overwriting {out_path()}")
     write(rows)
     print(f"wrote {len(rows)} communities to {out_path()}")
+    print(f"wrote {len(write_outlines(rows))} community outlines to {outlines_path()}")
 
 
 if __name__ == "__main__":
