@@ -4,7 +4,7 @@ Three times a day a GitHub Actions job pulls rents from public sources, turns th
 
 ## 1. When it runs
 
-The **"Daily Ejari pull"** workflow (`.github/workflows/daily-ejari.yml`) runs at **06:17, 14:17 and 22:17 UAE time** (02:17, 10:17, 18:17 UTC). cron-job.org also starts it, because GitHub's own scheduler can be late or skip runs. Its first step stops GitHub from switching off a quiet schedule after 60 days.
+The **"Daily Ejari pull"** workflow (`.github/workflows/daily-ejari.yml`) runs at **06:17, 14:17 and 22:17 UAE time** (02:17, 10:17, 18:17 UTC). cron-job.org starts it on time; GitHub's own timer is the backup and often fires hours late. A first **guard** job lets a timer run step aside when a pull succeeded in the last 3 hours (manual and cron-job.org starts always run). The pull's first step stops GitHub from switching off a quiet schedule after 60 days.
 
 ## 2. Where the data lives
 
@@ -23,6 +23,8 @@ Generated files (the `GENERATED` list in `scripts/data-branch.sh`):
 | `latest.json` | The table rows (area, DLD area, home size, rent, contracts, sale price, yield); also what Download CSV gives |
 | `meta.json` | How far the data runs, when it was built, each source's status ("Data health"), areas with no map point yet |
 | `outlines.json` | Official community outlines, simplified, one set per map area |
+| `changes.json` | What changed since the previous publication: the biggest moves, unconfirmed jumps, new and gone areas (feeds the rent check's "since your last visit") |
+| `history/<date>.json` | Our own rent history: every area's medians for each publication (about 30 KB each), named by the date the data runs to |
 | `state.json` | Each source's state: ok, failed with the reason, or off, and when it last ran |
 | `datadubai/` | Dubai Data's files as last fetched (CSV export or rebuilt from the live pages), with ETags |
 | `crosscheck/` | The cross-check sources' figures (and the older districts from Continental Club) |
@@ -38,12 +40,13 @@ Generated files (the `GENERATED` list in `scripts/data-branch.sh`):
    - **DLD open-data service** (`collector/fetch_dld.py`): off until DLD gives written permission.
    - **Dubai Pulse API** (`collector/fetch_ejari.py`): real contract-level Ejari data, but it needs the API key still awaited from Digital Dubai. It also imports any files dropped in `data/inbox/`.
    - **Dubai Data** (`collector/fetch_datadubai.py`): **the main source today.** Medians per community and per bedroom count, from DLD's Ejari feed, under CC BY 4.0.
-     - It first checks datadubai.ae's live pages. When their date has moved on, it reads each community's page, one request a second.
+     - It first checks datadubai.ae's live pages. When their date has moved on, it reads each community's page, one request a second. Pages that fail get one more try after 30 seconds (never after a "slow down" or "forbidden" answer); a page failing twice means the weekly export is used instead.
+     - Each new publication's date and when it was first seen go into `state.json` (`published_seen`, last 30), to learn when Dubai Data publishes.
      - Otherwise it uses the weekly export from Hugging Face, with the GitHub mirror as a fallback.
      - A file that hasn't changed costs one tiny request (an ETag check).
    - **Cross-checks** (`collector/fetch_crosscheck.py`, at most once a day): dubairealestatedata.com and continentalclub.ae. Continental Club also supplies the **56 older districts** (Deira, Bur Dubai, Karama…) that Dubai Data doesn't cover.
    - **Placing new areas** (`collector/geocode_missing.py`): an area with no map point gets a careful OpenStreetMap look-up, at most 10 per pull. A point is only accepted after checks (inside Dubai, a place rather than a shop or road, a close name match).
-3. **Build** (`collector/build.py`): turns the raw files into what the page shows (section 4).
+3. **Build** (`collector/build.py`): turns the raw files into what the page shows (section 4), compares them with our own history (section 5), and writes a summary to the run's page on GitHub: what changed since the previous publication, unconfirmed jumps, and where the cross-check sources differ by more than 15%.
 4. **Check before publishing** (`tests/test_data.py`): the files must be well-formed, the counts must add up, and the placed contracts must match the total. If anything looks broken, nothing is saved.
 5. **Save:** commit the generated files to the `data` branch.
    - Files are only added or updated, never deleted.
@@ -66,13 +69,25 @@ Generated files (the `GENERATED` list in `scripts/data-branch.sh`):
 - **Property types:** one file each for all homes, flats and studios. Labour camps and whole-building leases are kept out of home rents.
 - **Thin figures:** anything from fewer than 10 contracts is still published, but flagged so the map draws it dashed.
 
-## 5. Safety rules
+## 5. Our own history
 
+Dubai Data replaces its medians with each publication, so the build keeps a snapshot of every area's medians per publication (`collector/history.py`, `data/history/<date>.json`; the older districts run to their own dates and are left out). From the snapshots:
+
+- **Change over time:** each area and home size gets its change against the snapshot about a year back, or, until there is a year of history, the oldest one at least four weeks back. The breakdown shows "Rent +6.5% since 14 Nov 2025".
+- **Unconfirmed jumps:** a median (from at least 30 contracts) that moved more than 40% since the previous publication is published but marked: dashed on the map, with a note in its breakdown. The mark clears by itself when the next publication stays close to it.
+- **What changed** (`changes.json`, and the run summary): moves of 5% or more, the jumps, new and gone areas.
+- **Sources that differ:** where a cross-check source is more than 15% away from our figure, the area's breakdown says so, with their figure.
+
+The first snapshot is the publication to 16 Nov 2026, so changes appear from mid-December (four weeks later), and year-on-year from November 2027.
+
+## 6. Safety rules
+
+- **Unconfirmed jumps are marked, not hidden** (section 5): a single area's figure can't silently swing the map.
 - **Never publish a smaller catalog:** if a build has 30% fewer areas or contracts than the last one, it refuses (`collector/output.py`), and the site keeps the previous data.
 - **Polite fetching** (`collector/net.py`): a few small requests, a clear User-Agent, pauses between pages. No logins, no CAPTCHA workarounds, no listing sites. The DLD service stays off without permission.
 - **Each source records its own state** (`state.json`, `collector/state.py`): that drives the "Data health" list and stops a failed source from being retried too soon.
 
-## 6. After the pull
+## 7. After the pull
 
 - **`freshness.yml` runs every 6 hours** (`scripts/check_fresh.py`). It fails, and GitHub emails the owner, if the data is more than 7 days old or the pulls stop. Busy areas still missing a map point are listed as warnings, without an email.
 - **The weekly "Place unplaced areas" job** (`geocode.yml`) refreshes the Municipality community list and outlines, rebuilds, saves and deploys.

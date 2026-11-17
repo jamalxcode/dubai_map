@@ -18,6 +18,9 @@ AREA_DEFAULTS = {
     "sale_yoy": None,  # % change in sale price per sq ft: last 3 months against the same 3 months a year before
     "source": None,   # None: the main source; "ccp": Continental Club older districts (ccp_areas.py)
     "through": None,  # set when an area's figures run to a different date than the rest
+    "rent_change": None,  # {since, pct}: the median against our own snapshot about a year back (history.py)
+    "unconfirmed": None,  # {from, pct}: moved more than 40% since the previous publication, until confirmed
+    "disagree": [],       # [{source, unit, ours, theirs, pct}]: cross-check sources more than 15% away
 }
 
 

@@ -86,6 +86,43 @@ class LiveTests(TempData):
         with open(os.path.join(self.tmp, "state.json")) as f:
             self.assertEqual(json.load(f)["datadubai"]["state"], "failed")
 
+    def test_a_page_that_fails_once_is_tried_again(self):
+        self.fail_on, tries = "/communities/dubai-marina.json", []
+        real = self.fake_get
+        def flaky(url, **kw):
+            path = url.replace(fetch_datadubai.LIVE, "")
+            if path == self.fail_on:
+                tries.append(path)
+                if len(tries) == 1:
+                    raise net.StopForToday("HTTP 503")
+            return json.loads(json.dumps(PAGES[path]))
+        self.fake_get = flaky
+        try:
+            self.run_main()
+        finally:
+            self.fake_get = real
+        self.assertEqual(len(tries), 2, "tried again once")
+        self.assertEqual(fetch_datadubai.data_through(), "2026-11-13", "the fresh publication is used")
+        with open(os.path.join(self.tmp, "state.json")) as f:
+            seen = json.load(f)["datadubai"]["published_seen"]
+        self.assertEqual(seen[-1]["through"], "2026-11-13", "when the publication was first seen is logged")
+
+    def test_a_slow_down_answer_is_not_retried(self):
+        self.fail_on = "/communities/dubai-marina.json"
+        real = self.fake_get
+        def slow(url, **kw):
+            self.calls.append(url)
+            if url.endswith("dubai-marina.json"):
+                raise net.StopForToday("HTTP 429")
+            return json.loads(json.dumps(PAGES[url.replace(fetch_datadubai.LIVE, "")]))
+        self.fake_get = slow
+        try:
+            self.run_main()
+        finally:
+            self.fake_get = real
+        self.assertEqual(sum(u.endswith("dubai-marina.json") for u in self.calls), 1)
+        self.assertEqual(fetch_datadubai.data_through(), "2026-10-29")
+
     def test_at_most_every_six_hours_and_nothing_when_already_current(self):
         self.run_main()
         n = len(self.calls)

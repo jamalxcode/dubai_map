@@ -186,6 +186,8 @@ function drawOutlines(){
     const col=cssVar(LABEL.colorOf(p.v));
     L.polygon(o.rings.map(r=>r.map(([x,y])=>[y,x])),{pane:'outlines',interactive:false,color:col,weight:1,opacity:.7,fillColor:col,fillOpacity:.32}).addTo(outlineLayer)}
 }
+// What changed since the previous publication (history.py), for the rent check's "since your last visit". Optional.
+window.CHANGES=null;getJSON('data/changes.json').then(d=>{window.CHANGES=d;dispatchEvent(new Event('atlas:changes'))}).catch(()=>{});
 function loadOutlines(){getJSON('data/outlines.json').then(d=>{OUTLINES=d.areas||[];drawOutlines()}).catch(()=>{})}
 let POINTS=[],LABEL={},animateLabels=true;
 const pct=v=>Number(v).toFixed(1)+'%'; // yields: always one decimal
@@ -372,6 +374,10 @@ function saleTrend(a){
   return '<div class="trend"><small>'+T('Sale price per sq ft, {a} to {b}',{a:t[0].m,b:t.at(-1).m})+(yoy!=null?' · <b class="'+(yoy>0?'up':yoy<0?'down':'')+'">'+T('{sign}{v}% on a year ago',{sign:yoy>0?'+':'',v:yoy})+'</b>':'')+'</small>'+
     chart(t.map(x=>({m:x.m,v:x.psf})),{label:T('Sale price per sq ft, monthly'),stroke:'var(--gold-ink)'})+'</div>';
 }
+// Notes from our own history (history.py) and the cross-checks: change since an earlier publication,
+// a big jump not yet confirmed, other sources more than 15% away.
+const sinceNote=c=>c&&c.pct!=null?'<small class="chg '+(c.pct>0?'up':c.pct<0?'down':'')+'">'+T('Rent {sign}{pct}% since {date}',{sign:c.pct>0?'+':'',pct:c.pct,date:niceDate(c.since)})+'</small>':'';
+const jumpNote=j=>j?'<small class="jump">'+T('Changed {pct}% since the previous update (from AED {from}): waiting for the next update to confirm it.',{pct:(j.pct>0?'+':'')+j.pct,from:fmt(j.from)})+'</small>':'';
 function popup(a){
   const types=Object.entries(a.reg_types||{}).map(([k,v])=>safe(k)+' '+fmt(v)).join(', ');
   const aed=v=>'<b>AED '+fmt(v)+'</b>';
@@ -379,14 +385,15 @@ function popup(a){
   // highlights its row, and gives the all-homes figure on the line under it.
   const pick=$('unit').value,pu=pick&&TYPE==='homes'?a.by_unit.find(u=>u.u===pick&&u.median):null;
   const lead=pu?'<p class="lead">'+(pu.n!=null?T('{unit}: median {aed} a year from {n}',{unit:safe(T.unit(pu.u)),aed:aed(pu.median),n:T.count(pu.n,'contract')}):T('{unit}: median {aed} a year',{unit:safe(T.unit(pu.u)),aed:aed(pu.median)}))+
-      (pu.yield!=null||pu.sale?'<br>'+[pu.yield!=null?T('Gross yield {v}%',{v:Number(pu.yield).toFixed(1)}):'',pu.sale?T('median sale price AED {v}',{v:fmt(pu.sale)}):''].filter(Boolean).join(T(', ')):'')+'</p>':'';
+      (pu.yield!=null||pu.sale?'<br>'+[pu.yield!=null?T('Gross yield {v}%',{v:Number(pu.yield).toFixed(1)}):'',pu.sale?T('median sale price AED {v}',{v:fmt(pu.sale)}):''].filter(Boolean).join(T(', ')):'')+(pu.chg?'<br>'+sinceNote(pu.chg):'')+(pu.unconfirmed?'<br>'+jumpNote(pu.unconfirmed):'')+'</p>':'';
   // The area-wide figures: the main lines, or a smaller "All homes:" block under the picked home's figure.
   const main=
     (a.median_kind==='unit'?T('Median for {unit} {aed} a year (no all-homes median is published for this area); ',{unit:safe(T.unit(a.median_unit||'')).toLowerCase(),aed:aed(a.median)})
       :a.median_kind==='typical'?T('Typical {aed} a year (average of the bedroom medians below) from ',{aed:aed(a.median)}):T('Median {aed} a year from ',{aed:aed(a.median)}))+T.count(a.n,'contract')+
     (a.p25!=null?'<br>'+T('Middle half pay AED {a} to {b}',{a:fmt(a.p25),b:fmt(a.p75)}):'')+'<br>'+
     (a.median_sqm?T('AED {v} per m² a year',{v:fmt(a.median_sqm)})+'<br>':'')+
-    (a.yield_pct!=null?T('Gross yield {v}%',{v:Number(a.yield_pct).toFixed(1)})+(a.sale_median?T(', median sale price AED {v}',{v:fmt(a.sale_median)}):'')+'<br>':'');
+    (a.yield_pct!=null?T('Gross yield {v}%',{v:Number(a.yield_pct).toFixed(1)})+(a.sale_median?T(', median sale price AED {v}',{v:fmt(a.sale_median)}):'')+'<br>':'')+
+    (a.rent_change?sinceNote(a.rent_change)+'<br>':'')+(a.unconfirmed?jumpNote(a.unconfirmed)+'<br>':'');
   return '<span class="t" data-label="'+safe(a.label)+'">'+safe(T.place(a.label))+'</span>'+(lead?lead+'<p class="allh">'+T('All homes:')+' '+main+'</p>':main)+
     (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+saleTrend(a)+
     (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr'+(u.n!=null&&u.n<THIN?' class="thin'+(pu&&u.u===pu.u?' pick':'')+'" title="'+safe(T('Fewer than {n} contracts: a thin figure',{n:THIN}))+'"':pu&&u.u===pu.u?' class="pick"':'')+'><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>'+(a.by_unit.some(u=>u.n!=null&&u.n<THIN)?'<small>'+T('Italic rows: fewer than {n} contracts, so treat them as a rough guide.',{n:THIN})+'</small><br>':''):'')+
@@ -399,6 +406,7 @@ function popup(a){
       ['https://www.google.com/search?tbm=isch&q='+encodeURIComponent(a.label+' Dubai'),T('Photos on Google')]]
       .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+'</p>'+
     (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
+    ((a.disagree||[]).length?'<p class="differ"><small>'+T('Other sources differ by more than 15%:')+' '+a.disagree.map(d=>T('{source}, {unit}: AED {theirs} (ours is {pct}%)',{source:safe(d.source),unit:safe(T.unit(d.unit)),theirs:fmt(d.theirs),pct:(d.pct>0?'+':'')+d.pct})).join('; ')+'. '+T('They count differently (new contracts only, or by DLD area), so treat both as a guide.')+'</small></p>':'')+
     '<small>'+T('DLD area: {list}. The point is an approximate reference for the area, not a building.',{list:a.dld_areas.map(safe).join(', ')})+(a.url?' <a href="'+safe(a.url)+'" target="_blank" rel="noopener">'+T('Dubai Data page')+'</a>':'')+'</small>';
 }
 
@@ -570,7 +578,8 @@ function draw(){
     // Weight for averages: the unit's contracts; where a source gives none per unit, a rough share of the area total.
     const n=bu?(bu.n!=null?bu.n:Math.round(a.n/Math.max(1,a.by_unit.length)))||0:a.n;
     // Thin: a figure from fewer than THIN contracts (where the source gives a count) is drawn dashed and italic.
-    const thin=bu?(bu.n!=null&&bu.n<THIN):a.n<THIN;POINTS.push({a,v,n,thin})}
+    // A big jump not yet confirmed by the next publication is drawn the same way (dashed), and says so in its breakdown.
+    const thin=bu?(bu.n!=null&&bu.n<THIN)||!!bu.unconfirmed:a.n<THIN||(!!a.unconfirmed&&metric==='median');POINTS.push({a,v,n,thin})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
   const sc=scaleFor(vals),colorOf=sc.colorOf;
   LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();drawOutlines();setTimeout(popupMargins,0);
@@ -584,7 +593,7 @@ function draw(){
   $('legend').classList.toggle('folded',legendFolded());
   if(metric!=='median'&&AREAS.some(a=>a.lat!=null&&areaValue(a,'median',unit)!=null&&areaValue(a,metric,unit)==null))
     $('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts have rents only, so they show in the rent view.')+'</div>');
-  if(POINTS.some(p=>p.thin))$('legend').insertAdjacentHTML('beforeend','<div class="note"><span class="thinMark"></span>'+T('Dashed: fewer than {n} contracts',{n:THIN})+'</div>');
+  if(POINTS.some(p=>p.thin))$('legend').insertAdjacentHTML('beforeend','<div class="note"><span class="thinMark"></span>'+(POINTS.some(p=>p.a.unconfirmed||(p.a.by_unit||[]).some(u=>u.unconfirmed))?T('Dashed: fewer than {n} contracts, or a big change waiting to be confirmed',{n:THIN}):T('Dashed: fewer than {n} contracts',{n:THIN}))+'</div>');
   // All homes mixes studios with 5-bedroom homes, so the key spans a wide range: say so, and point to the picker.
   if(!unit&&TYPE==='homes'&&metric!=='yield')$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Mixed home sizes: pick one for a fair comparison.')+'</div>');
   syncViews();

@@ -16,8 +16,8 @@ shopt -s nullglob
 cd "$(git rev-parse --show-toplevel)"
 
 BRANCH=${DATA_BRANCH:-data}
-PAGE_FILES=(data/areas.json 'data/areas_*.json' data/latest.json data/meta.json data/outlines.json)
-GENERATED=(data/areas.json data/areas_*.json data/latest.json data/meta.json data/outlines.json data/state.json
+PAGE_FILES=(data/areas.json 'data/areas_*.json' data/latest.json data/meta.json data/outlines.json data/changes.json)
+GENERATED=(data/areas.json data/areas_*.json data/latest.json data/meta.json data/outlines.json data/changes.json data/history data/state.json
            data/contracts data/datadubai data/crosscheck data/osm_area_points.csv data/dm_communities.csv data/dm_outlines.json)
 
 # Tell the workflow whether anything changed (step output `changed`), and say it in the log.

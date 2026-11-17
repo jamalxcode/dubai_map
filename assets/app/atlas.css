@@ -439,3 +439,5 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
   .band p{font-size:15px;margin-top:8px}
   .big .num{font-size:60px}
 }
+.leaflet-popup-content .chg{font-weight:600} /* no colour: a rise is bad news for tenants and good news for owners */
+.leaflet-popup-content .jump{color:var(--bad)}.leaflet-popup-content .differ{margin:6px 0}

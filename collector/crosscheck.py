@@ -101,3 +101,18 @@ def compare(areas, state=None):
             entry["status"] += f" (latest refresh {block.get('status')})"
         out.append(entry)
     return out
+
+
+SHORT = {"dred": "Dubai Real Estate Data", "ccp": "Continental Club Property"}
+
+
+def gaps(areas, state=None):
+    """Per area, the cross-check figures more than TOLERANCE away from ours:
+    {label: [{source, unit, ours, theirs, pct}]}, pct = how far ours is above (+) or below (-) theirs."""
+    out = {}
+    for key, pairs in (("dred", pairs_dred), ("ccp", pairs_ccp)):
+        for label, unit, ours, theirs in pairs(load(key), areas):
+            pct = round((ours - theirs) / theirs * 100, 1)
+            if abs(pct) > TOLERANCE * 100:
+                out.setdefault(label, []).append({"source": SHORT[key], "unit": unit, "ours": ours, "theirs": theirs, "pct": pct})
+    return out

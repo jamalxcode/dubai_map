@@ -316,9 +316,18 @@
     const items = w.changes.slice(0, 4).map(c => `<li><button type="button" class="link" data-area="${esc(c.area)}" data-unit="${esc(c.unit)}">${esc(c.area)}${c.unit ? ' · ' + esc(US(c.unit)) : ''}</button>: ${aed(c.to)} <small class="${c.pct > 0 ? 'up' : 'down'}">${T('{sign}{pct}% since you saved it', { sign: c.pct > 0 ? '+' : '', pct: c.pct })}</small></li>`).join('');
     box.innerHTML = `<p>${T('<b>New figures since your last visit</b>: rents now run to {to} (was {from}).', { to: esc(dateText(w.to)), from: esc(dateText(w.from)) })}</p>
       ${items ? `<ul>${items}</ul>` : `<p class="muted">${T('Your saved areas have not changed.')}</p>`}
+      <p class="muted ck-city"></p>
       <button type="button" class="btn" data-act="seen">${T('Got it')}</button>`;
     box.hidden = false;
+    fillCity();
   }
+  // Across Dubai, from changes.json (the build's comparison with the previous publication), once it has loaded.
+  function fillCity() {
+    const p = document.querySelector('#ckNew .ck-city'), c = window.CHANGES;
+    if (!p || !c || !c.previous) return;
+    p.textContent = T('Across Dubai since the update to {date}: rents rose 5% or more in {up} areas and fell as much in {down}.', { date: dateText(c.previous), up: c.up || 0, down: c.down || 0 });
+  }
+  addEventListener('atlas:changes', fillCity);
 
   // ---- map: from exploring to checking, and back ----
   // The same rule as slug() in scripts/share_pages.py, which writes a/<slug>/ with this area's preview.

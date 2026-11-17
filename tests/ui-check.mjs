@@ -341,6 +341,14 @@ try {
       check(near && c.z >= 13, `desktop: a rent check takes the map to the area (JVC; zoom ${c.z})`);
       check(!!(await page.$('.leaflet-popup-content')), 'desktop: and opens its breakdown');
       // One home choice for the page: the check set the map's picker; the map's picker re-checks the area.
+      // Our own history and the cross-checks in a breakdown: change since an earlier update, an unconfirmed
+      // jump, other sources more than 15% away (fields the build adds; injected here).
+      const notes = await page.evaluate(() => { const a = AREAS.find(x => x.label === 'Jumeirah Village Circle');
+        const h = popup(Object.assign({}, a, { rent_change: { since: '2025-11-14', pct: 6.5 }, unconfirmed: { from: 44000, pct: 50 },
+          disagree: [{ source: 'Dubai Real Estate Data', unit: 'studios to 2 beds', ours: 66000, theirs: 52000, pct: 26.9 }] }));
+        const d = document.createElement('div'); d.innerHTML = h; return d.textContent; });
+      check(/Rent \+6\.5% since 14 Nov 2025/.test(notes) && /waiting for the next update to confirm/.test(notes) && /Other sources differ by more than 15%/.test(notes) && /AED 52,000/.test(notes),
+        'desktop: a breakdown shows the change since an earlier update, an unconfirmed jump, and sources that differ');
       // One Home control for the page: the check has none of its own and follows the map's picker.
       const sync0 = await page.evaluate(() => [!document.getElementById('ckUnit'), document.querySelector('.ck-what')?.textContent || '']);
       await page.selectOption('#home', 'homes|2-bedroom apartments');

@@ -469,7 +469,18 @@ Data rebuilt after merging (daily pull for the trend file, placement job for the
 
 The owner saw a breakdown cut off at the top of the map and under the Rent / Sale price / Yield bar. A full breakdown (all homes, trend, six units, photos) is about 510 px tall: on shorter maps it didn't fit between the buttons and the legend, so Leaflet's pan couldn't clear both, and photos arriving after it opened made it taller still. Now the card's height is capped at the clear space (its content scrolls), and it re-fits once the photos load. A browser check opens one near the buttons at four window sizes; it failed at all four before the fix.
 
+## Decision on 2026-11-17 (forty-fourth pass): a better data pull
+
+1. **Our own rent history:** each publication's medians are kept (`history.py`, `data/history/`), so the site can show rent change over time instead of only the latest figures. Dubai Data replaces its medians each time; without this the past was lost.
+2. **A guard per area:** a median moving more than 40% since the previous publication is marked as unconfirmed (dashed, with a note) until the next publication stays close. Marking rather than holding back keeps the figure honest and visible; the confirmation needs no stored state.
+3. **Sources that differ** are shown in the area's breakdown, not only in "Data health".
+4. **What changed:** `changes.json` and a summary on each run's GitHub page; the rent check's "since your last visit" adds a citywide line.
+5. **Schedule:** late GitHub timer runs step aside after a recent successful pull; Dubai Data's publication times are logged.
+6. **Retry:** failed live pages get one more try, so one hiccup doesn't throw away a fresh publication.
+
 ## Change log
+
+- 2026-11-17: Rent history snapshots, unconfirmed-jump marks, sources-differ notes, changes.json and run summaries, a guard for late timer runs, one retry for failed live pages, publication times logged.
 
 - 2026-11-17: Added DATA_PIPELINE.md, how the data is pulled, organised, stored and published.
 

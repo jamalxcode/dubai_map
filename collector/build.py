@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ccp_areas  # noqa: E402
 import crosscheck  # noqa: E402
 import fetch_datadubai  # noqa: E402
+import history  # noqa: E402
 import state as st  # noqa: E402
 import store  # noqa: E402
 from kinds import HOME_KINDS, PROPERTY_TYPES, in_type, is_home, kind, unit  # noqa: E402,F401
@@ -258,6 +259,13 @@ def build_aggregate(now, state, own=None):
     unplaced += extra_unplaced
     table += extra_table
     areas.sort(key=lambda a: -a["n"])
+    # Our own history (history.py): change over time, unconfirmed jumps; and where the cross-check
+    # sources differ by more than 15% (shown in the area's breakdown).
+    snaps = history.load_all()
+    history.annotate(areas, snaps, through)
+    gaps = crosscheck.gaps(areas, state)
+    for a in areas:
+        a["disagree"] = gaps.get(a["label"], [])
     total = sum(a["n"] for a in areas)
     files = {"areas.json": {"generated_at": now, "from": None, "to": through, "type": "homes", "areas": areas},
              "latest.json": {"generated_at": now, "mode": "aggregate", "rows": table}}
@@ -269,6 +277,8 @@ def build_aggregate(now, state, own=None):
         sub.sort(key=lambda a: -a["n"])
         counts[t] = sum(a["n"] for a in sub)
         files[f"areas_{t}.json"] = {"generated_at": now, "from": None, "to": through, "type": t, "areas": sub}
+    ch = history.changes(areas, snaps, through)
+    files["changes.json"] = {"generated_at": now, **ch}
     shapes = area_outlines(areas, load_dm_points())
     if shapes:
         files["outlines.json"] = shapes
@@ -290,6 +300,10 @@ def build_aggregate(now, state, own=None):
                   (f" Older districts ({len(extra)} DLD areas): {ccp_areas.NAME}, CC BY 4.0." if extra else ""),
     }
     publish(files)
+    history.save(history.snapshot(areas, through))  # after publishing: a refused build leaves no snapshot
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+            f.write(history.summary_markdown(ch, gaps))
     print(f"built (aggregate): {len(areas)} communities, {total} contracts in 12m, "
           f"{len(unplaced)} unplaced")
     return True
@@ -387,7 +401,8 @@ def aggregate_type(area, t):
     # Sale price for this type: the bedroom medians weighted like the rent (by rent contracts); one unit: its median.
     ss = [(u["sale"], u["n"] or 1) for u in units if u.get("sale")]
     sale = (ss[0][0] if len(ss) == 1 else round(sum(v * k for v, k in ss) / sum(k for _, k in ss) / 1000) * 1000) if ss else None
-    return dict(area, n=n, median=value, median_kind=kind, by_unit=units, sale_median=sale,
+    # The change and the jump mark belong to the all-homes median, not to this type's figure.
+    return dict(area, n=n, median=value, median_kind=kind, by_unit=units, sale_median=sale, rent_change=None, unconfirmed=None,
                 yield_pct=round(sum(y * k for y, k in ys) / sum(k for _, k in ys), 2) if ys else None)
 
 

@@ -40,7 +40,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # GitHub's own timer often fires hours late, so its runs land just after one cron-job.org already
+  # started. A timer run steps aside when a pull succeeded in the last 3 hours (manual and cron-job.org
+  # starts always run); the timer stays as the backup if cron-job.org stops.
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      skip: ${{ steps.recent.outputs.skip }}
+    steps:
+      - name: Skip a late timer run right after a successful pull
+        id: recent
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          skip=false
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            since=$(date -u -d '3 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+            n=$(gh api "repos/${{ github.repository }}/actions/workflows/daily-ejari.yml/runs?status=success&per_page=10" \
+                  --jq "[.workflow_runs[] | select(.run_started_at >= \"$since\")] | length" || echo 0)
+            if [ "${n:-0}" -gt 0 ]; then skip=true; echo "a pull succeeded since $since: this late timer run steps aside"; fi
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
   pull:
+    needs: guard
+    if: needs.guard.outputs.skip != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:

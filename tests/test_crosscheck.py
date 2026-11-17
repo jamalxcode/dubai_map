@@ -83,6 +83,11 @@ class CompareTests(TempData):
                          [("Jumeirah Village Circle", "1-bedroom apartments"), ("Jumeirah Village Circle", "Studios")])
         self.assertEqual(ccp["agree"], 2, "1 bed matches exactly; studios 48k vs 47k is within 15% too")
 
+    def test_gaps_per_area_for_the_breakdown(self):
+        g = crosscheck.gaps(AREAS, state={})
+        self.assertEqual(list(g), ["Business Bay"], "only figures more than 15% away")
+        self.assertEqual((g["Business Bay"][0]["source"], g["Business Bay"][0]["pct"]), ("Dubai Real Estate Data", 25.0))
+
     def test_missing_files_report_the_source_state(self):
         os.remove(os.path.join(self.tmp, "crosscheck", "dred.csv"))
         e = crosscheck.compare(AREAS, state={"crosscheck": {"dred": {"state": "failed", "status": "stopped: HTTP 503"}}})[0]

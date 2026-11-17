@@ -37,6 +37,7 @@ jobs:
           # No "|| true" here: a site without its data must fail, not deploy an empty map.
           cp data/areas*.json data/latest.json data/meta.json _site/data/
           cp data/outlines.json _site/data/ 2>/dev/null || true  # community outlines (optional: the map works without them)
+          cp data/changes.json _site/data/ 2>/dev/null || true  # what changed since the previous publication (optional)
           cp -r assets/fonts assets/app assets/vendor _site/assets/
           cp assets/share.png _site/assets/
           # One small page per area (a/<slug>/) so a shared link shows that area's figure in its preview.

@@ -75,6 +75,13 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | One home choice | The rent check has no home field: it uses the map's Home picker (a size, else all homes); when the area lacks that home it checks the area's most common one and the map follows; a home picked on the map re-checks the area | `atlas.js setMapHome`, `companion.js pickUnit` |
 | Usage counts | GoatCounter events by feature name only, at most with the choice made (view, home size, sort column): views, names button, home, All Dubai, Near me, sort, legend fold, CSV, table finder and rent range (once a visit each), a shared map link opened from elsewhere; plus the rent check's check, save and share. Never what was typed, never a position | `atlas.js countUse`, `companion.js count` |
 | Area rank | "Dearer than X% of N areas" = the share of areas (with 30+ contracts for that home) whose median is lower | `insights.js rankAmong` |
+| Rent history | One snapshot per publication (data-through date) of every area's medians, after a successful build; older districts left out | `history.py`, `build.py` |
+| Change shown | Against the snapshot at least 330 days back if any, else the oldest at least 28 days back; none before that | `history.baseline` |
+| Unconfirmed jump | More than 40% since the previous publication, from 30+ contracts: dashed and noted until the next publication stays close (no stored state) | `history.annotate`, `atlas.js` |
+| Changes listed | Moves of 5% or more (30+ contracts), up to 40, plus jumps, new and gone areas | `history.changes` |
+| Sources differ | A cross-check figure more than 15% from ours is shown in the area's breakdown with the source's figure | `crosscheck.gaps` |
+| Late timer runs | A scheduled run steps aside when a pull succeeded in the last 3 hours | `daily-ejari.yml` guard |
+| Live page retry | Failed community pages get one more try after 30 s; not after HTTP 429 or 403 | `fetch_datadubai.fetch_live` |
 | Hidden labels | A label under a button or the legend with no free spot within two label-steps joins its nearest neighbour, and merging runs again | `labels.js` rule 3 |
 | Display names | All-capitals names in title case, acronyms kept; registered names for search, links and storage | `i18n.js T.place`, `share_pages.place` |
 | Table order | Clicked header (descending first, Area A–Z), else the view's column; areas with no figure last | `atlas.js table` |

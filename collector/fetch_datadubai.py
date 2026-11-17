@@ -40,6 +40,7 @@ import store  # noqa: E402
 
 LIVE = "https://datadubai.ae"
 LIVE_PAUSE = 1.0          # seconds between page requests
+LIVE_RETRY_PAUSE = 30.0   # before one more try at pages that failed (never after a "slow down" or "forbidden")
 MIN_COMMUNITIES = 50      # fewer than this in rents.json means something is wrong upstream
 
 MIRRORS = [
@@ -115,15 +116,32 @@ def fetch_live(block, sleep=time.sleep):
     if through <= (data_through() or ""):
         block["live_checked_at"] = source_state.now_iso()
         return "current"
-    rents, beds, info, areas = [], [], [], {}
+    # Every community page, politely; pages that fail get one more try after a pause, so one hiccup
+    # doesn't throw away a fresh publication. Still all-or-nothing: a page failing twice raises.
+    pages, failed = {}, []
     for i, c in enumerate(comms):
         rel = c["url"]
         if not rel.startswith("/communities/"):
             raise ValueError(f"unexpected community url {rel!r}")
-        url = LIVE + rel
         if i:
             sleep(LIVE_PAUSE)
-        page = net.get_json(LIVE + rel.rstrip("/") + ".json", attempts=2, source="datadubai")
+        try:
+            pages[rel] = net.get_json(LIVE + rel.rstrip("/") + ".json", attempts=2, source="datadubai")
+        except net.StopForToday as e:
+            if re.search(r"\b(429|403)\b", str(e)):
+                raise
+            failed.append(rel)
+    if failed:
+        print(f"datadubai live: {len(failed)} page(s) failed; one more try in {LIVE_RETRY_PAUSE:.0f} s")
+        sleep(LIVE_RETRY_PAUSE)
+        for rel in failed:
+            pages[rel] = net.get_json(LIVE + rel.rstrip("/") + ".json", attempts=2, source="datadubai")
+            sleep(LIVE_PAUSE)
+    rents, beds, info, areas = [], [], [], {}
+    for c in comms:
+        rel = c["url"]
+        url = LIVE + rel
+        page = pages[rel]
         slug = rel.strip("/").split("/")[-1]
         rents.append({"name": c["name"], "url": url, "contracts": c.get("contracts") or 0,
                       "rent_median": c.get("rent_median") or "", "yield_pct": _blank(c.get("yield_pct"))})
@@ -159,6 +177,11 @@ def fetch_live(block, sleep=time.sleep):
     _set_readme_through(os.path.join(out, "README.md"), through)
     block["live_checked_at"] = source_state.now_iso()
     block["through"] = through
+    # When each new publication was first seen (last 30), to learn when Dubai Data publishes.
+    log = block.setdefault("published_seen", [])
+    if not log or log[-1].get("through") != through:
+        log.append({"through": through, "seen_at": source_state.now_iso()})
+        del log[:-30]
     return "updated"
 
 

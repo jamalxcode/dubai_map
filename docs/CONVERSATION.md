@@ -249,6 +249,10 @@ A tall breakdown ran under the map's bar and off the top of the map. Fixed (deci
 
 Saved as docs/DATA_PIPELINE.md, linked from the README and CLAUDE.md.
 
+### 17 Nov · "can the data pull be made better?" → "do it all, merge on main"
+
+All six done (decisions, forty-fourth pass): our own rent history, unconfirmed-jump marks, sources-differ notes in breakdowns, a "what changed" file and run summary, a guard for late timer runs with publication times logged, and one retry for failed live pages. Changes over time start showing about four weeks after the first snapshot (16 Nov 2026).
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources.

@@ -241,6 +241,28 @@ class AggregateBuildTests(TempData):
         with open(os.path.join(self.tmp, "areas_studio.json")) as f:
             self.assertEqual(json.load(f)["areas"][0]["median"], 45000)
 
+    def test_each_build_keeps_a_snapshot_and_says_what_changed(self):
+        summary = os.path.join(self.tmp, "summary.md")
+        with mock.patch("builtins.print"), mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": summary}):
+            build.main()
+        self.assertTrue(os.path.exists(os.path.join(self.tmp, "history", "2026-10-29.json")), "a snapshot per publication")
+        ch = self.load("changes.json")
+        self.assertEqual((ch["through"], ch["previous"]), ("2026-10-29", None))
+        with open(summary, encoding="utf-8") as f:
+            self.assertIn("Data through 2026-10-29", f.read())
+        # A later publication with Alpha 50% dearer: unconfirmed, and listed.
+        snap = self.load("history/2026-10-29.json")
+        snap["through"], snap["areas"]["Alpha"]["m"] = "2026-10-22", 40000
+        os.rename(os.path.join(self.tmp, "history", "2026-10-29.json"), os.path.join(self.tmp, "history", "2026-10-22.json"))
+        with open(os.path.join(self.tmp, "history", "2026-10-22.json"), "w") as f:
+            json.dump(snap, f)
+        with mock.patch("builtins.print"):
+            build.main()
+        alpha = self.load("areas.json")["areas"][0]
+        self.assertEqual(alpha["unconfirmed"], {"from": 40000, "pct": 50.0})
+        self.assertEqual(self.load("changes.json")["unconfirmed"][0]["area"], "Alpha")
+        self.assertIsNone(self.load("areas_flat.json")["areas"][0]["unconfirmed"], "the mark is for the all-homes median only")
+
     def test_flats_typical_is_contract_weighted(self):
         area = {"label": "X", "n": 100, "median": 1, "by_unit": [
             {"u": "1-bedroom apartments", "n": 30, "median": 60000, "yield": 7.0},

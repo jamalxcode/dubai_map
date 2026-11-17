@@ -64,6 +64,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Size rules for one screen width can fight later additions.** A phone rule fixed the zoom buttons' width, so a new "Near me" button was clipped. *Rule:* fix only the dimension that matters (height for touch); let width follow the content, and test that no button's text overflows.
 - **Critique rounds reach diminishing returns.** After four rounds the findings were small. *Rule:* count which features are used, then cut or improve based on that.
 - **Panning can't fit a card taller than the space.** Pan margins kept short breakdowns clear, but a full one was taller than the map's clear area, and photos made it grow after opening. *Rule:* cap a pop-up's height at the clear space, re-fit after any content that loads later, and test the tallest content on short windows.
+- **A source that replaces its figures erases the past.** Dubai Data's medians are overwritten each publication. *Rule:* keep our own dated snapshot of what we publish; history can't be rebuilt later.
+- **A total-size guard misses single bad figures.** *Rule:* also compare each figure with the previous publication, and mark big jumps visibly instead of silently publishing them.
 
 ## Accessibility
 
