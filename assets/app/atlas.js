@@ -574,7 +574,7 @@ function viewStat(){
   if(metric==='hotels'&&hotelPriced()){$('medLabel').textContent=T('Typical hotel price a night in view')+(vis.length?' · '+T.count(vis.length,'area'):'');odometer($('med'),N?Math.round(vis.reduce((s,p)=>s+p.v*p.n,0)/N/10)*10:null,'AED ');return}
   // Until hotel prices exist the figure is a count: it says so in the number itself ("809 places"), so it is never
   // read as a price in the spot where prices go.
-  if(metric==='hotels'){const n=vis.reduce((t,p)=>t+p.v,0);$('medLabel').textContent=T('Places to stay in view')+(vis.length?' · '+T.count(vis.length,'area'):'')+' · '+T('no nightly prices yet');
+  if(metric==='hotels'){const n=vis.reduce((t,p)=>t+p.v,0);$('medLabel').textContent=T('Places to stay in view')+(vis.length?' · '+T.count(vis.length,'area'):'')+' · '+T('nightly prices on booking sites');
     const m=$('med');m._sig=null;m.textContent=n?fmt(n)+' '+(n===1?T('place'):T('places')):'—';m.setAttribute('aria-label',m.textContent);return}
   const what=metric==='n'?T('Contracts'):metric==='median_sqm'?T('Typical rent per m²'):metric==='yield'?T('Typical gross yield'):metric==='sale'?T('Typical sale price'):T('Typical yearly rent');
   $('medLabel').textContent=T('{what} in view',{what})+(vis.length?' · '+T.count(vis.length,'area')+T(', ')+($('unit').value?T.unit($('unit').value):TYPENAME()).toLowerCase():'');
@@ -758,7 +758,7 @@ function hotelSection(a){
     (HOTEL_PRICES?'<td>'+(h.price?fmt(h.price):'—')+'</td>':'')+'</tr>';
   return '<p class="lead">'+(x.typical?T('Typical hotel price {aed} a night',{aed:'<b>AED '+fmt(x.typical)+'</b>'})+'<br>':'')+
       T('{n} places to stay',{n:fmt(x.n)})+(x.typical?T(', {k} with a price',{k:x.prices.length}):'')+'</p>'+
-    (HOTEL_PRICES?'':'<p class="muted">'+T('Nightly prices show here once hotel prices are switched on.')+'</p>')+
+    (HOTEL_PRICES?'':'<p class="muted">'+T('Nightly prices are on booking sites: each place links to them.')+'</p>')+
     '<table class="htab"><tr><th>'+T('Place')+'</th>'+(stars?'<th>'+T('Stars')+'</th>':'')+(HOTEL_PRICES?'<th>'+T('AED a night')+'</th>':'')+'</tr>'+
       list.slice(0,HOTEL_ROWS).map(row).join('')+'</table>'+
     (list.length>HOTEL_ROWS?'<p class="muted">'+T('and {n} more: zoom in to see them on the map.',{n:list.length-HOTEL_ROWS})+'</p>':'')+

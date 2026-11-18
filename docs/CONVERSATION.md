@@ -333,6 +333,10 @@ In the Hotels view an area's card now lists its places to stay first, rents fold
 
 No prices were live (no LiteAPI key yet): the numbers were counts. Fixed (decisions, fifty-eighth pass): only places inside Dubai and taking guests (975 → 798), and the top figure reads "809 places … no nightly prices yet". Prices appear once the LiteAPI live key is added.
 
+### 18 Nov · "give me the steps to create free LiteAPI" → "it says Add a payment method to unlock production API keys" → "explain this" (the commercial model, card authorisation) → "skip it"
+
+Skipped (decisions, fifty-ninth pass): no LiteAPI key; the status page stops asking for it and the Hotels view points to booking sites for nightly prices. The code stays ready if that changes.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
@@ -341,5 +345,5 @@ No prices were live (no LiteAPI key yet): the numbers were counts. Fixed (decisi
 4. **Old branches** to delete on GitHub (sessions may not delete branches; checked 18 Nov, everything in them is on `main`): `datadubai-daily`, `engagement`, `fix-tabs`, `mobile-redesign`, `phone-map-first` (all superseded by main's rebuilt history), `metro`, `hotels` (merged), `probe-sources` (one-off source probes, never meant for main). Keep `main` and `data` (the published figures). Keep `rera-check`: the RERA renewal calculator, parked by the collaborator until later.
 4b. **Rent history** starts showing changes about four weeks after the first snapshot (16 Nov 2026), so from mid-December; year-on-year from November 2027.
 5a. **Street View inside the breakdown** (option 3): needs the owner's Google Maps Embed API key (free, billing enabled, restricted to the site's address).
-5b. **Hotel prices** (owner): create a free LiteAPI account (liteapi.travel), copy the **live** API key from the dashboard (not the sandbox key) and add it as the repository secret `LITEAPI_KEY`; each hotel's average and each area's typical price appear after the next pull. DET's official hotel figures arrive with the Dubai Pulse key (item 1).
+5b. ~~Hotel prices~~: skipped by the owner on 18 Nov (LiteAPI's live key needs a payment card that could be charged for bookings made with the key). Adding `LITEAPI_KEY` later switches them on. DET's official, city-wide hotel figures still arrive with the Dubai Pulse key (item 1).
 6. Expansion to other cities in the region (new source adapter per registry).

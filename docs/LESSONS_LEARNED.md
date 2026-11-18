@@ -78,6 +78,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **A bounding box is not a boundary.** "Dubai's box" took in Sharjah and Ajman, so 14% of the places were in another emirate. *Rule:* filter by official boundaries (Dubai Municipality's outlines) when a place must be in Dubai; use boxes only to narrow a search.
 - **Crowd-sourced tags need a sense check.** OpenStreetMap's holiday-flat tag sat on staff housing and residential towers. *Rule:* check a new tag-based source by eye against the names before counting it, and filter what's clearly something else.
 - **A number in a price's place gets read as a price.** *Rule:* a figure that isn't money says what it counts in the figure itself.
+- **"Free" APIs can need a card to go live.** LiteAPI's free account only gives a sandbox key; the live key needs a payment card authorised for bookings made with the key. *Rule:* before recommending a source, check what its live access requires (card, fees, booking liability) and say so up front.
+- **An owner's "no" is not an open task.** *Rule:* when the owner declines something, take it off "Needs you" and record the choice, so the status page doesn't keep asking.
 
 ## Accessibility
 

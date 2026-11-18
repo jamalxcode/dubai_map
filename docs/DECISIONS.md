@@ -603,7 +603,13 @@ The owner: "review the hotel pricing, they don't look correct". No hotel prices 
 3. **The figure at the top says it counts:** "809 places" with "no nightly prices yet" under it, instead of a bare 809 where prices usually go.
 Prices still need the owner's LiteAPI live key (under "Needs you").
 
+## Decision on 2026-11-18 (fifty-ninth pass): no LiteAPI key, by the owner's choice
+
+LiteAPI only unlocks its live (real-price) key after a payment card is added, with authority to charge any booking made with the key. The atlas never books, but a leaked key could be used to book on the owner's card. The owner chose to skip it. So: the status page no longer asks for the key under "Needs you" (it says under "Waiting" that hotel prices are off by the owner's choice; a key that is added later but rejected or sandbox still shows there), and the Hotels view says nightly prices are on booking sites rather than "not yet". The price code stays: adding `LITEAPI_KEY` later switches prices on with no other change.
+
 ## Change log
+
+- 2026-11-18: Hotel prices off by the owner's choice (LiteAPI's live key needs a payment card); not asked for on the status page; wording points to booking sites.
 
 - 2026-11-18: Hotels: only places inside Dubai and taking guests (975 → 798); the top figure says it counts places until prices exist.
 

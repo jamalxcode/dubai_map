@@ -100,6 +100,8 @@
   function pending(st, state) {
     const p = (st && st.pending) || {};
     const items = [];
+    if (((state || {}).hotel_prices || {}).state === 'no_key')
+      items.push('<li><b>' + esc(T('Hotel prices: off')) + '</b>: ' + esc(T("the owner's choice, since LiteAPI's live key needs a payment card; each place links to booking sites for prices.")) + '</li>');
     const un = p.unplaced || [];
     items.push('<li><b>' + esc(T('{n} areas waiting for a map point', { n: un.length })) + '</b>' + (un.length ? ' ' + esc(T('(see "Needs you")')) : '') + '</li>');
     const uc = p.unconfirmed || [];
@@ -157,7 +159,9 @@
       add(T('Get the Dubai Pulse API key'), T('It unlocks contract-level data: rent ranges, rent per m², new vs renewal, monthly trends, and Dubai\'s official hotel room rates and occupancy (DET) for the Hotels view.'),
         T('Follow up the Digital Dubai request, or have someone with UAE Pass request dld_rent_contracts-open-api on data.dubai; then add DUBAI_PULSE_KEY and DUBAI_PULSE_SECRET as repository secrets.'), 'https://data.dubai');
     const hp = s.hotel_prices || {};
-    if (hp.state === 'no_key' || (hp.state === 'failed' && /sandbox|401/.test(hp.status || '')))
+    // No key is the owner's choice (18 Nov: LiteAPI's live key needs a payment card), so it is not asked for here;
+    // it shows under "Waiting" instead. A key that is added but rejected or sandbox still needs the owner.
+    if (hp.state === 'failed' && /sandbox|401/.test(hp.status || ''))
       add(T('Get a LiteAPI key for hotel prices'), hp.state === 'failed' ? hp.status : T('It unlocks each hotel\'s average price a night and each area\'s typical hotel price in the Hotels view.'),
         T('Create a free account at liteapi.travel, copy the live API key from the dashboard (not the sandbox key) and add it as the repository secret LITEAPI_KEY. Prices appear after the next pull.'), 'https://liteapi.travel');
     else if (hp.state === 'failed') add(T('Hotel prices are failing'), hp.status || '', T("Open the source's page to see whether it moved or changed; the last good figures stay on the map meanwhile."), 'https://liteapi.travel');

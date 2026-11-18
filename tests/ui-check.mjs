@@ -180,7 +180,7 @@ try {
         `${name}: "Hotels" shows ${h.dots} places to stay and ${h.priced ? 'typical prices a night per area on the blue key' : 'counts per area (largest ' + biggest + ')'}`);
       if (!h.priced) {
         const head = await page.evaluate(() => [document.getElementById('med').textContent, document.getElementById('medLabel').textContent]);
-        check(/places?$/.test(head[0].trim()) && !/AED/.test(head[0]) && /no nightly prices yet/.test(head[1]),
+        check(/places?$/.test(head[0].trim()) && !/AED/.test(head[0]) && /nightly prices on booking sites/.test(head[1]),
           `${name}: without prices, the big number says it counts places ("${head[0].trim()}"), never reads as a price`);
       }
       check((await overlaps(page)).overlaps === 0, `${name}: no labels overlap in the hotels view`);
@@ -498,8 +498,9 @@ try {
       left: document.querySelectorAll('#left li').length, pending: document.querySelectorAll('#pending li').length, alerts: document.getElementById('alerts').textContent,
       sideways: document.documentElement.scrollWidth > innerWidth, dir: document.documentElement.dir,
       needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
-    // Unresolved issues a person can fix come first, each with what to do (here: the API key, an old branch).
-    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && st.needs.some(t => /LiteAPI/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
+    // Unresolved issues a person can fix come first, each with what to do (here: the Dubai Pulse key, an old branch).
+    // No LiteAPI key is the owner's choice (18 Nov), so it is not asked for.
+    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
       `${name}: "Needs you" comes first and lists what a person can fix, with what to do (${st.needs.length})`);
     check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 5 && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
       `${name}: shows the totals (${st.contracts} contracts), what each source pulled, what's in use, left out and waiting, and recent pulls`);
