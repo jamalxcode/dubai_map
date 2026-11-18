@@ -26,6 +26,8 @@ Generated files (the `GENERATED` list in `scripts/data-branch.sh`):
 | `meta.json` | How far the data runs, when it was built, each source's status ("Data health"), areas with no map point yet |
 | `outlines.json` | Official community outlines, simplified, one set per map area |
 | `transit.json` | Dubai Metro and Dubai Tram lines and stations (OpenStreetMap, ODbL), refreshed weekly by "Place unplaced areas" (`collector/transit.py`); kept when a fetch fails or looks wrong (fewer than 2 metro lines, 40 metro stations, 1 tram line or 8 tram stops) |
+| `hotels.json` | Places to stay (hotels, hotel apartments, hostels, guest houses) from OpenStreetMap (ODbL): name, Arabic name, kind, stars, point. Refreshed weekly by "Place unplaced areas" (`collector/hotels.py`); kept when a fetch fails or returns fewer than 300 |
+| `hotel_stats.json` | Dubai's official monthly hotel figures (DET, Dubai Pulse open data): average daily rate, occupancy, RevPAR, length of stay, last 36 months. Tried on every pull (`collector/hotel_stats.py`) with the Dubai Pulse key, else the open CSV; both are refused from outside the UAE, so this file appears once the key is added |
 | `changes.json` | What changed since the previous publication: the biggest moves, unconfirmed jumps, new and gone areas (feeds the rent check's "since your last visit") |
 | `history/<date>.json` | Our own rent history: every area's medians for each publication (about 30 KB each), named by the date the data runs to |
 | `history/ccp/<date>.json` | The same for the older districts (Continental Club), by Continental Club's own date |

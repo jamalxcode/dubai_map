@@ -101,3 +101,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the first panel animation tweened the grid column and resized the map (Leaflet `invalidateSize` + MapLibre canvas) on every frame; on real screens the whole page jittered.
 - **Rule:** never resize or re-lay out the map during an animation. Resize it once, then move things with transforms only (the panel slides over the map, the map slides by the distance its centre moves). Re-place labels after the motion ends. Measure: one map `resize` event per toggle.
+
+## Counts that add up (18 Nov 2026)
+
+- **Problem:** the first Hotels build passed hotel counts as label values but left each area's weight (`n`) as its contract count; `RentLabels.place` with `sum` adds the weights, so a group label read "25,413 hotels" when the city has 975.
+- **Rule:** in a view where groups add up (`sum`), the weight is the thing being counted. The browser check now fails if any hotel label is larger than the total.

@@ -560,6 +560,17 @@ The collaborator: "the panel really clumped up and messy … more professional a
 - **Compare:** the table of ruled rows with two-line labels became a "versus" sheet: the two areas face each other with their rent rolling up (our odometer, from React Bits' Counter), one plain sentence for the answer, then mirrored rows with bars from the centre so the difference reads without reading numbers. Short home-size names keep labels on one line.
 - Lenis keeps the page's smooth scrolling; the comparison scrolls natively (`data-lenis-prevent`).
 
+## Decision on 2026-11-18 (fifty-fourth pass): a Hotels view, from free sources only
+
+The collaborator and a friend asked for a hotels option next to rent and sale price, updated three times a day, with nightly prices from several sources. Checked what is free and allowed: nightly prices from Booking.com, Agoda, Expedia, Google Hotels or Airbnb need a partner or affiliate agreement (or scraping, which their terms forbid), so the collaborator chose "1 and 4": OpenStreetMap's places to stay, and DET's official figures through Dubai Pulse, "where rent and sales are".
+- **A fourth view in the map's bar**, Hotels: places to stay counted per area, every place as a gold-ringed dot, and a breakdown that links out (Google Maps, a Booking.com search) instead of showing a price we can't source. Plain ivory labels, since the blue scale means price.
+- **Where a hotel belongs:** the official outline that holds it, else the nearest area point within 1.5 km (`Transit.assign`, tested). Groups of labels add hotels, not contracts (an early build added contract counts and showed "25,413 hotels").
+- **Refresh:** OpenStreetMap weekly with Metro and Tram (hotels open and close slowly; Overpass asks for light use). DET figures are monthly, so they are tried on every pull but only change once a month.
+- **DET is blocked for now:** Dubai Pulse refuses the CSV and the API from outside the UAE, the same wall as the rent contracts. The collector switches on by itself once `DUBAI_PULSE_KEY` / `_SECRET` are added; the status page's Dubai Pulse entry now names the hotel figures too.
+- **Credits:** OpenStreetMap in the legend and every hotel breakdown; "prices are set by the booking site, not this page".
+- **Next, needing the owner:** live nightly prices per area need the Booking.com affiliate programme (deep links and widgets) and/or Agoda's affiliate API; both are free to join.
+- **Checked:** 975 places from a run on GitHub (789 hotels, 73 hotel apartments, 63 hostels, 50 guest houses); Python tests for both collectors; browser checks for the view on desktop and phone (counts, key, no overlaps); English, Arabic and phone screenshots.
+
 ## Change log
 
 - 2026-11-18: One calm system for the side panel; the comparison as a mirrored "versus" sheet with motion.

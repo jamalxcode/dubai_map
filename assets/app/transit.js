@@ -96,5 +96,29 @@
     return out.sort((x, y) => x.v - y.v);
   }
 
-  return { WALKS, metres, toSegment, inRing, toOutline, nearest, areasNear, stationRents };
+  /**
+   * Which area each place (a hotel) is in: the area whose official outline contains it; failing that, the
+   * nearest area's point within `maxM` metres (areas without an outline, or a place just outside every outline).
+   * places: [{lat, lng}]; returns an array of area labels (or null), in the places' order.
+   */
+  function assign(places, areas, outlines, maxM = 1500) {
+    const boxed = [];
+    for (const a of areas) {
+      const rings = outlines && outlines.get(a.label);
+      if (!rings) continue;
+      let s = 90, n = -90, w = 180, e = -180;
+      for (const r of rings) for (const [la, ln] of r) { if (la < s) s = la; if (la > n) n = la; if (ln < w) w = ln; if (ln > e) e = ln; }
+      boxed.push({ label: a.label, rings, s, n, w, e });
+    }
+    const placed = areas.filter(a => a.lat != null);
+    return places.map(p => {
+      const pt = [p.lat, p.lng];
+      for (const b of boxed) if (p.lat >= b.s && p.lat <= b.n && p.lng >= b.w && p.lng <= b.e && b.rings.some(r => r.length > 2 && inRing(pt, r))) return b.label;
+      let best = null, bm = maxM;
+      for (const a of placed) { const m = metres(pt, [a.lat, a.lng]); if (m <= bm) { bm = m; best = a.label; } }
+      return best;
+    });
+  }
+
+  return { WALKS, metres, toSegment, inRing, toOutline, nearest, areasNear, stationRents, assign };
 });

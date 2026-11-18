@@ -90,7 +90,11 @@ def main(argv=None):
     ap.add_argument("--save-raw")
     a = ap.parse_args(argv)
     try:
-        raw = json.load(open(a.from_file, encoding="utf-8")) if a.from_file else fetch()
+        if a.from_file:
+            with open(a.from_file, encoding="utf-8") as f:
+                raw = json.load(f)
+        else:
+            raw = fetch()
     except net.StopForToday as e:
         net.log(f"Overpass not reachable ({e}); keeping the current file", "hotels")
         return 0

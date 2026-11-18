@@ -50,8 +50,9 @@ def pick(row, *names):
     return None
 
 
-def build(text, today=None):
-    rows = list(csv.DictReader(io.StringIO(text.lstrip("﻿"))))
+def build(text, today=None, rows=None):
+    """From the CSV text, or from the API's rows (dicts with the same column names)."""
+    rows = rows if rows is not None else list(csv.DictReader(io.StringIO(text.lstrip("\ufeff"))))
     months = {}
     for r in rows:
         d = (pick(r, "report_date", "date", "month") or "").strip()[:7]
@@ -68,6 +69,28 @@ def build(text, today=None):
             "latest": ordered[-1] if ordered else None}
 
 
+API_PATHS = [os.environ["HOTEL_STATS_API_URL"]] if os.environ.get("HOTEL_STATS_API_URL") else [
+    "https://apis.data.dubai/open/dtcm/dtcm_hotel_establishment_performance-open-api",
+    "https://api.dubaipulse.gov.ae/open/dtcm/dtcm_hotel_establishment_performance-open",
+]
+
+
+def fetch_api(key, secret):
+    """With the Dubai Pulse key (the same as for rent contracts): the dataset's rows through the API."""
+    import fetch_ejari  # token endpoints and row unwrapping shared with the rent-contract collector
+    token = fetch_ejari.get_token(key, secret)
+    last = None
+    for url in API_PATHS:
+        try:
+            payload = net.get_json(url + "?limit=500", headers={"Authorization": "Bearer " + token}, source="hotel_stats")
+            rows = fetch_ejari.rows_from(payload)
+            if rows:
+                return rows
+        except net.StopForToday as e:
+            last = e
+    raise net.StopForToday(f"no rows from the API ({last})")
+
+
 def fetch_csv():
     return net.request(CSV_URL, timeout=60, source="hotel_stats").decode("utf-8", "replace")
 
@@ -77,15 +100,23 @@ def main(argv=None):
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--from-file")
     a = ap.parse_args(argv)
+    key, secret = os.environ.get("DUBAI_PULSE_KEY"), os.environ.get("DUBAI_PULSE_SECRET")
+    rows, text = None, ""
     try:
-        text = open(a.from_file, encoding="utf-8").read() if a.from_file else fetch_csv()
+        if a.from_file:
+            text = open(a.from_file, encoding="utf-8").read()
+        elif key and secret:
+            rows = fetch_api(key, secret)
+        else:
+            text = fetch_csv()
     except net.StopForToday as e:
-        net.log(f"Dubai Pulse CSV not available ({e}); keeping the current file", "hotel_stats")
+        net.log(f"Dubai Pulse not available ({e}); keeping the current file. Needs Dubai Pulse access "
+                "(the same API key as rent contracts): the CSV download is refused from outside the UAE.", "hotel_stats")
         return 0
-    if text.lstrip().startswith("<"):
-        net.log("Dubai Pulse answered with a web page, not the CSV (permission needed?); keeping the current file", "hotel_stats")
+    if rows is None and text.lstrip().startswith("<"):
+        net.log("Dubai Pulse answered with a web page, not the CSV (permission needed); keeping the current file", "hotel_stats")
         return 0
-    out = build(text)
+    out = build(text, rows=rows)
     if not out["latest"]:
         net.log("no months found in the CSV; keeping the current file", "hotel_stats")
         return 1

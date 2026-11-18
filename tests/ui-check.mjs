@@ -165,6 +165,19 @@ try {
     check(views.yield.metric === 'yield' && views.yield.top === views.yield.p95 && /%/.test(views.yield.label),
       `${name}: "Yield" shows gross yields with their own key (top ${views.yield.top}%)`);
     check(views.median.metric === 'median' && views.median.top !== views.sale.top, `${name}: "Rent" switches back`);
+    // Hotels (OpenStreetMap): only offered once data/hotels.json is published; groups add hotels, never contracts.
+    if (await page.evaluate(() => !!document.querySelector('.viewSw button[data-m="hotels"]:not([hidden])'))) {
+      await page.click('.viewSw button[data-m="hotels"]');
+      await page.waitForTimeout(400);
+      const h = await page.evaluate(() => ({ metric: LABEL.metric, dots: document.querySelectorAll('.hdot').length, total: HOTELS.length,
+        biggest: Math.max(0, ...[...document.querySelectorAll('.rl b')].map(e => +e.textContent.replace(/[^\d]/g, ''))),
+        legend: !!document.querySelector('#legend .hkey'), url: /view=hotels/.test(location.search) }));
+      check(h.metric === 'hotels' && h.dots === h.total && h.dots >= 300 && h.biggest > 0 && h.biggest <= h.total && h.legend && h.url,
+        `${name}: "Hotels" shows ${h.dots} places to stay, counts per area (largest label ${h.biggest}) and its own key`);
+      check((await overlaps(page)).overlaps === 0, `${name}: no labels overlap in the hotels view`);
+      await page.click('.viewSw button[data-m="median"]');
+      await page.waitForTimeout(300);
+    }
     const shapes = await page.waitForFunction(() => document.querySelectorAll('.leaflet-outlines-pane path').length, null, { timeout: 5000 }).then(h => h.jsonValue()).catch(() => 0);
     check(shapes >= 50, `${name}: official community outlines are shaded under the labels (${shapes})`);
     const z0 = await page.evaluate(() => map.getZoom());

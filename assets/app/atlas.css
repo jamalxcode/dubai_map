@@ -557,3 +557,12 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
   .cmpPick{bottom:10px}
 }
 @media (prefers-reduced-motion:reduce){.cmpPanel{animation:none}}
+
+/* Hotels view (atlas.js drawHotels, hotelLegend): hotels as small paper dots ringed in gold leaf; the key says what
+   is counted and carries the official average room rate when there is one. */
+.hdot{cursor:pointer}
+.legend .hkey{display:flex;align-items:center;gap:8px;font-size:12px;margin:4px 0}
+.legend .hkey i{flex:none;width:10px;height:10px;border-radius:50%;border:2px solid #B8901F;background:var(--paper,#F6F1E7)}
+.legend .hstat{margin:6px 0 2px;padding:6px 8px;border-inline-start:3px solid var(--gold);background:var(--panel);border-radius:4px;font-size:12.5px}
+.legend .hstat b{display:block;font-weight:700}.legend .hstat span{color:var(--muted)}
+.hlinks{display:flex;flex-wrap:wrap;gap:4px 8px}.hlinks .sep{color:var(--muted)}

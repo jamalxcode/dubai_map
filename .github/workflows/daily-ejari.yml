@@ -101,6 +101,12 @@ jobs:
       - name: "Backup: Dubai Data community medians (Hugging Face, then GitHub)"
         continue-on-error: true  # a failing source must not stop the backups or the build
         run: python3 collector/fetch_datadubai.py
+      - name: "Official hotel figures (DET via Dubai Pulse; monthly, read each run, saved only when changed)"
+        continue-on-error: true  # needs Dubai Pulse access (the same key); without it the current file stays
+        env:
+          DUBAI_PULSE_KEY: ${{ secrets.DUBAI_PULSE_KEY }}
+          DUBAI_PULSE_SECRET: ${{ secrets.DUBAI_PULSE_SECRET }}
+        run: python3 collector/hotel_stats.py
       - name: "Cross-check: dubairealestatedata.com and continentalclub.ae rent pages (at most once a day)"
         continue-on-error: true  # a check, never a reason to stop the build
         run: python3 collector/fetch_crosscheck.py

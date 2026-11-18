@@ -154,7 +154,7 @@
     for (const i of (issues || []).filter(i => !i.pull_request))
       add(i.title.replace(/^Data alert:\s*/, ''), T('An open alert from the freshness check, since {t}.', { t: kuwait(i.created_at) }), T('Open the alert for details; it closes itself once the problem is gone.'), i.html_url);
     if ((s.pulse || {}).state === 'no_key')
-      add(T('Get the Dubai Pulse API key'), T('It unlocks contract-level data: rent ranges, rent per m², new vs renewal, monthly trends.'),
+      add(T('Get the Dubai Pulse API key'), T('It unlocks contract-level data: rent ranges, rent per m², new vs renewal, monthly trends, and Dubai\'s official hotel room rates and occupancy (DET) for the Hotels view.'),
         T('Follow up the Digital Dubai request, or have someone with UAE Pass request dld_rent_contracts-open-api on data.dubai; then add DUBAI_PULSE_KEY and DUBAI_PULSE_SECRET as repository secrets.'), 'https://data.dubai');
     if ((s.dld || {}).state === 'off')
       add(T("Ask DLD for written permission"), T("DLD's own open-data service stays off without it."), T('If DLD agrees in writing, set the repository variable DLD_ENABLED=1.'));

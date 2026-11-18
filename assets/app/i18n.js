@@ -90,6 +90,16 @@
     'Google Maps': 'خرائط Google',
     '(Median {aed} a year when you set this reminder.)': '(كان الوسيط {aed} سنويًا عند ضبط هذا التذكير.)',
     '(optional)': '(اختياري)',
+    // Hotels view (atlas.js loadHotels, hotelLegend, openHotel).
+    'Hotels': 'الفنادق', 'Hotel': 'فندق', 'Hotel apartments': 'شقق فندقية', 'Hostel': 'نُزُل', 'Guest house': 'دار ضيافة',
+    'Hotels in view': 'الفنادق في العرض', 'Hotels per area': 'الفنادق في كل منطقة', '{n} stars': '{n} نجوم',
+    'Prices on Booking.com': 'الأسعار على Booking.com',
+    'Place: © OpenStreetMap contributors. Prices are set by the booking site, not this page.': 'المكان: © مساهمو OpenStreetMap. الأسعار يحددها موقع الحجز، لا هذه الصفحة.',
+    '{n} hotels, hotel apartments, hostels and guest houses': '{n} فندقًا وشقة فندقية ونُزُلًا ودار ضيافة',
+    'Official average room rate: AED {adr} a night': 'متوسط سعر الغرفة الرسمي: {adr} درهم لليلة',
+    '{month}, all of Dubai': '{month}، دبي كلها', '{occ}% of rooms taken': 'نسبة الإشغال {occ}%',
+    "Dubai's official average room rate (DET) shows here once Dubai Pulse access is granted.": 'يظهر هنا متوسط سعر الغرفة الرسمي في دبي (دائرة الاقتصاد والسياحة) بعد منح الوصول إلى Dubai Pulse.',
+    'Hotels: © OpenStreetMap contributors. Nightly prices are on booking sites; tap a hotel for links.': 'الفنادق: © مساهمو OpenStreetMap. أسعار الليلة على مواقع الحجز؛ اضغط على فندق للروابط.',
     // Compare two areas (atlas.js renderCompare).
     'Cancel': 'إلغاء', 'Compare': 'قارن', 'Compare areas': 'مقارنة المناطق', 'Swap': 'تبديل', 'vs': 'مقابل',
     'Compare <b>{a}</b> with: tap another area on the map, or pick one nearby.': 'قارن <b>{a}</b> مع: اضغط منطقة أخرى على الخريطة، أو اختر واحدة قريبة.',
@@ -273,6 +283,7 @@
     'Open the alert for details; it closes itself once the problem is gone.': 'افتح التنبيه للتفاصيل؛ يُغلق تلقائيًا عند زوال المشكلة.',
     'Get the Dubai Pulse API key': 'احصل على مفتاح واجهة دبي بالس',
     'It unlocks contract-level data: rent ranges, rent per m², new vs renewal, monthly trends.': 'يفتح بيانات على مستوى العقد: نطاقات الإيجار، الإيجار لكل م²، الجديد مقابل التجديد، والاتجاهات الشهرية.',
+    "It unlocks contract-level data: rent ranges, rent per m², new vs renewal, monthly trends, and Dubai's official hotel room rates and occupancy (DET) for the Hotels view.": 'يفتح بيانات على مستوى العقد: نطاقات الإيجار، الإيجار لكل م²، الجديد مقابل التجديد، والاتجاهات الشهرية، ومتوسط أسعار الغرف ونسب الإشغال الرسمية للفنادق في دبي (DET) لعرض الفنادق.',
     'Follow up the Digital Dubai request, or have someone with UAE Pass request dld_rent_contracts-open-api on data.dubai; then add DUBAI_PULSE_KEY and DUBAI_PULSE_SECRET as repository secrets.': 'تابع طلب دبي الرقمية، أو اطلب من شخص لديه الهوية الرقمية طلب dld_rent_contracts-open-api في data.dubai؛ ثم أضف DUBAI_PULSE_KEY وDUBAI_PULSE_SECRET كأسرار في المستودع.',
     'Ask DLD for written permission': 'اطلب إذنًا كتابيًا من الدائرة',
     "DLD's own open-data service stays off without it.": 'تبقى خدمة البيانات المفتوحة للدائرة متوقفة بدونه.',
@@ -444,6 +455,7 @@
   const WORDS = {
     contract: ['عقد واحد', 'عقدان', 'عقود', 'عقدًا'],
     area: ['منطقة واحدة', 'منطقتان', 'مناطق', 'منطقة'],
+    hotel: ['فندق واحد', 'فندقان', 'فنادق', 'فندقًا'],
   };
   T.count = (n, word) => {
     const num = Number(n).toLocaleString('en-AE');

@@ -1,7 +1,7 @@
 name: Check the hotel collectors
 
 # When collector/hotels.py or collector/hotel_stats.py changes on any branch: run them (one Overpass request,
-# one Dubai Pulse download) without saving anything, and print what came back in the log, so a change can be
+# one Dubai Pulse download) without saving anything, and summarise what came back in the log, so a change can be
 # checked before it is merged. The weekly job and the daily pull save the real files from main.
 on:
   push:
@@ -34,6 +34,16 @@ jobs:
       - name: What came back (for the log)
         if: always()
         run: |
-          for f in hotels.json hotel_stats.json; do
-            [ -f "$f" ] && echo "FILE_${f}_B64_BEGIN" && gzip -9c "$f" | base64 -w0 && echo && echo "FILE_${f}_B64_END" || echo "no $f"
-          done
+          python3 - <<'PY'
+          import json, os, collections
+          if os.path.exists("hotels.json"):
+              h = json.load(open("hotels.json"))["hotels"]
+              print(len(h), "places:", dict(collections.Counter(x[2] for x in h)), "with stars:", sum(1 for x in h if x[3]))
+          else:
+              print("no hotels.json (Overpass not reachable or too few places)")
+          if os.path.exists("hotel_stats.json"):
+              s = json.load(open("hotel_stats.json"))
+              print(len(s["months"]), "months of DET figures, latest:", s["latest"])
+          else:
+              print("no hotel_stats.json (Dubai Pulse needs access from here)")
+          PY

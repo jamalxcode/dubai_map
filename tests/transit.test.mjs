@@ -38,3 +38,13 @@ test('rent near stations is contract-weighted, cheapest first, stations with not
   assert.equal(r[1].v, (60000 * 300 + 90000 * 100) / 400);
   assert.equal(r[1].areas, 2);
 });
+
+test('places go to the area whose outline holds them, else the nearest area point within 1.5 km', () => {
+  const areas = [{ label: 'Square', lat: 25.105, lng: 55.205 }, { label: 'Dot', lat: 25.105, lng: 55.220 }, { label: 'Far', lat: 25.30, lng: 55.40 }];
+  const places = [{ lat: 25.101, lng: 55.201 }, { lat: 25.106, lng: 55.222 }, { lat: 25.20, lng: 55.30 }, { lat: 25.105, lng: 55.212 }];
+  // In the square; near Dot; nowhere near anything; just outside the square's east edge, 706 m from Square's point
+  // and 806 m from Dot's: the nearer point wins.
+  assert.deepEqual(TR.assign(places, areas, outlines), ['Square', 'Dot', null, 'Square']);
+  assert.deepEqual(TR.assign(places, areas, new Map()), ['Square', 'Dot', null, 'Square']); // without outlines: nearest point
+  assert.deepEqual(TR.assign([{ lat: 25.105, lng: 55.212 }], [areas[1]], new Map(), 500), [null]); // beyond the limit
+});
