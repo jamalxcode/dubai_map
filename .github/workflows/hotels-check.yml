@@ -1,0 +1,39 @@
+name: Check the hotel collectors
+
+# When collector/hotels.py or collector/hotel_stats.py changes on any branch: run them (one Overpass request,
+# one Dubai Pulse download) without saving anything, and print what came back in the log, so a change can be
+# checked before it is merged. The weekly job and the daily pull save the real files from main.
+on:
+  push:
+    branches-ignore: [data]
+    paths: [collector/hotels.py, collector/hotel_stats.py, .github/workflows/hotels-check.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Hotels from OpenStreetMap (not saved)
+        continue-on-error: true
+        run: python3 collector/hotels.py --out hotels.json
+      - name: Official hotel figures from Dubai Pulse (not saved)
+        continue-on-error: true
+        run: |
+          curl -sS -L -o det.csv -w "HTTP %{http_code} %{content_type} %{size_download} bytes\n" \
+            -A "dubai-rent-atlas/1.0 (+https://github.com/jamalxcode/dubai_map)" \
+            "https://www.dubaipulse.gov.ae/dataset/5ce622ab-91f2-4207-a694-79ac7eb39165/resource/b4ea30a4-42ee-4d82-a7ea-98a5a1363ce4/download/hotel_establishment_performance.csv" || true
+          echo "--- first lines:"; head -c 1200 det.csv || true; echo; echo "--- last lines:"; tail -n 3 det.csv || true
+          python3 collector/hotel_stats.py --from-file det.csv --out hotel_stats.json || true
+      - name: What came back (for the log)
+        if: always()
+        run: |
+          for f in hotels.json hotel_stats.json; do
+            [ -f "$f" ] && echo "FILE_${f}_B64_BEGIN" && gzip -9c "$f" | base64 -w0 && echo && echo "FILE_${f}_B64_END" || echo "no $f"
+          done
