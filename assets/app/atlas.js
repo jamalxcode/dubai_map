@@ -260,8 +260,11 @@ function loadTransit(){getJSON('data/transit.json').then(d=>{if(!d||!(d.lines||[
 // cover the streets and the base map's own track (scale 1 at zoom 11 and below, about half at zoom 16).
 const transitScale=()=>{const z=map.getZoom();return z<=11?1:Math.max(.5,1-(z-11)*.1)};
 let transitParts=[];
-function sizeTransit(){const k=transitScale();
-  for(const [shape,base] of transitParts)shape instanceof L.CircleMarker?shape.setStyle({weight:base.weight*Math.max(.7,k)}).setRadius(base.radius*Math.max(.6,k)):shape.setStyle({weight:base.weight*k})}
+// Station dots: small when zoomed out (dozens of stations along a thin line), full size at zoom 13 and 14,
+// a little smaller again close up.
+const stationScale=()=>({8:.4,9:.45,10:.55,11:.65,12:.8,13:1,14:1,15:.9})[map.getZoom()]||(map.getZoom()<8?.4:.8);
+function sizeTransit(){const k=transitScale(),d=stationScale();
+  for(const [shape,base] of transitParts)shape instanceof L.CircleMarker?shape.setStyle({weight:Math.max(1,base.weight*d)}).setRadius(Math.max(2,base.radius*d)):shape.setStyle({weight:base.weight*k})}
 function drawTransit(){
   transitLayer.clearLayers();transitParts=[];if(!TRANSIT)return;
   const dark=document.documentElement.dataset.theme==='dark',casing=dark?'#1E1712':'#F6F1E7';
@@ -272,7 +275,7 @@ function drawTransit(){
       add(L.polyline(p,{pane:'transit',interactive:false,color:lineColour(l),weight:tram?3:4,opacity:1,lineCap:'round',className:'tline'}),{weight:tram?3:4})}}
   // Stations: paper dots ringed in their system's colour; interchanges larger with a thicker ring.
   for(const s of TRANSIT.stations){const lines=TRANSIT.lines.filter(l=>s.lines.includes(l.id)),swap=lines.length>1,tram=s.kind==='tram';
-    const base={radius:swap?6.5:tram?4:5,weight:swap?3.5:2.5};
+    const base={radius:swap?6:tram?3.6:4.5,weight:swap?3:2.2};
     const m=add(L.circleMarker([s.lat,s.lng],{pane:'transit',radius:base.radius,weight:base.weight,color:lines[0]?lineColour(lines[0]):casing,fillColor:casing,fillOpacity:1,className:'tstop'}),base)
       .bindTooltip(stationName(s)+' · '+lines.map(lineName).join(' / '),{direction:'top',offset:[0,-6]});
     m.on('click',()=>openStation(s))}
