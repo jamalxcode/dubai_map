@@ -1,0 +1,26 @@
+name: Check the Metro and Tram collector
+
+# When collector/transit.py changes on any branch: run it against OpenStreetMap (one Overpass request)
+# and keep the result as a downloadable artifact, so a change can be checked before it is merged.
+# Saves nothing to the data branch (the weekly "Place unplaced areas" job does that, from main).
+on:
+  push:
+    branches-ignore: [data]
+    paths: [collector/transit.py, .github/workflows/transit-check.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Fetch and build (not saved)
+        run: python3 collector/transit.py --out transit.json --save-raw overpass.json
+      - uses: actions/upload-artifact@v4
+        with: { name: transit, path: "transit.json\noverpass.json", retention-days: 7 }

@@ -38,6 +38,7 @@ jobs:
           cp data/areas*.json data/latest.json data/meta.json _site/data/
           cp data/outlines.json _site/data/ 2>/dev/null || true  # community outlines (optional: the map works without them)
           cp data/changes.json _site/data/ 2>/dev/null || true  # what changed since the previous publication (optional)
+          cp data/transit.json _site/data/ 2>/dev/null || true  # Metro and Tram lines and stations (optional: the layer hides without them)
           # The status page (status/) reads the data branch live; these copies are its fallback.
           for f in status.json state.json runs.jsonl; do cp "data/$f" _site/data/ 2>/dev/null || true; done
           mkdir -p _site/status && sed "s/__BUILD__/${GITHUB_SHA::7}/g" status/index.html > _site/status/index.html
