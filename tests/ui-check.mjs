@@ -169,11 +169,15 @@ try {
     if (await page.evaluate(() => !!document.querySelector('.viewSw button[data-m="hotels"]:not([hidden])'))) {
       await page.click('.viewSw button[data-m="hotels"]');
       await page.waitForTimeout(400);
-      const h = await page.evaluate(() => ({ metric: LABEL.metric, dots: document.querySelectorAll('.hdot').length, total: HOTELS.length,
-        biggest: Math.max(0, ...[...document.querySelectorAll('.rl b')].map(e => +e.textContent.replace(/[^\d]/g, ''))),
-        legend: !!document.querySelector('#legend .hkey'), url: /view=hotels/.test(location.search) }));
-      check(h.metric === 'hotels' && h.dots === h.total && h.dots >= 300 && h.biggest > 0 && h.biggest <= h.total && h.legend && h.url,
-        `${name}: "Hotels" shows ${h.dots} places to stay, counts per area (largest label ${h.biggest}) and its own key`);
+      const h = await page.evaluate(() => ({ metric: LABEL.metric, dots: document.querySelectorAll('.hdot').length, total: HOTELS.length, priced: hotelPriced(),
+        texts: [...document.querySelectorAll('.rl b')].map(e => e.textContent),
+        badges: [...document.querySelectorAll('.rl')].map(e => e.style.getPropertyValue('--c')),
+        legend: !!document.querySelector('#legend .hkey'), ramp: !!document.querySelector('#legend .ramp'), url: /view=hotels/.test(location.search) }));
+      const biggest = Math.max(0, ...h.texts.map(t => +t.replace(/[^\d]/g, '')));
+      check(h.metric === 'hotels' && h.dots === h.total && h.dots >= 300 && h.texts.length > 0 && h.legend && h.url && (h.priced
+        ? h.texts.every(t => /AED|درهم/.test(t)) && h.badges.every(c => /--b[1-6]/.test(c)) && h.ramp      // prices: blue key, as every price
+        : biggest <= h.total && h.badges.every(c => /oxblood/.test(c)) && !h.ramp),                           // counts: oxblood, no price key
+        `${name}: "Hotels" shows ${h.dots} places to stay and ${h.priced ? 'typical prices a night per area on the blue key' : 'counts per area (largest ' + biggest + ')'}`);
       check((await overlaps(page)).overlaps === 0, `${name}: no labels overlap in the hotels view`);
       await page.click('.viewSw button[data-m="median"]');
       await page.waitForTimeout(300);
@@ -463,7 +467,11 @@ try {
     // The data branch, served from ./data; GitHub's API, stubbed (two runs, no open alerts).
     await page.route(/raw\.githubusercontent\.com\/.+\/data\/data\//, async r => {
       const f = r.request().url().split('/data/data/')[1];
-      try { await r.fulfill({ body: await readFile(join(ROOT, 'data', f)), contentType: f.endsWith('.json') ? 'application/json' : 'text/plain' }); }
+      try {
+        let body = await readFile(join(ROOT, 'data', f));
+        // Hotel prices without a key: "Needs you" must ask for one.
+        if (f === 'state.json') { const j = JSON.parse(body); j.hotel_prices = { state: 'no_key', status: 'no credentials' }; body = JSON.stringify(j); }
+        await r.fulfill({ body, contentType: f.endsWith('.json') ? 'application/json' : 'text/plain' }); }
       catch { await r.fulfill({ status: 404, body: 'not found' }); }
     });
     await page.route(/api\.github\.com\/repos\/.+\/actions\/workflows\/daily-ejari\.yml\/runs/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ workflow_runs: [
@@ -480,7 +488,7 @@ try {
       sideways: document.documentElement.scrollWidth > innerWidth, dir: document.documentElement.dir,
       needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
     // Unresolved issues a person can fix come first, each with what to do (here: the API key, an old branch).
-    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
+    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && st.needs.some(t => /LiteAPI/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
       `${name}: "Needs you" comes first and lists what a person can fix, with what to do (${st.needs.length})`);
     check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 5 && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
       `${name}: shows the totals (${st.contracts} contracts), what each source pulled, what's in use, left out and waiting, and recent pulls`);

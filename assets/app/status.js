@@ -156,6 +156,11 @@
     if ((s.pulse || {}).state === 'no_key')
       add(T('Get the Dubai Pulse API key'), T('It unlocks contract-level data: rent ranges, rent per m², new vs renewal, monthly trends, and Dubai\'s official hotel room rates and occupancy (DET) for the Hotels view.'),
         T('Follow up the Digital Dubai request, or have someone with UAE Pass request dld_rent_contracts-open-api on data.dubai; then add DUBAI_PULSE_KEY and DUBAI_PULSE_SECRET as repository secrets.'), 'https://data.dubai');
+    const hp = s.hotel_prices || {};
+    if (hp.state === 'no_key' || (hp.state === 'failed' && /sandbox|401/.test(hp.status || '')))
+      add(T('Get a LiteAPI key for hotel prices'), hp.state === 'failed' ? hp.status : T('It unlocks each hotel\'s average price a night and each area\'s typical hotel price in the Hotels view.'),
+        T('Create a free account at liteapi.travel, copy the live API key from the dashboard (not the sandbox key) and add it as the repository secret LITEAPI_KEY. Prices appear after the next pull.'), 'https://liteapi.travel');
+    else if (hp.state === 'failed') add(T('Hotel prices are failing'), hp.status || '', T("Open the source's page to see whether it moved or changed; the last good figures stay on the map meanwhile."), 'https://liteapi.travel');
     if ((s.dld || {}).state === 'off')
       add(T("Ask DLD for written permission"), T("DLD's own open-data service stays off without it."), T('If DLD agrees in writing, set the repository variable DLD_ENABLED=1.'));
     const stale = (branches || []).filter(b => !['main', 'data'].includes(b.name) && !/^gh-pages$/.test(b.name));

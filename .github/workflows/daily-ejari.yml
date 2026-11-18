@@ -107,6 +107,11 @@ jobs:
           DUBAI_PULSE_KEY: ${{ secrets.DUBAI_PULSE_KEY }}
           DUBAI_PULSE_SECRET: ${{ secrets.DUBAI_PULSE_SECRET }}
         run: python3 collector/hotel_stats.py
+      - name: "Hotel prices (LiteAPI; once a day, the cheapest room on four sample nights)"
+        continue-on-error: true  # needs LITEAPI_KEY (free LiteAPI account); without it the state says so and nothing changes
+        env:
+          LITEAPI_KEY: ${{ secrets.LITEAPI_KEY }}
+        run: python3 collector/hotel_prices.py
       - name: "Cross-check: dubairealestatedata.com and continentalclub.ae rent pages (at most once a day)"
         continue-on-error: true  # a check, never a reason to stop the build
         run: python3 collector/fetch_crosscheck.py

@@ -17,6 +17,7 @@ __pycache__/
 /data/transit.json
 /data/hotels.json
 /data/hotel_stats.json
+/data/hotel_prices.json
 /data/changes.json
 /data/history/
 /data/runs.jsonl

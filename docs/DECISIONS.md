@@ -580,6 +580,17 @@ The collaborator: "when we press on a highlighted area the pop-up kind of hides 
 - **Phones:** the sheet stops at 60% of the screen, like Compare, and scrolls inside; the area fits in the strip above it.
 - **Checked:** a browser check fails if the card covers more than 3% of the area; Business Bay, Jumeirah Village Circle and a phone viewed before and after (covered 18%, 47%, 13% → 0%).
 
+## Decision on 2026-11-18 (fifty-sixth pass): hotel prices, each hotel and each area
+
+The collaborator: "each hotel should have an average price and the area should as well". No free source gives nightly prices without an account, and we don't invent or scrape them. Checked: Booking.com's Demand API is for approved affiliate partners and forbids using its content for price comparison; Amadeus closed its self-service APIs on 17 July 2026; LiteAPI (Nuitée) gives a free account whose rate searches are free under a reasonable look-to-book ratio. The collaborator chose LiteAPI.
+- **What a price is:** the cheapest room for 2 adults, one night, on 4 sample nights over the next month (different weekdays), averaged per hotel. An area's figure is the median of its hotels (a few palaces would pull an average far up).
+- **How often:** once a day, about 20 requests (batches of 200 hotels), to keep lookups light since the site never books.
+- **Matching:** our OpenStreetMap places to LiteAPI's list by position and name, each once; unmatched places say they have no price yet.
+- **Safety:** a sandbox key returns test prices, so a sandbox answer is never published and the status page says to use the live key; prices outside AED 50–60,000, other currencies and runs pricing fewer than 20 hotels are refused.
+- **On the page:** with prices the Hotels view becomes a price view on the blue scale (prices are prices), the hotel card leads with its average, and every area breakdown gets a places-to-stay line. Without the key nothing changes.
+- **Needs the owner:** a free LiteAPI account and its live key as the secret `LITEAPI_KEY` (listed under "Needs you").
+- **Checked:** collector tests with LiteAPI faked (matching, averages, once a day, no key, sandbox, other currency, rejected key); browser checks with and without prices (made-up local prices, never published).
+
 ## Change log
 
 - 2026-11-18: One calm system for the side panel; the comparison as a mirrored "versus" sheet with motion.

@@ -317,6 +317,10 @@ Hotels view on branch `hotels` (decisions, fifty-fourth pass): OpenStreetMap pla
 
 The breakdown now opens above or beside the area on computers and leaves it in view above the sheet on phones (decisions, fifty-fifth pass).
 
+### 18 Nov · "add an average price for the hotels … each hotel should have an average price and the area should as well" → LiteAPI recommended → "yes go ahead" (collaborator)
+
+Built on branch `hotel-prices` (decisions, fifty-sixth pass); switches on when the owner adds a LiteAPI key.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
@@ -325,5 +329,5 @@ The breakdown now opens above or beside the area on computers and leaves it in v
 4. **Old branches** to delete on GitHub (sessions may not delete branches; checked 18 Nov, everything in them is on `main`): `datadubai-daily`, `engagement`, `fix-tabs`, `mobile-redesign`, `phone-map-first` (all superseded by main's rebuilt history), `metro`, `hotels` (merged), `probe-sources` (one-off source probes, never meant for main). Keep `main` and `data` (the published figures). Keep `rera-check`: the RERA renewal calculator, parked by the collaborator until later.
 4b. **Rent history** starts showing changes about four weeks after the first snapshot (16 Nov 2026), so from mid-December; year-on-year from November 2027.
 5a. **Street View inside the breakdown** (option 3): needs the owner's Google Maps Embed API key (free, billing enabled, restricted to the site's address).
-5b. **Hotel prices** (owner): nightly prices per area need the Booking.com affiliate programme and/or Agoda's affiliate API (free to join); DET's official hotel figures arrive with the Dubai Pulse key (item 1).
+5b. **Hotel prices** (owner): create a free LiteAPI account (liteapi.travel), copy the **live** API key from the dashboard (not the sandbox key) and add it as the repository secret `LITEAPI_KEY`; each hotel's average and each area's typical price appear after the next pull. DET's official hotel figures arrive with the Dubai Pulse key (item 1).
 6. Expansion to other cities in the region (new source adapter per registry).

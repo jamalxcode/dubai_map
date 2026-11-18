@@ -111,3 +111,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the map flew to an area using a guessed padding, then opened its breakdown; the real card was taller than the guess and hung from the middle of the area, so it covered it.
 - **Rule:** measure, don't guess. Open the card, read its size (or the sheet's), then fit the map into the space that is actually free; refit when the card's content grows.
+
+## Test keys give test prices (18 Nov 2026)
+
+- **Problem:** LiteAPI's sandbox key answers with made-up rates that look real.
+- **Rule:** a collector checks the answer says it is live (`sandbox` false) before saving anything a visitor will read as a fact; test answers stop the run and say which key to use.

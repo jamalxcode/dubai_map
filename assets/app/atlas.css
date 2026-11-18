@@ -568,4 +568,5 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 :root[data-theme="dark"] .legend .hkey i{border-color:var(--ivory)}
 .legend .hstat{margin:6px 0 2px;padding:6px 8px;border-inline-start:3px solid var(--gold);background:var(--panel);border-radius:4px;font-size:12.5px}
 .legend .hstat b{display:block;font-weight:700}.legend .hstat span{color:var(--muted)}
+.leaflet-popup-content .hot,.areaSheet .hot{margin:8px 0 4px;padding-inline-start:8px;border-inline-start:3px solid var(--gold)}
 .hlinks{display:flex;flex-wrap:wrap;gap:4px 8px}.hlinks .sep{color:var(--muted)}
