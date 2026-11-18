@@ -273,6 +273,15 @@ try {
       await page.waitForTimeout(700);
       const qs = await page.evaluate(() => location.search);
       check(/view=sale/.test(qs) && /home=homes:1-bedroom/.test(qs) && /at=2[45]\.\d+,55\.\d+,\d+/.test(qs), `desktop: the address keeps the home, view and map position (${decodeURIComponent(qs)})`);
+      // Metro and Tram, when data/transit.json is published: the walk filter keeps only areas near a station and names one.
+      if (await page.evaluate(() => !document.querySelector('.f-walk').hidden)) {
+        await page.selectOption('#walk', '10');
+        await page.waitForTimeout(500);
+        const t = await page.evaluate(() => ({ note: document.getElementById('budgetNote').textContent, stops: document.querySelectorAll('.tstop').length, on: document.querySelector('.metroBtn').getAttribute('aria-pressed') }));
+        check(/within a 10-minute walk of a Metro or Tram station/.test(t.note) && t.stops > 20 && t.on === 'true', `desktop: Near Metro / Tram shows the lines and keeps areas near a station (${t.note.slice(0, 60)}…)`);
+        await page.selectOption('#walk', '0');
+        await page.waitForTimeout(300);
+      }
       await page.click('.viewSw button[data-m="median"]');
     }
     // The finder above the table filters the table only; the map keeps every area.

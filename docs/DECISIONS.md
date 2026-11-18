@@ -534,12 +534,20 @@ The status page's list of waiting areas is what got Al Twar Fifth fixed: the own
 
 Merged and deployed on 18 Nov (Tests passed). With today's data the list should hold three items: the Dubai Pulse key, DLD's permission, and the six old branches; no area is waiting for a map point. Checked in the browser tests with stubbed GitHub answers; the live page can't be opened from a session.
 
+## Decision on 2026-11-18 (fifty-first pass): Metro and Tram
+
+The collaborator: "Metro: show the Metro lines, and filter to areas near a station … make it slightly unique … don't forget tram stations and tram lines".
+- **Data:** OpenStreetMap (ODbL, already credited on the map): the route relations for metro and tram in Dubai and their stations, one Overpass request a week in "Place unplaced areas" (`collector/transit.py` → `data/transit.json` on the data branch, deployed with the page). Both directions and the Red Line's two services (Centrepoint–Expo City and –UAE Exchange) become one line; the closed Downtown trolley is left out; stations of lines not yet running (Blue Line) are left out until OpenStreetMap maps the line as running. Checked: 2 metro lines with 53 stations, the Tram with 11 stops (matches the network). The session can't reach OpenStreetMap, so a check workflow runs the collector on GitHub when it changes and prints the result in its log.
+- **On the map:** a Metro button on the zoom bar; lines in calmer versions of their colours, the Tram dotted; stations as ringed dots, interchanges larger.
+- **Filter:** "Near Metro / Tram: Anywhere, 10-minute walk, 20-minute walk" (800 m / 1,600 m straight line to the area's official outline: an area counts when its edge is that close, not only its centre). Works with the budget.
+- **What makes it ours:** each station has a rent: tapping one shows what the chosen home typically costs within the walk and which areas that covers; and the line under the filters names the cheapest station for that home ("Lowest near a station: Abu Hail (Green Line), typical AED 41k").
+- **Tests:** `tests/test_transit.py` (merging, the trolley, one station per name, refusing a thin result), `tests/transit.test.mjs` (distances, areas near a station, rent near stations), a browser check when the file is present.
+
 ## Change log
 
+- 2026-11-18: Metro and Tram lines and stations, Near Metro / Tram filter, rent near each station.
 - 2026-11-18: Status page opens with "Needs you": unresolved issues a person can fix, with what to do.
-
 - 2026-11-18: OpenStreetMap look-up also searches ordinals as numbers ("Al Twar 5"); retried at once for a new name.
-
 - 2026-11-18: Budget mode: the yearly rent range lights up the areas that fit on the map.
 - 2026-11-18: Map edge tab: hide the side panel on computers, full-screen map on phones.
 - 2026-11-18: Tap an area to zoom to its outline, darken the rest of the map and open its breakdown.

@@ -6,6 +6,8 @@ Three times a day a GitHub Actions job pulls rents from public sources, turns th
 
 The **"Daily Ejari pull"** workflow (`.github/workflows/daily-ejari.yml`) runs at **06:17, 14:17 and 22:17 UAE time** (02:17, 10:17, 18:17 UTC). cron-job.org starts it on time; GitHub's own timer is the backup and often fires hours late. A first **guard** job lets a timer run step aside when a pull succeeded in the last 3 hours (manual and cron-job.org starts always run). The pull's first step stops GitHub from switching off a quiet schedule after 60 days.
 
+Once a week the **"Place unplaced areas"** workflow (`geocode.yml`, Sundays) refreshes the official community points, looks up any area still off the map, and refreshes the Metro and Tram lines and stations (one Overpass request). A change to `collector/transit.py` on any branch runs **"Check the Metro and Tram collector"** (`transit-check.yml`), which fetches and builds without saving and prints a summary in its log.
+
 ## 2. Where the data lives
 
 | Place | What's there | Who writes it |
@@ -23,6 +25,7 @@ Generated files (the `GENERATED` list in `scripts/data-branch.sh`):
 | `latest.json` | The table rows (area, DLD area, home size, rent, contracts, sale price, yield); also what Download CSV gives |
 | `meta.json` | How far the data runs, when it was built, each source's status ("Data health"), areas with no map point yet |
 | `outlines.json` | Official community outlines, simplified, one set per map area |
+| `transit.json` | Dubai Metro and Dubai Tram lines and stations (OpenStreetMap, ODbL), refreshed weekly by "Place unplaced areas" (`collector/transit.py`); kept when a fetch fails or looks wrong (fewer than 2 metro lines, 40 metro stations, 1 tram line or 8 tram stops) |
 | `changes.json` | What changed since the previous publication: the biggest moves, unconfirmed jumps, new and gone areas (feeds the rent check's "since your last visit") |
 | `history/<date>.json` | Our own rent history: every area's medians for each publication (about 30 KB each), named by the date the data runs to |
 | `history/ccp/<date>.json` | The same for the older districts (Continental Club), by Continental Club's own date |

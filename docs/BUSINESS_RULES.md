@@ -107,6 +107,8 @@ A point is a reference for the area, never a building; the page says so. Coordin
 
 | Budget mode | A yearly rent range (Min, Max, either optional, swapped if reversed) on the chosen home's rent median; areas outside it, or without a rent figure for that home, lose their labels and leave the averages; colours keep the whole map's scale | `atlas.js draw`, `budgetNote` |
 
+| Metro and Tram | Lines and stations from OpenStreetMap (weekly). "Near Metro / Tram": an area counts when a station is within 800 m (10-minute walk) or 1,600 m (20-minute walk) in a straight line of its official outline (or of its point without one); combined with the budget. "Lowest near a station": the station whose areas within the walk have the lowest contract-weighted figure among those left on the map. A station's breakdown lists the areas within the walk with their figure and distance | `collector/transit.py`, `transit.js`, `atlas.js` |
+
 ## 6. The rent check
 
 | Rule | Value | Where |

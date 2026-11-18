@@ -14,6 +14,7 @@ __pycache__/
 /data/dm_communities.csv
 /data/dm_outlines.json
 /data/outlines.json
+/data/transit.json
 /data/changes.json
 /data/history/
 /data/runs.jsonl
