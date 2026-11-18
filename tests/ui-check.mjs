@@ -509,7 +509,7 @@ try {
       needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
     // Unresolved issues a person can fix come first, each with what to do (here: the Dubai Pulse key, an old branch).
     // No LiteAPI key is the owner's choice (18 Nov), so it is not asked for.
-    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
+    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
       `${name}: "Needs you" comes first and lists what a person can fix, with what to do (${st.needs.length})`);
     check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 5 && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
       `${name}: shows the totals (${st.contracts} contracts), what each source pulled, what's in use, left out and waiting, and recent pulls`);
@@ -518,6 +518,41 @@ try {
     if (q) check(st.dir === 'rtl', `${name}: reads right to left`);
     check(!errors.length, `${name}: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await axe(page, name);
+    await ctx.close();
+  }
+  // Night prices without per-hotel prices: DET's official rate on the night dial and in a hotel's card, and a
+  // booking partner's widget that loads only when tapped (both stubbed here: no Dubai Pulse, no partner).
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.route(/data\/hotel_stats\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ fetched: '2026-11-18', source: 'test',
+      months: [{ month: '2026-07', adr: 380 }, { month: '2026-08', adr: 410 }, { month: '2026-09', adr: 520 }, { month: '2026-10', adr: 640 }], latest: { month: '2026-10', adr: 640, occupancy: 78 } }) }));
+    await page.route(/assets\/app\/partners\.js/, r => r.fulfill({ contentType: 'application/javascript',
+      body: "window.PRICE_WIDGET={partner:'Test Partner',url:'https://widget.example/w?ss={name}&in={checkin}&out={checkout}&lang={lang}'};" }));
+    await page.route(/widget\.example/, r => r.fulfill({ contentType: 'text/html', body: '<p>prices</p>' }));
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.click('.viewSw button[data-m="hotels"]');
+    await page.waitForFunction(() => HOTEL_STATS && HOTELS, null, { timeout: 10000 }).catch(() => {});
+    await page.evaluate(() => draw());
+    await page.waitForTimeout(400);
+    const d = await page.evaluate(() => ({ on: !document.getElementById('dialBox').classList.contains('off'), kind: document.getElementById('dialKind').textContent,
+      med: document.getElementById('med').getAttribute('aria-label'), lo: document.getElementById('dialMin').textContent, hi: document.getElementById('dialMax').textContent, cap: document.getElementById('medLabel').textContent }));
+    check(d.on && /Dubai average a night/.test(d.kind) && /640/.test(d.med) && d.lo === '380' && d.hi === '640' && /October 2026/.test(d.cap),
+      `night dial: with DET's figures, Dubai's average room rate (${d.med}) between the lowest and highest month (${d.lo}–${d.hi})`);
+    await page.evaluate(() => openHotel(HOTELS.find(h => h.area) || HOTELS[0]));
+    await page.waitForTimeout(300);
+    const card = await page.evaluate(() => { const c = document.querySelector('.leaflet-popup-content'); return { text: c.textContent, frames: c.querySelectorAll('iframe').length }; });
+    check(/average room rate in October 2026: AED 640 a night/.test(card.text) && /Show live prices from Test Partner/.test(card.text) && card.frames === 0,
+      "a hotel's card gives Dubai's official rate and offers the partner's live prices, loading nothing until tapped");
+    await page.click('.leaflet-popup-content [data-pw]');
+    await page.waitForTimeout(300);
+    const src = await page.evaluate(() => document.querySelector('.leaflet-popup-content .pwidget iframe')?.getAttribute('src') || '');
+    check(/^https:\/\/widget\.example\/w\?ss=[^&]+&in=\d{4}-\d\d-\d\d&out=\d{4}-\d\d-\d\d&lang=en$/.test(src), `tapping it loads the partner's panel for that hotel and dates (${src.slice(0, 60)}…)`);
+    check(!errors.length, `night prices: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await axe(page, 'hotel card with the partner panel');
     await ctx.close();
   }
   // Backup source in use (Dubai Data stuck): the warning sign says so.

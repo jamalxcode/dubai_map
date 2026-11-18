@@ -158,6 +158,10 @@
     if ((s.pulse || {}).state === 'no_key')
       add(T('Get the Dubai Pulse API key'), T('It unlocks contract-level data: rent ranges, rent per m², new vs renewal, monthly trends, and Dubai\'s official hotel room rates and occupancy (DET) for the Hotels view.'),
         T('Follow up the Digital Dubai request, or have someone with UAE Pass request dld_rent_contracts-open-api on data.dubai; then add DUBAI_PULSE_KEY and DUBAI_PULSE_SECRET as repository secrets.'), 'https://data.dubai');
+    // Nightly prices in hotel cards come from a booking partner's widget (the owner's choice, 18 Nov): ask for it until set.
+    if (!(window.PRICE_WIDGET && /^https:\/\//.test(window.PRICE_WIDGET.url || '')))
+      add(T("Add a booking partner's price widget"), T('Hotel cards can then show live nightly prices from that partner, in their own panel, when a visitor taps for them.'),
+        T("Join a booking site's affiliate programme (Booking.com's or Expedia Group's, for example; free), create a hotel price or search widget in its dashboard, and send its link, or paste it into assets/app/partners.js."), 'https://www.booking.com/affiliate-program/v2/index.html');
     const hp = s.hotel_prices || {};
     // No key is the owner's choice (18 Nov: LiteAPI's live key needs a payment card), so it is not asked for here;
     // it shows under "Waiting" instead. A key that is added but rejected or sandbox still needs the owner.

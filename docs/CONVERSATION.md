@@ -345,6 +345,10 @@ Done (decisions, sixtieth pass): the header's figure is a dial with the median o
 
 Recorded: the hotel-prices skip (fifty-ninth pass) and the price dial (sixtieth pass), with what the dial showed once live, and a lesson on tests that encode an earlier request.
 
+### 18 Nov · "I need night prices showing, give me 5 ways of doing that" → "go with 2 and 4"
+
+Built (decisions, sixty-first pass): hotel cards offer a booking partner's live price panel (waiting for the owner's affiliate widget link) and the night dial shows DET's official average rate (waiting for the Dubai Pulse key). "1 places to stay" fixed.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
@@ -354,4 +358,5 @@ Recorded: the hotel-prices skip (fifty-ninth pass) and the price dial (sixtieth 
 4b. **Rent history** starts showing changes about four weeks after the first snapshot (16 Nov 2026), so from mid-December; year-on-year from November 2027.
 5a. **Street View inside the breakdown** (option 3): needs the owner's Google Maps Embed API key (free, billing enabled, restricted to the site's address).
 5b. ~~Hotel prices~~: skipped by the owner on 18 Nov (LiteAPI's live key needs a payment card that could be charged for bookings made with the key). Adding `LITEAPI_KEY` later switches them on. DET's official, city-wide hotel figures still arrive with the Dubai Pulse key (item 1).
+5c. **Night prices** (owner): (a) join a booking site's affiliate programme (free), create a hotel price or search widget, and send its link (it goes in `assets/app/partners.js`); (b) DET's official rate appears with the Dubai Pulse key (item 1).
 6. Expansion to other cities in the region (new source adapter per registry).

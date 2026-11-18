@@ -613,7 +613,16 @@ The owner asked for an annual-rent dial for flats and a night-charge dial for ho
 
 Merged and deployed on 18 Nov (Tests passed; 175 browser checks). At the starting view the dial read 63,700 between 35k and 156k on a phone, and 60,000 between 35k and 279k on desktop, where one dear area stretches the range: shown as it is.
 
+## Decision on 2026-11-18 (sixty-first pass): night prices through a partner widget and DET's official rate
+
+The owner wants night prices showing but skipped LiteAPI (it needs a card). Of five ways offered they chose 2 (a booking partner's widget) and 4 (DET's official figures). Both are built and waiting on inputs only the owner can give:
+- **Partner widget:** a hotel's card offers "Show live prices from {partner}" and loads the partner's own panel only when tapped (their scripts and prices stay theirs; nothing is stored). The link goes in `assets/app/partners.js`; until then "Needs you" asks for it, with the steps (free affiliate sign-up, create a widget, send the link).
+- **DET:** the Hotels view's dial shows Dubai's official average room rate for the latest month, between the lowest and highest month of the past year, and each hotel's card gives that rate; it switches on by itself when the Dubai Pulse key brings `hotel_stats.json`.
+Also fixed "1 places to stay" (now "1 place to stay"). Browser checks use stand-ins for DET's file and a partner.
+
 ## Change log
+
+- 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".
 
 - 2026-11-18: The header's figure is a price dial: median of what's on screen, lowest and highest area at the ends, following the view.
 
