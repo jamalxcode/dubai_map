@@ -313,6 +313,10 @@ Side panel and Compare panel redesigned (decisions, fifty-third pass) on branch 
 
 Hotels view on branch `hotels` (decisions, fifty-fourth pass): OpenStreetMap places to stay per area, with links out to Google Maps and Booking.com; DET's official figures switch on with the Dubai Pulse key. Live nightly prices wait on the owner joining the Booking.com and/or Agoda affiliate programmes.
 
+### 18 Nov · "when we press on a highlighted area there is the pop-up that kind of hides the highlighted area, how can we fix that" (collaborator)
+
+The breakdown now opens above or beside the area on computers and leaves it in view above the sheet on phones (decisions, fifty-fifth pass).
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

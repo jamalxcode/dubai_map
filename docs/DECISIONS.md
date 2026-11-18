@@ -572,6 +572,14 @@ The collaborator and a friend asked for a hotels option next to rent and sale pr
 - **Next, needing the owner:** live nightly prices per area need the Booking.com affiliate programme (deep links and widgets) and/or Agoda's affiliate API; both are free to join.
 - **Checked:** 975 places from a run on GitHub (789 hotels, 73 hotel apartments, 63 hostels, 50 guest houses); Python tests for both collectors; browser checks for the view on desktop and phone (counts, key, no overlaps); English, Arabic and phone screenshots.
 
+## Decision on 2026-11-18 (fifty-fifth pass): an area's breakdown no longer hides the area
+
+The collaborator: "when we press on a highlighted area the pop-up kind of hides the highlighted area". The map flew to the area before the card existed, guessing its room, and the card hung from the label in the middle of the area: it covered up to half of it on computers, and on phones the sheet (up to 80% of the screen) left a sliver above it.
+- **Card first, then fit:** the breakdown opens, its real size is measured, and the map fits the area into what is left (one move, not two). Photos loading later refit it.
+- **Computers:** the card hangs from the area's top edge, or sits to its right when that shows the area larger (wide maps, tall areas); it is capped at 58% of the map's height.
+- **Phones:** the sheet stops at 60% of the screen, like Compare, and scrolls inside; the area fits in the strip above it.
+- **Checked:** a browser check fails if the card covers more than 3% of the area; Business Bay, Jumeirah Village Circle and a phone viewed before and after (covered 18%, 47%, 13% → 0%).
+
 ## Change log
 
 - 2026-11-18: One calm system for the side panel; the comparison as a mirrored "versus" sheet with motion.

@@ -115,7 +115,8 @@ button,input,select{font:inherit;color:inherit}
 .leaflet-tile-pane{filter:var(--tiles)}
 .glBase .leaflet-tile-pane{filter:none} /* the vector map has its own dark style; the filter is only for the OpenStreetMap fallback */
 /* Area breakdown: Google links and photos taken nearby (atlas.js loadPhotos). */
-.leaflet-popup-content a{color:var(--text)} /* the page's links (espresso, gold-leaf underline), not Leaflet's blue */
+.leaflet-popup-content a{color:var(--text)}
+.leaflet-popup.side .leaflet-popup-tip-container{display:none} /* an area's card beside the area: no tip */ /* the page's links (espresso, gold-leaf underline), not Leaflet's blue */
 .leaflet-popup-content .see{margin:8px 0 4px;font-size:13px}
 .leaflet-popup-content .see .sep{margin:0 6px;color:var(--muted)}
 .pics.loading{min-height:70px;background:linear-gradient(90deg,var(--panel),var(--bg),var(--panel));border-radius:6px;margin:4px 0}
@@ -319,7 +320,7 @@ footer{font-size:13px;color:var(--muted);padding:18px 0 40px}
 
 /* Phones and fold phones: the area breakdown as a bottom sheet (atlas.js). The Leaflet pop-up stays
    open but hidden; its content lives in the sheet. Up to 640 px wide, centred on fold inner screens. */
-.areaSheet{position:fixed;z-index:1200;inset-inline:0;bottom:0;margin-inline:auto;width:min(100%,640px);max-height:min(80vh,80svh);overflow:auto;
+.areaSheet{position:fixed;z-index:1200;inset-inline:0;bottom:0;margin-inline:auto;width:min(100%,640px);max-height:min(60vh,60svh);overflow:auto;
   overscroll-behavior:contain;background:var(--bg);color:var(--text);border-radius:16px 16px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.28);
   padding:6px 16px calc(18px + env(safe-area-inset-bottom));animation:sheetUp .22s ease-out}
 .areaSheet[hidden]{display:none}

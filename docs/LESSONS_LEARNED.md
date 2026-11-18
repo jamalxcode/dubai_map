@@ -106,3 +106,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the first Hotels build passed hotel counts as label values but left each area's weight (`n`) as its contract count; `RentLabels.place` with `sum` adds the weights, so a group label read "25,413 hotels" when the city has 975.
 - **Rule:** in a view where groups add up (`sum`), the weight is the thing being counted. The browser check now fails if any hotel label is larger than the total.
+
+## Room for a card (18 Nov 2026)
+
+- **Problem:** the map flew to an area using a guessed padding, then opened its breakdown; the real card was taller than the guess and hung from the middle of the area, so it covered it.
+- **Rule:** measure, don't guess. Open the card, read its size (or the sheet's), then fit the map into the space that is actually free; refit when the card's content grows.

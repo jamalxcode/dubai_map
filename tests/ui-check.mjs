@@ -379,6 +379,12 @@ try {
       const c = await page.evaluate(() => ({ z: map.getZoom(), inView: map.getBounds().pad(-0.05).contains([25.058, 55.209]) }));
       const near = c.inView;
       check(near && c.z >= 13, `desktop: a rent check takes the map to the area (JVC; zoom ${c.z})`);
+      // The breakdown never covers the area it is about (above it or beside it, whichever shows the area larger).
+      const cover = await page.evaluate(() => { const card = document.querySelector('.leaflet-popup'), ring = document.querySelector('.focusRing');
+        if (!card || !ring) return null; const c = card.getBoundingClientRect(), a = ring.getBoundingClientRect();
+        const ix = Math.max(0, Math.min(c.right, a.right) - Math.max(c.left, a.left)), iy = Math.max(0, Math.min(c.bottom, a.bottom) - Math.max(c.top, a.top));
+        return Math.round(ix * iy / (a.width * a.height) * 100); });
+      check(cover !== null && cover <= 3, `desktop: the area's breakdown leaves the area in view (${cover}% covered)`);
       check(!!(await page.$('.leaflet-popup-content')), 'desktop: and opens its breakdown');
       // One home choice for the page: the check set the map's picker; the map's picker re-checks the area.
       // Our own history and the cross-checks in a breakdown: change since an earlier update, an unconfirmed

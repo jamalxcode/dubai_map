@@ -209,14 +209,53 @@ function drawFocus(){
   L.polygon(rings,{pane:'outlines',interactive:false,color:'#C9A227',weight:3.5,opacity:1,fill:false,className:'focusRing'}).addTo(focusLayer);
 }
 function clearFocus(){if(!FOCUS)return;FOCUS=null;focusPopup=null;drawFocus();document.querySelectorAll('.rl.focus').forEach(e=>e.classList.remove('focus'))}
-// Room for the breakdown: above the area on a computer (the card sits over its label), above the sheet on a phone.
-function focusPadding(){const s=map.getSize();
-  return SHEET_MQ.matches?{tl:L.point(24,24),br:L.point(24,Math.round(s.y*.55))}:{tl:L.point(70,Math.round(s.y*.42)),br:L.point(40,40)}}
+// The area's breakdown never covers the area. On a computer the card hangs from the area's top edge (the top of
+// its outline, centred) instead of from its label in the middle; on a phone it is the sheet at the bottom. The card
+// opens first, then the map fits the area into the room the card actually leaves (above the sheet, or under the
+// card and clear of the buttons and legend), and fits again if photos make the card taller.
+const focusBounds=a=>{const o=outlineOf(a);return o?L.latLngBounds(outlineLatLngs(o).flat()):L.latLng(a.lat,a.lng).toBounds(1800)};
+const focusMaxH=()=>Math.max(220,Math.round(map.getSize().y*.58)); // leaves the area at least 40% of the map
 function openArea(a){
-  const m=MARKERS.get(a.label);
-  if(m){if(!m.getPopup())m.bindPopup(popup(a),{maxWidth:320,offset:L.point(0,-18)});m.openPopup();focusPopup=m.getPopup()}
-  else focusPopup=L.popup({maxWidth:320}).setLatLng([a.lat,a.lng]).setContent(popup(a)).openOn(map); // merged at this zoom
+  const b=focusBounds(a),at=L.latLng(b.getNorth(),b.getCenter().lng),html=popup(a);
+  // A breakdown already open (e.g. the home changed): replace it without letting its closing end the focus.
+  if(focusPopup&&map.hasLayer(focusPopup)){relabelKeep=true;map.closePopup(focusPopup);relabelKeep=false}
+  focusPopup=L.popup({maxWidth:320,autoPan:false,focusCard:true,offset:L.point(0,-2)}).setLatLng(at).setContent(html).openOn(map);
   document.querySelectorAll('.rl').forEach(e=>e.classList.toggle('focus',e.dataset.area===a.label));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>fitFocus(a)));
+}
+function fitFocus(a){
+  if(FOCUS!==a||!focusPopup||!map.hasLayer(focusPopup))return;
+  const o=L.Popup.prototype.options,s=map.getSize(),tl0=o.autoPanPaddingTopLeft||L.point(10,10),br0=o.autoPanPaddingBottomRight||L.point(10,10);
+  let tl,br;
+  if(SHEET_MQ.matches){
+    if(!sheetEl||sheetEl.hidden)return;
+    const wrap=map.getContainer().parentNode;let box=map.getContainer().getBoundingClientRect();
+    // The map off the top of the screen or low on it: bring its top up, as Compare does.
+    if(box.top<-4||box.top>innerHeight*.2){const y=wrap.getBoundingClientRect().top+scrollY-8;let ln=null;try{ln=lenis}catch(_){} // lenis is set up later in the file
+      if(ln)ln.scrollTo(y,{immediate:true,force:true});else scrollTo(0,y);box=map.getContainer().getBoundingClientRect()}
+    const sheetTop=innerHeight-sheetEl.offsetHeight; // fixed to the bottom; measured from its size, not mid-animation
+    const hidden=Math.max(0,box.bottom-sheetTop);
+    tl=L.point(tl0.x,tl0.y);br=L.point(10,hidden+12);
+    if(s.y-tl.y-br.y<120)tl=L.point(10,10); // a short strip: use it all, under the buttons if need be
+  }else{
+    // Above the area, or beside it (to its right) when that shows the area larger: maps on computers are wide.
+    const card=focusPopup.getElement();if(!card)return;
+    const b=focusBounds(a),place=side=>{card.classList.toggle('side',side);
+      const w=card.offsetWidth,h=card.offsetHeight;
+      focusPopup.options.offset=side?L.point(Math.round(w/2)+14,Math.round(h/2)):L.point(0,-2);
+      focusPopup.setLatLng(side?L.latLng(b.getCenter().lat,b.getEast()):L.latLng(b.getNorth(),b.getCenter().lng));return {w,h}};
+    const top=place(false),pTop={tl:L.point(tl0.x,tl0.y+top.h+8),br:L.point(br0.x,br0.y)};
+    const side=place(true),pSide={tl:L.point(tl0.x,tl0.y),br:L.point(Math.max(br0.x,side.w+24),br0.y)};
+    const z=p=>map._getBoundsCenterZoom(b,{paddingTopLeft:p.tl,paddingBottomRight:p.br,maxZoom:16}).zoom;
+    const useSide=side.h<=s.y-tl0.y-br0.y-8&&z(pSide)>z(pTop);
+    if(!useSide)place(false);
+    ({tl,br}=useSide?pSide:pTop);
+  }
+  if(s.y-tl.y-br.y<60||s.x-tl.x-br.x<60)return;
+  const t=map._getBoundsCenterZoom(focusBounds(a),{paddingTopLeft:tl,paddingBottomRight:br,maxZoom:16});
+  const d=map.latLngToContainerPoint(t.center).distanceTo(map.latLngToContainerPoint(map.getCenter()));
+  if(t.zoom===map.getZoom()&&d<4)return;
+  if(FX)map.flyTo(t.center,t.zoom,{duration:.6});else map.setView(t.center,t.zoom,{animate:false});
 }
 function focusArea(a){
   if(a.lat==null)return;
@@ -224,14 +263,7 @@ function focusArea(a){
   // Already in focus with its breakdown open (e.g. the rent check re-checking after a home change): nothing to do.
   if(FOCUS&&FOCUS.label===a.label&&focusPopup&&map.hasLayer(focusPopup))return;
   focusPopup=null;map.closePopup();FOCUS=a;drawFocus();countUse('area-focus');
-  const o=outlineOf(a),b=o?L.latLngBounds(outlineLatLngs(o).flat()):L.latLng(a.lat,a.lng).toBounds(1800);
-  const pad=focusPadding(),opts={paddingTopLeft:pad.tl,paddingBottomRight:pad.br,maxZoom:16};
-  const t=map._getBoundsCenterZoom(b,opts);
-  // Already showing the whole area at about that zoom: open it where it is, without moving the map.
-  const still=Math.abs(t.zoom-map.getZoom())<=1&&map.getBounds().contains(b);
-  if(still){openArea(a);return}
-  map.once('moveend',()=>setTimeout(()=>{if(FOCUS===a)openArea(a)},0));
-  if(!FX)map.fitBounds(b,Object.assign({animate:false},opts));else map.flyToBounds(b,Object.assign({duration:.7},opts));
+  openArea(a);
 }
 window.focusArea=focusArea;
 let relabelKeep=false;
@@ -723,7 +755,7 @@ async function loadPhotos(e){
   refitPopup(e.popup);box.querySelectorAll('img').forEach(i=>i.addEventListener('load',()=>refitPopup(e.popup),{once:true}));
 }
 map.on('popupopen',loadPhotos);
-map.on('popupopen',e=>{popupMargins();e.popup.options.maxHeight=L.Popup.prototype.options.maxHeight;refitPopup(e.popup)});
+map.on('popupopen',e=>{popupMargins();e.popup.options.maxHeight=e.popup.options.focusCard?Math.min(focusMaxH(),L.Popup.prototype.options.maxHeight):L.Popup.prototype.options.maxHeight;refitPopup(e.popup)});
 // Pop-ups keep clear of the map's buttons and legend (Leaflet draws controls above pop-ups): the map pans so the
 // whole card sits inside these margins, measured from the controls as they are now. Pop-ups read their options
 // from this shared object, so updating it covers every pop-up, bound or opened later.
@@ -809,7 +841,7 @@ addEventListener('keydown',e=>{if(e.key==='Escape'&&isWide()&&!WIDE_MQ.matches&&
 (()=>{let saved=null;try{saved=localStorage.getItem('mapWide')}catch(e){}if(WIDE_MQ.matches&&saved==='1')map.whenReady(()=>setWide(true,false));else paintWide()})();
 // Re-lay out and pan an open breakdown after its content changed size (photos arriving): Leaflet only
 // checks the size when content is set through it.
-function refitPopup(p){try{if(p&&p.isOpen()&&!SHEET_MQ.matches){p._updateLayout();p._updatePosition();p._adjustPan()}}catch(e){}}
+function refitPopup(p){try{if(p&&p.isOpen()&&!SHEET_MQ.matches){p._updateLayout();p._updatePosition();if(p===focusPopup&&FOCUS)fitFocus(FOCUS);else p._adjustPan()}}catch(e){}}
 
 // Phones and fold phones (860 px and narrower): an area's breakdown slides up from the bottom of the
 // screen, full width and scrollable, instead of a small pop-up on the map. The Leaflet pop-up stays
@@ -970,7 +1002,7 @@ function draw(){
   LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};
   // A change of home or view keeps a focused area in focus: its breakdown reopens with the new figures.
   const legendBox0=$('legend').hidden?'':$('legend').offsetWidth+'x'+$('legend').offsetHeight;
-  const kept=FOCUS&&focusPopup?FOCUS:null;relabelKeep=!!kept;renderLabels();relabelKeep=false;if(kept&&!map._popup){FOCUS=kept;drawFocus();openArea(kept)}
+  const kept=FOCUS&&focusPopup?FOCUS:null;relabelKeep=!!kept;renderLabels();relabelKeep=false;if(kept){FOCUS=kept;drawFocus();openArea(kept)}
   viewStat();drawOutlines();drawHotels();setTimeout(popupMargins,0);
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
