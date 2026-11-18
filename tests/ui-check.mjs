@@ -429,13 +429,18 @@ try {
       { run_started_at: '2026-11-17T18:00:00Z', created_at: '2026-11-17T18:00:00Z', updated_at: '2026-11-17T18:01:10Z', event: 'workflow_dispatch', conclusion: 'success', html_url: 'https://github.com/x/y/actions/runs/2' },
       { run_started_at: '2026-11-17T10:17:00Z', created_at: '2026-11-17T10:17:00Z', updated_at: '2026-11-17T10:17:20Z', event: 'schedule', conclusion: 'success', html_url: 'https://github.com/x/y/actions/runs/1' }] }) }));
     await page.route(/api\.github\.com\/repos\/.+\/issues/, r => r.fulfill({ contentType: 'application/json', body: '[]' }));
+    await page.route(/api\.github\.com\/repos\/.+\/branches/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify([{ name: 'main' }, { name: 'data' }, { name: 'old-probe' }]) }));
     await page.goto(BASE + 'status/' + q);
     await page.waitForFunction(() => window.statusState, null, { timeout: 15000 }).catch(() => {});
     const st = await page.evaluate(() => ({ state: window.statusState, overall: document.getElementById('overall').textContent,
       totals: document.querySelectorAll('#totals div').length, contracts: document.querySelector('#totals dd')?.textContent || '',
       pulled: document.querySelectorAll('#pulled tr').length, used: document.querySelectorAll('#used tr').length, runs: document.querySelectorAll('#runs tr').length,
       left: document.querySelectorAll('#left li').length, pending: document.querySelectorAll('#pending li').length, alerts: document.getElementById('alerts').textContent,
-      sideways: document.documentElement.scrollWidth > innerWidth, dir: document.documentElement.dir }));
+      sideways: document.documentElement.scrollWidth > innerWidth, dir: document.documentElement.dir,
+      needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
+    // Unresolved issues a person can fix come first, each with what to do (here: the API key, an old branch).
+    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
+      `${name}: "Needs you" comes first and lists what a person can fix, with what to do (${st.needs.length})`);
     check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 5 && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
       `${name}: shows the totals (${st.contracts} contracts), what each source pulled, what's in use, left out and waiting, and recent pulls`);
     check(/All fine|كل شيء/.test(st.overall) && /No open alerts|لا تنبيهات/.test(st.alerts), `${name}: says all is fine when the last pull worked and no alert is open`);

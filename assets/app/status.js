@@ -101,13 +101,10 @@
     const p = (st && st.pending) || {};
     const items = [];
     const un = p.unplaced || [];
-    items.push('<li><b>' + esc(T('{n} areas waiting for a map point', { n: un.length })) + '</b>' + (un.length ? ': ' + un.map(x => esc(T.place(x.area)) + ' <span class="muted">(' + T('{n} contracts', { n: fmt(x.n) }) + ')</span>').join(', ') : '') + '</li>');
+    items.push('<li><b>' + esc(T('{n} areas waiting for a map point', { n: un.length })) + '</b>' + (un.length ? ' ' + esc(T('(see "Needs you")')) : '') + '</li>');
     const uc = p.unconfirmed || [];
     items.push('<li><b>' + esc(T('{n} big changes waiting to be confirmed', { n: uc.length })) + '</b>' + (uc.length ? ': ' + uc.slice(0, 10).map(x => esc(T.place(x.area)) + (x.unit ? ' · ' + esc(T.unit(x.unit, true)) : '') + ' ' + (x.pct > 0 ? '+' : '') + x.pct + '%').join(', ') : '') + '</li>');
     items.push('<li><b>' + esc(T('{n} figures where another source differs by more than 15%', { n: fmt(p.sources_differ) })) + '</b></li>');
-    const s = state || {};
-    if ((s.pulse || {}).state === 'no_key') items.push('<li><b>' + esc(T('Dubai Pulse API')) + '</b>: ' + esc(T('waiting for the API key (contract-level data)')) + '</li>');
-    if ((s.dld || {}).state === 'off') items.push('<li><b>' + esc(T('DLD open-data service')) + '</b>: ' + esc(T("off until DLD's written permission")) + '</li>');
     $('pending').innerHTML = items.join('');
   }
 
@@ -138,19 +135,53 @@
     return open.length;
   }
 
-  function overall(nAlerts, runs, st) {
+  // Unresolved issues a person can fix, each with why it matters and what to do. Every condition the robot
+  // can't resolve by itself belongs here (docs/INTERFACE_RULES.md, 7b): add new ones when a new kind appears.
+  function needs(st, state, issues, runs, branches) {
+    const s = state || {}, p = (st && st.pending) || {}, out = [];
+    const add = (title, why, todo, link) => out.push({ title, why, todo, link });
+    for (const u of p.unplaced || [])
+      add(T('Place {area} on the map', { area: T.place(u.area) }), T('{n} contracts are in the table but not on the map: no official or checked point exists for this name.', { n: fmt(u.n) }),
+        T('Find the area on Makani, the DLD map or Google Maps and send its coordinates (lat, lng), or another name it is known by (e.g. "Al Twar 5" for Al Twar Fifth). A checked point goes in data/area_locations.csv.'));
+    if (st && st.backup) add(T('Dubai Data has stopped updating'), T('The map is running on backup figures from Continental Club since {d}.', { d: day(st.backup.since) }),
+      T('Check datadubai.ae and its weekly export; if their format changed, the collector needs updating.'), 'https://datadubai.ae/');
+    for (const [key, name] of [['datadubai', 'Dubai Data'], ['crosscheck:ccp', 'Continental Club Property'], ['crosscheck:dred', 'Dubai Real Estate Data']]) {
+      const b = key.startsWith('crosscheck:') ? (s.crosscheck || {})[key.slice(11)] || {} : s[key] || {};
+      if (b.state === 'failed') add(T('{source} is failing', { source: name }), b.status || '', T("Open the source's page to see whether it moved or changed; the last good figures stay on the map meanwhile."));
+    }
+    const last = runs && runs[0];
+    if (last && last.ok && last.ok !== 'success') add(T('The last pull failed'), T('Started {t}.', { t: kuwait(last.at) }), T('Open the run, read the failing step, and re-run it once the cause is fixed.'), last.url);
+    for (const i of (issues || []).filter(i => !i.pull_request))
+      add(i.title.replace(/^Data alert:\s*/, ''), T('An open alert from the freshness check, since {t}.', { t: kuwait(i.created_at) }), T('Open the alert for details; it closes itself once the problem is gone.'), i.html_url);
+    if ((s.pulse || {}).state === 'no_key')
+      add(T('Get the Dubai Pulse API key'), T('It unlocks contract-level data: rent ranges, rent per m², new vs renewal, monthly trends.'),
+        T('Follow up the Digital Dubai request, or have someone with UAE Pass request dld_rent_contracts-open-api on data.dubai; then add DUBAI_PULSE_KEY and DUBAI_PULSE_SECRET as repository secrets.'), 'https://data.dubai');
+    if ((s.dld || {}).state === 'off')
+      add(T("Ask DLD for written permission"), T("DLD's own open-data service stays off without it."), T('If DLD agrees in writing, set the repository variable DLD_ENABLED=1.'));
+    const stale = (branches || []).filter(b => !['main', 'data'].includes(b.name) && !/^gh-pages$/.test(b.name));
+    if (stale.length) add(T('Delete {n} old branches', { n: stale.length }), stale.map(b => b.name).join(', '),
+      T('Coding sessions may not delete branches: delete them under the repository\'s Branches page if they are no longer needed.'), 'https://github.com/' + REPO + '/branches/all');
+    $('needs').innerHTML = out.length ? out.map(n => '<li><b>' + esc(n.title) + '</b>' + (n.why ? '<br><span class="muted">' + esc(n.why) + '</span>' : '') +
+      '<br><span class="todo">' + esc(T('What to do:')) + ' ' + esc(n.todo) + '</span>' + (n.link ? ' <a href="' + esc(n.link) + '" target="_blank" rel="noopener">' + esc(T('Open')) + '</a>' : '') + '</li>').join('')
+      : '<li>' + esc(T('Nothing needs you right now.')) + '</li>';
+    return out.length;
+  }
+
+  function overall(nAlerts, runs, st, nNeeds) {
     const last = runs[0];
     const bad = nAlerts > 0 || (last && last.ok && last.ok !== 'success') || (st && st.backup);
     $('overall').textContent = bad ? T('Needs a look') : T('All fine');
     $('overall').className = 'num ' + (bad ? 'bad' : 'good');
-    $('overallCap').textContent = nAlerts ? T('{n} open alerts', { n: nAlerts }) : last ? T('Last pull {t}', { t: kuwait(last.at) }) : '';
+    $('overallCap').textContent = [nAlerts ? T('{n} open alerts', { n: nAlerts }) : last ? T('Last pull {t}', { t: kuwait(last.at) }) : '',
+      nNeeds ? T('{n} things need you', { n: nNeeds }) : ''].filter(Boolean).join(' · ');
   }
 
   async function main() {
-    const [st, state, meta, runsText, gh, issues] = await Promise.all([
+    const [st, state, meta, runsText, gh, issues, branches] = await Promise.all([
       data('status.json'), data('state.json'), data('meta.json'), data('runs.jsonl', true),
       get(API + 'actions/workflows/daily-ejari.yml/runs?per_page=12').then(j => j.workflow_runs).catch(() => null),
-      get(API + 'issues?state=open&labels=data-alert&per_page=50').catch(() => null)
+      get(API + 'issues?state=open&labels=data-alert&per_page=50').catch(() => null),
+      get(API + 'branches?per_page=100').catch(() => null)
     ]);
     const log = (runsText || '').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l); } catch (e) { return null; } }).filter(Boolean);
     totals(st, meta);
@@ -160,7 +191,8 @@
     pending(st, state || (meta && meta.state));
     const runs = recentRuns(gh, log);
     pubHours(state);
-    overall(alerts(issues), runs, st);
+    const nNeeds = needs(st, state || (meta && meta.state), issues, runs, branches);
+    overall(alerts(issues), runs, st, nNeeds);
     window.statusState = 'ready';
   }
   main().catch(e => { $('overall').textContent = T('Unavailable'); $('overallCap').textContent = String(e && e.message || e); window.statusState = 'error'; });

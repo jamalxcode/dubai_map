@@ -59,6 +59,7 @@ Standard-library Python only (3.12 in CI). Node 22 for tests.
 - One control per job: the page language switch, the **Home** picker (`#home`, backed by hidden `#unit` and `TYPE`), the map's view bar (backed by hidden `#metric`), the rent check as the area search (it has no home field: it reads `#home`, sets it with `window.setMapHome`, and re-checks on the `atlas:home` event); `#search` above the table filters the table only. Don't add a second control for the same thing.
 - Label boxes are measured from a hidden label (`labelBox`); keep new label styles inside `.rl` so the measurement stays right.
 - Keep the GoatCounter snippet in `index.html` (endpoint `https://salacompany.goatcounter.com/count`, shared with Flattery). Count features only, nothing personal (`countUse` in atlas.js, `count` in companion.js: feature names and at most the choice made).
+- **The status page's "Needs you" lists every unresolved issue a person can fix, with what to do** (`needs()` in `assets/app/status.js`). When you add a check, source or failure the robot can't resolve by itself, add it there (and to the browser check).
 - Don't guess coordinates: places come from Dubai Municipality, reviewed aliases or OpenStreetMap results that pass the checks.
 - The DLD service stays off without DLD's written permission. No VPN, no CAPTCHA workarounds, no listing portals.
 - Secrets only in GitHub Secrets. Keep the owner's name, email and support case details out of the repo; write "the owner".

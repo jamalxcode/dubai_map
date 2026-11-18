@@ -29,6 +29,13 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
 </header>
 
 <main class="wrap" id="status">
+  <!-- Unresolved issues a person can fix, each with what to do: always first. -->
+  <section aria-labelledby="hNeeds" class="needs">
+    <h2 id="hNeeds" data-t="s.needs">Needs you</h2>
+    <p class="muted" data-t="s.needs2">Unresolved issues the robot can't fix on its own, and what would fix them.</p>
+    <ol id="needs" class="needsList"></ol>
+  </section>
+
   <section aria-labelledby="hTotals">
     <h2 id="hTotals" data-t="s.totals">In the data</h2>
     <dl class="stats" id="totals"></dl>

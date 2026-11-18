@@ -99,7 +99,8 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 ## 7b. Data status page
 
 - Its own address, `status/` (linked from "Where the numbers come from" on the map page; not indexed by search engines). Same header, fonts, colours, language switch and dark mode as the map page.
-- A big verdict ("All fine" / "Needs a look": an open alert, a failed last pull or the backup source), then: In the data (five counts), The last pull (per source: what it pulled and its state), In use on the map (read / in use per source), Left out, Waiting, Recent pulls (linked to GitHub) and Open alerts.
+- **Needs you, always first:** every unresolved issue a person can fix, each with why it matters, what to do and a link where one helps. Today: areas without a map point (send coordinates or another name), Dubai Data stopped (backup in use), a failing source, a failed last pull, open alerts, the Dubai Pulse key, DLD's permission, old branches to delete. **Any new condition the robot can't resolve by itself must be added here.** "Nothing needs you right now" when empty.
+- A big verdict ("All fine" / "Needs a look": an open alert, a failed last pull or the backup source), with "N things need you" under it, then: In the data (five counts), The last pull (per source: what it pulled and its state), In use on the map (read / in use per source), Left out, Waiting, Recent pulls (linked to GitHub) and Open alerts.
 - Read live in the browser (data branch and GitHub's API); falls back to the site's copies. Browser-checked on desktop, phone and Arabic, with axe.
 
 ## 8. Language and direction

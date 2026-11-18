@@ -25,3 +25,8 @@
   .statusPage .band .wrap{padding-top:54px}
   .statusPage h2{font-size:24px}
 }
+/* "Needs you": unresolved issues a person can fix, first on the page. */
+.needs{border:2px solid var(--gold);border-radius:10px;padding:14px 18px;background:var(--panel)}
+.needs h2{margin-top:0}
+.needsList{margin:8px 0 0;padding-inline-start:22px}.needsList li{margin-bottom:12px;line-height:1.45}
+.needsList .todo{font-size:14.5px}

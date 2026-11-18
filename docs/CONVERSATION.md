@@ -289,6 +289,10 @@ The existing Rent range only filtered the table; it became the budget and now li
 
 Yes. The map's OpenStreetMap look-up now searches "Al Twar 5" too, with the usual checks; run on GitHub straight after merging, it found Al Twar 5 (a suburb, 25.2694, 55.3877, between Al Twar First and Second). Every area is now on the map (decisions, forty-seventh pass).
 
+### 18 Nov · "the status page helped fix an issue by highlighting it to me, be sure status pages lists out unresolved issues that can be fixed by human intervention"
+
+Done (decisions, forty-eighth pass): the status page opens with "Needs you", each item with what to do; CLAUDE.md makes it a rule for new kinds of issue.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

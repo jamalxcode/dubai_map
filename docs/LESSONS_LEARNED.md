@@ -73,6 +73,7 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Anything shown on the page that changes every run means a deploy every run.** *Rule:* keep run-by-run bookkeeping (run logs) off the page files; report it in run summaries and alerts instead.
 - **A workflow's new permission is only proven by running it.** The freshness check gained `issues: write`; a missing permission would only show when a real problem appeared. *Rule:* after changing a workflow's permissions or secrets, run it once by hand and read its result.
 - **Ask the remote, not memory, what exists.** The open-items list named work branches to delete that had only ever existed locally. *Rule:* list remote branches (`git ls-remote --heads origin`) before writing them down for the owner.
+- **Showing a problem to the owner fixes it faster than an email.** Al Twar Fifth sat in an email warning for days; one look at the status page's list brought the missing name. *Rule:* every issue only a person can fix appears on the status page under "Needs you", with what to do.
 
 ## Accessibility
 
