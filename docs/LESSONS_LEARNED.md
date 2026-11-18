@@ -94,3 +94,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Chained shell commands stop at the first failure.** A failed `git checkout -b` skipped the edits after it; the commit then had nothing in it. *Rule:* check that a change was actually written before committing.
 - **Some actions belong to the owner.** Deleting branches and anything irreversible are not done from a session; they are listed for the owner instead.
 - **Keep personal details out of a public repo:** write "the owner", never names, emails or support case numbers.
+
+## Animating the map's size (18 Nov 2026)
+
+- **Problem:** the first panel animation tweened the grid column and resized the map (Leaflet `invalidateSize` + MapLibre canvas) on every frame; on real screens the whole page jittered.
+- **Rule:** never resize or re-lay out the map during an animation. Resize it once, then move things with transforms only (the panel slides over the map, the map slides by the distance its centre moves). Re-place labels after the motion ends. Measure: one map `resize` event per toggle.

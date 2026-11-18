@@ -522,38 +522,42 @@ const isWide=()=>document.documentElement.classList.contains('mapWide');
 function paintWide(){const on=isWide(),desk=WIDE_MQ.matches;
   const t=desk?(on?T('Show the side panel'):T('Hide the side panel')):(on?T('Exit full screen'):T('Full-screen map'));
   wideBtn.setAttribute('aria-label',t);wideBtn.title=t;wideBtn.setAttribute('aria-pressed',String(on));wideBtn.classList.toggle('flip',on)}
-function setWide(on,save){
+function setWide(on,save,labelsLater){
   document.documentElement.classList.toggle('mapWide',on);paintWide();
   if(save&&WIDE_MQ.matches)try{localStorage.setItem('mapWide',on?'1':'0')}catch(e){}
   // Keep the same place in view: the centre stays put while the map grows or shrinks.
   const c=map.getCenter();map.invalidateSize({pan:false});map.setView(c,map.getZoom(),{animate:false});
-  popupMargins();if(LABEL.metric)renderLabels();
+  popupMargins();if(LABEL.metric&&!labelsLater)renderLabels();
   if(on&&!WIDE_MQ.matches)wideBtn.focus({preventScroll:true});
 }
-// The same change, animated with GSAP (skipped when the visitor asks for reduced motion).
-// Computers: the side panel slides out (or in) while its grid column narrows (or widens), so the map grows
-// into the space frame by frame; the map re-measures each frame keeping its centre, and labels re-place at the end.
-// Narrow screens: the map is set full screen at once and revealed from its old box with a clip, and back.
+// The same change, animated with GSAP (skipped when the visitor asks for reduced motion). Only transforms move,
+// so nothing is laid out or redrawn while it plays: the map is resized once, at the start (collapsing) or at the
+// end (expanding), and the motion is the side panel sliding over it while the map slides by half the panel's
+// width, which is exactly where its centre moves to. Narrow screens: the full-screen map is revealed from its old
+// box with a clip, and back.
 let wideAnim=null;
 function animateWide(on){
   if(!FX){setWide(on,true);return}
   if(wideAnim){wideAnim.progress(1);wideAnim=null}
-  const root=document.documentElement,layout=document.querySelector('.layout'),pane=document.querySelector('.pane'),wrap=map.getContainer().parentNode;
-  const c=map.getCenter(),z=map.getZoom(),follow=()=>{map.invalidateSize({pan:false});map.setView(c,z,{animate:false})};
-  wideBtn.classList.add('turning');wideBtn.classList.toggle('flip',on); // the arrow turns as the move starts
+  const root=document.documentElement,pane=document.querySelector('.pane'),wrap=map.getContainer().parentNode;
+  wideBtn.classList.toggle('flip',on); // the arrow turns as the move starts
   if(WIDE_MQ.matches){
-    const sign=root.dir==='rtl'?1:-1;
-    if(on){ // measure the open panel, then slide it out
-      const W=pane.getBoundingClientRect().width,st={w:W};
-      pane.style.width=W+'px';layout.style.overflow='hidden';
-      wideAnim=G.to(st,{w:0,duration:.5,ease:'power3.inOut',onUpdate(){layout.style.gridTemplateColumns=st.w+'px minmax(0,1fr)';pane.style.transform='translateX('+(sign*(W-st.w))+'px)';follow()},
-        onComplete(){wideAnim=null;pane.style.cssText='';layout.style.cssText='';wideBtn.classList.remove('turning');setWide(true,true)}});
-    }else{ // put the panel back to measure its width, then slide it in from the edge
-      root.classList.remove('mapWide');const W=pane.getBoundingClientRect().width,st={w:0};root.classList.add('mapWide');
-      pane.style.cssText='display:block;width:'+W+'px;transform:translateX('+(sign*W)+'px)';layout.style.overflow='hidden';layout.style.gridTemplateColumns='0px minmax(0,1fr)';
-      root.classList.remove('mapWide');paintWide();
-      wideAnim=G.to(st,{w:W,duration:.5,ease:'power3.inOut',onUpdate(){layout.style.gridTemplateColumns=st.w+'px minmax(0,1fr)';pane.style.transform='translateX('+(sign*(W-st.w))+'px)';follow()},
-        onComplete(){wideAnim=null;pane.style.cssText='';layout.style.cssText='';wideBtn.classList.remove('turning');setWide(false,true)}});
+    const rtl=root.dir==='rtl',sign=rtl?1:-1,side=rtl?'right':'left';
+    // The panel, lifted out of the page where it stands, slides over the map; it has the page's background.
+    const lift=(W,top)=>{pane.style.cssText='display:block;position:fixed;top:'+top+'px;'+side+':0;width:'+W+'px;z-index:1050;background:var(--bg);will-change:transform'};
+    const done=()=>{wideAnim=null;pane.style.cssText='';G.set(wrap,{clearProps:'transform,willChange'})};
+    if(on){
+      const W=pane.getBoundingClientRect().width;pane._y=scrollY;lift(W,-scrollY);
+      setWide(true,true,true);                    // map at full width now, centre kept; labels re-placed at the end
+      G.set(wrap,{x:-sign*W/2,willChange:'transform'}); // drawn where it was, then slides into place
+      wideAnim=G.timeline({defaults:{duration:.55,ease:'power3.inOut'},onComplete(){done();if(LABEL.metric)renderLabels()}})
+        .to(pane,{x:sign*W},0).to(wrap,{x:0},0);
+    }else{
+      root.classList.remove('mapWide');const W=pane.getBoundingClientRect().width;root.classList.add('mapWide'); // its width when open
+      const y=pane._y||0;lift(W,-y);G.set(pane,{x:sign*W});G.set(wrap,{willChange:'transform'}); // back where the reader left it
+      wideAnim=G.timeline({defaults:{duration:.55,ease:'power3.inOut'},onComplete(){done();setWide(false,true);
+        if(y){scrollTo(0,y);if(lenis){try{lenis.resize()}catch(e){}lenis.scrollTo(y,{immediate:true,force:true})}}}})
+        .to(pane,{x:0},0).to(wrap,{x:-sign*W/2},0);
     }
     return;
   }
@@ -562,10 +566,10 @@ function animateWide(on){
   const box=`inset(${Math.max(0,r.top)}px ${Math.max(0,vw-r.right)}px ${Math.max(0,vh-r.bottom)}px ${Math.max(0,r.left)}px round 12px)`,full='inset(0px 0px 0px 0px round 0px)';
   if(on){wrap._from=r;wrap.parentNode.style.minHeight=r.height+'px'; // the page keeps its place under the map
     if(lenis)lenis.stop();setWide(true,false);
-    wideAnim=G.fromTo(wrap,{clipPath:box},{clipPath:full,duration:.42,ease:'power3.out',onComplete(){wideAnim=null;wrap.style.clipPath='';wideBtn.classList.remove('turning')}});
+    wideAnim=G.fromTo(wrap,{clipPath:box},{clipPath:full,duration:.42,ease:'power3.out',onComplete(){wideAnim=null;wrap.style.clipPath=''}});
   }else{
     wideAnim=G.fromTo(wrap,{clipPath:full},{clipPath:box,duration:.36,ease:'power3.in',onComplete(){wideAnim=null;wrap.style.clipPath='';wrap.parentNode.style.minHeight='';
-      setWide(false,false);if(lenis)lenis.start();wideBtn.classList.remove('turning')}});
+      setWide(false,false);if(lenis)lenis.start()}});
   }
 }
 wideBtn.addEventListener('click',()=>{const on=!isWide();animateWide(on);countUse(on?'map-wide':'map-narrow')});

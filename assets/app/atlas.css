@@ -463,6 +463,8 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 .mapWideBtn .fs{display:none}
 .mapWideBtn.flip .arr{transform:scaleX(-1)}
 .mapWideBtn .fs .shut,.mapWide .mapWideBtn .fs .open{display:none}.mapWide .mapWideBtn .fs .shut{display:inline}
+/* While the map slides, part of it is past the window's edge: clip it there (keeps the sticky map working). */
+.layout{overflow-x:clip}
 @media (min-width:1100px){
   .mapWide .layout{grid-template-columns:minmax(0,1fr)}
   .mapWide .pane{display:none}
