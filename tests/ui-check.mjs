@@ -182,8 +182,8 @@ try {
       // An area's card in the Hotels view leads with its places to stay; its rents fold away under them.
       const hc = await page.evaluate(async () => { const a = AREAS.find(x => hotelsBy().has(x.label)); focusArea(a);
         await new Promise(r => setTimeout(r, 1500)); const c = document.querySelector('.areaSheet:not([hidden]) .body') || document.querySelector('.leaflet-popup-content');
-        return c ? { table: !!c.querySelector('.htab .hrow'), folded: !!c.querySelector('details.rentMore:not([open])'), leadFirst: c.querySelector('.lead')?.compareDocumentPosition(c.querySelector('details.rentMore')) === 4 } : null; });
-      check(hc && hc.table && hc.folded && hc.leadFirst, `${name}: in the Hotels view an area's card lists its places to stay first, rents folded under them`);
+        return c ? { table: !!c.querySelector('.htab .hrow'), folded: !!c.querySelector('details.rentMore:not([open])'), actsFolded: !!c.querySelector('details.rentMore [data-check]') && ![...c.querySelectorAll('[data-check]')].some(x => !x.closest('details.rentMore')), leadFirst: c.querySelector('.lead')?.compareDocumentPosition(c.querySelector('details.rentMore')) === 4 } : null; });
+      check(hc && hc.table && hc.folded && hc.leadFirst && hc.actsFolded, `${name}: in the Hotels view an area's card lists its places to stay first, rents and "Check a rent here" folded under them`);
       await page.evaluate(() => { map.closePopup(); try { closeSheet(); } catch (e) {} });
       await page.click('.viewSw button[data-m="median"]');
       await page.waitForTimeout(300);

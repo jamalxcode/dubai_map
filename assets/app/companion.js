@@ -382,8 +382,11 @@
     const m = content.match(/<span class="t" data-label="([^"]*)">/);
     const label = m && new DOMParser().parseFromString(m[1], 'text/html').body.textContent;
     if (!label || !BY_LABEL[label]) return; // group popups list several areas: no single check
-    e.popup.setContent(content + `<p class="ck-popact"><button type="button" class="btn primary" data-check="${esc(label)}">${T('Check a rent here')}</button>` +
-      (typeof window.startCompare === 'function' ? ` <button type="button" class="btn" data-compare="${esc(label)}">${T('Compare')}</button>` : '') + `</p>`);
+    const acts = `<p class="ck-popact"><button type="button" class="btn primary" data-check="${esc(label)}">${T('Check a rent here')}</button>` +
+      (typeof window.startCompare === 'function' ? ` <button type="button" class="btn" data-compare="${esc(label)}">${T('Compare')}</button>` : '') + `</p>`;
+    // The Hotels view's card is about places to stay: the rent actions go inside its folded "Rents in this area".
+    const fold = content.indexOf('</details>', content.indexOf('class="rentMore"'));
+    e.popup.setContent(content.includes('class="rentMore"') && fold > 0 ? content.slice(0, fold) + acts + content.slice(fold) : content + acts);
   }
 
   function onPopupClick(e) {
