@@ -139,3 +139,26 @@ test('industrial zones (mostly staff accommodation) are left out of comparisons'
   assert.deepEqual(RI.rankAmong(pool, jvc, '1-bedroom apartments'), RI.rankAmong(AREAS, jvc, '1-bedroom apartments'), 'not counted in the rank');
   assert.equal(RI.rankAmong(pool, staff, '1-bedroom apartments'), null, 'and not ranked itself');
 });
+
+test('renewal cap follows the Decree 43 bands against the median', () => {
+  const m = 100000;
+  assert.equal(RI.renewalCap(95000, m).maxPct, 0);     // 5% below
+  assert.equal(RI.renewalCap(90000, m).maxPct, 0);     // exactly 10% below
+  assert.equal(RI.renewalCap(120000, m).maxPct, 0);    // above the median
+  assert.equal(RI.renewalCap(85000, m).maxPct, 5);
+  assert.equal(RI.renewalCap(75000, m).maxPct, 10);
+  assert.equal(RI.renewalCap(65000, m).maxPct, 15);
+  const c = RI.renewalCap(50000, m);
+  assert.deepEqual([c.maxPct, c.maxRent, c.maxIncrease, c.belowPct], [20, 60000, 10000, 50]);
+  assert.equal(RI.renewalCap(0, m), null);
+  assert.equal(RI.renewalCap(50000, null), null);
+});
+
+test('an asked-for rent is checked against the cap', () => {
+  const cap = RI.renewalCap(55000, 70000); // 21.4% below → 10%, so up to 60,500
+  assert.equal(cap.maxPct, 10);
+  assert.deepEqual(RI.askedIncrease(55000, 60000, cap), { pct: 9.1, ok: true, over: 0, none: false });
+  assert.deepEqual(RI.askedIncrease(55000, 66000, cap), { pct: 20, ok: false, over: 5500, none: false });
+  assert.equal(RI.askedIncrease(55000, 55000, cap).none, true);
+  assert.equal(RI.askedIncrease(55000, null, cap), null);
+});

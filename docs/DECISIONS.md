@@ -504,8 +504,18 @@ The collaborator: "if you click on the area it zooms in and also shows the data,
 - Counted as `area-focus` (feature name only).
 - **Tests:** the browser check confirms Enter on a label sets the area apart; axe now waits for label animations to finish (a fade-in caught mid-way read as low contrast); the address check accepts the whole of Dubai (24.x to 25.x N).
 
+## Decision on 2026-11-18 (forty-eighth pass): renewal increase estimate (the "RERA calculator")
+
+The collaborator: "Can we make it so it has the RERA calculator". DLD's own calculator can't be embedded or called (it needs the Ejari number and runs on DLD's site), so the rent check gives an estimate and links to the official one.
+- **Rule:** Decree No. 43 of 2013, article 1, unchanged since 2013: the further the current rent is below the average for similar homes, the more it may rise at renewal: up to 10% below → none, 11–20% → 5%, 21–30% → 10%, 31–40% → 15%, more than 40% → 20%, applied to the current rent. Checked on 18 Nov 2026 against several 2026 guides and DLD's Rental Index page.
+- **Benchmark:** since January 2025 the official average is DLD's Smart Rental Index, which rates each building; we only have area medians per home size, so the result says "estimate" every time and names what it was measured against. Edges: exactly 10% below counts as no increase; between bands the next band up applies.
+- **Asked-for rent:** optional; shows the increase in %, and whether it is within the estimated cap or by how much it is over, with "check the official Rental Index before you agree".
+- Also stated: the landlord's written notice at least 90 days before the contract ends; not legal advice.
+- Logic in `insights.js` (`renewalCap`, `askedIncrease`, Node-tested with the bands' edges and a published worked example: 55,000 against 70,000 → 10%); shown by `companion.js renewHtml`; counted as `renewal-check`.
+
 ## Change log
 
+- 2026-11-18: Renewal increase estimate in the rent check (Decree No. 43 bands, link to DLD's Rental Index).
 - 2026-11-18: Tap an area to zoom to its outline, darken the rest of the map and open its breakdown.
 - 2026-11-17: Data status page at status/: totals, the last pull per source, in use, left out, waiting, recent pulls, open alerts.
 

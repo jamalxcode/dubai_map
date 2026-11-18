@@ -139,6 +139,41 @@
     return { id: 'map', label: T('Show on the map') };
   }
 
+  // ---- renewal: how much may the rent rise? (Decree No. 43 of 2013; estimate against the area's median) ----
+  const DLD_INDEX = 'https://dubailand.gov.ae/en/eservices/rental-index-overview/';
+  function renewHtml(area, unit, rent, f, what) {
+    if (!rent) return '';
+    if (!unit) return `<p class="muted ck-renew-hint">${T('Pick a home size to estimate how much the rent may rise at renewal.')}</p>`;
+    const cap = RI.renewalCap(rent, f.median);
+    if (!cap) return '';
+    const capText = cap.maxPct === 0
+      ? T('Your rent is within 10% of the median or above it, so <b>no increase</b> is likely allowed at renewal.')
+      : T('Your rent is {pct}% below the median, so it may rise by at most <b>{max}%</b>: up to <b>{rent}</b> a year ({inc} more).',
+        { pct: Math.round(cap.belowPct), max: cap.maxPct, rent: aed(cap.maxRent), inc: aed(cap.maxIncrease) });
+    const bands = [[T('Up to 10%'), T('No increase')], [T('11% to 20%'), '5%'], [T('21% to 30%'), '10%'], [T('31% to 40%'), '15%'], [T('More than 40%'), '20%']];
+    return `<section class="ck-renew" aria-labelledby="ckRenewH">
+        <h3 id="ckRenewH">${T('At renewal: how much can it go up?')}</h3>
+        <p class="ck-renew-cap">${capText}</p>
+        <label class="field ck-asked"><span>${T('New rent your landlord asked for')} <span class="opt">${T('(optional)')}</span></span>
+          <input id="ckAsked" type="text" inputmode="numeric" placeholder="${T('e.g. 80,000')}" value="${current.asked ? current.asked.toLocaleString('en-AE') : ''}"></label>
+        <p id="ckAskedOut" class="ck-asked-out" aria-live="polite">${askedHtml(rent, current.asked, cap)}</p>
+        <details class="ck-more"><summary>${T('The rule')}</summary>
+          <table class="ck-bands"><thead><tr><th>${T('Your rent below the average for similar homes')}</th><th>${T('Most it may rise')}</th></tr></thead>
+          <tbody>${bands.map(([a, b], i) => `<tr${RI.RENEWAL_BANDS[i][1] === cap.maxPct ? ' class="pick"' : ''}><td>${a}</td><td>${b}</td></tr>`).join('')}</tbody></table>
+        </details>
+        <p class="muted ck-renew-note">${T("An estimate under Decree No. 43 of 2013, measured against this site's median for {what} in {area}, not DLD's official Smart Rental Index, which rates each building. Your landlord must give written notice at least 90 days before the contract ends. Not legal advice.", { what: esc(what.toLowerCase()), area: esc(T.place(area.label)) })}
+          <a href="${DLD_INDEX}" target="_blank" rel="noopener">${T("Check with DLD's official Rental Index")}</a></p>
+      </section>`;
+  }
+  function askedHtml(rent, asked, cap) {
+    const a = RI.askedIncrease(rent, asked, cap);
+    if (!a) return '';
+    const vars = { asked: `<b>${aed(asked)}</b>`, pct: Math.abs(a.pct), over: aed(a.over), max: aed(cap.maxRent) };
+    if (a.none) return T('{asked} is not an increase.', vars);
+    return a.ok ? `<span class="ck-ok">${T('{asked} is a {pct}% increase: <b>within</b> the estimated limit.', vars)}</span>`
+      : `<span class="ck-over">${T('{asked} is a {pct}% increase: <b>{over} a year above</b> the estimated limit of {max}. Check the official Rental Index before you agree.', vars)}</span>`;
+  }
+
   function render() {
     const { area, unit, rent } = current;
     const f = RI.unitFigure(area, unit);
@@ -191,6 +226,7 @@
         ${AGG && /^[3-9]-bedroom/.test(unit) ? `<p class="muted">${T('Dubai Data groups homes by bedrooms: in villa communities this figure may include villas and townhouses.')}</p>` : ''}
         ${f.p25 != null && f.p75 != null ? `<p class="muted ck-range">${T('The middle half of these tenants pay <b>{a}</b> to <b>{b}</b>.', { a: aed(f.p25), b: aed(f.p75) })}</p>` : ''}
         ${verdictHtml}
+        ${renewHtml(area, unit, rent, f, what)}
         ${finds.length ? `<details class="ck-moreinfo"${PHONE.matches ? '' : ' open'}><summary>${T('More about this area')}</summary><ul class="ck-finds">${finds.join('')}</ul></details>` : ''}
         <details class="ck-more"><summary>${T('What does this mean?')}</summary>
           <p>${T('The median is the middle contract: half of these tenants pay more and half less. Size, floor, view and building all move the price.')}</p>
@@ -405,6 +441,16 @@
     let t;
     el('ckRent').addEventListener('input', () => { const n = rentValue(); const txt = n ? n.toLocaleString('en-AE') : ''; if (el('ckRent').value !== txt) el('ckRent').value = txt;
       clearTimeout(t); t = setTimeout(() => { if (current) { current.rent = rentValue(); render(); remember(); } }, 350); });
+    let ta;
+    el('companion').addEventListener('input', e => {
+      if (e.target.id !== 'ckAsked' || !current) return;
+      const n = parseInt(e.target.value.replace(/[^\d]/g, ''), 10) || null, txt = n ? n.toLocaleString('en-AE') : '';
+      if (e.target.value !== txt) e.target.value = txt;
+      current.asked = n;
+      const f = RI.unitFigure(current.area, current.unit), cap = f && RI.renewalCap(current.rent, f.median);
+      el('ckAskedOut').innerHTML = cap ? askedHtml(current.rent, n, cap) : '';
+      clearTimeout(ta); ta = setTimeout(() => { if (n) count('renewal-check'); }, 1500);
+    });
     const remember = () => { store = RI.remember(store, { area: current.area.label, unit: current.unit, rent: current.rent, at: new Date().toISOString() }); save(); };
 
     el('companion').addEventListener('click', e => {

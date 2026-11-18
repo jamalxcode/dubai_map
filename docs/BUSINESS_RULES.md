@@ -116,6 +116,7 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Same home for less nearby | Same unit, within 12 km, at least 3% cheaper, at least 30 contracts; up to 3, ranked by saving per km | `insights.cheaperNearby` |
 | Rank | Among areas with 30+ contracts for the same unit; needs at least 5 such areas | `insights.rankAmong` |
 | Trend | Contract data only: first 3 vs last 3 months with 10+ contracts each; shown at ±3% or more | `insights.trend` |
+| Renewal increase (estimate) | With a rent and a home size: Decree No. 43 of 2013 bands against the area's median for that home (the official benchmark is DLD's Smart Rental Index, per building): up to 10% below the median or above it → no increase; to 20% → 5%; to 30% → 10%; to 40% → 15%; more → 20%. An asked-for new rent is compared with that cap. Always labelled an estimate, with the 90-day notice rule and a link to DLD's Rental Index | `insights.renewalCap`, `insights.askedIncrease`, `companion.js renewHtml` |
 | Comparisons | Area-to-area only for the same kind of home, never "all homes" against "all homes" | `insights.insights` |
 | 3+ bedrooms | Noted that Dubai Data's figure may include villas and townhouses | `companion.js render` |
 | One next step | Compare with my rent → Save → Renewal reminder → Show on the map; everything else is a plain link | `companion.js nextStep` |

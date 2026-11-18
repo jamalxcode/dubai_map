@@ -122,3 +122,16 @@
    (open on wider screens). */
 .ck-moreinfo summary{color:var(--gold-ink);font-weight:600;cursor:pointer;font-size:14px;margin:4px 0}
 @media (min-width:861px){.ck-moreinfo summary{display:none}}
+
+/* Renewal estimate (Decree No. 43 of 2013) inside the rent check's answer. */
+.ck-renew{margin:14px 0 6px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.ck-renew h3{margin:0 0 6px;font:700 17px/1.2 var(--cond)}
+.ck-renew-cap{margin:0 0 10px}
+.ck-asked{max-width:280px}
+.ck-asked-out{margin:8px 0 0;min-height:1.2em}
+.ck-ok b{color:var(--ok)}.ck-over b{color:var(--bad)}
+.ck-bands{border-collapse:collapse;margin-top:6px;font-size:13px}
+.ck-bands th,.ck-bands td{padding:4px 10px 4px 0;text-align:start;border-bottom:1px solid var(--line)}
+.ck-bands tr.pick td{font-weight:700}
+.ck-renew-note{font-size:12.5px;margin:8px 0 0}
+.ck-renew-hint{font-size:13px}

@@ -152,6 +152,23 @@
     return out;
   }
 
+  /** Renewal increase cap in Dubai (Decree No. 43 of 2013, article 1): the further the current rent sits
+   * below the average for similar homes, the more it may rise at renewal; never more than 20%. The official
+   * average is DLD's Smart Rental Index (per building since 2025); here the area's median stands in, so the
+   * result is an estimate. Bands: up to 10% below → 0%, to 20% → 5%, to 30% → 10%, to 40% → 15%, more → 20%. */
+  const RENEWAL_BANDS = [[10, 0], [20, 5], [30, 10], [40, 15], [Infinity, 20]];
+  function renewalCap(rent, median) {
+    if (!(rent > 0) || !(median > 0)) return null;
+    const below = (median - rent) / median * 100; // negative when the rent is above the median
+    const maxPct = RENEWAL_BANDS.find(([upTo]) => below <= upTo)[1];
+    return { belowPct: Math.round(below * 10) / 10, maxPct, maxRent: Math.round(rent * (1 + maxPct / 100)), maxIncrease: Math.round(rent * maxPct / 100) };
+  }
+  /** A landlord's asked-for new rent against that cap. */
+  function askedIncrease(rent, asked, cap) {
+    if (!cap || !(rent > 0) || !(asked > 0)) return null;
+    return { pct: Math.round((asked - rent) / rent * 1000) / 10, ok: asked <= cap.maxRent, over: Math.max(0, Math.round(asked - cap.maxRent)), none: asked <= rent };
+  }
+
   /** Change in an area's figure since it was saved. */
   function changeSince(snapshot, current) {
     if (!snapshot || !(snapshot.median > 0) || !(current > 0)) return null;
@@ -242,7 +259,7 @@
     return d.toISOString().slice(0, 10);
   }
 
-  const api = { norm, searchAreas, unitShort, unitOptions, unitFigure, verdict, km, cheaperNearby, rankAmong, trend, insights,
+  const api = { norm, searchAreas, unitShort, unitOptions, unitFigure, verdict, renewalCap, askedIncrease, RENEWAL_BANDS, km, cheaperNearby, rankAmong, trend, insights,
     changeSince, emptyStore, cleanStore, remember, isSaved, whatsNew, ics, addMonths, MAX_HISTORY, MAX_SAVED };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.RentInsights = api;

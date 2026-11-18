@@ -67,6 +67,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 ## 6. The rent check
 
+- **Renewal estimate** (inside the answer, once a rent is entered): "At renewal: how much can it go up?" with the estimated cap in one sentence, a field for the landlord's asked-for rent (green when within, amber when above, with the yearly amount over), the five bands folded under "The rule" (the visitor's band in bold), and the estimate note with DLD's official Rental Index link. With "All homes" it asks for a home size instead.
 - Fields: area (search with nicknames, DLD names and typos), optional yearly rent (written with thousands separators as you type), **Check**. No home field: the check uses the map's **Home** picker.
 - **One Home control for the page:** a check uses the map's picker (when the area lacks that home, its most common one, and the map follows); picking a home on the map re-checks the current area; **Other homes here:** under the result lists the area's other homes as links, which switch both.
 - Result: what was checked, the big figure with a small chip in its price colour, what it is and how many contracts, the middle half when known, the verdict if a rent was entered, up to four findings ("Dearer than 64% of 126 areas…"; on phones folded under **More about this area**, open on wider screens), a folded **What does this mean?** (what a median is, why there is no range yet), one primary button and plain links (Save · Show on the map · Share · Dubai Data page). The links wrap as one group, never leaving a dangling separator.
