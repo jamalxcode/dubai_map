@@ -611,6 +611,8 @@ LiteAPI only unlocks its live (real-price) key after a payment card is added, wi
 
 The owner asked for an annual-rent dial for flats and a night-charge dial for hotels, "with min and max and median showing depending on the view", with two dial mock-ups. The header's big number became a dial: the median of the areas on screen (contract-weighted), placed between the lowest and highest area in view, whose figures sit at the two ends; its label and unit follow the view (yearly rent, sale price, yield; a night in the Hotels view once hotel prices exist). Kept in the site's palette (the price key's blues on the oxblood header, an ivory knob edged in gold leaf), not the mock-ups' navy. The headline changed from "typical" (an average) to "median", as asked; the legend and merged labels keep "typical". Hotel prices are off by the owner's choice, so the Hotels view keeps its count of places, with no dial.
 
+Merged and deployed on 18 Nov (Tests passed; 175 browser checks). At the starting view the dial read 63,700 between 35k and 156k on a phone, and 60,000 between 35k and 279k on desktop, where one dear area stretches the range: shown as it is.
+
 ## Change log
 
 - 2026-11-18: The header's figure is a price dial: median of what's on screen, lowest and highest area at the ends, following the view.
