@@ -532,6 +532,8 @@ Result (run of 18 Nov): "OK Al Twar Fifth -> Al Twar 5 (suburb) 25.2694, 55.3877
 
 The status page's list of waiting areas is what got Al Twar Fifth fixed: the owner saw it and found the other name. So the page now opens with **Needs you**: every unresolved issue a person can fix, each with why it matters, what to do and a link (areas without a map point, Dubai Data stopped, failing sources, a failed pull, open alerts, the Dubai Pulse key, DLD's permission, old branches). Things that resolve themselves (unconfirmed jumps, sources that differ) stay under "Waiting". The rule is in CLAUDE.md: any new human-fixable condition goes on this list.
 
+Merged and deployed on 18 Nov (Tests passed). With today's data the list should hold three items: the Dubai Pulse key, DLD's permission, and the six old branches; no area is waiting for a map point. Checked in the browser tests with stubbed GitHub answers; the live page can't be opened from a session.
+
 ## Change log
 
 - 2026-11-18: Status page opens with "Needs you": unresolved issues a person can fix, with what to do.
