@@ -178,13 +178,18 @@ const layer=L.layerGroup().addTo(map);
 // price-key colour for the current view, under the labels. Loaded after the data; the map works without them.
 map.createPane('outlines');map.getPane('outlines').style.zIndex=390;map.getPane('outlines').style.pointerEvents='none';
 const outlineLayer=L.layerGroup().addTo(map);let OUTLINES=null;
+let BUDGET=null;const OUTSIDE=new Set(); // budget mode (draw): the yearly rent range, and the areas with a figure outside it
 const cssVar=v=>{const m=/^var\((--[\w-]+)\)$/.exec(v||'');return m?getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim():v};
 function drawOutlines(){
   outlineLayer.clearLayers();if(!OUTLINES||!LABEL.colorOf)return;
   const byLabel=new Map(POINTS.map(p=>[p.a.label,p]));
-  for(const o of OUTLINES){const p=byLabel.get(o.label);if(!p)continue;
+  for(const o of OUTLINES){const p=byLabel.get(o.label);
+    // Budget mode: an area with a figure but outside the budget keeps a faint grey outline, so the ones that fit stand out.
+    if(!p){if(BUDGET&&OUTSIDE.has(o.label))L.polygon(o.rings.map(r=>r.map(([x,y])=>[y,x])),{pane:'outlines',interactive:false,color:'#8A7F72',weight:.6,opacity:.5,fillColor:'#5E564C',fillOpacity:.22,className:'outBudget'}).addTo(outlineLayer);continue}
     const col=cssVar(LABEL.colorOf(p.v));
-    L.polygon(o.rings.map(r=>r.map(([x,y])=>[y,x])),{pane:'outlines',interactive:false,color:col,weight:1,opacity:.7,fillColor:col,fillOpacity:.32}).addTo(outlineLayer)}
+    // In budget mode the areas that fit light up: a gold-leaf edge and a stronger fill (cheap areas are the palest blues).
+    L.polygon(o.rings.map(r=>r.map(([x,y])=>[y,x])),BUDGET?{pane:'outlines',interactive:false,color:'#C9A227',weight:2,opacity:.95,fillColor:col,fillOpacity:.6,className:'inBudget'}
+      :{pane:'outlines',interactive:false,color:col,weight:1,opacity:.7,fillColor:col,fillOpacity:.32}).addTo(outlineLayer)}
 }
 // What changed since the previous publication (history.py), for the rent check's "since your last visit". Optional.
 window.CHANGES=null;getJSON('data/changes.json').then(d=>{window.CHANGES=d;dispatchEvent(new Event('atlas:changes'))}).catch(()=>{});
@@ -686,6 +691,18 @@ function readURL(){
   if(h){const [k,u='']=h.split(':');if([...$('home').options].some(o=>o.value===k+'|'+u)){
     if(k==='homes'){$('unit').value=u;$('home').value=k+'|'+u;unitChosen=true}else return ()=>{$('home').value=k+'|'+u;setHome(k,u)}}}
 }
+// The line under the filters that says what the budget leaves on the map.
+const budgetEl=(()=>{const p=document.createElement('p');p.id='budgetNote';p.className='budgetNote';p.hidden=true;p.setAttribute('aria-live','polite');
+  document.querySelector('.controls .f-range').after(p);return p})();
+function budgetNote(unit){
+  if(!BUDGET){budgetEl.hidden=true;return}
+  const what=(unit?T.unit(unit):TYPENAME()).toLowerCase(),a='AED '+fmt(BUDGET.lo),b=BUDGET.hi<Infinity?'AED '+fmt(BUDGET.hi):null;
+  const range=b?(BUDGET.lo>0?T('{a} to {b}',{a,b}):T('up to {b}',{b})):T('from {a}',{a});
+  budgetEl.innerHTML=(BUDGET.n?T('<b>{n} of {of} areas</b> fit your budget ({range} a year, {what}).',{n:BUDGET.n,of:BUDGET.of,range,what})
+    :T('<b>No area fits</b> {range} a year for {what}. Try a higher maximum or another home size.',{range,what}))+
+    (BUDGET.swapped?' '+T('(Min was above Max, so they were swapped.)'):'');
+  budgetEl.hidden=false;
+}
 function draw(){
   // The finder above the table filters the table only; the map always shows every area.
   const q=$('search').value.trim().toLowerCase(),unit=$('unit').value,metric=$('metric').value,min=+$('min').value||0,max=+$('max').value||Infinity;
@@ -699,6 +716,13 @@ function draw(){
     const thin=bu?(bu.n!=null&&bu.n<THIN)||!!bu.unconfirmed:a.n<THIN||(!!a.unconfirmed&&metric==='median');POINTS.push({a,v,n,thin})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
   const sc=scaleFor(vals),colorOf=sc.colorOf;
+  // Budget mode: with a yearly rent range set, only the areas whose rent for the chosen home falls inside it keep
+  // their labels (and the averages); the others turn grey. Colours stay those of the whole map, so they still match
+  // the key. The range is on rent whatever the view shows (sale price, yield): it is a rent budget.
+  let lo=+$('min').value||0,hi=+$('max').value||Infinity;const swapped=hi<lo;if(swapped)[lo,hi]=[hi,lo];
+  BUDGET=lo>0||hi<Infinity?{lo,hi,swapped}:null;OUTSIDE.clear();
+  if(BUDGET){const all=POINTS.length;POINTS=POINTS.filter(p=>{const r=areaValue(p.a,'median',unit);const ok=r!=null&&r>=lo&&r<=hi;if(!ok)OUTSIDE.add(p.a.label);return ok});BUDGET.n=POINTS.length;BUDGET.of=all}
+  budgetNote(unit);
   LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};
   // A change of home or view keeps a focused area in focus: its breakdown reopens with the new figures.
   const kept=FOCUS&&focusPopup?FOCUS:null;relabelKeep=!!kept;renderLabels();relabelKeep=false;if(kept&&!map._popup){FOCUS=kept;drawFocus();openArea(kept)}

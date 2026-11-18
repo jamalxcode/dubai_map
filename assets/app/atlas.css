@@ -95,6 +95,8 @@ button,input,select{font:inherit;color:inherit}
 .controls .f-range{flex:0 1 240px;min-width:0}
 .f-range .pair{display:flex;align-items:center;gap:6px}.f-range .pair input{width:100%;min-width:0;flex:1 1 0}
 .f-range .pair span{color:var(--muted)}
+/* Budget mode: what the range leaves on the map, on its own row under the filters. */
+.budgetNote{flex:1 0 100%;margin:0;font-size:13px;color:var(--muted)}.budgetNote b{color:var(--text)}.budgetNote[hidden]{display:none}
 .field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;color:var(--muted)}
 .field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 11px;font-size:15px;min-width:0;color:var(--text)}
 .field input:focus,.field select:focus{border-color:var(--gold-ink);outline:none;box-shadow:0 0 0 3px rgba(185,138,47,.35)}

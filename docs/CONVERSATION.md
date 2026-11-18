@@ -281,6 +281,10 @@ Audit: all pulls, tests and deploys green, no open alerts, data one day behind D
 
 The renewal estimate waits on branch `rera-check` (not merged). Built the map edge tab on branch `map-wide` (decisions, forty-ninth pass). Next, part by part: rent or buy, budget mode, Metro, compare, commute.
 
+### 18 Nov · "move to some of these ideas part by part … lets do Budget mode" (collaborator)
+
+The existing Rent range only filtered the table; it became the budget and now lights up the areas that fit on the map (decisions, fiftieth pass). Branch `budget-mode`. Ideas still to do: rent or buy, Metro, compare, commute; the renewal estimate waits on `rera-check`.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

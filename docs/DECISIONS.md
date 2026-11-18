@@ -514,8 +514,17 @@ The collaborator: "I want to be able to move this [the side panel] to the left �
 - **Motion, second version** (the collaborator: "the whole screen kind of jitters"): the first version resized the map every frame. Now the map is resized once and only transforms move (see interface rules); measured at one map resize per toggle, no gap between panel and map, centre and scroll position kept.
 - **Motion, first version** (asked for: "a smooth animation … gsap, lenis, react bits"): GSAP, already on the page. The panel's grid column is tweened and the panel slides with it while the map re-measures every frame around a fixed centre, so the map visibly grows into the space rather than jumping; labels are placed once at the end. On phones a clip-path reveal from the map's box (Lenis paused while full screen). Reduced motion: instant.
 
+## Decision on 2026-11-18 (fiftieth pass): budget mode
+
+The collaborator chose "Budget mode: type your budget, and the areas you can afford light up". The page already had a "Rent range" (Min – Max) that filtered only the table, so on the map it did nothing (a screenshot showed 3333 – 3000 with the map unchanged). One control per job: the range became the budget, renamed **Yearly rent budget (AED)**, and now drives the map too.
+- Areas whose rent for the chosen home is in range keep their labels, count in the figure at the top and light up (gold-leaf edge, stronger fill: cheap areas are the palest blues, so colour alone did not stand out); the rest turn grey and lose their labels (dimmed labels would fail contrast).
+- The price colours keep the whole map's scale, so a 58k area is the same blue with or without a budget.
+- The budget is on rent in every view (sale price and yield views show the same areas).
+- A line under the filters: "59 of 127 areas fit your budget (up to AED 60,000 a year, 1-bedroom apartments)", or none fits with a hint; Min above Max is swapped and said so.
+
 ## Change log
 
+- 2026-11-18: Budget mode: the yearly rent range lights up the areas that fit on the map.
 - 2026-11-18: Map edge tab: hide the side panel on computers, full-screen map on phones.
 - 2026-11-18: Tap an area to zoom to its outline, darken the rest of the map and open its breakdown.
 - 2026-11-17: Data status page at status/: totals, the last pull per source, in use, left out, waiting, recent pulls, open alerts.

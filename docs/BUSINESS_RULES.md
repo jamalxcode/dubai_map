@@ -105,6 +105,8 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Sale price trend | Monthly sale price per sq ft, last 24 months with at least 5 sales (Dubai Data community_monthly); year-on-year change = mean of the last 3 months against the same 3 months a year before | `build.sale_trends` |
 | Rent check moves the map | Wide screens (1,100 px and up): fly to the area at zoom 14 and open its breakdown. Not on narrower screens, not for a resumed check | `companion.js` |
 
+| Budget mode | A yearly rent range (Min, Max, either optional, swapped if reversed) on the chosen home's rent median; areas outside it, or without a rent figure for that home, lose their labels and leave the averages; colours keep the whole map's scale | `atlas.js draw`, `budgetNote` |
+
 ## 6. The rent check
 
 | Rule | Value | Where |
