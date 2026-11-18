@@ -374,7 +374,7 @@ function renderCompare(fresh){if(!CMP)return;
       (both?'<span class="vsBars" aria-hidden="true"><i class="a" style="--w:'+(va/mx).toFixed(3)+'"></i><i class="b" style="--w:'+(vb/mx).toFixed(3)+'"></i></span>':'')+'</div>'};
   const near=TRANSIT&&nearMap(),st=x=>{const n=near&&near.get(x.label);return n&&n.station?safe(stationName(n.station))+' <small>'+(n.m?T('{km} km',{km:(n.m/1000).toFixed(1)}):T('in the area'))+'</small>':'—'};
   const pct=v=>v==null?'—':Number(v).toFixed(1)+'%',chg=x=>x.rent_change&&x.rent_change.pct!=null?(x.rent_change.pct>0?'+':'')+x.rent_change.pct+'%':'—';
-  const side=(k,x,f)=>'<div class="vsSide '+k+'" style="--k:'+cmpColour(k)+'"><div class="vsPic" data-i="'+k+'"></div><h3>'+nm(x)+'</h3>'+
+  const side=(k,x,f)=>'<div class="vsSide '+k+'" style="--k:'+cmpColour(k)+'"><h3>'+nm(x)+'</h3>'+
     '<p class="vsBig" data-v="'+(f.median||'')+'">'+(f.median?'AED '+fmt(f.median):'—')+'</p><p class="vsSub">'+(f.median?T('a year')+(f.n!=null?' · '+T.count(f.n,'contract'):''):safe(T('No figure for {what}',{what})))+'</p></div>';
   cmpPanel.innerHTML='<div class="cmpHead"><h2>'+T('Compare')+'</h2><button type="button" class="cmpBtn" data-cmp-swap title="'+T('Swap')+'" aria-label="'+T('Swap')+'">⇄</button><button type="button" class="cmpBtn" data-cmp-close aria-label="'+T('Close')+'">×</button></div>'+
     '<div class="vsHero">'+side('a',a,fa)+'<span class="vsMid" aria-hidden="true">'+T('vs')+'</span>'+side('b',b,fb)+'</div>'+
@@ -388,11 +388,8 @@ function renderCompare(fresh){if(!CMP)return;
     (c.units.length?'<section class="vsSec"><h4>'+T('Typical yearly rent by home size')+'</h4>'+c.units.map(u=>row('<button type="button" class="link" data-cmp-unit="'+safe(u.u)+'"'+(u.u===unit?' aria-current="true"':'')+'>'+safe(T.unit(u.u,true))+'</button>',u.a,u.b,aedF(u.a),aedF(u.b),'low')).join('')+'</section>':'')+
     '<div class="vsFoot"><p>'+(c.km!=null?T('{km} km apart.',{km:c.km})+' ':'')+T('Lower rent and price, and higher yield, are in bold.')+'</p>'+
     '<p class="vsActs"><button type="button" class="btn" data-focus="'+safe(a.label)+'">'+T('Open {x}',{x:nm(a)})+'</button><button type="button" class="btn" data-focus="'+safe(b.label)+'">'+T('Open {x}',{x:nm(b)})+'</button><button type="button" class="link" data-cmp-share>'+T('Copy link')+'</button></p></div>';
-  // One photo of each, from Wikimedia Commons near the area's point (credited); the box goes if there is none.
-  for(const [k,x] of [['a',a],['b',b]])photosFor(x.lat,x.lng).then(ph=>{const box=cmpPanel.querySelector('.vsPic[data-i="'+k+'"]');if(!box||!CMP)return;
-    if(!ph.length){box.classList.add('none');return}const p=ph[0];
-    box.innerHTML='<a href="'+safe(p.page)+'" target="_blank" rel="noopener" title="'+safe(p.title+' · '+p.author+(p.lic?' · '+p.lic:''))+'"><img src="'+safe(p.src)+'" alt="'+safe(p.title)+'" loading="lazy" onerror="this.closest(\'.vsPic\').classList.add(\'none\')"><span>'+safe(p.author)+(p.lic?', '+safe(p.lic):'')+'</span></a>';
-    if(FX)G.from(box,{opacity:0,duration:.4,ease:'power1.out'})}).catch(()=>{});
+  // No photos here: Commons photos near a point are often of people or interiors, which reads as random in a
+  // side-by-side; each area's breakdown keeps its photo strip.
   animateCompare(fresh);
 }
 // Motion (GSAP; none with reduced motion): the panel slides in once, the two rents roll up like the header's
