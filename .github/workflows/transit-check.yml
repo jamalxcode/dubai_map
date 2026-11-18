@@ -26,7 +26,8 @@ jobs:
         if: always()
         run: |
           python3 - <<'PY'
-          import json, collections
+          import json, collections, os, sys
+          if not os.path.exists("overpass.json"): print("no response (Overpass not reachable)"); sys.exit(0)
           raw = json.load(open("overpass.json"))
           print("remark:", raw.get("remark"))
           els = raw.get("elements") or []
