@@ -256,19 +256,29 @@ const walkText=w=>w===20?T('20-minute walk'):T('10-minute walk');
 function loadTransit(){getJSON('data/transit.json').then(d=>{if(!d||!(d.lines||[]).length)return;TRANSIT=d;NEAR=null;
   transitBtn.hidden=false;walkField.hidden=false;try{if(localStorage.getItem('transit')==='1')showTransit(true,false)}catch(e){}
   if(WALK)draw()}).catch(()=>{})}
+// Line and dot sizes by zoom: bold across the whole city, slimmer as the map zooms in, so close up they don't
+// cover the streets and the base map's own track (scale 1 at zoom 11 and below, about half at zoom 16).
+const transitScale=()=>{const z=map.getZoom();return z<=11?1:Math.max(.5,1-(z-11)*.1)};
+let transitParts=[];
+function sizeTransit(){const k=transitScale();
+  for(const [shape,base] of transitParts)shape instanceof L.CircleMarker?shape.setStyle({weight:base.weight*Math.max(.7,k)}).setRadius(base.radius*Math.max(.6,k)):shape.setStyle({weight:base.weight*k})}
 function drawTransit(){
-  transitLayer.clearLayers();if(!TRANSIT)return;
+  transitLayer.clearLayers();transitParts=[];if(!TRANSIT)return;
   const dark=document.documentElement.dataset.theme==='dark',casing=dark?'#1E1712':'#F6F1E7';
+  const add=(shape,base)=>{transitParts.push([shape,base]);return shape.addTo(transitLayer)};
   // An ivory casing (espresso at night) lifts each line off the blue price areas.
   for(const l of TRANSIT.lines){const tram=l.kind==='tram';
-    for(const p of l.paths){L.polyline(p,{pane:'transit',interactive:false,color:casing,weight:tram?6:7.5,opacity:.95,lineCap:'round'}).addTo(transitLayer);
-      L.polyline(p,{pane:'transit',interactive:false,color:lineColour(l),weight:tram?3:4,opacity:1,lineCap:'round',className:'tline'}).addTo(transitLayer)}}
+    for(const p of l.paths){add(L.polyline(p,{pane:'transit',interactive:false,color:casing,weight:tram?6:7.5,opacity:.95,lineCap:'round'}),{weight:tram?6:7.5});
+      add(L.polyline(p,{pane:'transit',interactive:false,color:lineColour(l),weight:tram?3:4,opacity:1,lineCap:'round',className:'tline'}),{weight:tram?3:4})}}
   // Stations: paper dots ringed in their system's colour; interchanges larger with a thicker ring.
   for(const s of TRANSIT.stations){const lines=TRANSIT.lines.filter(l=>s.lines.includes(l.id)),swap=lines.length>1,tram=s.kind==='tram';
-    const m=L.circleMarker([s.lat,s.lng],{pane:'transit',radius:swap?6.5:tram?4:5,weight:swap?3.5:2.5,color:lines[0]?lineColour(lines[0]):casing,fillColor:casing,fillOpacity:1,className:'tstop'})
-      .bindTooltip(stationName(s)+' · '+lines.map(lineName).join(' / '),{direction:'top',offset:[0,-6]}).addTo(transitLayer);
+    const base={radius:swap?6.5:tram?4:5,weight:swap?3.5:2.5};
+    const m=add(L.circleMarker([s.lat,s.lng],{pane:'transit',radius:base.radius,weight:base.weight,color:lines[0]?lineColour(lines[0]):casing,fillColor:casing,fillOpacity:1,className:'tstop'}),base)
+      .bindTooltip(stationName(s)+' · '+lines.map(lineName).join(' / '),{direction:'top',offset:[0,-6]});
     m.on('click',()=>openStation(s))}
+  sizeTransit();
 }
+map.on('zoomend',()=>{if(transitOn)sizeTransit()});
 function showTransit(on,count){transitOn=on;transitBtn.setAttribute('aria-pressed',String(on));transitBtn.classList.toggle('on',on);
   try{localStorage.setItem('transit',on?'1':'0')}catch(e){}
   if(on){drawTransit();transitLayer.addTo(map)}else transitLayer.remove();
