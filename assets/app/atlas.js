@@ -243,11 +243,12 @@ map.on('popupclose',e=>{if(!relabelKeep&&FOCUS&&focusPopup&&e.popup===focusPopup
 map.createPane('transit');map.getPane('transit').style.zIndex=395;
 const transitLayer=L.layerGroup();let TRANSIT=null,NEAR=null,WALK=0,transitOn=false;
 const LINE_NAMES={'red-line':'Red Line','green-line':'Green Line','dubai-tram':'Dubai Tram'};
-// Line colours from the site's own palette ("golden note"), not OpenStreetMap's pure red and green: the Red Line in
-// an oxblood red, the Green Line in sage, the Tram in gold leaf; lighter at night. They still read as red, green
-// and gold, so the lines are easy to tell apart and to match with the real ones, but sit with the blues and ivory.
-const LINE_COLOURS={light:{'red-line':'#9E2B33','green-line':'#4F7D5C','dubai-tram':'#B8901F'},dark:{'red-line':'#D0646A','green-line':'#86B394','dubai-tram':'#D9B44A'}};
-const lineColour=l=>(LINE_COLOURS[document.documentElement.dataset.theme==='dark'?'dark':'light'][l.id])||l.colour;
+// Line colours from the map's own theme: Metro in the brand's oxblood, Tram in its gold leaf, so the two systems
+// differ at a glance and sit with the header, the gold label edges and the blue price areas (OpenStreetMap's pure
+// red and green clashed). At night, lighter tones of the same two. Which Metro line a station is on is in its
+// tooltip and breakdown.
+const LINE_COLOURS={light:{metro:'#6E2230',tram:'#B8901F'},dark:{metro:'#D99AA5',tram:'#D9B44A'}};
+const lineColour=l=>LINE_COLOURS[document.documentElement.dataset.theme==='dark'?'dark':'light'][l.kind]||l.colour;
 const lineName=l=>T.lang==='ar'&&l.name_ar?l.name_ar:LINE_NAMES[l.id]?T(LINE_NAMES[l.id]):l.name;
 const stationName=s=>T.lang==='ar'&&s.name_ar?s.name_ar:s.name;
 const outlinesByLabel=()=>new Map((OUTLINES||[]).map(o=>[o.label,o.rings.map(r=>r.map(([x,y])=>[y,x]))]));
@@ -257,14 +258,14 @@ function loadTransit(){getJSON('data/transit.json').then(d=>{if(!d||!(d.lines||[
   if(WALK)draw()}).catch(()=>{})}
 function drawTransit(){
   transitLayer.clearLayers();if(!TRANSIT)return;
-  const dark=document.documentElement.dataset.theme==='dark',casing=dark?'#1E1712':'#F6F1E7',ink=dark?'#F6F1E7':'#2B2118';
-  // A thin casing in the page's paper (ivory, or espresso at night) lifts each line off the blues without a hard edge.
+  const dark=document.documentElement.dataset.theme==='dark',casing=dark?'#1E1712':'#F6F1E7';
+  // An ivory casing (espresso at night) lifts each line off the blue price areas.
   for(const l of TRANSIT.lines){const tram=l.kind==='tram';
-    for(const p of l.paths){L.polyline(p,{pane:'transit',interactive:false,color:casing,weight:tram?5.5:6.5,opacity:.85,lineCap:'round'}).addTo(transitLayer);
-      L.polyline(p,{pane:'transit',interactive:false,color:lineColour(l),weight:tram?2.5:3.5,opacity:.95,lineCap:'round',dashArray:tram?'1 5':null,className:'tline'}).addTo(transitLayer)}}
-  // Stations: paper dots ringed in espresso (ivory at night); interchanges larger, ringed in gold leaf.
+    for(const p of l.paths){L.polyline(p,{pane:'transit',interactive:false,color:casing,weight:tram?6:7.5,opacity:.95,lineCap:'round'}).addTo(transitLayer);
+      L.polyline(p,{pane:'transit',interactive:false,color:lineColour(l),weight:tram?3:4,opacity:1,lineCap:'round',className:'tline'}).addTo(transitLayer)}}
+  // Stations: paper dots ringed in their system's colour; interchanges larger with a thicker ring.
   for(const s of TRANSIT.stations){const lines=TRANSIT.lines.filter(l=>s.lines.includes(l.id)),swap=lines.length>1,tram=s.kind==='tram';
-    const m=L.circleMarker([s.lat,s.lng],{pane:'transit',radius:swap?6.5:tram?3.5:4.5,weight:swap?3:2,color:swap?'#C9A227':ink,fillColor:casing,fillOpacity:1,className:'tstop'})
+    const m=L.circleMarker([s.lat,s.lng],{pane:'transit',radius:swap?6.5:tram?4:5,weight:swap?3.5:2.5,color:lines[0]?lineColour(lines[0]):casing,fillColor:casing,fillOpacity:1,className:'tstop'})
       .bindTooltip(stationName(s)+' · '+lines.map(lineName).join(' / '),{direction:'top',offset:[0,-6]}).addTo(transitLayer);
     m.on('click',()=>openStation(s))}
 }
