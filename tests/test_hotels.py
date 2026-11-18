@@ -89,3 +89,39 @@ class HotelStats(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DubaiOnlyAndGuestsOnlyTests(unittest.TestCase):
+    # One square "community" around Dubai Marina, as Dubai Municipality's outlines give them ([lng, lat] rings).
+    OUTLINES = None
+
+    @classmethod
+    def setUpClass(cls):
+        import tempfile, os
+        d = tempfile.mkdtemp()
+        cls.path = os.path.join(d, "dm_outlines.json")
+        with open(cls.path, "w") as f:
+            json.dump({"MARSA DUBAI": [[[55.13, 25.07], [55.15, 25.07], [55.15, 25.09], [55.13, 25.09]]]}, f)
+        cls.OUTLINES = hotels.load_outlines(cls.path)
+
+    def place(self, name, lat, lng, tourism="hotel", **tags):
+        return {"type": "node", "id": hash(name) % 10**6, "lat": lat, "lon": lng, "tags": {"tourism": tourism, "name": name, **tags}}
+
+    def test_only_places_inside_dubai(self):
+        raw = {"elements": [self.place("Marina Hotel", 25.08, 55.14),
+                            self.place("Pier Hotel", 25.08, 55.1525),          # ~250 m outside the outline: kept
+                            self.place("Sharjah Hotel", 25.34, 55.40)]}         # in the search box, not in Dubai
+        names = [h[0] for h in hotels.build(raw, today="2026-11-18", outlines=self.OUTLINES)["hotels"]]
+        self.assertEqual(sorted(names), ["Marina Hotel", "Pier Hotel"])
+        self.assertEqual(len(hotels.build(raw, today="2026-11-18")["hotels"]), 3, "without outlines, the box alone (as before)")
+
+    def test_staff_housing_and_residential_towers_are_not_places_to_stay(self):
+        g = hotels.takes_guests
+        self.assertFalse(g("Emirates Crew Building 1", "apartments", None))
+        self.assertFalse(g("Sheraton Grand Hotel Staff Accomadation", "hotel", None), "staff housing even with 'hotel' in the name")
+        self.assertFalse(g("Delmonte accommodation", "hotel", None))
+        self.assertFalse(g("Al Mamzar Tower 1", "apartments", None), "a residential tower tagged as holiday flats")
+        self.assertTrue(g("Backpacker 16 accomodation", "hostel", None), "accommodation for travellers")
+        self.assertTrue(g("Ramada Hotel Apartments Tower", "apartments", None), "a hotel sign in the name")
+        self.assertTrue(g("Marina Tower", "apartments", 4), "a star rating")
+        self.assertTrue(g("Burj Al Arab", "hotel", 7))

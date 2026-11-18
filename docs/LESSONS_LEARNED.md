@@ -75,6 +75,9 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Ask the remote, not memory, what exists.** The open-items list named work branches to delete that had only ever existed locally. *Rule:* list remote branches (`git ls-remote --heads origin`) before writing them down for the owner.
 - **Showing a problem to the owner fixes it faster than an email.** Al Twar Fifth sat in an email warning for days; one look at the status page's list brought the missing name. *Rule:* every issue only a person can fix appears on the status page under "Needs you", with what to do.
 - **When automation runs out, ask for local knowledge.** Every source missed Al Twar Fifth; the owner knew it as "Al Twar 5", and one more search spelling placed it. *Rule:* for an area that can't be placed, ask for other names it goes by before asking for coordinates, and teach the look-up the pattern (here: ordinals as numbers) so it helps the next area too.
+- **A bounding box is not a boundary.** "Dubai's box" took in Sharjah and Ajman, so 14% of the places were in another emirate. *Rule:* filter by official boundaries (Dubai Municipality's outlines) when a place must be in Dubai; use boxes only to narrow a search.
+- **Crowd-sourced tags need a sense check.** OpenStreetMap's holiday-flat tag sat on staff housing and residential towers. *Rule:* check a new tag-based source by eye against the names before counting it, and filter what's clearly something else.
+- **A number in a price's place gets read as a price.** *Rule:* a figure that isn't money says what it counts in the figure itself.
 
 ## Accessibility
 

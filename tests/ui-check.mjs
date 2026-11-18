@@ -178,6 +178,11 @@ try {
         ? h.texts.every(t => /AED|درهم/.test(t)) && h.badges.every(c => /--b[1-6]/.test(c)) && h.ramp      // prices: blue key, as every price
         : biggest <= h.total && h.badges.every(c => /oxblood/.test(c)) && !h.ramp),                           // counts: oxblood, no price key
         `${name}: "Hotels" shows ${h.dots} places to stay and ${h.priced ? 'typical prices a night per area on the blue key' : 'counts per area (largest ' + biggest + ')'}`);
+      if (!h.priced) {
+        const head = await page.evaluate(() => [document.getElementById('med').textContent, document.getElementById('medLabel').textContent]);
+        check(/places?$/.test(head[0].trim()) && !/AED/.test(head[0]) && /no nightly prices yet/.test(head[1]),
+          `${name}: without prices, the big number says it counts places ("${head[0].trim()}"), never reads as a price`);
+      }
       check((await overlaps(page)).overlaps === 0, `${name}: no labels overlap in the hotels view`);
       // An area's card in the Hotels view leads with its places to stay; its rents fold away under them.
       const hc = await page.evaluate(async () => { const a = AREAS.find(x => hotelsBy().has(x.label)); focusArea(a);

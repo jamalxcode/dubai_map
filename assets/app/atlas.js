@@ -572,7 +572,10 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{BOXES.cle
 function viewStat(){
   const metric=LABEL.metric,b=map.getBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0);
   if(metric==='hotels'&&hotelPriced()){$('medLabel').textContent=T('Typical hotel price a night in view')+(vis.length?' · '+T.count(vis.length,'area'):'');odometer($('med'),N?Math.round(vis.reduce((s,p)=>s+p.v*p.n,0)/N/10)*10:null,'AED ');return}
-  if(metric==='hotels'){const n=vis.reduce((t,p)=>t+p.v,0);$('medLabel').textContent=T('Hotels in view')+(vis.length?' · '+T.count(vis.length,'area'):'');odometer($('med'),n||null,'');return}
+  // Until hotel prices exist the figure is a count: it says so in the number itself ("809 places"), so it is never
+  // read as a price in the spot where prices go.
+  if(metric==='hotels'){const n=vis.reduce((t,p)=>t+p.v,0);$('medLabel').textContent=T('Places to stay in view')+(vis.length?' · '+T.count(vis.length,'area'):'')+' · '+T('no nightly prices yet');
+    const m=$('med');m._sig=null;m.textContent=n?fmt(n)+' '+(n===1?T('place'):T('places')):'—';m.setAttribute('aria-label',m.textContent);return}
   const what=metric==='n'?T('Contracts'):metric==='median_sqm'?T('Typical rent per m²'):metric==='yield'?T('Typical gross yield'):metric==='sale'?T('Typical sale price'):T('Typical yearly rent');
   $('medLabel').textContent=T('{what} in view',{what})+(vis.length?' · '+T.count(vis.length,'area')+T(', ')+($('unit').value?T.unit($('unit').value):TYPENAME()).toLowerCase():'');
   if(!vis.length||!N){odometer($('med'),null);

@@ -595,7 +595,17 @@ The collaborator: "each hotel should have an average price and the area should a
 
 The collaborator: "when I am in hotel mode and I click on one, the pop-up says 1-bedroom apartment 72,000 yearly; it should have the hotel's price". The card was the rent card in every view. In the Hotels view it now leads with the area's places to stay (typical price a night once prices exist, a list that opens each place, a Booking.com search for the area) and folds the rents under "Rents in this area". Until the LiteAPI key is added it says nightly prices are coming rather than showing nothing. Browser check added for desktop and phone.
 
+## Decision on 2026-11-18 (fifty-eighth pass): hotel figures checked
+
+The owner: "review the hotel pricing, they don't look correct". No hotel prices were live (LiteAPI's key isn't added, so no price file was ever published); what looked like prices were counts. Three fixes:
+1. **Only places inside Dubai:** the places job's search box reached Sharjah and Ajman, so 136 of 975 places were outside Dubai (drawn on the map and counted in the key; about a dozen counted into border areas). Places are now kept only inside Dubai Municipality's official community outlines, or within 300 m of one (piers, islands, coasts: Atlantis, Burj Al Arab, Bulgari, the World Islands all stay).
+2. **Only places that take guests:** 41 entries were staff housing, camps or residential towers tagged as holiday flats ("Emirates Crew Building 1–5", "Hilton Staff Accommodation", "Al Mamzar Tower 1"). Backpackers' hostels stay. On today's data: 975 places become 798.
+3. **The figure at the top says it counts:** "809 places" with "no nightly prices yet" under it, instead of a bare 809 where prices usually go.
+Prices still need the owner's LiteAPI live key (under "Needs you").
+
 ## Change log
+
+- 2026-11-18: Hotels: only places inside Dubai and taking guests (975 → 798); the top figure says it counts places until prices exist.
 
 - 2026-11-18: One calm system for the side panel; the comparison as a mirrored "versus" sheet with motion.
 - 2026-11-18: Compare two areas side by side, over the map, in the theme's colours.
