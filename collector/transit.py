@@ -222,7 +222,7 @@ def main(argv=None):
     if bad:
         net.log("not saved: " + "; ".join(bad), "transit")
         return 1
-    os.makedirs(os.path.dirname(a.out), exist_ok=True)
+    os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     net.log(f"saved {a.out}: {len(out['lines'])} lines, {len(out['stations'])} stations", "transit")
