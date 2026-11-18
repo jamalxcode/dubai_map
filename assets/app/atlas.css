@@ -441,3 +441,10 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 }
 .leaflet-popup-content .chg{font-weight:600} /* no colour: a rise is bad news for tenants and good news for owners */
 .leaflet-popup-content .jump{color:var(--bad)}.leaflet-popup-content .differ{margin:6px 0}
+
+/* Focus on one area (focusArea in atlas.js): the rest of the map is darkened by a mask with the area cut out,
+   its outline is ringed in gold leaf, and other labels step back so its own label and breakdown stand out. */
+/* Other labels keep full contrast (they stay readable and tappable); the darkened map does the isolating. */
+.focusing .leader{opacity:.4}
+.rl.focus{box-shadow:0 0 0 3px var(--gold),0 6px 18px rgba(0,0,0,.25)}
+.focusMask{transition:fill-opacity .25s}

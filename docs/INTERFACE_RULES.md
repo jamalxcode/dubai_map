@@ -52,6 +52,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 - **Thin figures** (fewer than 10 contracts): a dashed outline (the price colour darkened slightly) and an italic figure; same colours and contrast.
 - **Community outlines** under the labels: official boundaries, filled with the area's price colour at 32% and outlined at 70%, redrawn with every view, filter and type change.
 - Labels are keyboard buttons: Tab to one, Enter or Space opens it; the spoken name is the visible text.
+- **Focus on an area:** tapping one area's label (or Enter, or the rent check's area) flies to its official outline, darkens the map outside it (black at 42%), rings it in gold leaf (3.5 px) and opens its breakdown; other labels stay at full contrast. Closing the breakdown or zooming by hand ends it; a home or view change keeps it. Group labels zoom in until their areas separate.
 - Clicking a group zooms in until it splits; at full zoom it lists its areas.
 - Rules live in `assets/app/labels.js` (no DOM) and are unit-tested.
 

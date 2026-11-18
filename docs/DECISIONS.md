@@ -495,8 +495,18 @@ After merging, the pull was started by hand (guard, pull and deploy succeeded): 
 
 The owner asked for an update status page at its own address, with counts of total entries, what the last pull brought, what is rejected or pending and what is used. `status/` reads the data branch (`status.json`, `state.json`, `runs.jsonl`) and GitHub's public API live in the browser, so it shows the current state between deploys without redeploying the site on every pull. The collectors now record what each pull read; the build writes the counts. "Rejected" is shown as "Left out" with the reason for each kind (no median, already covered by Dubai Data, industrial zones kept out of comparisons), and "pending" as "Waiting".
 
+## Decision on 2026-11-18 (forty-seventh pass): tap an area to set it apart
+
+The collaborator: "if you click on the area it zooms in and also shows the data, kind of isolating it so you can see the area better".
+- **Tap one area's label** (or Enter on it, or "Show on map" from the rent check): the map flies to the area's official outline (`focusArea` in atlas.js), darkens everything outside it (a mask with the outline cut out, 42%), rings the outline in gold leaf, marks its label, and opens its breakdown once the map has arrived. Room is left for the breakdown: above the area on a computer, above the bottom sheet on a phone. Without an outline it zooms to the area's point.
+- **Back to the whole map:** closing the breakdown (×, Escape, a tap on the map, swiping the sheet down) or zooming by hand. Changing the home or view keeps the area in focus and reopens its breakdown with the new figures.
+- **Groups** keep zooming in until their areas separate (now a smooth flight). Other labels keep full contrast (dimming them failed WCAG contrast); the darkened map does the isolating.
+- Counted as `area-focus` (feature name only).
+- **Tests:** the browser check confirms Enter on a label sets the area apart; axe now waits for label animations to finish (a fade-in caught mid-way read as low contrast); the address check accepts the whole of Dubai (24.x to 25.x N).
+
 ## Change log
 
+- 2026-11-18: Tap an area to zoom to its outline, darken the rest of the map and open its breakdown.
 - 2026-11-17: Data status page at status/: totals, the last pull per source, in use, left out, waiting, recent pulls, open alerts.
 
 - 2026-11-17: Industrial zones flagged and left out of comparisons; Continental Club backup when Dubai Data is stuck; older districts' history; alerts as GitHub issues; run log; column checks.

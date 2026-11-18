@@ -75,6 +75,8 @@ const overlaps = page => page.evaluate(() => {
 });
 
 async function axe(page, label) {
+  // Check the page at rest: labels fading in (GSAP) would be measured half transparent.
+  await page.waitForFunction(() => !window.gsap || !gsap.globalTimeline.getChildren(true, true, false).some(t => t.isActive()), null, { timeout: 5000 }).catch(() => {});
   await page.addScriptTag({ content: AXE });
   const res = await page.evaluate(async () => (await window.axe.run(document, {
     runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
@@ -200,8 +202,11 @@ try {
     const focused = await page.evaluate(() => { const el = [...document.querySelectorAll('.rl:not(.grp)')][0]; if (el) el.focus(); return !!el; });
     if (focused) {
       await page.keyboard.press('Enter');
-      await page.waitForTimeout(300);
+      // The map first zooms to the area (focusArea), then opens its breakdown.
+      await page.waitForSelector('.leaflet-popup-content .t', { timeout: 4000 }).catch(() => {});
       check(!!(await page.$('.leaflet-popup-content')), `${name}: Enter on a map label opens its breakdown`);
+      check(await page.evaluate(() => document.getElementById('map').classList.contains('focusing') && document.querySelectorAll('.rl.focus').length === 1),
+        `${name}: opening an area sets it apart (the rest of the map dimmed, its label marked)`);
       const lead = await page.evaluate(() => { const c = [...document.querySelectorAll('.leaflet-popup-content')].find(e => e.querySelector('.t')); return { lead: c.querySelector('.lead')?.textContent || '', pick: c.querySelector('tr.pick td')?.textContent || '', all: !!c.querySelector('.allh') }; });
       check(/^1-bedroom apartments: median AED/.test(lead.lead) && lead.pick === '1-bedroom apartments' && lead.all,
         `${name}: the breakdown leads with the picked home's figure, highlights its row, then all homes`);
@@ -267,7 +272,7 @@ try {
       await page.click('.viewSw button[data-m="sale"]');
       await page.waitForTimeout(700);
       const qs = await page.evaluate(() => location.search);
-      check(/view=sale/.test(qs) && /home=homes:1-bedroom/.test(qs) && /at=25\.\d+,55\.\d+,\d+/.test(qs), `desktop: the address keeps the home, view and map position (${decodeURIComponent(qs)})`);
+      check(/view=sale/.test(qs) && /home=homes:1-bedroom/.test(qs) && /at=2[45]\.\d+,55\.\d+,\d+/.test(qs), `desktop: the address keeps the home, view and map position (${decodeURIComponent(qs)})`);
       await page.click('.viewSw button[data-m="median"]');
     }
     // The finder above the table filters the table only; the map keeps every area.

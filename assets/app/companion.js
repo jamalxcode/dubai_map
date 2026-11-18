@@ -356,6 +356,11 @@
 
   function showOnMap(area, { scroll = true } = {}) {
     if (area.lat == null || typeof map === 'undefined') return;
+    // The map's own focus: zoom to the area's outline, set it apart, open its breakdown.
+    if (typeof window.focusArea === 'function') {
+      if (scroll) el('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      window.focusArea(area); return;
+    }
     const open = () => {
       if (typeof layer === 'undefined') return;
       let found = false;

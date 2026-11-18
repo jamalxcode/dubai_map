@@ -188,7 +188,48 @@ function drawOutlines(){
 }
 // What changed since the previous publication (history.py), for the rent check's "since your last visit". Optional.
 window.CHANGES=null;getJSON('data/changes.json').then(d=>{window.CHANGES=d;dispatchEvent(new Event('atlas:changes'))}).catch(()=>{});
-function loadOutlines(){getJSON('data/outlines.json').then(d=>{OUTLINES=d.areas||[];drawOutlines()}).catch(()=>{})}
+function loadOutlines(){getJSON('data/outlines.json').then(d=>{OUTLINES=d.areas||[];drawOutlines();drawFocus()}).catch(()=>{})}
+// Focus on one area: tapping its label zooms to its official outline, darkens and dims everything else,
+// rings the area in gold and opens its breakdown. Closing the breakdown (×, Escape, a tap on the map)
+// brings the rest of the map back. Without an outline the map zooms to the area's point instead.
+const focusLayer=L.layerGroup().addTo(map);let FOCUS=null,focusPopup=null;
+const MARKERS=new Map(); // area label → its own (single) label marker at this zoom
+const outlineOf=a=>OUTLINES&&OUTLINES.find(o=>o.label===a.label);
+const outlineLatLngs=o=>o.rings.map(r=>r.map(([x,y])=>[y,x]));
+function drawFocus(){
+  focusLayer.clearLayers();map.getContainer().classList.toggle('focusing',!!FOCUS);if(!FOCUS)return;
+  const o=outlineOf(FOCUS);if(!o)return;
+  const rings=outlineLatLngs(o),world=[[-85,-179],[-85,179],[85,179],[85,-179]];
+  L.polygon([world,...rings],{pane:'outlines',interactive:false,stroke:false,fillColor:'#000',fillOpacity:.42,className:'focusMask'}).addTo(focusLayer);
+  L.polygon(rings,{pane:'outlines',interactive:false,color:'#C9A227',weight:3.5,opacity:1,fill:false,className:'focusRing'}).addTo(focusLayer);
+}
+function clearFocus(){if(!FOCUS)return;FOCUS=null;focusPopup=null;drawFocus();document.querySelectorAll('.rl.focus').forEach(e=>e.classList.remove('focus'))}
+// Room for the breakdown: above the area on a computer (the card sits over its label), above the sheet on a phone.
+function focusPadding(){const s=map.getSize();
+  return SHEET_MQ.matches?{tl:L.point(24,24),br:L.point(24,Math.round(s.y*.55))}:{tl:L.point(70,Math.round(s.y*.42)),br:L.point(40,40)}}
+function openArea(a){
+  const m=MARKERS.get(a.label);
+  if(m){if(!m.getPopup())m.bindPopup(popup(a),{maxWidth:320,offset:L.point(0,-18)});m.openPopup();focusPopup=m.getPopup()}
+  else focusPopup=L.popup({maxWidth:320}).setLatLng([a.lat,a.lng]).setContent(popup(a)).openOn(map); // merged at this zoom
+  document.querySelectorAll('.rl').forEach(e=>e.classList.toggle('focus',e.dataset.area===a.label));
+}
+function focusArea(a){
+  if(a.lat==null)return;
+  // Already in focus with its breakdown open (e.g. the rent check re-checking after a home change): nothing to do.
+  if(FOCUS&&FOCUS.label===a.label&&focusPopup&&map.hasLayer(focusPopup))return;
+  focusPopup=null;map.closePopup();FOCUS=a;drawFocus();countUse('area-focus');
+  const o=outlineOf(a),b=o?L.latLngBounds(outlineLatLngs(o).flat()):L.latLng(a.lat,a.lng).toBounds(1800);
+  const pad=focusPadding(),opts={paddingTopLeft:pad.tl,paddingBottomRight:pad.br,maxZoom:16};
+  const t=map._getBoundsCenterZoom(b,opts);
+  // Already showing the whole area at about that zoom: open it where it is, without moving the map.
+  const still=Math.abs(t.zoom-map.getZoom())<=1&&map.getBounds().contains(b);
+  if(still){openArea(a);return}
+  map.once('moveend',()=>setTimeout(()=>{if(FOCUS===a)openArea(a)},0));
+  if(!FX)map.fitBounds(b,Object.assign({animate:false},opts));else map.flyToBounds(b,Object.assign({duration:.7},opts));
+}
+window.focusArea=focusArea;
+let relabelKeep=false;
+map.on('popupclose',e=>{if(!relabelKeep&&FOCUS&&focusPopup&&e.popup===focusPopup)clearFocus()});
 let POINTS=[],LABEL={},animateLabels=true;
 const pct=v=>Number(v).toFixed(1)+'%'; // yields: always one decimal
 const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
@@ -218,24 +259,25 @@ function renderLabels(){
     .map(r=>{const c=map.containerPointToLayerPoint([r.left-box.left+r.width/2,r.top-box.top+r.height/2]);return {x:c.x,y:c.y,w:r.width,h:r.height}});
   const v0=map.containerPointToLayerPoint([0,0]),ms=map.getSize(),view={x0:v0.x,y0:v0.y,x1:v0.x+ms.x,y1:v0.y+ms.y};
   const cl=RentLabels.place(items,size,{pad:6,sum:metric==='n',blocks,view});
-  const added=[];
+  const added=[];MARKERS.clear();
   for(const c of cl){const g=c.members,moved=c.lx!==c.x||c.ly!==c.y,pos=moved?map.layerPointToLatLng([c.lx,c.ly]):L.latLng(c.lat,c.lng);
     if(moved){L.polyline([[c.lat,c.lng],pos],{className:'leader',weight:1.5,interactive:false}).addTo(layer);
       L.circleMarker([c.lat,c.lng],{className:'leader dot',radius:3,weight:1.5,interactive:false}).addTo(layer)}
     // The figure sits on a badge in its price-key colour, so the price reads at a glance; the area name underneath.
-    const html='<div class="rl'+(c.single?'':' grp')+(g.every(o=>o.thin)?' thin':'')+'" style="--c:'+colorOf(c.val)+';--on:'+LABEL.inkOf(c.val)+'" tabindex="0"><b>'+safe(labelText(c.val,metric))+'</b><small>'+safe(labelName(g))+'</small></div>';
+    const html='<div class="rl'+(c.single?'':' grp')+(g.every(o=>o.thin)?' thin':'')+(c.single&&FOCUS&&g[0].a.label===FOCUS.label?' focus':'')+'"'+(c.single?' data-area="'+safe(g[0].a.label)+'"':'')+' style="--c:'+colorOf(c.val)+';--on:'+LABEL.inkOf(c.val)+'" tabindex="0"><b>'+safe(labelText(c.val,metric))+'</b><small>'+safe(labelName(g))+'</small></div>';
     const m=L.marker(pos,{icon:L.divIcon({className:'rl-wrap',html,iconSize:[0,0]}),riseOnHover:true,keyboard:false,title:c.single?g[0].a.label:g.map(o=>o.a.label).join(', ')}).addTo(layer);
     added.push(m);
     // Keyboard: the label is a button. Enter or Space opens its breakdown, or zooms into a group.
     const el=m.getElement()&&m.getElement().firstChild;
     // Its spoken name is its visible text (rent and area), as WCAG 2.5.3 asks; the marker title lists a group's areas.
     if(el){el.setAttribute('role','button');
-      el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();if(c.single)m.openPopup();else m.fire('click')}})}
+      el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();m.fire('click')}})}
     // The breakdown's tip sits above the label, so the label stays visible under it.
-    if(c.single)m.bindPopup(popup(g[0].a),{maxWidth:320,offset:L.point(0,-18)});
+    // One area: zoom to it and set it apart (focusArea); the breakdown opens once the map has arrived.
+    if(c.single){MARKERS.set(g[0].a.label,m);m.on('click',()=>{if(FOCUS&&FOCUS.label===g[0].a.label&&m.isPopupOpen())return;focusArea(g[0].a)})}
     else m.on('click',()=>{const b=L.latLngBounds(g.map(o=>[o.a.lat,o.a.lng])),z=map.getBoundsZoom(b,false,L.point(140,140));
       if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<span class="t">'+T.count(g.length,'area')+'</span>'+(metric==='n'?safe(labelText(c.val,metric)):T('Typical {v}',{v:safe(labelText(c.val,metric))}))+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(T.place(o.a.label))+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
-      else map.fitBounds(b,{padding:[70,70],maxZoom:16})});
+      else{clearFocus();map.closePopup();map.flyToBounds(b,{padding:[70,70],maxZoom:16,duration:FX?.6:0,animate:!!FX})}});
   }
   // Labels answer a filter change by settling in from the centre; plain zooming redraws instantly.
   if(FX&&animateLabels){animateLabels=false;
@@ -550,7 +592,10 @@ document.addEventListener('click',e=>{
 });
 addEventListener('keydown',e=>{
   if(viewer&&!viewer.hidden){if(e.key==='Escape'){e.stopPropagation();closeViewer()}else if(e.key==='ArrowRight')showPhoto(vAt+(T.lang==='ar'?-1:1));else if(e.key==='ArrowLeft')showPhoto(vAt+(T.lang==='ar'?1:-1));return}
-  if(e.key==='Escape')closeSheet();
+  if(e.key==='Escape'){closeSheet();
+    // A focused area's breakdown on a computer: Escape closes it and gives the map back; focus returns to its label.
+    if(FOCUS&&focusPopup&&map.hasLayer(focusPopup)){const lab=FOCUS.label;map.closePopup(focusPopup);
+      const el=[...document.querySelectorAll('.rl[data-area]')].find(x=>x.dataset.area===lab);if(el)el.focus({preventScroll:true})}}
 },true);
 
 // The legend folds to its colour bar; phones start folded, so more of the map shows.
@@ -587,7 +632,10 @@ function draw(){
     const thin=bu?(bu.n!=null&&bu.n<THIN)||!!bu.unconfirmed:a.n<THIN||(!!a.unconfirmed&&metric==='median');POINTS.push({a,v,n,thin})}
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
   const sc=scaleFor(vals),colorOf=sc.colorOf;
-  LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};renderLabels();viewStat();drawOutlines();setTimeout(popupMargins,0);
+  LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};
+  // A change of home or view keeps a focused area in focus: its breakdown reopens with the new figures.
+  const kept=FOCUS&&focusPopup?FOCUS:null;relabelKeep=!!kept;renderLabels();relabelKeep=false;if(kept&&!map._popup){FOCUS=kept;drawFocus();openArea(kept)}
+  viewStat();drawOutlines();setTimeout(popupMargins,0);
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;
   // The key: a value at every step (the first and last also cover everything below and above them), and a
