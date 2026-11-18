@@ -504,8 +504,17 @@ The collaborator: "if you click on the area it zooms in and also shows the data,
 - Counted as `area-focus` (feature name only).
 - **Tests:** the browser check confirms Enter on a label sets the area apart; axe now waits for label animations to finish (a fade-in caught mid-way read as low contrast); the address check accepts the whole of Dubai (24.x to 25.x N).
 
+## Decision on 2026-11-18 (forty-ninth pass): a tab to give the map the whole window
+
+The collaborator: "I want to be able to move this [the side panel] to the left … with a little arrow that can make the map full screen".
+- **Computers (two panes):** a tab with an arrow on the map's edge next to the panel; it hides the panel so the map fills the window and brings it back. Remembered on the device, since someone who prefers the big map wants it next time too.
+- **Phones and tablets (one column):** the same tab is a full-screen toggle (corner icon); full screen covers the page, the area sheet still opens above it, and Escape or the tab ends it. Not remembered: opening the site straight into a full-screen map would hide the rent check and the rest.
+- The map keeps its centre while it resizes; labels avoid the tab like the other controls. Arabic: the tab is on the right, where the panel is, and its arrow mirrors.
+- Counted as `map-wide` / `map-narrow`.
+
 ## Change log
 
+- 2026-11-18: Map edge tab: hide the side panel on computers, full-screen map on phones.
 - 2026-11-18: Tap an area to zoom to its outline, darken the rest of the map and open its breakdown.
 - 2026-11-17: Data status page at status/: totals, the last pull per source, in use, left out, waiting, recent pulls, open alerts.
 

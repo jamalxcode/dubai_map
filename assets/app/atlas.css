@@ -448,3 +448,29 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 .focusing .leader{opacity:.4}
 .rl.focus{box-shadow:0 0 0 3px var(--gold),0 6px 18px rgba(0,0,0,.25)}
 .focusMask{transition:fill-opacity .25s}
+
+/* The map's edge tab (atlas.js setWide): an arrow that slides the side panel away on computers, a full-screen
+   toggle on narrower screens. It sits on the map's inline-start edge, halfway down, clear of the zoom bar. */
+.mapWideBtn{position:absolute;z-index:1000;top:50%;left:0;transform:translateY(-50%);width:26px;height:64px;padding:0;display:grid;place-items:center;
+  border:1px solid var(--line);border-left:0;border-radius:0 10px 10px 0;background:var(--legend);color:var(--text);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+/* The map box is always left to right; in Arabic the side panel is on the right, so the tab moves there. */
+[dir="rtl"] .mapWideBtn{left:auto;right:0;border:1px solid var(--line);border-right:0;border-radius:10px 0 0 10px}
+[dir="rtl"] .mapWideBtn .arr{transform:scaleX(-1)}[dir="rtl"] .mapWide .mapWideBtn .arr{transform:none}
+.mapWideBtn:hover{background:var(--panel)}
+.mapWideBtn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.mapWideBtn svg{width:18px;height:18px}
+.mapWideBtn .fs{display:none}
+.mapWide .mapWideBtn .arr{transform:scaleX(-1)}
+.mapWideBtn .fs .shut,.mapWide .mapWideBtn .fs .open{display:none}.mapWide .mapWideBtn .fs .shut{display:inline}
+@media (min-width:1100px){
+  .mapWide .layout{grid-template-columns:minmax(0,1fr)}
+  .mapWide .pane{display:none}
+  .mapWide .mapPane .mapWrap{border-inline-start:0}
+}
+/* Narrower screens: the tab is a full-screen toggle; full screen covers the page (the area sheet still opens above it). */
+@media (max-width:1099px){
+  .mapWideBtn{width:40px;height:40px;border-radius:0 8px 8px 0}[dir="rtl"] .mapWideBtn{border-radius:8px 0 0 8px}
+  .mapWideBtn .arr{display:none}.mapWideBtn .fs{display:inline}
+  .mapWide .mapWrap{position:fixed;inset:0;z-index:1100;height:auto;min-height:0;border-radius:0;border:0}
+  :root.mapWide,:root.mapWide body{overflow:hidden}
+}

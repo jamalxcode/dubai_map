@@ -254,7 +254,7 @@ function renderLabels(){
   const size=(members,val)=>labelBox(labelText(val,metric),labelName(members));
   const items=POINTS.map(p=>{const pt=map.latLngToLayerPoint([p.a.lat,p.a.lng]);return Object.assign({x:pt.x,y:pt.y,lat:p.a.lat,lng:p.a.lng},p)});
   const box=map.getContainer().getBoundingClientRect();
-  const blocks=[...map.getContainer().parentNode.querySelectorAll('.leaflet-control,.legend')].map(e=>e.getBoundingClientRect())
+  const blocks=[...map.getContainer().parentNode.querySelectorAll('.leaflet-control,.legend,.mapWideBtn')].map(e=>e.getBoundingClientRect())
     .filter(r=>r.width&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top)
     .map(r=>{const c=map.containerPointToLayerPoint([r.left-box.left+r.width/2,r.top-box.top+r.height/2]);return {x:c.x,y:c.y,w:r.width,h:r.height}});
   const v0=map.containerPointToLayerPoint([0,0]),ms=map.getSize(),view={x0:v0.x,y0:v0.y,x1:v0.x+ms.x,y1:v0.y+ms.y};
@@ -510,6 +510,31 @@ function popupMargins(){
   o.maxHeight=Math.max(160,Math.floor(box.height-(top+10)-bot-44));
 }
 map.whenReady(()=>setTimeout(popupMargins,0));addEventListener('resize',popupMargins);
+// A tab on the map's edge gives the map more room. Computers (two panes, 1,100 px and up): it slides the side
+// panel away so the map fills the window, and back; the choice is remembered on this device. Narrower screens:
+// it makes the map full screen until tapped again or Escape. Either way the map re-measures and labels re-place.
+const WIDE_MQ=matchMedia('(min-width:1100px)');
+const wideBtn=document.createElement('button');wideBtn.type='button';wideBtn.className='mapWideBtn';
+wideBtn.innerHTML='<svg class="arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+  '<svg class="fs" viewBox="0 0 24 24" aria-hidden="true"><path class="open" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path class="shut" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+map.getContainer().parentNode.append(wideBtn);
+const isWide=()=>document.documentElement.classList.contains('mapWide');
+function paintWide(){const on=isWide(),desk=WIDE_MQ.matches;
+  const t=desk?(on?T('Show the side panel'):T('Hide the side panel')):(on?T('Exit full screen'):T('Full-screen map'));
+  wideBtn.setAttribute('aria-label',t);wideBtn.title=t;wideBtn.setAttribute('aria-pressed',String(on))}
+function setWide(on,save){
+  document.documentElement.classList.toggle('mapWide',on);paintWide();
+  if(save&&WIDE_MQ.matches)try{localStorage.setItem('mapWide',on?'1':'0')}catch(e){}
+  // Keep the same place in view: the centre stays put while the map grows or shrinks.
+  const c=map.getCenter();map.invalidateSize({pan:false});map.setView(c,map.getZoom(),{animate:false});
+  popupMargins();if(LABEL.metric)renderLabels();
+  if(on&&!WIDE_MQ.matches)wideBtn.focus({preventScroll:true});
+}
+wideBtn.addEventListener('click',()=>{setWide(!isWide(),true);countUse(isWide()?'map-wide':'map-narrow')});
+// Full screen on a narrow screen never carries over to the two-pane layout, and vice versa.
+WIDE_MQ.addEventListener('change',()=>{let saved=null;try{saved=localStorage.getItem('mapWide')}catch(e){}setWide(WIDE_MQ.matches&&saved==='1',false)});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&isWide()&&!WIDE_MQ.matches&&!document.querySelector('.areaSheet:not([hidden])'))setWide(false,false)});
+(()=>{let saved=null;try{saved=localStorage.getItem('mapWide')}catch(e){}if(WIDE_MQ.matches&&saved==='1')map.whenReady(()=>setWide(true,false));else paintWide()})();
 // Re-lay out and pan an open breakdown after its content changed size (photos arriving): Leaflet only
 // checks the size when content is set through it.
 function refitPopup(p){try{if(p&&p.isOpen()&&!SHEET_MQ.matches){p._updateLayout();p._updatePosition();p._adjustPan()}}catch(e){}}

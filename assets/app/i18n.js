@@ -89,6 +89,8 @@
     'Google Maps': 'خرائط Google',
     '(Median {aed} a year when you set this reminder.)': '(كان الوسيط {aed} سنويًا عند ضبط هذا التذكير.)',
     '(optional)': '(اختياري)',
+    'Hide the side panel': 'إخفاء اللوحة الجانبية', 'Show the side panel': 'إظهار اللوحة الجانبية',
+    'Full-screen map': 'الخريطة بملء الشاشة', 'Exit full screen': 'الخروج من ملء الشاشة',
     '(to {d}).': '(حتى {d}).',
     ', ': '، ',
     ', median sale price AED {v}': '، وسعر البيع الوسيط AED {v}',
