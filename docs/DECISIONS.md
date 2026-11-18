@@ -607,7 +607,13 @@ Prices still need the owner's LiteAPI live key (under "Needs you").
 
 LiteAPI only unlocks its live (real-price) key after a payment card is added, with authority to charge any booking made with the key. The atlas never books, but a leaked key could be used to book on the owner's card. The owner chose to skip it. So: the status page no longer asks for the key under "Needs you" (it says under "Waiting" that hotel prices are off by the owner's choice; a key that is added later but rejected or sandbox still shows there), and the Hotels view says nightly prices are on booking sites rather than "not yet". The price code stays: adding `LITEAPI_KEY` later switches prices on with no other change.
 
+## Decision on 2026-11-18 (sixtieth pass): the price dial
+
+The owner asked for an annual-rent dial for flats and a night-charge dial for hotels, "with min and max and median showing depending on the view", with two dial mock-ups. The header's big number became a dial: the median of the areas on screen (contract-weighted), placed between the lowest and highest area in view, whose figures sit at the two ends; its label and unit follow the view (yearly rent, sale price, yield; a night in the Hotels view once hotel prices exist). Kept in the site's palette (the price key's blues on the oxblood header, an ivory knob edged in gold leaf), not the mock-ups' navy. The headline changed from "typical" (an average) to "median", as asked; the legend and merged labels keep "typical". Hotel prices are off by the owner's choice, so the Hotels view keeps its count of places, with no dial.
+
 ## Change log
+
+- 2026-11-18: The header's figure is a price dial: median of what's on screen, lowest and highest area at the ends, following the view.
 
 - 2026-11-18: Hotel prices off by the owner's choice (LiteAPI's live key needs a payment card); not asked for on the status page; wording points to booking sites.
 

@@ -80,6 +80,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **A number in a price's place gets read as a price.** *Rule:* a figure that isn't money says what it counts in the figure itself.
 - **"Free" APIs can need a card to go live.** LiteAPI's free account only gives a sandbox key; the live key needs a payment card authorised for bookings made with the key. *Rule:* before recommending a source, check what its live access requires (card, fees, booking liability) and say so up front.
 - **An owner's "no" is not an open task.** *Rule:* when the owner declines something, take it off "Needs you" and record the choice, so the status page doesn't keep asking.
+- **A mock-up is a shape, not a palette.** The dial mock-ups were navy; the site is oxblood, ivory and gold with blue prices. *Rule:* take the layout and behaviour from a mock-up, the colours from the design system.
+- **An SVG gradient on a growing arc stretches with it.** With the default bounding-box units, a short filled arc showed the whole light-to-dark range. *Rule:* give gauge gradients `userSpaceOnUse` so colour matches position.
 
 ## Accessibility
 

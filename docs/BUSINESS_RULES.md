@@ -68,7 +68,7 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Splitting | A merged label of up to 3 areas comes apart when each label fits at its own point or just beside it (a thin line joins a moved label to its point) | `labels.js MAX_SPLIT` |
 | Controls | Labels step out from under the zoom bar, the view bar and the legend; label boxes are measured as drawn | `labels.js`, `atlas.js labelBox` |
 | Group names | Every merged label: the busiest area's name (cut at 22 letters) plus "+N" others | `atlas.js groupName` |
-| Statistic wording | "Typical" for the headline (contract-weighted average of the medians in view), the legend and merged labels; "median" where a figure is exactly one median (breakdowns, the table) | `atlas.js viewStat`, `draw` |
+| Statistic wording | The header's **price dial**: the contract-weighted median of the areas on screen (half the contracts are in areas below it), with the lowest and highest area in view at the two ends; "typical" stays for the legend and merged labels (contract-weighted averages); "median" in breakdowns and the table. Counts (contracts, places to stay) get no dial | `atlas.js viewStat`, `setDial` |
 | Yields | One decimal everywhere (7.0%) | `atlas.js pct`, `companion.js`, `share_pages.py` |
 | Home picker | All homes, each home size (from the homes data), then other property types with data ("Flats, any size"); studios are a size, not offered again as a type | `atlas.js buildHome` |
 | Table finder | Filters the table's rows by area, DLD area, master project or building; never the map | `atlas.js draw` |

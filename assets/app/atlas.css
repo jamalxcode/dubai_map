@@ -579,3 +579,24 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 details.rentMore{margin:8px 0;border-top:1px solid var(--line);padding-top:6px}
 details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
 .hlinks{display:flex;flex-wrap:wrap;gap:4px 8px}.hlinks .sep{color:var(--muted)}
+/* The price dial (header): an arc on the price key's blues, a gold-edged knob at the median, the lowest and highest
+   area in view at the ends, and the median in the middle. Counts (contracts, places) hide it and show the number. */
+.big .dialBox{position:relative;width:200px;max-width:100%;margin-inline-start:auto}
+.big .dialBox.off{width:auto}
+.big .dialBox.off .dial,.big .dialBox.off .dEnd,.big .dialBox.off .dk,.big .dialBox.off .du{display:none}
+.big .dialBox.off .dialMid{position:static;transform:none}
+.dial{display:block;width:100%;height:auto;overflow:visible}
+.dial .dTrack{fill:none;stroke:rgba(246,241,231,.2);stroke-width:12;stroke-linecap:round}
+.dial .dFill{fill:none;stroke:url(#dialGrad);stroke-width:12;stroke-linecap:round}
+.dial .dKnob{fill:#F6F1E7;stroke:#C9A227;stroke-width:4}
+.big .dialMid{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;white-space:nowrap}
+.big .dialMid .dk{font:600 11px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--band-muted)}
+.big .dialMid .du{font:600 11.5px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:#E2C766}
+.big .dialBox:not(.off) .num{font-size:38px!important;line-height:1}
+.big .dEnd{position:absolute;bottom:2px;font:500 12px/1 var(--body);color:var(--band-muted);font-variant-numeric:tabular-nums}
+.big .dMin{left:8px}.big .dMax{right:8px}
+:root[lang="ar"] .big .dialMid .dk,:root[lang="ar"] .big .dialMid .du{letter-spacing:0;text-transform:none}
+@media (min-width:1100px){.big .dialBox{margin-inline-start:0;width:180px}.big .dialBox:not(.off) .num{font-size:34px!important}}
+@media (max-width:860px){.big .dialBox{margin-inline-start:0;width:156px}.big .dialBox:not(.off) .num{font-size:30px!important}.big .dialMid .dk,.big .dialMid .du{font-size:10px}}
+[dir="rtl"] .big .dialBox{direction:ltr}
+@media (min-width:861px) and (max-width:1099px){.big .dialBox{width:150px}.big .dialBox:not(.off) .num{font-size:28px!important}.big .dialMid .dk,.big .dialMid .du{font-size:10px}.band .big .cap{margin-top:2px}}

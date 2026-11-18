@@ -569,22 +569,44 @@ map.on('popupclose',()=>setTimeout(()=>{if(!map._popup&&LABEL.metric)renderLabel
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{BOXES.clear();if(LABEL.metric)renderLabels()});
 
 // The headline number ("typical"): the contract-weighted average of the medians on screen.
+// The price dial in the header: the median of what's on screen (contract-weighted: half the contracts are in areas
+// below it), placed between the lowest and highest area in view, whose figures sit at the two ends. It follows the
+// view: yearly rent, sale price, gross yield, or (with hotel prices) the price a night. Counts get no dial.
+const DIAL={cx:100,cy:100,r:80,a0:150,a1:390};
+const dialPt=a=>{const t=a*Math.PI/180;return [DIAL.cx+DIAL.r*Math.cos(t),DIAL.cy+DIAL.r*Math.sin(t)]};
+const dialArc=(a,b)=>{const [x0,y0]=dialPt(a),[x1,y1]=dialPt(b);return 'M'+x0.toFixed(1)+' '+y0.toFixed(1)+' A'+DIAL.r+' '+DIAL.r+' 0 '+(b-a>180?1:0)+' 1 '+x1.toFixed(1)+' '+y1.toFixed(1)};
+$('dialTrack').setAttribute('d',dialArc(DIAL.a0,DIAL.a1));
+function wMedian(ps){const s=[...ps].sort((x,y)=>x.v-y.v),N=s.reduce((t,p)=>t+(p.n||1),0);let c=0;for(const p of s){c+=p.n||1;if(c>=N/2)return p.v}return null}
+function setDial(on,{kind,unit,lo,hi,mid,fmtEnd}={}){
+  $('dialBox').classList.toggle('off',!on);if(!on)return;
+  const f=hi>lo?Math.min(1,Math.max(0,(mid-lo)/(hi-lo))):.5,a=DIAL.a0+(DIAL.a1-DIAL.a0)*f,[kx,ky]=dialPt(a);
+  $('dialFill').setAttribute('d',f>0.002?dialArc(DIAL.a0,a):'');$('dialKnob').setAttribute('cx',kx.toFixed(1));$('dialKnob').setAttribute('cy',ky.toFixed(1));
+  $('dialKind').textContent=kind;$('dialUnit').textContent=unit;
+  $('dialMin').textContent=fmtEnd(lo);$('dialMax').textContent=fmtEnd(hi);
+  $('dialMin').setAttribute('aria-label',T('Lowest area: {v}',{v:fmtEnd(lo)}));$('dialMax').setAttribute('aria-label',T('Highest area: {v}',{v:fmtEnd(hi)}));
+}
 function viewStat(){
   const metric=LABEL.metric,b=map.getBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0);
-  if(metric==='hotels'&&hotelPriced()){$('medLabel').textContent=T('Typical hotel price a night in view')+(vis.length?' · '+T.count(vis.length,'area'):'');odometer($('med'),N?Math.round(vis.reduce((s,p)=>s+p.v*p.n,0)/N/10)*10:null,'AED ');return}
+  const where=vis.length?' · '+T.count(vis.length,'area'):'';
   // Until hotel prices exist the figure is a count: it says so in the number itself ("809 places"), so it is never
-  // read as a price in the spot where prices go.
-  if(metric==='hotels'){const n=vis.reduce((t,p)=>t+p.v,0);$('medLabel').textContent=T('Places to stay in view')+(vis.length?' · '+T.count(vis.length,'area'):'')+' · '+T('nightly prices on booking sites');
+  // read as a price in the spot where prices go. Counts get no dial.
+  if(metric==='hotels'&&!hotelPriced()){const n=vis.reduce((t,p)=>t+p.v,0);setDial(false);$('medLabel').textContent=T('Places to stay in view')+where+' · '+T('nightly prices on booking sites');
     const m=$('med');m._sig=null;m.textContent=n?fmt(n)+' '+(n===1?T('place'):T('places')):'—';m.setAttribute('aria-label',m.textContent);return}
-  const what=metric==='n'?T('Contracts'):metric==='median_sqm'?T('Typical rent per m²'):metric==='yield'?T('Typical gross yield'):metric==='sale'?T('Typical sale price'):T('Typical yearly rent');
-  $('medLabel').textContent=T('{what} in view',{what})+(vis.length?' · '+T.count(vis.length,'area')+T(', ')+($('unit').value?T.unit($('unit').value):TYPENAME()).toLowerCase():'');
-  if(!vis.length||!N){odometer($('med'),null);
+  if(metric==='n'){setDial(false);$('medLabel').textContent=T('{what} in view',{what:T('Contracts')})+where;odometer($('med'),N||null,'');return}
+  const home=($('unit').value?T.unit($('unit').value):TYPENAME()).toLowerCase();
+  if(!vis.length||!N){setDial(false);odometer($('med'),null);
     const perUnitOnly=!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'&&a.lat!=null&&b.contains([a.lat,a.lng]));
-    $('medLabel').textContent=perUnitOnly?T('Areas here have figures per unit only: pick a unit (e.g. 1 bed) to see them.'):T('Nothing to show here for {type}. Zoom out to see more.',{type:TYPENAME().toLowerCase()});return}
-  const v=metric==='n'?N:vis.reduce((s,p)=>s+p.v*p.n,0)/N;
-  if(metric==='yield'){$('med').textContent=v.toFixed(1)+'%';$('med')._sig=null;return}
-  const step=metric==='median_sqm'?1:metric==='sale'?1000:100;
-  odometer($('med'),metric==='n'?v:Math.round(v/step)*step,metric==='n'?'':'AED ');
+    $('medLabel').textContent=metric==='hotels'?T('No priced places to stay here. Zoom out to see more.'):perUnitOnly?T('Areas here have figures per unit only: pick a unit (e.g. 1 bed) to see them.'):T('Nothing to show here for {type}. Zoom out to see more.',{type:TYPENAME().toLowerCase()});return}
+  const vals=vis.map(p=>p.v),lo=Math.min(...vals),hi=Math.max(...vals),mid=wMedian(vis);
+  const D={median:[T('Median rent'),T('AED a year'),T('Median yearly rent in view')],sale:[T('Median sale price'),T('AED'),T('Median sale price in view')],
+    yield:[T('Median yield'),T('gross a year'),T('Median gross yield in view')],median_sqm:[T('Median rent per m²'),T('AED a year'),T('Median rent per m² in view')],
+    hotels:[T('Median a night'),T('AED a night'),T('Median hotel price a night in view')]}[metric]||[T('Median'),'',T('Median in view')];
+  const end=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='median_sqm'?fmt:(v=>compact(v));
+  setDial(true,{kind:D[0],unit:D[1],lo,hi,mid,fmtEnd:end});
+  $('medLabel').textContent=D[2]+where+(metric==='hotels'?'':T(', ')+home)+' · '+T('lowest and highest area at the ends');
+  if(metric==='yield'){$('med').textContent=mid.toFixed(1)+'%';$('med')._sig=null;$('med').setAttribute('aria-label',$('med').textContent);return}
+  const step=metric==='median_sqm'?1:metric==='sale'?1000:metric==='hotels'?10:100;
+  odometer($('med'),Math.round(mid/step)*step,'');
 }
 map.on('moveend',viewStat);
 

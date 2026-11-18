@@ -97,6 +97,14 @@ try {
     const start = await overlaps(page);
     check(start.labels >= 10, `${name}: map shows rent labels (${start.labels})`);
     check(start.overlaps === 0, `${name}: no labels overlap at the start (${start.overlaps})`);
+    // The price dial: the median of what's on screen between the lowest and highest area, in the view's unit.
+    const dial = await page.evaluate(() => { const vals = POINTS.filter(p => map.getBounds().contains([p.a.lat, p.a.lng])).map(p => p.v);
+      const num = s => +String(s).replace(/[^\d.]/g, '') * (/k$/.test(s) ? 1000 : /M$/.test(s) ? 1e6 : 1);
+      return { on: !document.getElementById('dialBox').classList.contains('off'), kind: document.getElementById('dialKind').textContent, unit: document.getElementById('dialUnit').textContent,
+        med: num(document.getElementById('med').getAttribute('aria-label')), lo: num(document.getElementById('dialMin').textContent), hi: num(document.getElementById('dialMax').textContent),
+        min: Math.min(...vals), max: Math.max(...vals), knob: !!document.getElementById('dialKnob').getAttribute('cx') }; });
+    check(dial.on && /Median rent/.test(dial.kind) && /AED a year/.test(dial.unit) && dial.knob && dial.lo <= dial.med && dial.med <= dial.hi && Math.abs(dial.lo - dial.min) / dial.min < 0.05 && Math.abs(dial.hi - dial.max) / dial.max < 0.05,
+      `${name}: the rent dial shows the median (${dial.med}) between the lowest (${dial.lo}) and highest (${dial.hi}) area in view, in AED a year`);
     const under0 = await underControls(page);
     check(!under0.length, `${name}: at the start no label sits under the map's buttons or legend${under0.length ? ': ' + under0.join(', ') : ''}`);
     const labelNames = await page.evaluate(() => [...document.querySelectorAll('.rl small')].map(e => e.textContent));
@@ -179,6 +187,7 @@ try {
         : biggest <= h.total && h.badges.every(c => /oxblood/.test(c)) && !h.ramp),                           // counts: oxblood, no price key
         `${name}: "Hotels" shows ${h.dots} places to stay and ${h.priced ? 'typical prices a night per area on the blue key' : 'counts per area (largest ' + biggest + ')'}`);
       if (!h.priced) {
+        check(await page.evaluate(() => document.getElementById('dialBox').classList.contains('off')), `${name}: counting places, the dial steps aside (a count is not a price)`);
         const head = await page.evaluate(() => [document.getElementById('med').textContent, document.getElementById('medLabel').textContent]);
         check(/places?$/.test(head[0].trim()) && !/AED/.test(head[0]) && /nightly prices on booking sites/.test(head[1]),
           `${name}: without prices, the big number says it counts places ("${head[0].trim()}"), never reads as a price`);
