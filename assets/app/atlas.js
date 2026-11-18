@@ -969,6 +969,7 @@ function draw(){
   budgetNote(unit,metric);if(CMP)renderCompare();
   LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};
   // A change of home or view keeps a focused area in focus: its breakdown reopens with the new figures.
+  const legendBox0=$('legend').hidden?'':$('legend').offsetWidth+'x'+$('legend').offsetHeight;
   const kept=FOCUS&&focusPopup?FOCUS:null;relabelKeep=!!kept;renderLabels();relabelKeep=false;if(kept&&!map._popup){FOCUS=kept;drawFocus();openArea(kept)}
   viewStat();drawOutlines();drawHotels();setTimeout(popupMargins,0);
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
@@ -987,6 +988,8 @@ function draw(){
   if(!hotelsView&&!unit&&TYPE==='homes'&&metric!=='yield')$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Mixed home sizes: pick one for a fair comparison.')+'</div>');
   syncViews();
   if(!hotelsView&&!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts (no all-homes median): pick a unit to see them')+'</div>');
+  // Labels keep clear of the legend as it was when they were placed: if the legend changed size (another view's key), place them again.
+  if(($('legend').hidden?'':$('legend').offsetWidth+'x'+$('legend').offsetHeight)!==legendBox0){relabelKeep=true;renderLabels();relabelKeep=false}
   const all=AREAS.reduce((s,a)=>s+a.n,0),placed=shown.reduce((s,a)=>s+a.n,0);
   odometer($('n12'),all);
   $('mapped').innerHTML=(all?safe((Math.floor(placed/all*1000)/10).toFixed(1))+'%':'—')+'<small>'+safe(T('of these contracts'))+'</small>';
