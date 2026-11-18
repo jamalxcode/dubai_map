@@ -1,4 +1,4 @@
-dld_area,lat,lng,osm_name,osm_type,score,checked_at
-Al Aryam,,,,,,2026-11-16
-Al Twar Fifth,,,,,,2026-11-16
-Al Waha Villas,25.02902,55.28587,Al Waha Villas,administrative,1.00,2026-11-16
+dld_area,lat,lng,osm_name,osm_type,score,checked_at,queries
+Al Aryam,,,,,,2026-11-16,
+Al Twar Fifth,25.26940,55.38770,Al Twar 5,suburb,1.00,2026-11-18,2
+Al Waha Villas,25.02902,55.28587,Al Waha Villas,administrative,1.00,2026-11-16,
