@@ -305,6 +305,10 @@ Built on branch `metro` (decisions, fifty-first pass): Metro and Tram from OpenS
 
 Recommended within the main page (map in view, starts from an area, shareable link); built that way on branch `compare` (decisions, fifty-second pass). Next idea on the list: commute.
 
+### 18 Nov · "can we work on fixing the panel, it really clumped up and messy … more professional and not AI slop, using GSAP, Lenis or React Bits" → "Both" (collaborator)
+
+Side panel and Compare panel redesigned (decisions, fifty-third pass) on branch `panels`.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

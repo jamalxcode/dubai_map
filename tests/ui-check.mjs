@@ -281,7 +281,7 @@ try {
       await page.waitForTimeout(400);
       await page.click('.cmpSugg .chip');
       await page.waitForTimeout(1200);
-      const cmp = await page.evaluate(() => ({ open: !document.querySelector('.cmpPanel').hidden, head: document.querySelector('.cmpHeadline')?.textContent || '', link: /compare=/.test(location.search), units: document.querySelectorAll('.cmpUnits tbody tr').length }));
+      const cmp = await page.evaluate(() => ({ open: !document.querySelector('.cmpPanel').hidden, head: document.querySelector('.vsVerdict')?.textContent || '', link: /compare=/.test(location.search), units: document.querySelectorAll('[data-cmp-unit]').length }));
       check(cmp.open && /cheaper than|About the same/.test(cmp.head) && cmp.link && cmp.units > 1, `desktop: Compare opens two areas side by side (${cmp.head.slice(0, 70)}…)`);
       await axe(page, 'desktop with Compare open');
       await page.keyboard.press('Escape');

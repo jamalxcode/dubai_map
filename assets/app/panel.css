@@ -1,0 +1,89 @@
+/* One calm system for the side panel (and the same blocks on phones), loaded after atlas.css and companion.css.
+ *
+ * Why: the panel had grown six container styles (header card, bare filters, a beige card with boxes inside, a
+ * black rule, figures, a beige table head), fields of different heights and widths, and uneven gaps. Here every
+ * block is a section on the page's paper, divided by one hairline, with one heading style, one field style
+ * (40 px high) and one spacing scale (4, 8, 12, 16, 24, 32 px). Colour stays the golden-note palette; prices keep
+ * the blue scale. Motion is one entrance on load (panel.js).
+ */
+:root{--fieldH:40px;--secPadY:22px;--paper:#FFFCF5}
+:root[data-theme="dark"]{--paper:#2A211A}
+
+/* ---- Fields: one look everywhere (filters, rent check, table finder) ---- */
+.field{gap:6px;font-size:12px;font-weight:600;letter-spacing:.01em;color:var(--muted)}
+.field input,.field select,.tblFind input{height:var(--fieldH);padding:0 12px;font-size:14.5px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--text);
+  transition:border-color .15s,box-shadow .15s}
+.field select{padding-inline-end:28px}
+.field input:hover,.field select:hover,.tblFind input:hover{border-color:#C9BBA3}
+:root[data-theme="dark"] .field input:hover,:root[data-theme="dark"] .field select:hover{border-color:#5A4A3B}
+.btn{height:var(--fieldH);display:inline-flex;align-items:center;justify-content:center;padding:0 18px;border-width:1.5px;border-radius:8px;font:600 16px/1 var(--cond);letter-spacing:.01em}
+
+/* ---- Filters: a tidy grid under the header ---- */
+.controls{border-bottom:1px solid var(--line)}
+.controls .wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px;align-items:end;padding-top:20px;padding-bottom:20px}
+.controls .f-home{grid-area:1/1}.controls .f-walk{grid-area:1/2}
+.controls .f-range{grid-area:2/1/3/-1}
+.controls .budgetNote{grid-area:3/1/4/-1;margin:-4px 0 0;font-size:13px;line-height:1.45}
+.controls .f-home:has(~.f-walk[hidden]){grid-area:1/1/2/-1}
+/* Labels stay on one line, so the boxes under them line up. */
+.field>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.f-range .pair{gap:8px}.f-range .pair span{color:var(--muted)}
+
+/* ---- Rent check: a section, not a card in a card ---- */
+#companion{padding-top:0}
+.ck{background:none;border-radius:0;padding:var(--secPadY) 0}
+.ck-head h2{font:700 22px/1.15 var(--cond);margin:0 0 4px}
+.ck-head p{font-size:14px;margin:0 0 14px}
+.ck-form{gap:10px 12px}
+.ck-form .btn{height:var(--fieldH);padding:0 20px;font-size:17px}
+.ck-result:not(:empty){margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+
+/* ---- Key figures: three equal columns on a hairline ---- */
+.facts{border-top:1px solid var(--line);margin-top:4px;padding-top:14px}
+.facts div{padding:0 12px 0 0}
+.facts dt{font-size:12px;font-weight:600;letter-spacing:.01em}
+.facts dd{font-size:26px;margin-top:4px}
+.facts dd small{font-size:12px;margin-top:2px}
+.fresh{font-size:12.5px;line-height:1.45;margin-top:12px}
+
+/* ---- The table: no box, a sticky head on the paper, quiet rows ---- */
+.tableHead{margin:32px 0 12px;padding-top:var(--secPadY);border-top:1px solid var(--line)}
+.tableHead h2{font:700 22px/1.15 var(--cond);margin:0}
+.tableHead p{font-size:13px;margin-top:4px}
+.tableTools{display:flex;gap:8px;align-items:center}
+.tblFind input{width:100%}
+.tableWrap{border:0;border-top:1px solid var(--line);border-radius:0}
+.tableWrap thead th{background:var(--bg);font-size:11.5px;font-weight:600;letter-spacing:.01em;color:var(--muted);border-bottom:1px solid var(--line)}
+.tableWrap tbody tr{border-bottom:1px solid var(--line)}
+.tableWrap tbody tr:hover{background:var(--hover)}
+
+/* ---- The side panel on computers: the same rhythm, edge to edge ---- */
+@media (min-width:1100px){
+  .pane{background:var(--bg)}
+  .pane .wrap{padding-left:28px;padding-right:28px}
+  .pane .controls .wrap{padding-top:20px;padding-bottom:20px}
+  .pane #companion .ck{padding-top:var(--secPadY);padding-bottom:var(--secPadY)}
+  .pane .ck-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+  .pane .ck-form .btn{align-self:end}
+  .pane .facts dd{font-size:24px}
+  .pane th,.pane td{font-size:12.5px}
+  .pane .tableTools{width:100%}.pane .tblFind{flex:1}
+}
+/* Narrow side panel (1,100–1,300 px): the filters stack before they squeeze. */
+@media (min-width:1100px) and (max-width:1299px){
+  .pane .ck-form{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .pane .ck-form .btn{grid-column:1/-1}
+}
+
+/* ---- Phones: same fields and rules, a little tighter ---- */
+@media (max-width:860px){
+  :root{--fieldH:42px;--secPadY:18px}
+  /* Home and budget share the first row, so the map still starts high on the first screen. */
+  .controls .wrap{gap:10px;padding-top:14px;padding-bottom:14px}
+  .controls .f-home{grid-area:1/1}.controls .f-range{grid-area:1/2}.controls .f-walk{grid-area:2/1/3/-1}.controls .budgetNote{grid-area:3/1/4/-1}
+  .facts dd{font-size:22px}
+}
+@media (max-width:339px){
+  .controls .wrap{grid-template-columns:minmax(0,1fr)}
+  .controls .f-home{grid-area:1/1}.controls .f-range{grid-area:2/1}.controls .f-walk{grid-area:3/1}.controls .budgetNote{grid-area:4/1}
+}

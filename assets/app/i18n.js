@@ -99,7 +99,7 @@
     'Middle half pays': 'النصف الأوسط يدفع', 'Rent change': 'تغيّر الإيجار', 'Nearest Metro or Tram': 'أقرب مترو أو ترام', 'in the area': 'داخل المنطقة',
     '{what}, last 12 months': '{what}، آخر 12 شهرًا', 'Typical yearly rent by home size': 'الإيجار السنوي النموذجي حسب حجم المسكن',
     '{km} km apart.': 'تبعدان {km} كم.', 'Lower rent and price, and higher yield, are in bold.': 'الإيجار والسعر الأقل، والعائد الأعلى، بخط عريض.',
-    'Open {x}': 'افتح {x}', 'Copy link': 'انسخ الرابط',
+    'Open {x}': 'افتح {x}', 'Copy link': 'انسخ الرابط', 'No figure for {what}': 'لا يوجد رقم لـ{what}',
     // Metro and Tram (atlas.js, transit.js).
     'Metro': 'المترو', 'Show Metro and Tram lines': 'إظهار خطوط المترو والترام',
     'Near Metro / Tram': 'قرب المترو / الترام', 'Anywhere': 'في أي مكان', '10-minute walk': 'مشي 10 دقائق', '20-minute walk': 'مشي 20 دقيقة',
@@ -403,7 +403,7 @@
     'about the median': 'قريب من الوسيط',
     'average': 'متوسط',
     'avg': 'متوسط',
-    'e.g. 75,000': 'مثلًا 75,000',
+    'e.g. 75,000': 'مثلًا 75,000', 'Optional, e.g. 75,000': 'اختياري، مثلًا 75,000',
     'e.g. JVC, Business Bay, Al Qusais': 'مثلًا: JVC أو Business Bay أو Al Qusais',
     'homes': 'المساكن',
     'last 12 months': 'آخر 12 شهرًا',

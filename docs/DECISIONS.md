@@ -553,8 +553,16 @@ The collaborator asked for "a nice slick comparison side by side, a different ta
 - **Logic** in `insights.compare` (Node-tested): cheaper by the difference as a share of the dearer, about the same within 3%, home sizes in reading order.
 - **Tests:** a browser check opens a comparison from JVC and runs axe with it open. The accessibility check now also waits for the map to stop and a breakdown to finish fading in (an Arabic run caught a breakdown mid-fade after the rent check's fly-to).
 
+## Decision on 2026-11-18 (fifty-third pass): the side panel and the comparison, cleaned up
+
+The collaborator: "the panel really clumped up and messy … more professional and not AI slop", for both the side panel and the Compare panel.
+- **Side panel:** six container styles had piled up (the header card, bare filters, a beige card holding more boxes, a black rule, figures, a beige table head), with fields of different heights and widths and uneven gaps. Now one system in `panel.css`: sections divided by hairlines, one heading, one field (40 px), one spacing scale, filters in a tidy grid, the rent check as a section on one row, the table without a box. Restraint over effects: one GSAP entrance on load and nothing else.
+- **Compare:** the table of ruled rows with two-line labels became a "versus" sheet: the two areas face each other with their rent rolling up (our odometer, from React Bits' Counter), one plain sentence for the answer, then mirrored rows with bars from the centre so the difference reads without reading numbers. Short home-size names keep labels on one line.
+- Lenis keeps the page's smooth scrolling; the comparison scrolls natively (`data-lenis-prevent`).
+
 ## Change log
 
+- 2026-11-18: One calm system for the side panel; the comparison as a mirrored "versus" sheet with motion.
 - 2026-11-18: Compare two areas side by side, over the map, in the theme's colours.
 - 2026-11-18: Metro and Tram lines and stations, Near Metro / Tram filter, rent near each station.
 - 2026-11-18: Status page opens with "Needs you": unresolved issues a person can fix, with what to do.

@@ -48,8 +48,8 @@
             <input id="ckArea" list="ckAreas" placeholder="${T('e.g. JVC, Business Bay, Al Qusais')}" enterkeyhint="search" required aria-describedby="ckTitle">
           </label>
           <datalist id="ckAreas"></datalist>
-          <label class="field ck-rent"><span>${T('Your yearly rent')} <span class="opt">${T('(optional)')}</span></span>
-            <input id="ckRent" type="text" inputmode="numeric" placeholder="${T('e.g. 75,000')}">
+          <label class="field ck-rent"><span>${T('Your yearly rent')}</span>
+            <input id="ckRent" type="text" inputmode="numeric" placeholder="${T('Optional, e.g. 75,000')}">
           </label>
           <button class="btn primary" type="submit" id="ckGo">${T('Check')}</button>
         </form>
