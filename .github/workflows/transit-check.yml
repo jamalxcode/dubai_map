@@ -22,6 +22,21 @@ jobs:
         with: { python-version: "3.12" }
       - name: Fetch and build (not saved)
         run: python3 collector/transit.py --out transit.json --save-raw overpass.json
+      - name: What came back (for the log)
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, collections
+          raw = json.load(open("overpass.json"))
+          print("remark:", raw.get("remark"))
+          els = raw.get("elements") or []
+          print("elements:", collections.Counter(e["type"] for e in els))
+          for e in [e for e in els if e["type"] == "relation"][:12]:
+              t = e.get("tags", {}); print("relation", e["id"], t.get("route"), t.get("name:en") or t.get("name"), t.get("colour"), "members:", len(e.get("members") or []))
+          st = collections.Counter((e.get("tags", {}).get("railway"), e.get("tags", {}).get("station"), e.get("tags", {}).get("public_transport")) for e in els if e["type"] != "relation")
+          print("station tags:", st.most_common(12))
+          PY
+          [ -f transit.json ] && gzip -9c transit.json | base64 -w0 > transit.b64 && echo "TRANSIT_B64_BEGIN" && cat transit.b64 && echo && echo "TRANSIT_B64_END" || true
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: transit, path: "transit.json\noverpass.json", retention-days: 7 }
