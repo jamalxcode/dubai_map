@@ -38,7 +38,7 @@ NEAR_LINE_M = 150  # a station this close to a line's track is on that line
 
 QUERY = """[out:json][timeout:180];
 relation["route"~"^(subway|tram|light_rail)$"]({bbox})->.r;
-.r out geom tags;
+.r out geom;
 (
   node["railway"="station"]({bbox});
   way["railway"="station"]({bbox});
@@ -93,6 +93,7 @@ def clean_name(name):
     """'Dubai Metro Red Line: Centrepoint => Expo 2020' -> 'Red Line'; 'Dubai Tram: Al Sufouh => Jumeirah Lakes Towers' -> 'Dubai Tram'."""
     name = re.split(r"\s*[:(]\s*", name or "", maxsplit=1)[0].strip()
     name = re.sub(r"^Dubai Metro\s+", "", name, flags=re.I)
+    name = re.sub(r"^(Red|Green|Blue)\d+\b", r"\1", name)  # OSM's 'Red1 Line' / 'Red2 Line' (the two Red Line services)
     return name or "Line"
 
 
@@ -117,8 +118,10 @@ def build(raw, today=None):
         if e.get("type") != "relation":
             continue
         t = e.get("tags") or {}
+        if re.search(r"trolley", t.get("name:en") or t.get("name") or "", re.I):
+            continue  # the Downtown Dubai trolley: closed, not part of the Metro or Tram
         kind = kind_of_route(t)
-        colour = (t.get("colour") or "").upper() or ("#E21836" if kind == "metro" else "#F7A800")
+        colour = (t.get("colour") or "").upper() or ("#CC0000" if kind == "metro" else "#E07A00")
         key = (kind, colour)
         g = groups.setdefault(key, {"kind": kind, "colour": colour, "names": [], "names_ar": [], "ways": {}, "stops": set()})
         g["names"].append(clean_name(t.get("name:en") or t.get("name")))
