@@ -193,7 +193,7 @@ function drawOutlines(){
 }
 // What changed since the previous publication (history.py), for the rent check's "since your last visit". Optional.
 window.CHANGES=null;getJSON('data/changes.json').then(d=>{window.CHANGES=d;dispatchEvent(new Event('atlas:changes'))}).catch(()=>{});
-function loadOutlines(){getJSON('data/outlines.json').then(d=>{OUTLINES=d.areas||[];drawOutlines();drawFocus()}).catch(()=>{})}
+function loadOutlines(){getJSON('data/outlines.json').then(d=>{OUTLINES=d.areas||[];NEAR=null;drawOutlines();drawFocus();if(WALK)draw()}).catch(()=>{});loadTransit()}
 // Focus on one area: tapping its label zooms to its official outline, darkens and dims everything else,
 // rings the area in gold and opens its breakdown. Closing the breakdown (×, Escape, a tap on the map)
 // brings the rest of the map back. Without an outline the map zooms to the area's point instead.
@@ -235,6 +235,66 @@ function focusArea(a){
 window.focusArea=focusArea;
 let relabelKeep=false;
 map.on('popupclose',e=>{if(!relabelKeep&&FOCUS&&focusPopup&&e.popup===focusPopup)clearFocus()});
+// Metro and Tram (data/transit.json: OpenStreetMap lines and stations, collector/transit.py; distances in
+// transit.js). A "Metro" button on the zoom bar shows the lines and stations; the "Near Metro / Tram" filter keeps
+// only the areas within a 10- or 20-minute walk of a station (straight line to the area's official boundary) and
+// names the station where that home is cheapest. Tapping a station says what homes within a walk typically cost.
+// Without the file (not fetched yet, or offline) the button and filter stay hidden and the map works as before.
+map.createPane('transit');map.getPane('transit').style.zIndex=395;
+const transitLayer=L.layerGroup();let TRANSIT=null,NEAR=null,WALK=0,transitOn=false;
+const LINE_NAMES={'red-line':'Red Line','green-line':'Green Line','dubai-tram':'Dubai Tram'};
+// OpenStreetMap tags pure red and green; these are closer to the lines' own colours and calmer under the labels.
+const LINE_COLOURS={'red-line':'#D6232D','green-line':'#139B48','dubai-tram':'#E07A00'};
+const lineColour=l=>LINE_COLOURS[l.id]||l.colour;
+const lineName=l=>T.lang==='ar'&&l.name_ar?l.name_ar:LINE_NAMES[l.id]?T(LINE_NAMES[l.id]):l.name;
+const stationName=s=>T.lang==='ar'&&s.name_ar?s.name_ar:s.name;
+const outlinesByLabel=()=>new Map((OUTLINES||[]).map(o=>[o.label,o.rings.map(r=>r.map(([x,y])=>[y,x]))]));
+const walkText=w=>w===20?T('20-minute walk'):T('10-minute walk');
+function loadTransit(){getJSON('data/transit.json').then(d=>{if(!d||!(d.lines||[]).length)return;TRANSIT=d;NEAR=null;
+  transitBtn.hidden=false;walkField.hidden=false;try{if(localStorage.getItem('transit')==='1')showTransit(true,false)}catch(e){}
+  if(WALK)draw()}).catch(()=>{})}
+function drawTransit(){
+  transitLayer.clearLayers();if(!TRANSIT)return;
+  const dark=document.documentElement.dataset.theme==='dark',casing=dark?'#171C21':'#FFFCF5';
+  for(const l of TRANSIT.lines){const tram=l.kind==='tram';
+    for(const p of l.paths){L.polyline(p,{pane:'transit',interactive:false,color:casing,weight:tram?6:8,opacity:.9,lineCap:'round'}).addTo(transitLayer);
+      L.polyline(p,{pane:'transit',interactive:false,color:lineColour(l),weight:tram?3:4.5,opacity:1,lineCap:'round',dashArray:tram?'1 6':null,className:'tline'}).addTo(transitLayer)}}
+  for(const s of TRANSIT.stations){const lines=TRANSIT.lines.filter(l=>s.lines.includes(l.id)),swap=lines.length>1,tram=s.kind==='tram';
+    const m=L.circleMarker([s.lat,s.lng],{pane:'transit',radius:swap?7:tram?4.5:5.5,weight:swap?3:2.5,color:swap?(dark?'#E4E9EE':'#2B2118'):lines[0]?lineColour(lines[0]):'#2B2118',fillColor:casing,fillOpacity:1,className:'tstop'})
+      .bindTooltip(stationName(s)+' · '+lines.map(lineName).join(' / '),{direction:'top',offset:[0,-6]}).addTo(transitLayer);
+    m.on('click',()=>openStation(s))}
+}
+function showTransit(on,count){transitOn=on;transitBtn.setAttribute('aria-pressed',String(on));transitBtn.classList.toggle('on',on);
+  try{localStorage.setItem('transit',on?'1':'0')}catch(e){}
+  if(on){drawTransit();transitLayer.addTo(map)}else transitLayer.remove();
+  if(count)countUse(on?'metro-on':'metro-off')}
+// The nearest station to every placed area (once per data and outlines).
+function nearMap(){if(!NEAR&&TRANSIT)NEAR=Transit.nearest(AREAS.filter(a=>a.lat!=null),outlinesByLabel(),TRANSIT.stations);return NEAR}
+function openStation(s){
+  const w=WALK||10,maxM=Transit.WALKS[w],unit=$('unit').value,metric=$('metric').value;
+  const lines=TRANSIT.lines.filter(l=>s.lines.includes(l.id));
+  const near=Transit.areasNear(s,AREAS.filter(a=>a.lat!=null),outlinesByLabel(),maxM);
+  const vals=near.map(x=>{const a=AREAS.find(y=>y.label===x.label),v=a&&areaValue(a,metric,unit),bu=unit&&a?(a.by_unit.find(u=>u.u===unit)||{}):null;
+    return v==null?null:{a,v,m:x.m,n:bu?(bu.n!=null?bu.n:Math.round(a.n/Math.max(1,a.by_unit.length)))||0:a.n}}).filter(Boolean).sort((x,y)=>x.v-y.v);
+  const what=(unit?T.unit(unit):TYPENAME()).toLowerCase(),N=vals.reduce((t,x)=>t+x.n,0),avg=N?vals.reduce((t,x)=>t+x.v*x.n,0)/N:null;
+  const html='<span class="t">'+safe(stationName(s))+'</span><p class="tlines">'+lines.map(l=>'<span class="tchip" style="--lc:'+lineColour(l)+'">'+safe(lineName(l))+'</span>').join(' ')+'</p>'+
+    (avg!=null?'<p>'+T('Typical {what} within a {walk}: <b>{v}</b> ({n})',{what:safe(what),walk:walkText(w),v:safe(labelText(avg,metric)),n:T.count(vals.length,'area')})+'</p>'+
+      '<ul class="tnear">'+vals.map(x=>'<li><button type="button" class="link" data-focus="'+safe(x.a.label)+'">'+safe(T.place(x.a.label))+'</button> <b>'+safe(labelText(x.v,metric))+'</b> <span class="muted">'+(x.m?T('{km} km',{km:(x.m/1000).toFixed(1)}):T('station inside'))+'</span></li>').join('')+'</ul>'
+      :'<p>'+T('No area with figures for {what} within a {walk}.',{what:safe(what),walk:walkText(w)})+'</p>')+
+    '<p class="muted tnote">'+T("Straight-line distance from the station to each area's official boundary. Lines and stations: © OpenStreetMap contributors.")+'</p>';
+  clearFocus();L.popup({maxWidth:320}).setLatLng([s.lat,s.lng]).setContent(html).openOn(map);countUse('station');
+}
+// A tap on an area in a station's breakdown (pop-up or phone sheet) focuses that area.
+document.addEventListener('click',e=>{const b=e.target.closest('[data-focus]');if(!b)return;const a=AREAS.find(x=>x.label===b.dataset.focus);if(a){closeSheet();focusArea(a)}});
+// The Metro button: fourth on the zoom bar, after Near me.
+const transitBtn=L.DomUtil.create('a','near metroBtn',map.zoomControl.getContainer());
+transitBtn.href='#';transitBtn.role='button';transitBtn.textContent=T('Metro');transitBtn.title=T('Show Metro and Tram lines');transitBtn.hidden=true;transitBtn.setAttribute('aria-pressed','false');
+L.DomEvent.on(transitBtn,'click',e=>{L.DomEvent.stop(e);showTransit(!transitOn,true)});
+// The walk filter, next to the budget.
+const walkField=(()=>{const f=document.createElement('label');f.className='field f-walk';f.hidden=true;
+  f.innerHTML='<span>'+T('Near Metro / Tram')+'</span><select id="walk"><option value="0">'+T('Anywhere')+'</option><option value="10">'+T('10-minute walk')+'</option><option value="20">'+T('20-minute walk')+'</option></select>';
+  document.querySelector('.controls .f-range').after(f);return f})();
+$('walk').addEventListener('change',()=>{WALK=+$('walk').value;if(WALK&&!transitOn)showTransit(true,false);animateLabels=true;draw();countUse('walk-'+(WALK||'any'))});
 let POINTS=[],LABEL={},animateLabels=true;
 const pct=v=>Number(v).toFixed(1)+'%'; // yields: always one decimal
 const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
@@ -693,16 +753,27 @@ function readURL(){
 }
 // The line under the filters that says what the budget leaves on the map.
 const budgetEl=(()=>{const p=document.createElement('p');p.id='budgetNote';p.className='budgetNote';p.hidden=true;p.setAttribute('aria-live','polite');
-  document.querySelector('.controls .f-range').after(p);return p})();
-function budgetNote(unit){
+  (document.querySelector('.controls .f-walk')||document.querySelector('.controls .f-range')).after(p);return p})();
+function budgetNote(unit,metric){
   if(!BUDGET){budgetEl.hidden=true;return}
   const what=(unit?T.unit(unit):TYPENAME()).toLowerCase(),a='AED '+fmt(BUDGET.lo),b=BUDGET.hi<Infinity?'AED '+fmt(BUDGET.hi):null;
-  const range=b?(BUDGET.lo>0?T('{a} to {b}',{a,b}):T('up to {b}',{b})):T('from {a}',{a});
-  budgetEl.innerHTML=(BUDGET.n?T('<b>{n} of {of} areas</b> fit your budget ({range} a year, {what}).',{n:BUDGET.n,of:BUDGET.of,range,what})
-    :T('<b>No area fits</b> {range} a year for {what}. Try a higher maximum or another home size.',{range,what}))+
-    (BUDGET.swapped?' '+T('(Min was above Max, so they were swapped.)'):'');
+  const range=b?(BUDGET.lo>0?T('{a} to {b}',{a,b}):T('up to {b}',{b})):T('from {a}',{a}),walk=WALK?walkText(WALK):'';
+  let txt;
+  if(!BUDGET.n)txt=WALK&&!BUDGET.walkOnly?T('<b>No area</b> fits {range} a year within a {walk} of a station for {what}. Try a longer walk, a higher maximum or another home size.',{range,walk,what})
+    :WALK?T('<b>No area</b> with figures for {what} is within a {walk} of a station.',{what,walk})
+    :T('<b>No area fits</b> {range} a year for {what}. Try a higher maximum or another home size.',{range,what});
+  else txt=WALK&&!BUDGET.walkOnly?T('<b>{n} of {of} areas</b> fit your budget ({range} a year) within a {walk} of a Metro or Tram station ({what}).',{n:BUDGET.n,of:BUDGET.of,range,walk,what})
+    :WALK?T('<b>{n} of {of} areas</b> are within a {walk} of a Metro or Tram station ({what}).',{n:BUDGET.n,of:BUDGET.of,walk,what})
+    :T('<b>{n} of {of} areas</b> fit your budget ({range} a year, {what}).',{n:BUDGET.n,of:BUDGET.of,range,what});
+  // The station where this home is cheapest, among the areas left on the map.
+  if(WALK&&BUDGET.n&&TRANSIT){const best=Transit.stationRents(TRANSIT.stations,AREAS.filter(a=>a.lat!=null),outlinesByLabel(),POINTS.map(p=>({label:p.a.label,v:p.v,n:p.n})),Transit.WALKS[WALK])[0];
+    if(best){const l=TRANSIT.lines.find(x=>best.station.lines.includes(x.id));
+      txt+=' '+T('Lowest near a station: {station} ({line}), typical {v}.',{station:'<button type="button" class="link" data-station="'+safe(best.station.name)+'">'+safe(stationName(best.station))+'</button>',line:l?safe(lineName(l)):'',v:safe(labelText(best.v,metric))})}}
+  budgetEl.innerHTML=txt+(BUDGET.swapped?' '+T('(Min was above Max, so they were swapped.)'):'');
   budgetEl.hidden=false;
 }
+budgetEl.addEventListener('click',e=>{const b=e.target.closest('[data-station]');if(!b||!TRANSIT)return;const s=TRANSIT.stations.find(x=>x.name===b.dataset.station);if(!s)return;
+  if(!transitOn)showTransit(true,false);map.once('moveend',()=>setTimeout(()=>openStation(s),0));map.flyTo([s.lat,s.lng],Math.max(map.getZoom(),14),{duration:FX?.7:0})});
 function draw(){
   // The finder above the table filters the table only; the map always shows every area.
   const q=$('search').value.trim().toLowerCase(),unit=$('unit').value,metric=$('metric').value,min=+$('min').value||0,max=+$('max').value||Infinity;
@@ -721,8 +792,13 @@ function draw(){
   // the key. The range is on rent whatever the view shows (sale price, yield): it is a rent budget.
   let lo=+$('min').value||0,hi=+$('max').value||Infinity;const swapped=hi<lo;if(swapped)[lo,hi]=[hi,lo];
   BUDGET=lo>0||hi<Infinity?{lo,hi,swapped}:null;OUTSIDE.clear();
-  if(BUDGET){const all=POINTS.length;POINTS=POINTS.filter(p=>{const r=areaValue(p.a,'median',unit);const ok=r!=null&&r>=lo&&r<=hi;if(!ok)OUTSIDE.add(p.a.label);return ok});BUDGET.n=POINTS.length;BUDGET.of=all}
-  budgetNote(unit);
+  const allN=POINTS.length;
+  if(BUDGET)POINTS=POINTS.filter(p=>{const r=areaValue(p.a,'median',unit);const ok=r!=null&&r>=lo&&r<=hi;if(!ok)OUTSIDE.add(p.a.label);return ok});
+  // Near Metro / Tram: only areas within the chosen walk of a station.
+  const near=WALK&&nearMap();
+  if(near){POINTS=POINTS.filter(p=>{const x=near.get(p.a.label);const ok=!!x&&x.m<=Transit.WALKS[WALK];if(!ok)OUTSIDE.add(p.a.label);return ok});if(!BUDGET)BUDGET={lo:0,hi:Infinity,walkOnly:true}}
+  if(BUDGET){BUDGET.n=POINTS.length;BUDGET.of=allN}
+  budgetNote(unit,metric);
   LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};
   // A change of home or view keeps a focused area in focus: its breakdown reopens with the new figures.
   const kept=FOCUS&&focusPopup?FOCUS:null;relabelKeep=!!kept;renderLabels();relabelKeep=false;if(kept&&!map._popup){FOCUS=kept;drawFocus();openArea(kept)}
@@ -814,7 +890,7 @@ const MOON='<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
 function paintToggle(){const dark=document.documentElement.dataset.theme==='dark',b=$('theme');
   b.querySelector('svg').innerHTML=dark?SUN:MOON;b.querySelector('span').textContent=dark?T('Light'):T('Dark');
   b.setAttribute('aria-label',dark?T('Switch to light mode'):T('Switch to dark mode'))}
-function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{localStorage.setItem('theme',t)}catch(e){}paintToggle();restyleBase();
+function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{localStorage.setItem('theme',t)}catch(e){}paintToggle();if(transitOn)drawTransit();restyleBase();
   if(LABEL.metric)renderLabels()}
 $('theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark',true);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let saved;try{saved=localStorage.getItem('theme')}catch(_){}if(!saved)setTheme(e.matches?'dark':'light',false)});

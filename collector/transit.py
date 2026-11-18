@@ -107,7 +107,9 @@ def station_kind(tags):
 
 
 def norm(s):
-    return re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).replace(" station", "").replace(" metro", "").replace(" tram stop", "").strip()
+    """Key for one station: 'Bur Juman' and 'BurJuman Metro Station' are the same."""
+    s = re.sub(r"\b(metro|tram)?\s*(station|stop)\b", "", (s or "").lower())
+    return re.sub(r"[^a-z0-9]+", "", s)
 
 
 def build(raw, today=None):

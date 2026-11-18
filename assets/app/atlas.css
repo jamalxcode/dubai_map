@@ -479,3 +479,17 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
   .mapWide .mapWrap{position:fixed;inset:0;z-index:1100;height:auto;min-height:0;border-radius:0;border:0}
   :root.mapWide,:root.mapWide body{overflow:hidden}
 }
+
+/* Metro and Tram (atlas.js drawTransit): the Metro button on the zoom bar is filled when on; the walk filter sits
+   next to the budget; a station's breakdown shows its lines as coloured chips and the areas within a walk. */
+.leaflet-control-zoom a.metroBtn[hidden]{display:none}
+.leaflet-control-zoom a.metroBtn.on{background:var(--oxblood)!important;color:var(--ivory)!important}
+.controls .f-walk{flex:0 1 190px;min-width:0}.controls .f-walk select{width:100%}.controls .f-walk[hidden]{display:none}
+.tstop{cursor:pointer}
+.tlines{margin:4px 0 8px;display:flex;flex-wrap:wrap;gap:6px}
+.tchip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600}
+.tchip::before{content:"";width:18px;height:5px;border-radius:3px;background:var(--lc)}
+.tnear{list-style:none;margin:6px 0;padding:0;font-size:13.5px}.tnear li{margin:3px 0}
+.tnote{font-size:12px;margin-top:8px}
+.budgetNote .link{font:inherit;font-weight:600}
+@media (max-width:860px){.controls .f-walk{flex:1 1 100%}}
