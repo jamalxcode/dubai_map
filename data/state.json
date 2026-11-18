@@ -16,17 +16,25 @@
     }
   },
   "datadubai": {
-    "last_ok_at": "2026-11-17T19:42:58+00:00",
+    "last_ok_at": "2026-11-18T01:01:14+00:00",
     "last_pull": {
-      "at": "2026-11-17T19:42:58+00:00",
+      "at": "2026-11-18T00:58:59+00:00",
       "export_files_updated": 0,
-      "live": "current",
-      "through": "2026-11-16"
+      "live": "updated",
+      "pages": 102,
+      "through": "2026-11-17"
     },
-    "live_checked_at": "2026-11-17T18:00:19+00:00",
+    "live_checked_at": "2026-11-18T01:01:14+00:00",
+    "live_pages": 102,
+    "published_seen": [
+      {
+        "seen_at": "2026-11-18T01:01:14+00:00",
+        "through": "2026-11-17"
+      }
+    ],
     "state": "ok",
     "status": "ok",
-    "through": "2026-11-16"
+    "through": "2026-11-17"
   },
   "dld": {
     "state": "off",
