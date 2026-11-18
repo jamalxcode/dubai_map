@@ -152,6 +152,37 @@
     return out;
   }
 
+  /** Home sizes in reading order: studios, then 1, 2, 3… bedrooms, then anything else. */
+  function unitRank(u) {
+    if (/^studio/i.test(u)) return 0;
+    const m = /^(\d+)-bedroom/i.exec(u || '');
+    return m ? +m[1] + (/villa/i.test(u) ? 0.5 : 0) : 99;
+  }
+
+  /**
+   * Two areas side by side for one home size: their figures, which is cheaper and by how much
+   * (as a share of the dearer one; within 3% counts as about the same), every home size either
+   * has (in reading order), and the distance between them.
+   */
+  function compare(a, b, unit) {
+    const fa = unitFigure(a, unit), fb = unitFigure(b, unit);
+    const out = { fa, fb, cheaper: null, diff: null, pct: null, km: a.lat != null && b.lat != null ? Math.round(km(a, b) * 10) / 10 : null };
+    if (fa && fb && fa.median > 0 && fb.median > 0) {
+      const d = fb.median - fa.median, dear = Math.max(fa.median, fb.median);
+      out.diff = Math.abs(d);
+      out.pct = Math.round(Math.abs(d) / dear * 100);
+      out.cheaper = Math.abs(d) / dear <= 0.03 ? null : d > 0 ? 'a' : 'b';
+    }
+    const ua = unitOptions(a), ub = unitOptions(b);
+    const units = [...new Set([...ua, ...ub].map(u => u.u))].sort((x, y) => unitRank(x) - unitRank(y) || x.localeCompare(y));
+    out.units = units.map(u => {
+      const x = ua.find(o => o.u === u), y = ub.find(o => o.u === u);
+      const va = x ? x.median : null, vb = y ? y.median : null;
+      return { u, a: va, b: vb, lower: va && vb && Math.abs(va - vb) / Math.max(va, vb) > 0.03 ? (va < vb ? 'a' : 'b') : null };
+    });
+    return out;
+  }
+
   /** Change in an area's figure since it was saved. */
   function changeSince(snapshot, current) {
     if (!snapshot || !(snapshot.median > 0) || !(current > 0)) return null;
@@ -242,7 +273,7 @@
     return d.toISOString().slice(0, 10);
   }
 
-  const api = { norm, searchAreas, unitShort, unitOptions, unitFigure, verdict, km, cheaperNearby, rankAmong, trend, insights,
+  const api = { norm, searchAreas, unitShort, unitOptions, unitFigure, verdict, compare, unitRank, km, cheaperNearby, rankAmong, trend, insights,
     changeSince, emptyStore, cleanStore, remember, isSaved, whatsNew, ics, addMonths, MAX_HISTORY, MAX_SAVED };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.RentInsights = api;

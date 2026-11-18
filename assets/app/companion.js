@@ -177,6 +177,7 @@
     const secondary = [];
     if (step.id !== 'save' && savedIdx < 0) secondary.push(`<button type="button" class="link" data-act="save">${T('Save to My areas')}</button>`);
     if (step.id !== 'map') secondary.push(`<button type="button" class="link" data-act="map">${T('Show on the map')}</button>`);
+    if (typeof window.startCompare === 'function' && area.lat != null) secondary.push(`<button type="button" class="link" data-act="compare">${T('Compare')}</button>`);
     secondary.push(`<button type="button" class="link" data-act="share">${T('Share')}</button>`);
     if (area.url) secondary.push(`<a href="${esc(area.url)}" target="_blank" rel="noopener">${T('Dubai Data page')}</a>`);
     out.innerHTML = `
@@ -381,10 +382,13 @@
     const m = content.match(/<span class="t" data-label="([^"]*)">/);
     const label = m && new DOMParser().parseFromString(m[1], 'text/html').body.textContent;
     if (!label || !BY_LABEL[label]) return; // group popups list several areas: no single check
-    e.popup.setContent(content + `<p class="ck-popact"><button type="button" class="btn primary" data-check="${esc(label)}">${T('Check a rent here')}</button></p>`);
+    e.popup.setContent(content + `<p class="ck-popact"><button type="button" class="btn primary" data-check="${esc(label)}">${T('Check a rent here')}</button>` +
+      (typeof window.startCompare === 'function' ? ` <button type="button" class="btn" data-compare="${esc(label)}">${T('Compare')}</button>` : '') + `</p>`);
   }
 
   function onPopupClick(e) {
+    const cmp = e.target.closest('[data-compare]');
+    if (cmp) { window.startCompare(cmp.dataset.compare); return; }
     const b = e.target.closest('[data-check]');
     if (!b) return;
     map.closePopup();
@@ -420,6 +424,7 @@
         case 'remind': remindForm(); break;
         case 'map': showOnMap(current.area); break;
         case 'share': share(b); break;
+        case 'compare': window.startCompare(current.area.label); break;
         case 'clear-history': store.history = []; save(); renderMine(); break;
         case 'every-ics': everyIcs(); break;
         case 'seen': store.seenThrough = THROUGH; save(); el('ckNew').hidden = true; break;

@@ -193,7 +193,7 @@ function drawOutlines(){
 }
 // What changed since the previous publication (history.py), for the rent check's "since your last visit". Optional.
 window.CHANGES=null;getJSON('data/changes.json').then(d=>{window.CHANGES=d;dispatchEvent(new Event('atlas:changes'))}).catch(()=>{});
-function loadOutlines(){getJSON('data/outlines.json').then(d=>{OUTLINES=d.areas||[];NEAR=null;drawOutlines();drawFocus();if(WALK)draw()}).catch(()=>{});loadTransit()}
+function loadOutlines(){getJSON('data/outlines.json').then(d=>{OUTLINES=d.areas||[];NEAR=null;drawOutlines();drawFocus();if(CMP)drawCompare();if(WALK)draw()}).catch(()=>{});loadTransit()}
 // Focus on one area: tapping its label zooms to its official outline, darkens and dims everything else,
 // rings the area in gold and opens its breakdown. Closing the breakdown (×, Escape, a tap on the map)
 // brings the rest of the map back. Without an outline the map zooms to the area's point instead.
@@ -220,6 +220,7 @@ function openArea(a){
 }
 function focusArea(a){
   if(a.lat==null)return;
+  if(CMP||CMP_PICK)closeCompare(); // a single area replaces a comparison
   // Already in focus with its breakdown open (e.g. the rent check re-checking after a home change): nothing to do.
   if(FOCUS&&FOCUS.label===a.label&&focusPopup&&map.hasLayer(focusPopup))return;
   focusPopup=null;map.closePopup();FOCUS=a;drawFocus();countUse('area-focus');
@@ -313,6 +314,94 @@ const walkField=(()=>{const f=document.createElement('label');f.className='field
   f.innerHTML='<span>'+T('Near Metro / Tram')+'</span><select id="walk"><option value="0">'+T('Anywhere')+'</option><option value="10">'+T('10-minute walk')+'</option><option value="20">'+T('20-minute walk')+'</option></select>';
   document.querySelector('.controls .f-range').after(f);return f})();
 $('walk').addEventListener('change',()=>{WALK=+$('walk').value;if(WALK&&!transitOn)showTransit(true,false);animateLabels=true;draw();countUse('walk-'+(WALK||'any'))});
+// Compare two areas side by side (the collaborator chose it "within the main page"). "Compare" in an area's
+// breakdown or the rent check starts it: a bar on the map asks for the second area (tap its label, or one of the
+// nearest suggested). The comparison opens over the map (a panel on computers, a sheet on phones), the two areas
+// outlined in the theme's gold leaf (A) and oxblood (B) with the rest of the map dimmed. It follows the Home picker,
+// has its own link (?compare=A|B) and closes with ×, Escape or a tap on the map. Figures: RentInsights.compare.
+let CMP=null,CMP_PICK=null;const cmpLayer=L.layerGroup().addTo(map);
+const cmpColour=k=>k==='a'?'#C9A227':document.documentElement.dataset.theme==='dark'?'#D99AA5':'#6E2230';
+const pickBar=(()=>{const d=document.createElement('div');d.className='cmpPick';d.hidden=true;d.setAttribute('role','status');map.getContainer().parentNode.append(d);return d})();
+const cmpPanel=(()=>{const d=document.createElement('section');d.className='cmpPanel';d.hidden=true;d.setAttribute('role','dialog');d.setAttribute('aria-label',T('Compare areas'));d.tabIndex=-1;map.getContainer().parentNode.append(d);return d})();
+const byLabel=l=>AREAS.find(x=>x.label===l);
+function startCompare(label){const a=byLabel(label);if(!a||a.lat==null)return;
+  closeCompare(true);CMP_PICK=a;map.closePopup();closeSheet();clearFocus();
+  const unit=$('unit').value;
+  const sugg=AREAS.filter(x=>x!==a&&x.lat!=null&&RentInsights.unitFigure(x,unit)).map(x=>[x,RentInsights.km(a,x)]).sort((p,q)=>p[1]-q[1]).slice(0,3).map(p=>p[0]);
+  pickBar.innerHTML='<p>'+T('Compare <b>{a}</b> with: tap another area on the map, or pick one nearby.',{a:safe(T.place(a.label))})+'</p><div class="cmpSugg">'+
+    sugg.map(x=>'<button type="button" class="chip" data-cmp-b="'+safe(x.label)+'">'+safe(T.place(x.label))+'</button>').join('')+
+    '<button type="button" class="link" data-cmp-cancel>'+T('Cancel')+'</button></div>';
+  pickBar.hidden=false;map.getContainer().classList.add('picking');
+  map.getContainer().parentNode.scrollIntoView({behavior:FX?'smooth':'auto',block:'center'});countUse('compare-start');
+}
+function stopPicking(){CMP_PICK=null;pickBar.hidden=true;map.getContainer().classList.remove('picking')}
+pickBar.addEventListener('click',e=>{const b=e.target.closest('[data-cmp-b]');if(b&&CMP_PICK){openCompare(CMP_PICK,byLabel(b.dataset.cmpB));return}if(e.target.closest('[data-cmp-cancel]'))stopPicking()});
+L.DomEvent.disableClickPropagation(pickBar);L.DomEvent.disableScrollPropagation(pickBar);
+function cmpRings(x){const o=outlineOf(x);return o?outlineLatLngs(o):null}
+function drawCompare(){cmpLayer.clearLayers();map.getContainer().classList.toggle('comparing',!!CMP);if(!CMP)return;
+  const ra=cmpRings(CMP.a),rb=cmpRings(CMP.b),world=[[-85,-179],[-85,179],[85,179],[85,-179]];
+  L.polygon([world,...(ra||[]),...(rb||[])],{pane:'outlines',interactive:false,stroke:false,fillColor:'#000',fillOpacity:.3}).addTo(cmpLayer);
+  for(const [k,x,r] of [['a',CMP.a,ra],['b',CMP.b,rb]]){
+    if(r)L.polygon(r,{pane:'outlines',interactive:false,color:cmpColour(k),weight:3.5,opacity:1,fillColor:cmpColour(k),fillOpacity:.12}).addTo(cmpLayer);
+    else L.circleMarker([x.lat,x.lng],{pane:'outlines',interactive:false,radius:14,color:cmpColour(k),weight:3.5,fillOpacity:.12}).addTo(cmpLayer)}
+}
+function openCompare(a,b,{fit=true}={}){if(!a||!b||a===b)return;
+  stopPicking();map.closePopup();closeSheet();clearFocus();CMP={a,b};drawCompare();renderCompare();
+  // Phones: the map at the top of the screen, so the two areas show above the sheet.
+  if(SHEET_MQ.matches){const w=map.getContainer().parentNode,y=w.getBoundingClientRect().top+scrollY-8;if(lenis)lenis.scrollTo(y,{immediate:true,force:true});else scrollTo(0,y)}
+  cmpPanel.hidden=false;document.documentElement.classList.add('cmpOpen');
+  if(fit){const pts=[...(cmpRings(a)||[[[a.lat,a.lng]]]).flat(),...(cmpRings(b)||[[[b.lat,b.lng]]]).flat()],s=map.getSize();
+    const opts=SHEET_MQ.matches?{paddingTopLeft:L.point(56,20),paddingBottomRight:L.point(20,Math.max(0,Math.round(innerHeight*.6)-(innerHeight-s.y))+20),maxZoom:15}
+      :{paddingTopLeft:L.point(70,60),paddingBottomRight:L.point(Math.min(420,s.x*.45)+30,30),maxZoom:15};
+    map.flyToBounds(L.latLngBounds(pts),Object.assign({duration:FX?.7:0,animate:FX},opts))}
+  writeURL();countUse('compare');cmpPanel.focus({preventScroll:true});
+}
+function closeCompare(quiet){if(!CMP&&!CMP_PICK)return;stopPicking();CMP=null;drawCompare();cmpPanel.hidden=true;document.documentElement.classList.remove('cmpOpen');if(!quiet)writeURL()}
+function compareFromURL(){const v=new URLSearchParams(location.search).get('compare');if(!v)return;const [x,y]=v.split('|').map(byLabel);if(x&&y)openCompare(x,y,{fit:!new URLSearchParams(location.search).get('at')})}
+function renderCompare(){if(!CMP)return;
+  const {a,b}=CMP,unit=$('unit').value,what=(unit?T.unit(unit):TYPENAME()).toLowerCase(),c=RentInsights.compare(a,b,unit);
+  const nm=x=>safe(T.place(x.label)),aedF=v=>v==null?'—':'AED '+fmt(v),fa=c.fa||{},fb=c.fb||{};
+  let head;
+  if(c.cheaper){const x=c.cheaper==='a'?a:b,y=c.cheaper==='a'?b:a;head=T('<b>{x}</b> is <b>{diff}</b> a year cheaper than {y} for {what}: {pct}% less.',{x:nm(x),y:nm(y),diff:aedF(c.diff),pct:c.pct,what:safe(what)})}
+  else if(c.fa&&c.fb)head=T('About the same for {what}: within 3% of each other.',{what:safe(what)});
+  else head=T('No figure for {what} in {x}: pick another home size below.',{what:safe(what),x:nm(c.fa?b:a)});
+  // Better side of a row: lower rent and sale price, higher yield; nothing marked within 3%.
+  const mark=(va,vb,low)=>{if(va==null||vb==null||Math.abs(va-vb)/Math.max(va,vb)<=.03)return ['',''];const aw=low?va<vb:va>vb;return aw?[' class="win"','']:['',' class="win"']};
+  const near=TRANSIT&&nearMap(),st=x=>{const n=near&&near.get(x.label);return n&&n.station?safe(stationName(n.station))+'<small>'+(n.m?T('{km} km',{km:(n.m/1000).toFixed(1)}):T('in the area'))+'</small>':'—'};
+  const chg=x=>x.rent_change&&x.rent_change.pct!=null?(x.rent_change.pct>0?'+':'')+x.rent_change.pct+'%':'—';
+  const rows=[
+    [T('Typical yearly rent'),aedF(fa.median),aedF(fb.median),mark(fa.median,fb.median,true)],
+    [T('Middle half pays'),fa.p25!=null?aedF(fa.p25)+'–'+fmt(fa.p75):'—',fb.p25!=null?aedF(fb.p25)+'–'+fmt(fb.p75):'—',['','']],
+    [T('Contracts, last 12 months'),fa.n!=null?fmt(fa.n):'—',fb.n!=null?fmt(fb.n):'—',['','']],
+    [T('Typical sale price'),aedF(fa.sale),aedF(fb.sale),mark(fa.sale,fb.sale,true)],
+    [T('Gross yield'),fa.yield!=null?Number(fa.yield).toFixed(1)+'%':'—',fb.yield!=null?Number(fb.yield).toFixed(1)+'%':'—',mark(fa.yield,fb.yield,false)],
+    [T('Rent change'),chg(a),chg(b),['','']],
+  ];
+  if(TRANSIT)rows.push([T('Nearest Metro or Tram'),st(a),st(b),['','']]);
+  const tr=r=>r[1]==='—'&&r[2]==='—'?'':'<tr><th scope="row">'+r[0]+'</th><td'+r[3][0]+'>'+r[1]+'</td><td'+r[3][1]+'>'+r[2]+'</td></tr>';
+  cmpPanel.innerHTML='<div class="cmpHead"><h2>'+T('Compare')+'</h2><button type="button" class="cmpBtn" data-cmp-swap title="'+T('Swap')+'" aria-label="'+T('Swap')+'">⇄</button><button type="button" class="cmpBtn" data-cmp-close aria-label="'+T('Close')+'">×</button></div>'+
+    '<div class="cmpNames"><span class="cmpName" style="--k:'+cmpColour('a')+'">'+nm(a)+'</span><span class="vs">'+T('vs')+'</span><span class="cmpName" style="--k:'+cmpColour('b')+'">'+nm(b)+'</span></div>'+
+    '<p class="cmpHeadline">'+head+'</p>'+
+    '<div class="cmpPics"><div class="cmpPic" data-i="a"></div><div class="cmpPic" data-i="b"></div></div>'+
+    '<table class="cmpTable"><caption>'+safe(T('{what}, last 12 months',{what:unit?T.unit(unit):TYPENAME()}))+'</caption><thead><tr><td></td><th scope="col" style="--k:'+cmpColour('a')+'">'+nm(a)+'</th><th scope="col" style="--k:'+cmpColour('b')+'">'+nm(b)+'</th></tr></thead><tbody>'+rows.map(tr).join('')+'</tbody></table>'+
+    (c.units.length?'<table class="cmpTable cmpUnits"><caption>'+T('Typical yearly rent by home size')+'</caption><tbody>'+c.units.map(u=>'<tr'+(u.u===unit?' class="pick"':'')+'><th scope="row"><button type="button" class="link" data-cmp-unit="'+safe(u.u)+'">'+safe(T.unit(u.u))+'</button></th><td'+(u.lower==='a'?' class="win"':'')+'>'+aedF(u.a)+'</td><td'+(u.lower==='b'?' class="win"':'')+'>'+aedF(u.b)+'</td></tr>').join('')+'</tbody></table>':'')+
+    '<p class="cmpFoot">'+(c.km!=null?T('{km} km apart.',{km:c.km})+' ':'')+T('Lower rent and price, and higher yield, are in bold.')+'</p>'+
+    '<p class="cmpActs"><button type="button" class="link" data-focus="'+safe(a.label)+'">'+T('Open {x}',{x:nm(a)})+'</button><span class="sep" aria-hidden="true">·</span><button type="button" class="link" data-focus="'+safe(b.label)+'">'+T('Open {x}',{x:nm(b)})+'</button><span class="sep" aria-hidden="true">·</span><button type="button" class="link" data-cmp-share>'+T('Copy link')+'</button></p>';
+  // One photo of each, from Wikimedia Commons near the area's point (credited); the box goes if there is none.
+  for(const [k,x] of [['a',a],['b',b]])photosFor(x.lat,x.lng).then(ph=>{const box=cmpPanel.querySelector('.cmpPic[data-i="'+k+'"]');if(!box||!CMP)return;
+    if(!ph.length){box.classList.add('none');return}const p=ph[0];
+    box.innerHTML='<a href="'+safe(p.page)+'" target="_blank" rel="noopener" title="'+safe(p.title+' · '+p.author+(p.lic?' · '+p.lic:''))+'"><img src="'+safe(p.src)+'" alt="'+safe(p.title)+'" loading="lazy" onerror="this.closest(\'.cmpPic\').classList.add(\'none\')"><span>'+safe(p.author)+(p.lic?', '+safe(p.lic):'')+'</span></a>'}).catch(()=>{});
+}
+cmpPanel.addEventListener('click',async e=>{const t=e.target;
+  if(t.closest('[data-cmp-close]'))return closeCompare();
+  if(t.closest('[data-cmp-swap]')){CMP={a:CMP.b,b:CMP.a};drawCompare();renderCompare();writeURL();return}
+  const u=t.closest('[data-cmp-unit]');if(u){const v=u.dataset.cmpUnit;if(typeof window.setMapHome==='function')window.setMapHome(v);return}
+  const f=t.closest('[data-focus]');if(f){const x=byLabel(f.dataset.focus);closeCompare();if(x)focusArea(x);return}
+  const sh=t.closest('[data-cmp-share]');if(sh){let ok=false;try{await navigator.clipboard.writeText(location.href);ok=true}catch(_){}sh.textContent=ok?T('Link copied'):location.href;countUse('compare-share')}});
+L.DomEvent.disableClickPropagation(cmpPanel);L.DomEvent.disableScrollPropagation(cmpPanel);
+addEventListener('keydown',e=>{if(e.key==='Escape'&&(CMP||CMP_PICK)&&!document.querySelector('.areaSheet:not([hidden])'))closeCompare()});
+map.on('click',()=>{if(CMP_PICK)return;if(CMP)closeCompare()});
+window.startCompare=startCompare;
 let POINTS=[],LABEL={},animateLabels=true;
 const pct=v=>Number(v).toFixed(1)+'%'; // yields: always one decimal
 const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
@@ -357,7 +446,7 @@ function renderLabels(){
       el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();m.fire('click')}})}
     // The breakdown's tip sits above the label, so the label stays visible under it.
     // One area: zoom to it and set it apart (focusArea); the breakdown opens once the map has arrived.
-    if(c.single){MARKERS.set(g[0].a.label,m);m.on('click',()=>{if(FOCUS&&FOCUS.label===g[0].a.label&&m.isPopupOpen())return;focusArea(g[0].a)})}
+    if(c.single){MARKERS.set(g[0].a.label,m);m.on('click',()=>{if(CMP_PICK){if(CMP_PICK.label!==g[0].a.label)openCompare(CMP_PICK,g[0].a);return}if(FOCUS&&FOCUS.label===g[0].a.label&&m.isPopupOpen())return;focusArea(g[0].a)})}
     else m.on('click',()=>{const b=L.latLngBounds(g.map(o=>[o.a.lat,o.a.lng])),z=map.getBoundsZoom(b,false,L.point(140,140));
       if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<span class="t">'+T.count(g.length,'area')+'</span>'+(metric==='n'?safe(labelText(c.val,metric)):T('Typical {v}',{v:safe(labelText(c.val,metric))}))+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(T.place(o.a.label))+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
       else{clearFocus();map.closePopup();map.flyToBounds(b,{padding:[70,70],maxZoom:16,duration:FX?.6:0,animate:!!FX})}});
@@ -759,6 +848,7 @@ L.DomEvent.disableClickPropagation($('legend'));
 let urlT;
 function writeURL(){if(!$('home').options.length)return;clearTimeout(urlT);urlT=setTimeout(()=>{try{const q=new URLSearchParams(location.search),c=map.getCenter();
   q.set('home',$('home').value.replace('|',':'));q.set('view',$('metric').value);q.set('at',c.lat.toFixed(4)+','+c.lng.toFixed(4)+','+map.getZoom());
+  if(CMP)q.set('compare',CMP.a.label+'|'+CMP.b.label);else q.delete('compare');
   history.replaceState(history.state,'','?'+q.toString().replace(/%3A/g,':').replace(/%2C/g,',')+location.hash)}catch(e){}},300)}
 map.on('moveend',writeURL);
 function readURL(){
@@ -816,7 +906,7 @@ function draw(){
   const near=WALK&&nearMap();
   if(near){POINTS=POINTS.filter(p=>{const x=near.get(p.a.label);const ok=!!x&&x.m<=Transit.WALKS[WALK];if(!ok)OUTSIDE.add(p.a.label);return ok});if(!BUDGET)BUDGET={lo:0,hi:Infinity,walkOnly:true}}
   if(BUDGET){BUDGET.n=POINTS.length;BUDGET.of=allN}
-  budgetNote(unit,metric);
+  budgetNote(unit,metric);if(CMP)renderCompare();
   LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};
   // A change of home or view keeps a focused area in focus: its breakdown reopens with the new figures.
   const kept=FOCUS&&focusPopup?FOCUS:null;relabelKeep=!!kept;renderLabels();relabelKeep=false;if(kept&&!map._popup){FOCUS=kept;drawFocus();openArea(kept)}
@@ -908,12 +998,12 @@ const MOON='<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
 function paintToggle(){const dark=document.documentElement.dataset.theme==='dark',b=$('theme');
   b.querySelector('svg').innerHTML=dark?SUN:MOON;b.querySelector('span').textContent=dark?T('Light'):T('Dark');
   b.setAttribute('aria-label',dark?T('Switch to light mode'):T('Switch to dark mode'))}
-function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{localStorage.setItem('theme',t)}catch(e){}paintToggle();if(transitOn)drawTransit();restyleBase();
+function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{localStorage.setItem('theme',t)}catch(e){}paintToggle();if(transitOn)drawTransit();if(CMP)drawCompare();restyleBase();
   if(LABEL.metric)renderLabels()}
 $('theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark',true);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let saved;try{saved=localStorage.getItem('theme')}catch(_){}if(!saved)setTheme(e.matches?'dark':'light',false)});
 paintToggle();
 // The base map comes after the rent data, and only once the map is on (or near) the screen: on phones the map
 // sits below the first screen, so MapLibre (1 MB) isn't fetched by visitors who never scroll to it.
-init().finally(()=>{loadOutlines();const el=$('map');if(!('IntersectionObserver' in window))return vectorBase();
+init().finally(()=>{loadOutlines();compareFromURL();const el=$('map');if(!('IntersectionObserver' in window))return vectorBase();
   const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();vectorBase()}},{rootMargin:'400px'});io.observe(el)});

@@ -493,3 +493,59 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 .tnote{font-size:12px;margin-top:8px}
 .budgetNote .link{font:inherit;font-weight:600}
 @media (max-width:860px){.controls .f-walk{flex:1 1 100%}}
+
+/* Compare two areas (atlas.js openCompare): the brand's look. An oxblood header band with a gold-leaf rule, like
+   the page header; ivory body; area A marked in gold leaf, B in oxblood (rose at night), on the map and here.
+   Computers: a panel over the map's right side. Phones: a sheet from the bottom, like an area's breakdown. */
+.cmpPanel{position:absolute;z-index:1001;top:58px;inset-inline-end:12px;width:min(400px,46%);max-height:calc(100% - 70px);overflow:auto;overscroll-behavior:contain;
+  background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 36px rgba(43,33,24,.28);direction:ltr}
+[dir="rtl"] .cmpPanel{direction:rtl}
+.cmpPanel[hidden]{display:none}
+.cmpPanel:focus{outline:none}
+.cmpHead{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:6px;padding:10px 12px 10px 16px;background:var(--oxblood);color:var(--ivory);border-bottom:2px solid var(--gold)}
+.cmpHead h2{margin:0;flex:1;font:700 22px/1.1 var(--cond);letter-spacing:.01em}
+.cmpBtn{border:1px solid rgba(246,241,231,.55);background:transparent;color:var(--ivory);border-radius:999px;width:34px;height:34px;font:600 18px/1 var(--body);cursor:pointer}
+.cmpBtn:hover{background:rgba(246,241,231,.12)}.cmpBtn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.cmpNames{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;padding:12px 16px 4px;font:700 17px/1.2 var(--cond)}
+.cmpName{display:inline-flex;align-items:center;gap:7px}
+.cmpName::before{content:"";width:12px;height:12px;border-radius:3px;background:var(--k);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.cmpNames .vs{color:var(--muted);font:500 13px/1 var(--body)}
+.cmpHeadline{margin:8px 16px 10px;padding:10px 12px;background:var(--panel);border-inline-start:3px solid var(--gold);border-radius:6px;font-size:14.5px;line-height:1.4}
+.cmpPics{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px}
+.cmpPic{aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:var(--panel)}
+.cmpPic.none{display:none}
+.cmpPic a{display:block;height:100%;position:relative;color:#fff}
+.cmpPic img{width:100%;height:100%;object-fit:cover;display:block}
+.cmpPic span{position:absolute;inset-inline:0;bottom:0;padding:3px 6px;font-size:10.5px;background:linear-gradient(transparent,rgba(0,0,0,.6));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmpTable{width:calc(100% - 32px);margin:12px 16px 0;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.cmpTable caption{text-align:start;font:700 14px/1.2 var(--cond);color:var(--muted);padding-bottom:4px}
+.cmpTable thead th{text-align:end;font:700 13px/1.2 var(--cond);padding:4px 0 6px;border-bottom:3px solid var(--k)}
+.cmpTable th,.cmpTable td,.cmpTable thead td{background:none}
+.cmpTable th[scope="row"]{text-align:start;font-weight:500;color:var(--muted);padding:6px 8px 6px 0}
+.cmpTable td{text-align:end;padding:6px 0 6px 8px;white-space:nowrap}
+.cmpTable tbody tr{border-bottom:1px solid var(--line)}
+.cmpTable td small{display:block;color:var(--muted);font-size:11.5px}
+.cmpTable td.win{font-weight:700;color:var(--text)}
+.cmpTable td.win::after{content:"";display:block;height:2px;margin-top:2px;margin-inline-start:auto;width:2.2em;background:var(--gold)}
+.cmpUnits tr.pick th,.cmpUnits tr.pick td{background:var(--hover)}
+.cmpUnits .link{font:inherit;color:inherit;text-align:start}
+.cmpFoot{margin:10px 16px 0;font-size:12px;color:var(--muted)}
+.cmpActs{margin:8px 16px 16px;font-size:14px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.cmpActs .sep{color:var(--muted)}
+/* The bar that asks for the second area: oxblood like the header, over the map. */
+.cmpPick{position:absolute;z-index:1001;bottom:76px;left:50%;transform:translateX(-50%);width:min(460px,calc(100% - 24px));padding:10px 14px;
+  background:var(--oxblood);color:var(--ivory);border:1px solid var(--gold);border-radius:12px;box-shadow:0 10px 28px rgba(43,33,24,.3);direction:ltr}
+[dir="rtl"] .cmpPick{direction:rtl}
+.cmpPick[hidden]{display:none}
+.cmpPick p{margin:0 0 8px;font-size:14px}
+.cmpSugg{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cmpSugg .chip{border:1px solid var(--gold);background:var(--ivory);color:var(--espresso);border-radius:999px;padding:5px 11px;font:600 13px/1.1 var(--body);cursor:pointer}
+.cmpSugg .link{color:var(--ivory);font:600 13px/1 var(--body);margin-inline-start:4px}
+.picking .rl[data-area]{cursor:copy}
+@media (max-width:860px){
+  .cmpPanel{position:fixed;z-index:1200;top:auto;bottom:0;inset-inline:0;margin-inline:auto;width:min(100%,640px);max-height:min(60vh,60svh);border-radius:16px 16px 0 0;
+    padding-bottom:env(safe-area-inset-bottom);animation:sheetUp .22s ease-out}
+  .cmpHead{border-radius:16px 16px 0 0}
+  .cmpPick{bottom:10px}
+}
+@media (prefers-reduced-motion:reduce){.cmpPanel{animation:none}}

@@ -301,6 +301,10 @@ Recorded: the "Needs you" pass (decisions, forty-eighth pass, with what the live
 
 Built on branch `metro` (decisions, fifty-first pass): Metro and Tram from OpenStreetMap, a Near Metro / Tram filter, and a rent for every station. After merging, run "Place unplaced areas" once so `transit.json` is published (until then the button and filter stay hidden).
 
+### 18 Nov · "Compare: two areas side by side … a different tab or within the main, tell me what you think is better" → "make sure it is the same color and fits the theme well" (collaborator)
+
+Recommended within the main page (map in view, starts from an area, shareable link); built that way on branch `compare` (decisions, fifty-second pass). Next idea on the list: commute.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

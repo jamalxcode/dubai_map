@@ -90,6 +90,16 @@
     'Google Maps': 'خرائط Google',
     '(Median {aed} a year when you set this reminder.)': '(كان الوسيط {aed} سنويًا عند ضبط هذا التذكير.)',
     '(optional)': '(اختياري)',
+    // Compare two areas (atlas.js renderCompare).
+    'Cancel': 'إلغاء', 'Compare': 'قارن', 'Compare areas': 'مقارنة المناطق', 'Swap': 'تبديل', 'vs': 'مقابل',
+    'Compare <b>{a}</b> with: tap another area on the map, or pick one nearby.': 'قارن <b>{a}</b> مع: اضغط منطقة أخرى على الخريطة، أو اختر واحدة قريبة.',
+    '<b>{x}</b> is <b>{diff}</b> a year cheaper than {y} for {what}: {pct}% less.': '<b>{x}</b> أرخص من {y} بمقدار <b>{diff}</b> سنويًا لـ{what}: أقل بنسبة {pct}%.',
+    'About the same for {what}: within 3% of each other.': 'متقاربتان لـ{what}: الفرق ضمن 3%.',
+    'No figure for {what} in {x}: pick another home size below.': 'لا يوجد رقم لـ{what} في {x}: اختر حجم مسكن آخر أدناه.',
+    'Middle half pays': 'النصف الأوسط يدفع', 'Rent change': 'تغيّر الإيجار', 'Nearest Metro or Tram': 'أقرب مترو أو ترام', 'in the area': 'داخل المنطقة',
+    '{what}, last 12 months': '{what}، آخر 12 شهرًا', 'Typical yearly rent by home size': 'الإيجار السنوي النموذجي حسب حجم المسكن',
+    '{km} km apart.': 'تبعدان {km} كم.', 'Lower rent and price, and higher yield, are in bold.': 'الإيجار والسعر الأقل، والعائد الأعلى، بخط عريض.',
+    'Open {x}': 'افتح {x}', 'Copy link': 'انسخ الرابط',
     // Metro and Tram (atlas.js, transit.js).
     'Metro': 'المترو', 'Show Metro and Tram lines': 'إظهار خطوط المترو والترام',
     'Near Metro / Tram': 'قرب المترو / الترام', 'Anywhere': 'في أي مكان', '10-minute walk': 'مشي 10 دقائق', '20-minute walk': 'مشي 20 دقيقة',

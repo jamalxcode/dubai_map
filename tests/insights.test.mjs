@@ -139,3 +139,18 @@ test('industrial zones (mostly staff accommodation) are left out of comparisons'
   assert.deepEqual(RI.rankAmong(pool, jvc, '1-bedroom apartments'), RI.rankAmong(AREAS, jvc, '1-bedroom apartments'), 'not counted in the rank');
   assert.equal(RI.rankAmong(pool, staff, '1-bedroom apartments'), null, 'and not ranked itself');
 });
+
+test('compare: cheaper area, share of the dearer, home sizes in reading order', () => {
+  const a = { label: 'A', lat: 25.0, lng: 55.0, by_unit: [{ u: '2-bedroom apartments', n: 50, median: 100000 }, { u: '1-bedroom apartments', n: 80, median: 70000 }, { u: 'Studios', n: 20, median: 45000 }] };
+  const b = { label: 'B', lat: 25.0, lng: 55.1, by_unit: [{ u: '1-bedroom apartments', n: 90, median: 80000 }, { u: '3-bedroom apartments', n: 10, median: 150000 }] };
+  const c = RI.compare(a, b, '1-bedroom apartments');
+  assert.equal(c.cheaper, 'a');
+  assert.equal(c.diff, 10000);
+  assert.equal(c.pct, 13); // 10,000 of 80,000
+  assert.ok(c.km > 9 && c.km < 11);
+  assert.deepEqual(c.units.map(u => u.u), ['Studios', '1-bedroom apartments', '2-bedroom apartments', '3-bedroom apartments']);
+  assert.deepEqual(c.units.map(u => u.lower), [null, 'a', null, null]);
+  const same = RI.compare(a, { ...b, by_unit: [{ u: '1-bedroom apartments', n: 9, median: 71000 }] }, '1-bedroom apartments');
+  assert.equal(same.cheaper, null); // within 3%
+  assert.equal(RI.compare(a, b, 'Studios').cheaper, null); // B has no studios
+});

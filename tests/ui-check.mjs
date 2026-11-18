@@ -77,6 +77,9 @@ const overlaps = page => page.evaluate(() => {
 async function axe(page, label) {
   // Check the page at rest: labels fading in (GSAP) would be measured half transparent.
   await page.waitForFunction(() => !window.gsap || !gsap.globalTimeline.getChildren(true, true, false).some(t => t.isActive()), null, { timeout: 5000 }).catch(() => {});
+  // …and with the map still and any breakdown fully faded in (a fly-to opens it after landing; Leaflet fades it in).
+  await page.waitForFunction(() => typeof map === 'undefined' || (!map._flyToFrame && !map._animatingZoom && [...document.querySelectorAll('.leaflet-popup')].every(e => getComputedStyle(e).opacity === '1')), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(250);
   await page.addScriptTag({ content: AXE });
   const res = await page.evaluate(async () => (await window.axe.run(document, {
     runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'] },
@@ -273,6 +276,16 @@ try {
       await page.waitForTimeout(700);
       const qs = await page.evaluate(() => location.search);
       check(/view=sale/.test(qs) && /home=homes:1-bedroom/.test(qs) && /at=2[45]\.\d+,55\.\d+,\d+/.test(qs), `desktop: the address keeps the home, view and map position (${decodeURIComponent(qs)})`);
+      // Compare: from an area to a suggested neighbour; the panel says which is cheaper, the link keeps both.
+      await page.evaluate(() => window.startCompare('Jumeirah Village Circle'));
+      await page.waitForTimeout(400);
+      await page.click('.cmpSugg .chip');
+      await page.waitForTimeout(1200);
+      const cmp = await page.evaluate(() => ({ open: !document.querySelector('.cmpPanel').hidden, head: document.querySelector('.cmpHeadline')?.textContent || '', link: /compare=/.test(location.search), units: document.querySelectorAll('.cmpUnits tbody tr').length }));
+      check(cmp.open && /cheaper than|About the same/.test(cmp.head) && cmp.link && cmp.units > 1, `desktop: Compare opens two areas side by side (${cmp.head.slice(0, 70)}…)`);
+      await axe(page, 'desktop with Compare open');
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
       // Metro and Tram, when data/transit.json is published: the walk filter keeps only areas near a station and names one.
       if (await page.evaluate(() => !document.querySelector('.f-walk').hidden)) {
         await page.selectOption('#walk', '10');

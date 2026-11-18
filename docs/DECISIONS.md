@@ -544,8 +544,18 @@ The collaborator: "Metro: show the Metro lines, and filter to areas near a stati
 - **What makes it ours:** each station has a rent: tapping one shows what the chosen home typically costs within the walk and which areas that covers; and the line under the filters names the cheapest station for that home ("Lowest near a station: Abu Hail (Green Line), typical AED 41k").
 - **Tests:** `tests/test_transit.py` (merging, the trolley, one station per name, refusing a thin result), `tests/transit.test.mjs` (distances, areas near a station, rent near stations), a browser check when the file is present.
 
+## Decision on 2026-11-18 (fifty-second pass): compare two areas
+
+The collaborator asked for "a nice slick comparison side by side, a different tab or within the main, tell me what you think is better", then "make sure it is the same color and fits the theme well".
+- **Within the main page, not a tab:** the map stays in view with both areas outlined, it starts from where the visitor already is (an area's breakdown or the rent check), the Home picker and filters carry over, and a link (`?compare=A|B`) gives it the shareability a separate page would have had.
+- **Picking the second area:** tap any label, or one of the three nearest areas with figures for the chosen home.
+- **Theme:** the page header's oxblood band and gold-leaf rule; A in gold leaf, B in oxblood (both theme colours, distinct from the blue price scale); ivory panel; the better figure in a row bold with a gold underline.
+- **Logic** in `insights.compare` (Node-tested): cheaper by the difference as a share of the dearer, about the same within 3%, home sizes in reading order.
+- **Tests:** a browser check opens a comparison from JVC and runs axe with it open. The accessibility check now also waits for the map to stop and a breakdown to finish fading in (an Arabic run caught a breakdown mid-fade after the rent check's fly-to).
+
 ## Change log
 
+- 2026-11-18: Compare two areas side by side, over the map, in the theme's colours.
 - 2026-11-18: Metro and Tram lines and stations, Near Metro / Tram filter, rent near each station.
 - 2026-11-18: Status page opens with "Needs you": unresolved issues a person can fix, with what to do.
 - 2026-11-18: OpenStreetMap look-up also searches ordinals as numbers ("Al Twar 5"); retried at once for a new name.
