@@ -115,6 +115,7 @@ button,input,select{font:inherit;color:inherit}
 .leaflet-tile-pane{filter:var(--tiles)}
 .glBase .leaflet-tile-pane{filter:none} /* the vector map has its own dark style; the filter is only for the OpenStreetMap fallback */
 /* Area breakdown: Google links and photos taken nearby (atlas.js loadPhotos). */
+.leaflet-popup-content a{color:var(--text)} /* the page's links (espresso, gold-leaf underline), not Leaflet's blue */
 .leaflet-popup-content .see{margin:8px 0 4px;font-size:13px}
 .leaflet-popup-content .see .sep{margin:0 6px;color:var(--muted)}
 .pics.loading{min-height:70px;background:linear-gradient(90deg,var(--panel),var(--bg),var(--panel));border-radius:6px;margin:4px 0}
@@ -562,7 +563,8 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
    is counted and carries the official average room rate when there is one. */
 .hdot{cursor:pointer}
 .legend .hkey{display:flex;align-items:center;gap:8px;font-size:12px;margin:4px 0}
-.legend .hkey i{flex:none;width:10px;height:10px;border-radius:50%;border:2px solid #B8901F;background:var(--paper,#F6F1E7)}
+.legend .hkey i{flex:none;width:10px;height:10px;border-radius:50%;border:1.5px solid var(--oxblood);background:var(--gold)}
+:root[data-theme="dark"] .legend .hkey i{border-color:var(--ivory)}
 .legend .hstat{margin:6px 0 2px;padding:6px 8px;border-inline-start:3px solid var(--gold);background:var(--panel);border-radius:4px;font-size:12.5px}
 .legend .hstat b{display:block;font-weight:700}.legend .hstat span{color:var(--muted)}
 .hlinks{display:flex;flex-wrap:wrap;gap:4px 8px}.hlinks .sep{color:var(--muted)}

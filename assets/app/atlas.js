@@ -186,10 +186,10 @@ function drawOutlines(){
   for(const o of OUTLINES){const p=byLabel.get(o.label);
     // Budget mode: an area with a figure but outside the budget keeps a faint grey outline, so the ones that fit stand out.
     if(!p){if(BUDGET&&OUTSIDE.has(o.label))L.polygon(o.rings.map(r=>r.map(([x,y])=>[y,x])),{pane:'outlines',interactive:false,color:'#8A7F72',weight:.6,opacity:.5,fillColor:'#5E564C',fillOpacity:.22,className:'outBudget'}).addTo(outlineLayer);continue}
-    const col=LABEL.metric==='hotels'?'#B8901F':cssVar(LABEL.colorOf(p.v));
+    const col=LABEL.metric==='hotels'?'#C9A227':cssVar(LABEL.colorOf(p.v)); // hotels: gold leaf (prices keep the blue scale)
     // In budget mode the areas that fit light up: a gold-leaf edge and a stronger fill (cheap areas are the palest blues).
     L.polygon(o.rings.map(r=>r.map(([x,y])=>[y,x])),BUDGET?{pane:'outlines',interactive:false,color:'#C9A227',weight:2,opacity:.95,fillColor:col,fillOpacity:.6,className:'inBudget'}
-      :{pane:'outlines',interactive:false,color:col,weight:1,opacity:.7,fillColor:col,fillOpacity:.32}).addTo(outlineLayer)}
+      :{pane:'outlines',interactive:false,color:col,weight:1,opacity:.7,fillColor:col,fillOpacity:LABEL.metric==='hotels'?.2:.32}).addTo(outlineLayer)}
 }
 // What changed since the previous publication (history.py), for the rent check's "since your last visit". Optional.
 window.CHANGES=null;getJSON('data/changes.json').then(d=>{window.CHANGES=d;dispatchEvent(new Event('atlas:changes'))}).catch(()=>{});
@@ -437,7 +437,7 @@ function hotelsBy(){if(!HOTEL_BY&&HOTELS){HOTEL_BY=new Map();const lab=Transit.a
 function drawHotels(){hotelLayer.clearLayers();if(!HOTELS||$('metric').value!=='hotels'){hotelLayer.remove();return}
   const dark=document.documentElement.dataset.theme==='dark';
   for(const h of HOTELS){const r=h.stars>=5?4.5:h.stars>=4?4:3.2;
-    L.circleMarker([h.lat,h.lng],{pane:'transit',radius:r,weight:1.6,color:'#B8901F',fillColor:dark?'#1E1712':'#F6F1E7',fillOpacity:1,className:'hdot'})
+    L.circleMarker([h.lat,h.lng],{pane:'transit',radius:r,weight:1.4,color:dark?'#F6F1E7':'#521825',fillColor:'#C9A227',fillOpacity:1,className:'hdot'})
       .bindTooltip(hotelName(h)+(h.stars?' · '+'★'.repeat(Math.round(h.stars)):''),{direction:'top',offset:[0,-4]})
       .on('click',()=>openHotel(h)).addTo(hotelLayer)}
   hotelLayer.addTo(map)}
@@ -445,7 +445,7 @@ function openHotel(h){
   const q=encodeURIComponent(h.name+' Dubai'),area=h.area?byLabel(h.area):null;
   const html='<span class="t">'+safe(hotelName(h))+'</span>'+(T.lang!=='ar'&&h.name_ar?'<p class="muted" lang="ar">'+safe(h.name_ar)+'</p>':'')+
     '<p>'+T(HOTEL_KIND[h.kind]||'Hotel')+(h.stars?' · <span aria-label="'+safe(T('{n} stars',{n:h.stars}))+'">'+'★'.repeat(Math.round(h.stars))+'</span>':'')+(area?' · '+safe(T.place(area.label)):'')+'</p>'+
-    '<p class="hlinks"><a href="https://www.google.com/maps/search/?api=1&query='+q+'" target="_blank" rel="noopener">'+T('Google Maps')+'</a><span class="sep" aria-hidden="true">·</span>'+
+    '<p class="see hlinks"><a href="https://www.google.com/maps/search/?api=1&query='+q+'" target="_blank" rel="noopener">'+T('Google Maps')+'</a><span class="sep" aria-hidden="true">·</span>'+
     '<a href="https://www.booking.com/searchresults.html?ss='+q+'" target="_blank" rel="noopener">'+T('Prices on Booking.com')+'</a></p>'+
     '<p class="muted tnote">'+T('Place: © OpenStreetMap contributors. Prices are set by the booking site, not this page.')+'</p>';
   clearFocus();L.popup({maxWidth:300}).setLatLng([h.lat,h.lng]).setContent(html).openOn(map);countUse('hotel');
@@ -954,7 +954,7 @@ function draw(){
   const vals=POINTS.map(p=>p.v).sort((a,b)=>a-b);
   const hotelsView=metric==='hotels';
   // Hotels are counted places, not prices: their labels are plain paper cards (the blue scale is for prices only).
-  const sc=hotelsView?{colorOf:()=>'#F6F1E7',inkOf:()=>'#2B2118',lo:0,hi:1}:scaleFor(vals),colorOf=sc.colorOf;
+  const sc=hotelsView?{colorOf:()=>'var(--oxblood)',inkOf:()=>'#F6F1E7',lo:0,hi:1}:scaleFor(vals),colorOf=sc.colorOf;
   // Budget mode: with a yearly rent range set, only the areas whose rent for the chosen home falls inside it keep
   // their labels (and the averages); the others turn grey. Colours stay those of the whole map, so they still match
   // the key. The range is on rent whatever the view shows (sale price, yield): it is a rent budget.
@@ -1062,7 +1062,7 @@ const MOON='<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>';
 function paintToggle(){const dark=document.documentElement.dataset.theme==='dark',b=$('theme');
   b.querySelector('svg').innerHTML=dark?SUN:MOON;b.querySelector('span').textContent=dark?T('Light'):T('Dark');
   b.setAttribute('aria-label',dark?T('Switch to light mode'):T('Switch to dark mode'))}
-function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{localStorage.setItem('theme',t)}catch(e){}paintToggle();if(transitOn)drawTransit();if(CMP)drawCompare();restyleBase();
+function setTheme(t,save){document.documentElement.dataset.theme=t;if(save)try{localStorage.setItem('theme',t)}catch(e){}paintToggle();if(transitOn)drawTransit();if(HOTELS)drawHotels();if(CMP)drawCompare();restyleBase();
   if(LABEL.metric)renderLabels()}
 $('theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark',true);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let saved;try{saved=localStorage.getItem('theme')}catch(_){}if(!saved)setTheme(e.matches?'dark':'light',false)});
