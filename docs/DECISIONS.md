@@ -591,6 +591,10 @@ The collaborator: "each hotel should have an average price and the area should a
 - **Needs the owner:** a free LiteAPI account and its live key as the secret `LITEAPI_KEY` (listed under "Needs you").
 - **Checked:** collector tests with LiteAPI faked (matching, averages, once a day, no key, sandbox, other currency, rejected key); browser checks with and without prices (made-up local prices, never published).
 
+## Decision on 2026-11-18 (fifty-seventh pass): in the Hotels view, an area's card is about its hotels
+
+The collaborator: "when I am in hotel mode and I click on one, the pop-up says 1-bedroom apartment 72,000 yearly; it should have the hotel's price". The card was the rent card in every view. In the Hotels view it now leads with the area's places to stay (typical price a night once prices exist, a list that opens each place, a Booking.com search for the area) and folds the rents under "Rents in this area". Until the LiteAPI key is added it says nightly prices are coming rather than showing nothing. Browser check added for desktop and phone.
+
 ## Change log
 
 - 2026-11-18: One calm system for the side panel; the comparison as a mirrored "versus" sheet with motion.

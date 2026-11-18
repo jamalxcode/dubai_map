@@ -462,7 +462,7 @@ const HOTEL_KIND={hotel:'Hotel',apartments:'Hotel apartments',hostel:'Hostel',gu
 const hotelName=h=>T.lang==='ar'&&h.name_ar?h.name_ar:h.name;
 function loadHotels(){
   getJSON('data/hotels.json').then(d=>{if(!d||!(d.hotels||[]).length)return;
-    HOTELS=d.hotels.map(h=>({name:h[0],name_ar:h[1],kind:h[2],stars:h[3],lat:h[4],lng:h[5]}));attachPrices();
+    HOTELS=d.hotels.map((h,i)=>({i,name:h[0],name_ar:h[1],kind:h[2],stars:h[3],lat:h[4],lng:h[5]}));attachPrices();
     const sel=$('metric');if(![...sel.options].some(o=>o.value==='hotels')){const o=document.createElement('option');o.value='hotels';o.textContent=T('Hotels');sel.append(o)}
     if(new URLSearchParams(location.search).get('view')==='hotels')sel.value='hotels';
     syncViews();if(sel.value==='hotels')draw()}).catch(()=>{});
@@ -719,11 +719,14 @@ function popup(a){
     (a.median_sqm?T('AED {v} per m² a year',{v:fmt(a.median_sqm)})+'<br>':'')+
     (a.yield_pct!=null?T('Gross yield {v}%',{v:Number(a.yield_pct).toFixed(1)})+(a.sale_median?T(', median sale price AED {v}',{v:fmt(a.sale_median)}):'')+'<br>':'')+
     (a.rent_change?sinceNote(a.rent_change)+'<br>':'')+(a.unconfirmed?jumpNote(a.unconfirmed)+'<br>':'');
-  return '<span class="t" data-label="'+safe(a.label)+'">'+safe(T.place(a.label))+'</span>'+(lead?lead+'<p class="allh">'+T('All homes:')+' '+main+'</p>':main)+
-    (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+saleTrend(a)+areaHotels(a)+
+  // In the Hotels view the card leads with the area's places to stay; its rents fold away under them.
+  const hv=$('metric').value==='hotels'&&!!HOTELS,figs=(lead?lead+'<p class="allh">'+T('All homes:')+' '+main+'</p>':main)+
+    (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+saleTrend(a)+(hv?'':areaHotels(a))+
     (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr'+(u.n!=null&&u.n<THIN?' class="thin'+(pu&&u.u===pu.u?' pick':'')+'" title="'+safe(T('Fewer than {n} contracts: a thin figure',{n:THIN}))+'"':pu&&u.u===pu.u?' class="pick"':'')+'><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>'+(a.by_unit.some(u=>u.n!=null&&u.n<THIN)?'<small>'+T('Italic rows: fewer than {n} contracts, so treat them as a rough guide.',{n:THIN})+'</small><br>':''):'')+
     (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<table><tr><th>'+T('Busiest buildings')+'</th><th>n</th><th>'+T('Median')+'</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
-    (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'')+
+    (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'');
+  return '<span class="t" data-label="'+safe(a.label)+'">'+safe(T.place(a.label))+'</span>'+
+    (hv?hotelSection(a)+'<details class="rentMore"><summary>'+T('Rents in this area')+'</summary>'+figs+'</details>':figs)+
     // See the place: Google links (open a new tab; Google allows these links without a key) and free photos
     // taken near the point (Wikimedia Commons, filled in when the breakdown opens; see loadPhotos).
     '<p class="see">'+[['https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a.label+', Dubai'),T('Google Maps')],
@@ -736,9 +739,31 @@ function popup(a){
     '<small>'+T('DLD area: {list}. The point is an approximate reference for the area, not a building.',{list:a.dld_areas.map(safe).join(', ')})+(a.url?' <a href="'+safe(a.url)+'" target="_blank" rel="noopener">'+T('Dubai Data page')+'</a>':'')+'</small>';
 }
 
-// Places to stay in the area (OpenStreetMap) and, with prices, their typical price a night.
+// (Other views) Places to stay in the area (OpenStreetMap) and, with prices, their typical price a night.
 function areaHotels(a){const g=HOTELS&&hotelsBy(),x=g&&g.get(a.label);if(!x)return '';
   return '<p class="hot">'+T('Places to stay: {n}',{n:fmt(x.n)})+(x.typical?' · '+T('typical {aed} a night ({k} with a price)',{aed:'<b>AED '+fmt(x.typical)+'</b>',k:x.prices.length}):'')+'</p>'}
+// Hotels view: an area's card leads with its places to stay, dearest first once prices exist (else by stars),
+// each a button that opens that place's own card.
+const HOTEL_ROWS=12;
+function hotelSection(a){
+  const x=hotelsBy()&&hotelsBy().get(a.label);
+  if(!x)return '<p class="lead">'+T('No places to stay are mapped in this area.')+'</p>';
+  const list=[...x.list].sort((p,q)=>(q.price||0)-(p.price||0)||(q.stars||0)-(p.stars||0)||p.name.localeCompare(q.name));
+  const stars=list.slice(0,HOTEL_ROWS).some(h=>h.stars); // no column of blanks when none of them has a rating
+  const row=h=>'<tr><td><button type="button" class="hrow" data-h="'+h.i+'">'+safe(hotelName(h))+'</button><small>'+T(HOTEL_KIND[h.kind]||'Hotel')+'</small></td>'+
+    (stars?'<td>'+(h.stars?'<span aria-label="'+safe(T('{n} stars',{n:h.stars}))+'">'+'★'.repeat(Math.round(h.stars))+'</span>':'')+'</td>':'')+
+    (HOTEL_PRICES?'<td>'+(h.price?fmt(h.price):'—')+'</td>':'')+'</tr>';
+  return '<p class="lead">'+(x.typical?T('Typical hotel price {aed} a night',{aed:'<b>AED '+fmt(x.typical)+'</b>'})+'<br>':'')+
+      T('{n} places to stay',{n:fmt(x.n)})+(x.typical?T(', {k} with a price',{k:x.prices.length}):'')+'</p>'+
+    (HOTEL_PRICES?'':'<p class="muted">'+T('Nightly prices show here once hotel prices are switched on.')+'</p>')+
+    '<table class="htab"><tr><th>'+T('Place')+'</th>'+(stars?'<th>'+T('Stars')+'</th>':'')+(HOTEL_PRICES?'<th>'+T('AED a night')+'</th>':'')+'</tr>'+
+      list.slice(0,HOTEL_ROWS).map(row).join('')+'</table>'+
+    (list.length>HOTEL_ROWS?'<p class="muted">'+T('and {n} more: zoom in to see them on the map.',{n:list.length-HOTEL_ROWS})+'</p>':'')+
+    '<p class="see hlinks"><a href="https://www.booking.com/searchresults.html?ss='+encodeURIComponent(a.label+', Dubai')+'" target="_blank" rel="noopener">'+T('Prices on Booking.com')+'</a></p>';
+}
+// Tapping a place in an area's list opens it (pop-ups and the phone sheet alike).
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.hrow');if(!b||!HOTELS)return;
+  const h=HOTELS[+b.dataset.h];if(!h)return;closeSheet();if(map.getZoom()<15)map.setView([h.lat,h.lng],15,{animate:false});openHotel(h)});
 // Photos taken near an area's point: freely licensed, from Wikimedia Commons, each credited (author and
 // licence) and linked to its page. Asked for only when a breakdown opens, once per point per visit; photos
 // only (no maps, logos, plans or diagrams), within 1 km. Nothing found or no answer: nothing is shown.

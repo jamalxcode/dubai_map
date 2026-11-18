@@ -569,4 +569,13 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 .legend .hstat{margin:6px 0 2px;padding:6px 8px;border-inline-start:3px solid var(--gold);background:var(--panel);border-radius:4px;font-size:12.5px}
 .legend .hstat b{display:block;font-weight:700}.legend .hstat span{color:var(--muted)}
 .leaflet-popup-content .hot,.areaSheet .hot{margin:8px 0 4px;padding-inline-start:8px;border-inline-start:3px solid var(--gold)}
+.htab{width:100%;border-collapse:collapse;margin:6px 0}
+.htab th{text-align:start;font-weight:600;color:var(--muted);font-size:12px;padding:4px 6px 4px 0;border-bottom:1px solid var(--line)}
+.htab td{padding:5px 6px 5px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.htab td:nth-child(2){color:var(--gold-ink);white-space:nowrap;font-size:12px}.htab td:nth-child(3){white-space:nowrap;font-variant-numeric:tabular-nums}
+.htab small{display:block;color:var(--muted);font-size:11.5px}
+.hrow{all:unset;cursor:pointer;color:var(--text);text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:3px;text-decoration-thickness:1.5px}
+.hrow:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+details.rentMore{margin:8px 0;border-top:1px solid var(--line);padding-top:6px}
+details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
 .hlinks{display:flex;flex-wrap:wrap;gap:4px 8px}.hlinks .sep{color:var(--muted)}
