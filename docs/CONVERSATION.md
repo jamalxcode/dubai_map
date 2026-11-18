@@ -285,6 +285,10 @@ The renewal estimate waits on branch `rera-check` (not merged). Built the map ed
 
 The existing Rent range only filtered the table; it became the budget and now lights up the areas that fit on the map (decisions, fiftieth pass). Branch `budget-mode`. Ideas still to do: rent or buy, Metro, compare, commute; the renewal estimate waits on `rera-check`.
 
+### 18 Nov · "try this for Al Twar, does it fix it?" (Al Twar Fifth is also called Al Twar 5, الطوار الخامسة)
+
+Used (decisions, forty-seventh pass): the map's OpenStreetMap look-up now searches "Al Twar 5" too, with the usual checks; run on GitHub straight after merging.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

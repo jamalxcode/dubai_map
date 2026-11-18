@@ -110,6 +110,22 @@ class OsmFallbackTests(TempData):
         self.assertIn("AL TWAR FIFTH", dm)
         self.assertNotIn("FAKE MALL", dm, "a failed look-up is not a map point")
 
+    def test_searched_as_maps_write_it_and_retried_at_once_for_a_new_name(self):
+        self.assertEqual(geocode_missing.queries("Al Twar Fifth"), ["Al Twar Fifth, Dubai", "Al Twar 5, Dubai"])
+        self.assertEqual(geocode_missing.queries("Al Aryam"), ["Al Aryam, Dubai"])
+        # Tried two days ago under its DLD name only (no "queries" column then): tried again now, as "Al Twar 5".
+        self.write("osm_area_points.csv", "dld_area,lat,lng,osm_name,osm_type,score,checked_at\nAL TWAR FIFTH,,,,,,2026-11-16\n")
+        calls = []
+        def only_digits(q):
+            calls.append(q)
+            return [{"name": "Al Twar 5", "type": "suburb", "lat": "25.25", "lon": "55.41"}] if q == "AL TWAR 5, Dubai" else []
+        with mock.patch("builtins.print"):
+            geocode_missing.main(search=only_digits, sleep=lambda s: None, today="2026-11-18")
+        self.assertEqual(calls[:2], ["AL TWAR FIFTH, Dubai", "AL TWAR 5, Dubai"])
+        with open(geocode_missing.out_path()) as f:
+            row = next(r for r in csv.DictReader(f) if r["dld_area"] == "AL TWAR FIFTH")
+        self.assertEqual((row["lat"], row["osm_name"], row["queries"]), ("25.25000", "Al Twar 5", "2"))
+
     def test_english_name_counts_when_the_name_is_arabic(self):
         hit = {"name": "فيلات الواحة", "type": "administrative", "lat": "25.029", "lon": "55.286",
                "namedetails": {"name": "فيلات الواحة", "name:en": "Al Waha Villas"}}

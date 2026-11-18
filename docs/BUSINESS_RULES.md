@@ -42,7 +42,7 @@ they serve are in [DESIGN_GOALS.md](DESIGN_GOALS.md).
 | Identity | One honest User-Agent naming this repo. No CAPTCHA workarounds, no listing portals, no identity rotation, no VPN | `collector/net.py` |
 | Dubai Pulse paging | 500 rows a page, 4 s apart, at most 120 pages; stops at the reported total or a repeated page | `fetch_ejari.py` |
 | Dubai Data | Conditional requests (unchanged files cost nothing), 1 s between pages; fewer than 50 communities means the source is broken | `fetch_datadubai.py` |
-| OpenStreetMap | At most 1 request a second, at most 10 look-ups per daily pull (40 weekly), results cached; a failed look-up is retried after 7 days | `collector/geocode_missing.py` |
+| OpenStreetMap | At most 1 request a second, at most 10 look-ups per daily pull (40 weekly), results cached; each area is searched under its DLD name and, where different, with ordinals as numbers ("Al Twar Fifth" → "Al Twar 5"); a failed look-up is retried after 7 days, or at once when it gains a name it wasn't searched under | `collector/geocode_missing.py` |
 | Base map | Vector tiles from OpenFreeMap (free, no key, attribution shown), loaded after the page; fallback when there is no WebGL or the style can't load within 12 s: OpenStreetMap's tiles at their policy URL with visible attribution, no bulk or offline use | `assets/app/atlas.js` |
 
 ## 4. Placing areas on the map

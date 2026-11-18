@@ -522,7 +522,13 @@ The collaborator chose "Budget mode: type your budget, and the areas you can aff
 - The budget is on rent in every view (sale price and yield views show the same areas).
 - A line under the filters: "59 of 127 areas fit your budget (up to AED 60,000 a year, 1-bedroom apartments)", or none fits with a hint; Min above Max is swapped and said so.
 
+## Decision on 2026-11-18 (forty-seventh pass): Al Twar Fifth as "Al Twar 5"
+
+The owner found that maps write the area as "Al Twar 5" (الطوار الخامسة). An alias in `dld_dm_aliases.csv` can't help: it points a DLD name at a Dubai Municipality community, and DM's list stops at Al Twar Fourth. Instead the OpenStreetMap look-up now also searches ordinals as numbers, and an area gains a retry at once when it has a name it wasn't searched under. The same checks apply (inside Dubai, a place not a shop or road, a close name match), so no point is guessed. Nominatim can't be reached from a session, so the result comes from the "Place unplaced areas" run on GitHub.
+
 ## Change log
+
+- 2026-11-18: OpenStreetMap look-up also searches ordinals as numbers ("Al Twar 5"); retried at once for a new name.
 
 - 2026-11-18: Budget mode: the yearly rent range lights up the areas that fit on the map.
 - 2026-11-18: Map edge tab: hide the side panel on computers, full-screen map on phones.

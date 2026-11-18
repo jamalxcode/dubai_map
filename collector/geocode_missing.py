@@ -5,7 +5,8 @@ boundaries (dm_communities.csv + dld_dm_aliases.csv). Whatever is left in
 data/meta.json -> unmatched_areas (usually brand-new areas DM hasn't published
 yet) is looked up here with OpenStreetMap Nominatim.
 
-A result is only accepted automatically when all checks pass:
+Each area is searched under its DLD name and, where they differ, the way maps usually write it: ordinals
+as numbers ("Al Twar Fifth" -> "Al Twar 5"). A result is only accepted automatically when all checks pass:
   * it is inside Dubai;
   * it is a place or boundary (suburb, neighbourhood, quarter, village,
     administrative area, residential), not a shop, road or building;
@@ -40,7 +41,7 @@ VIEWBOX = "54.89,25.36,55.65,24.79"  # west,north,east,south
 LAT, LNG = (24.6, 25.45), (54.85, 55.7)
 PLACE_TYPES = {"suburb", "neighbourhood", "quarter", "village", "hamlet", "administrative",
                "residential", "city_district", "district", "locality", "island"}
-FIELDS = ["dld_area", "lat", "lng", "osm_name", "osm_type", "score", "checked_at"]
+FIELDS = ["dld_area", "lat", "lng", "osm_name", "osm_type", "score", "checked_at", "queries"]
 
 
 RETRY_DAYS = 7
@@ -52,6 +53,13 @@ def simplify(s):
     s = " ".join(ORDINALS.get(w, w) for w in s.split())
     s = re.sub(r"\b(dubai|united arab emirates|al|villas?|community|area)\b", " ", s)
     return re.sub(r"\s+", " ", s).strip()
+
+
+def queries(area):
+    """The names to search an area under: its DLD name, then (if different) with ordinals as numbers,
+    the way maps usually write them ("Al Twar Fifth" -> "Al Twar 5")."""
+    digits = " ".join(ORDINALS.get(w.lower(), w) for w in area.split())
+    return [f"{area}, Dubai"] + ([f"{digits}, Dubai"] if digits != area else [])
 
 
 def score(area, hit):
@@ -99,6 +107,8 @@ def main(search=search, sleep=time.sleep, today=None):
             return False
         if r.get("lat"):
             return True
+        if int(r.get("queries") or 1) < len(queries(area)):
+            return False  # a name it wasn't searched under yet: try now, not after the week
         try:
             return (date.fromisoformat(today) - date.fromisoformat(r.get("checked_at") or "")).days < RETRY_DAYS
         except ValueError:
@@ -109,17 +119,26 @@ def main(search=search, sleep=time.sleep, today=None):
     for i, area in enumerate(todo):
         if i:
             sleep(1.2)
-        try:
-            hits = search(f"{area}, Dubai")
-        except Exception as e:  # noqa: BLE001
-            print(f"ERR  {area}: {e}")
+        hits, failed = [], False
+        for j, q in enumerate(queries(area)):
+            if j:
+                sleep(1.2)
+            try:
+                hits = search(q)
+            except Exception as e:  # noqa: BLE001
+                print(f"ERR  {area} ({q}): {e}")
+                failed = True
+                break
+            if any(accept(area, h) for h in hits):
+                break
+        if failed:
             continue
         good = [h for h in hits if accept(area, h)]
         if good:
             h = max(good, key=lambda h: score(area, h))
             have[area] = {"dld_area": area, "lat": f"{float(h['lat']):.5f}", "lng": f"{float(h['lon']):.5f}",
                           "osm_name": h.get("name", ""), "osm_type": h.get("type", ""),
-                          "score": f"{score(area, h):.2f}", "checked_at": today}
+                          "score": f"{score(area, h):.2f}", "checked_at": today, "queries": len(queries(area))}
             added += 1
             print(f"OK   {area} -> {h.get('name')} ({h.get('type')}) {h['lat']},{h['lon']}")
         else:
@@ -131,7 +150,7 @@ def main(search=search, sleep=time.sleep, today=None):
             best = max(hits, key=lambda h: score(area, h)) if hits else {}
             have[area] = {"dld_area": area, "lat": "", "lng": "", "osm_name": best.get("name", ""),
                           "osm_type": best.get("type", ""), "score": f"{score(area, best):.2f}" if best else "",
-                          "checked_at": today}
+                          "checked_at": today, "queries": len(queries(area))}
     with open(out_path(), "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, FIELDS, lineterminator="\n")
         w.writeheader()
