@@ -57,12 +57,12 @@ Keyboard-friendly (map labels are real buttons), WCAG 2.1 AA contrast in light, 
 | **[Dubai Pulse / data.dubai](https://data.dubai) API** | Every contract: ranges, rent per m², new vs renewal, busiest buildings | ⏳ Code ready, waiting for the API key |
 | **DLD's own open-data service** | The same, from the source | ⛔ Off until DLD agrees in writing |
 
-Right now: **534,835 contracts** from the last 12 months across **158 areas**, over 99% of them on the map, data to 16 Nov 2026.
+Right now: **534,835 contracts** from the last 12 months across **158 areas**, every one of them on the map, data to 16 Nov 2026.
 
 **House rules**
 - **Not asking prices**, and not the RERA rental index (that's the allowed-increase calculator, a different thing).
 - **Medians, never invented numbers.** No range published? The page says so instead of guessing.
-- **Map points are area references, never buildings**, and never guessed. The one busy area without a checked point (Al Twar Fifth) is listed, not faked.
+- **Map points are area references, never buildings**, and never guessed: each comes from Dubai Municipality, a reviewed alias, or an OpenStreetMap place that passes the checks.
 - **Big jumps are marked, not hidden**, until the next publication confirms them.
 
 ---

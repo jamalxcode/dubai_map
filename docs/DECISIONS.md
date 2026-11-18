@@ -526,6 +526,8 @@ The collaborator chose "Budget mode: type your budget, and the areas you can aff
 
 The owner found that maps write the area as "Al Twar 5" (الطوار الخامسة). An alias in `dld_dm_aliases.csv` can't help: it points a DLD name at a Dubai Municipality community, and DM's list stops at Al Twar Fourth. Instead the OpenStreetMap look-up now also searches ordinals as numbers, and an area gains a retry at once when it has a name it wasn't searched under. The same checks apply (inside Dubai, a place not a shop or road, a close name match), so no point is guessed. Nominatim can't be reached from a session, so the result comes from the "Place unplaced areas" run on GitHub.
 
+Result (run of 18 Nov): "OK Al Twar Fifth -> Al Twar 5 (suburb) 25.2694, 55.3877", between Al Twar First and Al Twar Second as expected. Al Aryam and Al Waha Villas are placed too, so no area is off the map: 534,974 of 534,974 contracts are on it.
+
 ## Change log
 
 - 2026-11-18: OpenStreetMap look-up also searches ordinals as numbers ("Al Twar 5"); retried at once for a new name.
