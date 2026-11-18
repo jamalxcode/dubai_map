@@ -511,6 +511,7 @@ The collaborator: "I want to be able to move this [the side panel] to the left â
 - **Phones and tablets (one column):** the same tab is a full-screen toggle (corner icon); full screen covers the page, the area sheet still opens above it, and Escape or the tab ends it. Not remembered: opening the site straight into a full-screen map would hide the rent check and the rest.
 - The map keeps its centre while it resizes; labels avoid the tab like the other controls. Arabic: the tab is on the right, where the panel is, and its arrow mirrors.
 - Counted as `map-wide` / `map-narrow`.
+- **Motion** (asked for: "a smooth animation â€¦ gsap, lenis, react bits"): GSAP, already on the page. The panel's grid column is tweened and the panel slides with it while the map re-measures every frame around a fixed centre, so the map visibly grows into the space rather than jumping; labels are placed once at the end. On phones a clip-path reveal from the map's box (Lenis paused while full screen). Reduced motion: instant.
 
 ## Change log
 

@@ -521,7 +521,7 @@ map.getContainer().parentNode.append(wideBtn);
 const isWide=()=>document.documentElement.classList.contains('mapWide');
 function paintWide(){const on=isWide(),desk=WIDE_MQ.matches;
   const t=desk?(on?T('Show the side panel'):T('Hide the side panel')):(on?T('Exit full screen'):T('Full-screen map'));
-  wideBtn.setAttribute('aria-label',t);wideBtn.title=t;wideBtn.setAttribute('aria-pressed',String(on))}
+  wideBtn.setAttribute('aria-label',t);wideBtn.title=t;wideBtn.setAttribute('aria-pressed',String(on));wideBtn.classList.toggle('flip',on)}
 function setWide(on,save){
   document.documentElement.classList.toggle('mapWide',on);paintWide();
   if(save&&WIDE_MQ.matches)try{localStorage.setItem('mapWide',on?'1':'0')}catch(e){}
@@ -530,10 +530,48 @@ function setWide(on,save){
   popupMargins();if(LABEL.metric)renderLabels();
   if(on&&!WIDE_MQ.matches)wideBtn.focus({preventScroll:true});
 }
-wideBtn.addEventListener('click',()=>{setWide(!isWide(),true);countUse(isWide()?'map-wide':'map-narrow')});
+// The same change, animated with GSAP (skipped when the visitor asks for reduced motion).
+// Computers: the side panel slides out (or in) while its grid column narrows (or widens), so the map grows
+// into the space frame by frame; the map re-measures each frame keeping its centre, and labels re-place at the end.
+// Narrow screens: the map is set full screen at once and revealed from its old box with a clip, and back.
+let wideAnim=null;
+function animateWide(on){
+  if(!FX){setWide(on,true);return}
+  if(wideAnim){wideAnim.progress(1);wideAnim=null}
+  const root=document.documentElement,layout=document.querySelector('.layout'),pane=document.querySelector('.pane'),wrap=map.getContainer().parentNode;
+  const c=map.getCenter(),z=map.getZoom(),follow=()=>{map.invalidateSize({pan:false});map.setView(c,z,{animate:false})};
+  wideBtn.classList.add('turning');wideBtn.classList.toggle('flip',on); // the arrow turns as the move starts
+  if(WIDE_MQ.matches){
+    const sign=root.dir==='rtl'?1:-1;
+    if(on){ // measure the open panel, then slide it out
+      const W=pane.getBoundingClientRect().width,st={w:W};
+      pane.style.width=W+'px';layout.style.overflow='hidden';
+      wideAnim=G.to(st,{w:0,duration:.5,ease:'power3.inOut',onUpdate(){layout.style.gridTemplateColumns=st.w+'px minmax(0,1fr)';pane.style.transform='translateX('+(sign*(W-st.w))+'px)';follow()},
+        onComplete(){wideAnim=null;pane.style.cssText='';layout.style.cssText='';wideBtn.classList.remove('turning');setWide(true,true)}});
+    }else{ // put the panel back to measure its width, then slide it in from the edge
+      root.classList.remove('mapWide');const W=pane.getBoundingClientRect().width,st={w:0};root.classList.add('mapWide');
+      pane.style.cssText='display:block;width:'+W+'px;transform:translateX('+(sign*W)+'px)';layout.style.overflow='hidden';layout.style.gridTemplateColumns='0px minmax(0,1fr)';
+      root.classList.remove('mapWide');paintWide();
+      wideAnim=G.to(st,{w:W,duration:.5,ease:'power3.inOut',onUpdate(){layout.style.gridTemplateColumns=st.w+'px minmax(0,1fr)';pane.style.transform='translateX('+(sign*(W-st.w))+'px)';follow()},
+        onComplete(){wideAnim=null;pane.style.cssText='';layout.style.cssText='';wideBtn.classList.remove('turning');setWide(false,true)}});
+    }
+    return;
+  }
+  // Narrow screens: clip from the map's box on the page to the whole screen, or back.
+  const r=on?wrap.getBoundingClientRect():(wrap._from||wrap.getBoundingClientRect()),vw=innerWidth,vh=innerHeight;
+  const box=`inset(${Math.max(0,r.top)}px ${Math.max(0,vw-r.right)}px ${Math.max(0,vh-r.bottom)}px ${Math.max(0,r.left)}px round 12px)`,full='inset(0px 0px 0px 0px round 0px)';
+  if(on){wrap._from=r;wrap.parentNode.style.minHeight=r.height+'px'; // the page keeps its place under the map
+    if(lenis)lenis.stop();setWide(true,false);
+    wideAnim=G.fromTo(wrap,{clipPath:box},{clipPath:full,duration:.42,ease:'power3.out',onComplete(){wideAnim=null;wrap.style.clipPath='';wideBtn.classList.remove('turning')}});
+  }else{
+    wideAnim=G.fromTo(wrap,{clipPath:full},{clipPath:box,duration:.36,ease:'power3.in',onComplete(){wideAnim=null;wrap.style.clipPath='';wrap.parentNode.style.minHeight='';
+      setWide(false,false);if(lenis)lenis.start();wideBtn.classList.remove('turning')}});
+  }
+}
+wideBtn.addEventListener('click',()=>{const on=!isWide();animateWide(on);countUse(on?'map-wide':'map-narrow')});
 // Full screen on a narrow screen never carries over to the two-pane layout, and vice versa.
 WIDE_MQ.addEventListener('change',()=>{let saved=null;try{saved=localStorage.getItem('mapWide')}catch(e){}setWide(WIDE_MQ.matches&&saved==='1',false)});
-addEventListener('keydown',e=>{if(e.key==='Escape'&&isWide()&&!WIDE_MQ.matches&&!document.querySelector('.areaSheet:not([hidden])'))setWide(false,false)});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&isWide()&&!WIDE_MQ.matches&&!document.querySelector('.areaSheet:not([hidden])'))animateWide(false)});
 (()=>{let saved=null;try{saved=localStorage.getItem('mapWide')}catch(e){}if(WIDE_MQ.matches&&saved==='1')map.whenReady(()=>setWide(true,false));else paintWide()})();
 // Re-lay out and pan an open breakdown after its content changed size (photos arriving): Leaflet only
 // checks the size when content is set through it.
