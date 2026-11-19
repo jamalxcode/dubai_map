@@ -31,7 +31,7 @@
 .needsList{margin:8px 0 0;padding-inline-start:22px}.needsList li{margin-bottom:12px;line-height:1.45}
 .needsList .todo{font-size:14.5px}
 /* Hotels: seven figures, each with a note under it. */
-#hotels.stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+#hotels.stats{grid-template-columns:repeat(4,minmax(0,1fr))} /* eight figures: two rows of four */
 .stats dd.sub{font:400 12.5px/1.35 "Barlow",system-ui,sans-serif;margin-top:3px}
 @media (max-width:860px){#hotels.stats{grid-template-columns:1fr 1fr}}
 @media (max-width:420px){#hotels.stats{grid-template-columns:1fr}}

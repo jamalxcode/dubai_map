@@ -511,8 +511,8 @@ try {
     // No LiteAPI key is the owner's choice (18 Nov), so it is not asked for.
     check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && !st.needs.some(t => /rera-check/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.some(t => /Hotel prices have not refreshed|لم تُحدَّث أسعار الفنادق/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
       `${name}: "Needs you" comes first and lists what a person can fix, with what to do, stale hotel prices included (${st.needs.length})`);
-    check(st.hotels === 7 && /Xotelo/.test(st.hotelsText) && /AED [\d,]+ – [\d,]+/.test(st.hotelsText), `${name}: the Hotels section gives places, matches, prices, their range and freshness, DET and the partner panel`);
-    check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 7 && st.det && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
+    check(st.hotels === 8 && /Xotelo/.test(st.hotelsText) && /AED [\d,]+ – [\d,]+/.test(st.hotelsText), `${name}: the Hotels section gives places, matches, prices, their range and freshness, DET and the partner panel`);
+    check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 8 && st.det && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
       `${name}: shows the totals (${st.contracts} contracts), what each source pulled (hotel sources too), what's in use, left out and waiting, and recent pulls`);
     check(/All fine|كل شيء/.test(st.overall) && /No open alerts|لا تنبيهات/.test(st.alerts), `${name}: says all is fine when the last pull worked and no alert is open`);
     check(!st.sideways, `${name}: no sideways scrolling`);
@@ -585,6 +585,37 @@ try {
     const card = await page.evaluate(() => document.querySelector('.leaflet-popup-content').textContent);
     check(/Average AED [\d,]+ a night/.test(card) && /Lowest price on booking sites/.test(card), "a priced hotel's card gives its average and its range");
     check(!errors.length, `hotel prices: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await ctx.close();
+  }
+  // Holiday homes (Xotelo, data/holiday_homes.json): their own view, priced on the blue scale, with their own dots and cards.
+  if (await readFile(join(ROOT, 'data/holiday_homes.json')).then(() => true).catch(() => false)) {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    const today = new Date().toISOString().slice(0, 10);
+    const src = JSON.parse(await readFile(join(ROOT, 'data/holiday_homes.json'), 'utf8'));
+    src.homes = src.homes.map(r => Object.assign([...r], { 7: today }));  // dated today, so none is hidden as old
+    await page.route(/data\/holiday_homes\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(src) }));
+    await page.goto(BASE + '?view=homes');
+    await page.waitForFunction(() => window.atlasState === 'ready' && HOMES && $('metric').value === 'homes', null, { timeout: 15000 }).catch(() => {});
+    await page.evaluate(() => draw());
+    await page.waitForTimeout(400);
+    const v = await page.evaluate(() => ({ btn: !!document.querySelector('.viewSw button[data-m="homes"]:not([hidden])'), pressed: document.querySelector('.viewSw button[data-m="homes"]')?.getAttribute('aria-pressed'),
+      dots: document.querySelectorAll('.hhdot').length, hotelDots: document.querySelectorAll('.hdot').length, n: HOMES.length,
+      labels: [...document.querySelectorAll('.rl b')].map(e => e.textContent), badges: [...document.querySelectorAll('.rl')].map(e => e.style.getPropertyValue('--c')),
+      kind: document.getElementById('dialKind').textContent, legend: document.getElementById('legend').textContent,
+      area: [...homesBy().keys()][0] }));
+    check(v.btn && v.pressed === 'true' && v.dots === v.n && v.hotelDots === 0 && v.labels.length && v.labels.every(t => /AED/.test(t)) && v.badges.every(c => /--b[1-6]/.test(c)) && /Median a night/.test(v.kind) && /Typical holiday home price/.test(v.legend),
+      `holiday homes: their own view (${v.n} places, own dots, no hotel dots), prices on the blue key, the dial and legend say so`);
+    const sec = await page.evaluate(a => { const d = document.createElement('div'); d.innerHTML = homeSection(byLabel(a)); return d.textContent; }, v.area);
+    check(/Typical holiday home price AED [\d,]+ a night/.test(sec) && /holiday homes? with a price/.test(sec), `an area's card gives its typical holiday home price (${v.area})`);
+    await page.evaluate(() => openHome(HOMES[0]));
+    await page.waitForTimeout(300);
+    const card = await page.evaluate(() => { const c = document.querySelector('.leaflet-popup-content'); return { text: c.textContent, ta: !!c.querySelector('a[href^="https://www.tripadvisor."]') }; });
+    check(/Serviced apartment or holiday home/.test(card.text) && /Average AED [\d,]+ a night/.test(card.text) && card.ta, "a holiday home's card gives its kind, rating, price and a Tripadvisor link");
+    check(!errors.length, `holiday homes: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await axe(page, 'holiday homes view with a card open');
     await ctx.close();
   }
   // Backup source in use (Dubai Data stuck): the warning sign says so.

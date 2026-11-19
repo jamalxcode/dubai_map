@@ -104,7 +104,9 @@ def fetch_list(get=None):
             lat, lng = g.get("latitude"), g.get("longitude")
             if h.get("key") and h.get("name") and isinstance(lat, (int, float)) and isinstance(lng, (int, float)) \
                     and BBOX[0] <= lat <= BBOX[2] and BBOX[1] <= lng <= BBOX[3]:
-                theirs.append({"id": h["key"], "name": h["name"], "lat": lat, "lng": lng})
+                rs = h.get("review_summary") or {}
+                theirs.append({"id": h["key"], "name": h["name"], "lat": lat, "lng": lng, "type": h.get("accommodation_type") or "",
+                               "url": h.get("url") or "", "rating": rs.get("rating"), "reviews": rs.get("count")})
         if len(rows) < 100:
             break
         offset += 100

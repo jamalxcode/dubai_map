@@ -18,6 +18,7 @@ __pycache__/
 /data/hotels.json
 /data/hotel_stats.json
 /data/hotel_prices.json
+/data/holiday_homes.json
 /data/changes.json
 /data/history/
 /data/runs.jsonl

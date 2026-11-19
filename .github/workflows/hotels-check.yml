@@ -6,7 +6,7 @@ name: Check the hotel collectors
 on:
   push:
     branches-ignore: [data]
-    paths: [collector/hotels.py, collector/hotel_stats.py, collector/hotel_prices.py, .github/workflows/hotels-check.yml]
+    paths: [collector/hotels.py, collector/hotel_stats.py, collector/hotel_prices.py, collector/holiday_homes.py, .github/workflows/hotels-check.yml]
   workflow_dispatch:
 
 permissions:
@@ -36,6 +36,7 @@ jobs:
         run: |
           mkdir -p data && echo '{}' > data/state.json
           [ -f hotels.json ] && python3 collector/hotel_prices.py --hotels hotels.json --out hotel_prices.json --budget 15 || true
+          python3 collector/holiday_homes.py --out holiday_homes.json --hotel-prices hotel_prices.json --budget 10 || true
       - name: What came back (for the log)
         if: always()
         run: |
@@ -56,4 +57,9 @@ jobs:
               print(p["matched"], "places matched on Xotelo;", len(p["hotels"]), "priced, e.g.", p["hotels"][:3])
           else:
               print("no hotel_prices.json (Xotelo not reachable)")
+          if os.path.exists("holiday_homes.json"):
+              h = json.load(open("holiday_homes.json"))
+              print(h["listed"], "holiday homes listed;", len(h["homes"]), "priced, e.g.", [r[:7] for r in h["homes"][:3]])
+          else:
+              print("no holiday_homes.json (Xotelo not reachable)")
           PY

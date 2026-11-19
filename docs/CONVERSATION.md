@@ -377,6 +377,18 @@ Done (decisions, sixty-fourth pass): a Hotels section on the status page and fou
 
 Answered: no. Travelpayouts closed its hotel price API (Hotellook) on 20 Oct 2025; it now gives widgets and commission only. Hotel prices stay with Xotelo; a Travelpayouts widget would add live prices for a visitor's own dates inside a hotel's card.
 
+### 19 Nov · "remove, check again, anything else needs deletion?" → "done, check again"
+
+Checked twice: after the owner's clean-up only `main`, `data` and `rera-check` remain (open item 4 done). The status page no longer counts `rera-check` as an old branch.
+
+### 19 Nov · "i need more hotel pricing data, what can we do?"
+
+Offered: add Xotelo's own Dubai places, keep a hotel price history, price more nights, better matching, DET with the Dubai Pulse key. Recommended the first two.
+
+### 19 Nov · "add these as their own tab" (of Xotelo's condominiums: holiday homes and serviced apartments)
+
+Built (decisions, sixty-fifth pass): a Holiday homes view with its own collector, dots, cards and area breakdowns, priced like hotels; 256 places (those not already shown as hotels), about 50 priced a pull. Still offered, not asked for yet: the rest of Xotelo's hotels as places, a hotel price history, more nights per hotel.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

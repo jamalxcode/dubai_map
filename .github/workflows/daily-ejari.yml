@@ -111,6 +111,10 @@ jobs:
         continue-on-error: true  # a failure keeps the last prices (shown up to 10 days) and the state says why
         timeout-minutes: 15
         run: python3 collector/hotel_prices.py
+      - name: "Holiday homes and serviced apartments (Xotelo, free, no key; about 50 a pull, priced like hotels)"
+        continue-on-error: true  # a failure keeps the last prices (shown up to 10 days) and the state says why
+        timeout-minutes: 10
+        run: python3 collector/holiday_homes.py
       - name: "Cross-check: dubairealestatedata.com and continentalclub.ae rent pages (at most once a day)"
         continue-on-error: true  # a check, never a reason to stop the build
         run: python3 collector/fetch_crosscheck.py

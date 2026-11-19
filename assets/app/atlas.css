@@ -562,10 +562,11 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 
 /* Hotels view (atlas.js drawHotels, hotelLegend): hotels as small paper dots ringed in gold leaf; the key says what
    is counted and carries the official average room rate when there is one. */
-.hdot{cursor:pointer}
+.hdot,.hhdot{cursor:pointer}
 .legend .hkey{display:flex;align-items:center;gap:8px;font-size:12px;margin:4px 0}
 .legend .hkey i{flex:none;width:10px;height:10px;border-radius:50%;border:1.5px solid var(--oxblood);background:var(--gold)}
 :root[data-theme="dark"] .legend .hkey i{border-color:var(--ivory)}
+.legend .hkey.home i{border-color:var(--gold);background:var(--espresso)}:root[data-theme="dark"] .legend .hkey.home i{border-color:var(--ivory)}
 .legend .hstat{margin:6px 0 2px;padding:6px 8px;border-inline-start:3px solid var(--gold);background:var(--panel);border-radius:4px;font-size:12.5px}
 .legend .hstat b{display:block;font-weight:700}.legend .hstat span{color:var(--muted)}
 .leaflet-popup-content .hot,.areaSheet .hot{margin:8px 0 4px;padding-inline-start:8px;border-inline-start:3px solid var(--gold)}

@@ -35,7 +35,7 @@
   const SOURCE_NAMES = {
     datadubai: 'Dubai Data', 'crosscheck:ccp': 'Continental Club Property', 'crosscheck:dred': 'Dubai Real Estate Data',
     pulse: 'Dubai Pulse API', dld: 'DLD open-data service',
-    hotel_stats: "Dubai's hotel room rates (DET)", hotel_prices: 'Hotel prices (Xotelo)'
+    hotel_stats: "Dubai's hotel room rates (DET)", hotel_prices: 'Hotel prices (Xotelo)', holiday_homes: 'Holiday homes (Xotelo)'
   };
   const STATE_TEXT = {
     ok: T('working'), failed: T('failing'), no_key: T('waiting for the API key'), off: T("off (waiting for DLD's permission)"),
@@ -62,6 +62,7 @@
           : p.live === 'off' ? T('live pages off') : T('checked recently; not asked again yet');
       return live + (p.export_files_updated ? ' · ' + T('{n} export files updated', { n: p.export_files_updated }) : '') + (p.through ? ' · ' + T('data to {d}', { d: day(p.through) }) : '');
     }
+    if (key === 'holiday_homes') return p.priced != null ? T('{n} of {m} priced', { n: fmt(p.priced), m: fmt(p.listed) }) : '—';
     if (key === 'hotel_prices') return p.priced != null ? T('{n} hotels priced', { n: fmt(p.priced) }) : '—';
     if (key === 'hotel_stats') return p.latest ? T('monthly figures to {m}', { m: p.latest }) : '—';
     if (key === 'pulse') return p.rows != null ? T('{rows} rows ({a} new, {u} updated)', { rows: fmt(p.rows), a: fmt(p.added), u: fmt(p.updated) }) : '—';
@@ -75,7 +76,7 @@
       : T('{when}: data to {d}, {n} areas.', { when: kuwait(last.at), d: day(last.through), n: fmt(last.areas) });
     const pulled = (last && last.pulled) || {};
     const states = (last && last.sources) || {};
-    const keys = ['datadubai', 'crosscheck:ccp', 'crosscheck:dred', 'pulse', 'dld', 'hotel_stats', 'hotel_prices'];
+    const keys = ['datadubai', 'crosscheck:ccp', 'crosscheck:dred', 'pulse', 'dld', 'hotel_stats', 'hotel_prices', 'holiday_homes'];
     const s = state || {};
     const stateOf = k => states[k] || (k.startsWith('crosscheck:') ? ((s.crosscheck || {})[k.slice(11)] || {}).state : (s[k] || {}).state);
     $('pulled').innerHTML = keys.map(k => '<tr><td>' + esc(T(SOURCE_NAMES[k])) + '</td><td>' + esc(pulledText(k, pulled[k])) + '</td><td>' + stateCell(stateOf(k)) + '</td></tr>').join('');
@@ -182,6 +183,11 @@
       if (ho.nPlaces >= 500 && ho.matched != null && ho.matched < 300)
         add(T('Only {n} places to stay were found on Xotelo', { n: fmt(ho.matched) }), T('Usually 500 or more match; Xotelo\'s list may have shrunk or changed its names or format.'),
           T("Read the pull's Hotel prices step for the list size; if Xotelo changed, the collector needs updating."), 'https://xotelo.com');
+      if (ho.homesState === 'failed') add(T('Holiday home prices are failing'), ho.homesStatus || '',
+        T("Xotelo may be down or may have changed; the last good prices stay up to 10 days, then the Holiday homes view disappears. If it stays down, ask for another price source."), 'https://xotelo.com');
+      else if (ho.homesAge != null && ho.homesAge > 48)
+        add(T('Holiday home prices have not refreshed for {n} hours', { n: Math.floor(ho.homesAge) }), T('Each pull should price about 50 holiday homes; prices older than 10 days disappear from the map.'),
+          T('Check that the pull is running and read its "Holiday homes" step.'), 'https://github.com/' + REPO + '/actions/workflows/daily-ejari.yml');
       if (ho.matched && ho.tried >= ho.matched && ho.priced < ho.matched * 0.25)
         add(T('Few hotels have a price ({n} of {m})', { n: fmt(ho.priced), m: fmt(ho.matched) }), T('Every matched hotel has been asked, but most came back without rooms.'),
           T('Xotelo may be returning empty rates; check a hotel on xotelo.com. If it persists, ask for another price source.'), 'https://xotelo.com');
@@ -216,8 +222,10 @@
   // Hotels: places from OpenStreetMap (weekly), prices from Xotelo (every pull, about 100 hotels), DET's official
   // rate (Dubai Pulse) and the partner widget. Returns the figures "Needs you" checks.
   const HOURS = iso => iso ? (Date.now() - new Date(iso)) / 36e5 : null;
-  function hotels(places, prices, state) {
-    const s = state || {}, hp = s.hotel_prices || {}, hs = s.hotel_stats || {};
+  function hotels(places, prices, state, homes) {
+    const s = state || {}, hp = s.hotel_prices || {}, hs = s.hotel_stats || {}, hh = s.holiday_homes || {};
+    const hRows = homes && homes.homes ? homes.homes.filter(r => !r[7] || Date.now() - new Date(r[7] + 'T00:00:00Z') <= ((homes.keep_days || 10) + 1) * 864e5) : [];
+    const hTried = homes && homes.tried ? Object.keys(homes.tried).length : null;
     const nPlaces = places && places.hotels ? places.hotels.length : null;
     const isX = prices && /xotelo/i.test(prices.source || '');
     const keep = ((prices && prices.keep_days) || 10) * 864e5;
@@ -234,17 +242,18 @@
       [T('With a current price'), fmt(rows.length) + pc(rows.length, matched), tried != null ? T('{a} of {m} asked so far; {b} had no rooms listed', { a: fmt(tried), m: fmt(matched), b: fmt(Math.max(0, tried - rows.length)) }) : ''],
       [T('Nightly prices'), vals.length ? 'AED ' + fmt(vals[0]) + ' – ' + fmt(vals[vals.length - 1]) : '—', med ? T('median AED {m} a night', { m: fmt(med) }) : ''],
       [T('Prices last updated'), kuwait(hp.last_ok_at), oldest ? T('oldest price checked {d}', { d: day(oldest) }) : ''],
+      [T('Holiday homes with a price'), fmt(hRows.length) + pc(hRows.length, homes && homes.listed), homes && homes.listed ? T('{a} of {m} asked so far', { a: fmt(hTried), m: fmt(homes.listed) }) + ' · ' + T('serviced apartments and holiday homes in Xotelo\'s list, not shown as hotels') : ''],
       [T("Dubai's official room rate (DET)"), hs.state === 'ok' ? T('to {m}', { m: hs.latest || '—' }) : hs.state === 'no_key' ? T('waiting') : STATE_TEXT[hs.state] || T('not run yet'), hs.state === 'no_key' ? T('waiting for the Dubai Pulse key') : ''],
       [T("Booking partner's price panel"), widget ? T('on') : T('not set up'), widget ? (window.PRICE_WIDGET.partner || '') : T('see "Needs you"')]
     ];
     $('hotels').innerHTML = items.map(([k, v, sub]) => '<div><dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>' + (sub ? '<dd class="sub muted">' + esc(sub) + '</dd>' : '') + '</div>').join('');
     $('hotelsNote').textContent = T('Each pull prices about 100 hotels on two nights two to three weeks ahead (lowest believable offer on booking sites, one room, 2 adults); prices older than 10 days are hidden. State: {s}.', { s: STATE_TEXT[hp.state] || hp.status || T('not run yet') });
-    return { nPlaces, placesAge: places && places.fetched ? HOURS(places.fetched + 'T00:00:00Z') : null, matched, tried, priced: rows.length, pricesAge: HOURS(hp.last_ok_at), state: hp.state };
+    return { homesState: hh.state, homesStatus: hh.status, homesAge: HOURS(hh.last_ok_at), nPlaces, placesAge: places && places.fetched ? HOURS(places.fetched + 'T00:00:00Z') : null, matched, tried, priced: rows.length, pricesAge: HOURS(hp.last_ok_at), state: hp.state };
   }
 
   async function main() {
-    const [st, state, meta, runsText, places, prices, gh, issues, branches] = await Promise.all([
-      data('status.json'), data('state.json'), data('meta.json'), data('runs.jsonl', true), data('hotels.json'), data('hotel_prices.json'),
+    const [st, state, meta, runsText, places, prices, homes, gh, issues, branches] = await Promise.all([
+      data('status.json'), data('state.json'), data('meta.json'), data('runs.jsonl', true), data('hotels.json'), data('hotel_prices.json'), data('holiday_homes.json'),
       get(API + 'actions/workflows/daily-ejari.yml/runs?per_page=12').then(j => j.workflow_runs).catch(() => null),
       get(API + 'issues?state=open&labels=data-alert&per_page=50').catch(() => null),
       get(API + 'branches?per_page=100').catch(() => null)
@@ -255,7 +264,7 @@
     used(st);
     leftOut(st);
     pending(st, state || (meta && meta.state));
-    const ho = hotels(places, prices, state);
+    const ho = hotels(places, prices, state, homes);
     const runs = recentRuns(gh, log);
     pubHours(state);
     const nNeeds = needs(st, state || (meta && meta.state), issues, runs, branches, ho);
