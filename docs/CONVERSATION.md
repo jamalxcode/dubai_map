@@ -407,6 +407,10 @@ Recorded: the live results of passes sixty-three to sixty-six, these requests, a
 
 Done (decisions, sixty-seventh pass): two phone bugs (view bar over the zoom buttons, lists past the sheet), the side panel following the view (nightly budget, nightly figures, prices-by-area table), solid and hollow hotel dots, thin areas under 3 places, full-figure labels, a folded legend, cheapest-first lists, cross-links between the two views, hotel ratings, readable dates and the nights priced.
 
+### 19 Nov · a list of free hotel price sources → "get access to these free sources for dubai, for pulling 3 times a day" → "build it now, merge on main"
+
+Checked each (decisions, sixty-eighth pass): only SerpApi (Google Hotels, 250 free searches a month) is usable for three pulls a day; Best Time To Book blocks automated requests, Inside Airbnb has no Dubai data, the others are one-off trials or too small. Built the SerpApi collector; it switches on when the owner adds the `SERPAPI_KEY` secret (open item 5e).
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
@@ -417,5 +421,6 @@ Done (decisions, sixty-seventh pass): two phone bugs (view bar over the zoom but
 5a. **Street View inside the breakdown** (option 3): needs the owner's Google Maps Embed API key (free, billing enabled, restricted to the site's address).
 5b. ~~Hotel prices~~: done on 19 Nov with Xotelo (free, no key); LiteAPI rejected by the owner (its live key needs a payment card that bookings could be charged to). DET's official, city-wide hotel figures still arrive with the Dubai Pulse key (item 1).
 5c. **Night prices** (owner): per-hotel and holiday home prices now come from Xotelo (passes sixty-three and sixty-five). Still open: (a) a booking partner's widget for live prices on a visitor's own dates: join Travelpayouts or Booking.com's programme (via Awin or CJ), create a Dubai hotel widget and send its code (it goes in `assets/app/partners.js`); Travelpayouts gives no price data, only widgets (its Hotellook API closed on 20 Oct 2025); (b) DET's official rate appears with the Dubai Pulse key (item 1).
+5e. **SerpApi key** (owner): sign up at serpapi.com on the Free plan, copy the API key (serpapi.com/manage-api-key) and add it as the repository secret `SERPAPI_KEY`; Google Hotels prices then start with the next pull. The status page asks for it under "Needs you" until then.
 5d. **Hotel pricing ideas offered, not asked for yet:** add the rest of Xotelo's Dubai hotels (not just those matching OpenStreetMap) as places; price more nights per hotel (weekday and weekend, up to two months ahead); looser matching for renamed or Arabic-named hotels.
 6. Expansion to other cities in the region (new source adapter per registry).

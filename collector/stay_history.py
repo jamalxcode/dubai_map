@@ -1,8 +1,8 @@
 """Our own hotel and holiday home price history: data/stay_history.json, one snapshot a day, never deleted.
 
 Xotelo only ever gives today's prices, so without this the site can't say whether a night in an area is getting
-dearer. After each pull's build, every place with a current price (hotel_prices.json, holiday_homes.json: prices
-checked in the last 10 days) is put in its area by the same rule as the page (Transit.assign in transit.js: the
+dearer. After each pull's build, every place with a current price (hotel_prices.json, holiday_homes.json and serp_stays.json:
+prices checked in the last 10 days) is put in its area by the same rule as the page (Transit.assign in transit.js: the
 official outline that holds it, else the nearest area point within 1.5 km), and each area's median price a night
 is saved with how many places it rests on, plus the median for all of Dubai. One entry per day: a later pull the
 same day replaces that day's entry. Days are never removed (as with the rent history, it is the only record).
@@ -112,8 +112,9 @@ def main(today=None):
         return 0
     area_of = assigner(areas, outlines)
     day = {"d": today.isoformat()}
+    serp = load("serp_stays.json") or {}  # Google Hotels via SerpApi: hotels Xotelo hasn't priced, and extra rentals
     for kind, name, key in (("hotels", "hotel_prices.json", "hotels"), ("homes", "holiday_homes.json", "homes")):
-        s = summarise((load(name) or {}).get(key), area_of, today)
+        s = summarise(((load(name) or {}).get(key) or []) + (serp.get(key) or []), area_of, today)
         if s:
             day[kind] = s
     if len(day) == 1:

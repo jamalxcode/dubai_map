@@ -115,6 +115,12 @@ jobs:
         continue-on-error: true  # a failure keeps the last prices (shown up to 10 days) and the state says why
         timeout-minutes: 10
         run: python3 collector/holiday_homes.py
+      - name: "Google Hotels prices via SerpApi (free plan: two searches a pull, at most 240 a month; needs SERPAPI_KEY)"
+        continue-on-error: true  # without the key the state says so; a failure keeps the last prices
+        timeout-minutes: 5
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+        run: python3 collector/serp_stays.py
       - name: "Cross-check: dubairealestatedata.com and continentalclub.ae rent pages (at most once a day)"
         continue-on-error: true  # a check, never a reason to stop the build
         run: python3 collector/fetch_crosscheck.py

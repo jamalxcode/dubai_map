@@ -491,7 +491,7 @@ try {
       try {
         let body = await readFile(join(ROOT, 'data', f));
         // Hotel prices last refreshed 3 days ago: "Needs you" must say so.
-        if (f === 'state.json') { const j = JSON.parse(body); j.hotel_prices = { state: 'ok', status: 'ok', last_ok_at: new Date(Date.now() - 72 * 36e5).toISOString(), listed: 2625, matched: 527, list_at: new Date().toISOString() }; body = JSON.stringify(j); }
+        if (f === 'state.json') { const j = JSON.parse(body); j.serp_stays = { state: 'no_key', status: 'no credentials' }; j.hotel_prices = { state: 'ok', status: 'ok', last_ok_at: new Date(Date.now() - 72 * 36e5).toISOString(), listed: 2625, matched: 527, list_at: new Date().toISOString() }; body = JSON.stringify(j); }
         await r.fulfill({ body, contentType: f.endsWith('.json') ? 'application/json' : 'text/plain' }); }
       catch { await r.fulfill({ status: 404, body: 'not found' }); }
     });
@@ -510,10 +510,10 @@ try {
       needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), hotels: document.querySelectorAll('#hotels div').length, hotelsText: document.getElementById('hotels').textContent, needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
     // Unresolved issues a person can fix come first, each with what to do (here: the Dubai Pulse key, an old branch).
     // No LiteAPI key is the owner's choice (18 Nov), so it is not asked for.
-    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && !st.needs.some(t => /rera-check/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.some(t => /Hotel prices have not refreshed|لم تُحدَّث أسعار الفنادق/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
+    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && !st.needs.some(t => /rera-check/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.some(t => /Hotel prices have not refreshed|لم تُحدَّث أسعار الفنادق/.test(t)) && st.needs.some(t => /SerpApi/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
       `${name}: "Needs you" comes first and lists what a person can fix, with what to do, stale hotel prices included (${st.needs.length})`);
-    check(st.hotels === 8 && /Xotelo/.test(st.hotelsText) && /AED [\d,]+ – [\d,]+/.test(st.hotelsText), `${name}: the Hotels section gives places, matches, prices, their range and freshness, DET and the partner panel`);
-    check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 8 && st.det && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
+    check(st.hotels === 9 && /Xotelo/.test(st.hotelsText) && /AED [\d,]+ – [\d,]+/.test(st.hotelsText), `${name}: the Hotels section gives places, matches, prices, their range and freshness, DET and the partner panel`);
+    check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 9 && st.det && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
       `${name}: shows the totals (${st.contracts} contracts), what each source pulled (hotel sources too), what's in use, left out and waiting, and recent pulls`);
     check(/All fine|كل شيء/.test(st.overall) && /No open alerts|لا تنبيهات/.test(st.alerts), `${name}: says all is fine when the last pull worked and no alert is open`);
     check(!st.sideways, `${name}: no sideways scrolling`);
@@ -572,8 +572,11 @@ try {
     const histDays = Array.from({ length: 35 }, (_, i) => ({ d: new Date(Date.now() - (34 - i) * 864e5).toISOString().slice(0, 10), v: 300 + i }));
     await page.route(/data\/stay_history\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ days: histDays.map(x => ({ d: x.d,
       hotels: { all: [x.v, 50], areas: new Proxy({}, {}) } })) }) }));
+    // Google Hotels via SerpApi: a hotel Xotelo hasn't priced (index 1), and one vacation rental for the Holiday homes view.
+    await page.route(/data\/serp_stays\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ fetched: today, keep_days: 10,
+      hotels: [[hs[1][0], hs[1][4], hs[1][5], 444, 1, 444, 444, today, 4.6, 80, 4]], homes: [['Google Rental Test', 25.0805, 55.1405, 777, 1, 777, 777, today, 4.8, 12, 'https://example.com/listing', 'g:test']] }) }));
     await page.goto(BASE + '?view=hotels');
-    await page.waitForFunction(() => window.atlasState === 'ready' && HOTEL_PRICES && HOTELS && hotelPriced(), null, { timeout: 15000 }).catch(() => {});
+    await page.waitForFunction(() => window.atlasState === 'ready' && HOTEL_PRICES && SERP && HOTELS && hotelPriced(), null, { timeout: 15000 }).catch(() => {});
     await page.evaluate(() => draw());
     await page.waitForTimeout(400);
     const v = await page.evaluate(() => {
@@ -589,7 +592,7 @@ try {
       const box = document.createElement('div'); box.innerHTML = hotelSection(byLabel(a)); return { text: box.textContent, svg: !!box.querySelector('.trend svg.chart') }; }, v.area);
     check(tr.svg && /Typical hotel price a night, \d{1,2} \w{3} to \d{1,2} \w{3}/.test(tr.text) && /\+\d+% since \d{1,2} \w{3}/.test(tr.text),
       `an area's card draws its hotel price history and the change over four weeks (${(tr.text.match(/[+-]\d+% since \d{1,2} \w{3}/) || [''])[0]})`);
-    await page.evaluate(() => openHotel(HOTELS.find(h => h.price)));
+    await page.evaluate(() => openHotel(HOTELS.find(h => h.src === 'xotelo')));
     await page.waitForTimeout(300);
     const card = await page.evaluate(() => document.querySelector('.leaflet-popup-content').textContent);
     check(/Average AED [\d,]+ a night/.test(card) && /Lowest price on booking sites/.test(card) && /Nights? of \d{1,2} \w{3}/.test(card), "a priced hotel's card gives its average, its range and the nights priced");
@@ -606,6 +609,13 @@ try {
       $('metric').value = 'hotels'; $('metric').dispatchEvent(new Event('change')); const back = $('max').value; $('max').value = ''; draw(); return { all, n, ok, note, rentMax, home, back, lim }; });
     check(bud.n > 0 && bud.n < bud.all && bud.ok && /a night/.test(bud.note) && bud.rentMax === '' && bud.home && bud.back === bud.lim,
       `the nightly budget keeps ${bud.n} of ${bud.all} areas (typical AED ${bud.lim} a night or less); the rent view keeps its own budget and its home picker`);
+    await page.waitForFunction(() => HOMES && HOMES.some(x => x.src === 'google'), null, { timeout: 8000 }).catch(() => {});
+    await page.evaluate(() => { map.closePopup(); openHotel(HOTELS[1]); });
+    await page.waitForTimeout(400);
+    const gg = await page.evaluate(() => { const h = HOTELS[1], t = [...document.querySelectorAll('.leaflet-popup-content')].map(e => e.textContent).join(' ');
+      const r = (HOMES || []).find(x => x.src === 'google'); return { src: h.src, price: h.price, card: t, rental: !!r }; });
+    check(gg.src === 'google' && gg.price === 444 && /Google Hotels, via SerpApi/.test(gg.card) && /Lowest rate on Google Hotels/.test(gg.card) && gg.rental,
+      `Google Hotels (SerpApi) fills a hotel Xotelo has no price for, says so on its card, and adds its vacation rentals to Holiday homes (${gg.src}, ${gg.price}, rental ${gg.rental})`);
     check(!errors.length, `hotel prices: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await ctx.close();
   }

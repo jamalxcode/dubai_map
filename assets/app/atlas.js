@@ -461,15 +461,19 @@ window.startCompare=startCompare;
 // prices, so not on the blue scale). The key carries Dubai's official monthly average room rate and occupancy
 // (DET via Dubai Pulse, collector/hotel_stats.py) when that file exists. Nightly prices are not shown: booking
 // sites' prices are theirs; each hotel links out to look them up. With data/hotel_prices.json (Xotelo), prices show.
-let HOTELS=null,HOTEL_STATS=null,HOTEL_BY=null,HOTEL_PRICES=null;const hotelLayer=L.layerGroup();
+let HOTELS=null,HOTEL_STATS=null,HOTEL_BY=null,HOTEL_PRICES=null,SERP=null;
+// Google Hotels prices through SerpApi (collector/serp_stays.py, data/serp_stays.json): used for hotels Xotelo hasn't
+// priced and as extra holiday homes (Google's vacation rentals). Each place says which source its price is from.
+const freshRow=(r,days)=>r&&r[3]&&(!r[7]||Date.now()-new Date(r[7]+'T00:00:00Z')<=((days||10)+1)*864e5);const hotelLayer=L.layerGroup();
 // Nightly prices (Xotelo, data/hotel_prices.json): each hotel's average over sample nights; an area's figure is the
 // median of its hotels' averages. Without that file the view counts places (oxblood badges); with it, prices (blue).
 const hotelPriced=()=>!!(HOTELS&&HOTELS.some(h=>h.price));
 // A price checked more than keep_days ago (10) is not shown: it is no longer a current price.
 function attachPrices(){if(!HOTELS)return;const keep=((HOTEL_PRICES&&HOTEL_PRICES.keep_days)||10)*864e5,fresh=r=>!r[7]||Date.now()-new Date(r[7]+'T00:00:00Z')<=keep+864e5;
   const m=new Map(((HOTEL_PRICES&&HOTEL_PRICES.hotels)||[]).filter(fresh).map(r=>[r[0]+'|'+r[1]+'|'+r[2],r]));
-  const info=(HOTEL_PRICES&&HOTEL_PRICES.info)||{};
-  HOTELS.forEach(h=>{const k=h.name+'|'+h.lat+'|'+h.lng,r=m.get(k),t=info[k]||[];h.rating=t[0];h.reviews=t[1];h.url=t[2];h.price=r?r[3]:null;h.priceN=r?r[4]:0;h.priceLo=r?r[5]:null;h.priceHi=r?r[6]:null;h.priceAt=r?r[7]||HOTEL_PRICES.fetched:null});HOTEL_BY=null}
+  const info=(HOTEL_PRICES&&HOTEL_PRICES.info)||{},sg=new Map(((SERP&&SERP.hotels)||[]).filter(r=>freshRow(r,SERP.keep_days)).map(r=>[r[0]+'|'+r[1]+'|'+r[2],r]));
+  HOTELS.forEach(h=>{const k=h.name+'|'+h.lat+'|'+h.lng,x=m.get(k),g=x?null:sg.get(k),r=x||g,t=info[k]||[];
+    h.src=x?'xotelo':g?'google':null;h.rating=t[0]||(g&&g[8]);h.reviews=t[1]||(g&&g[9]);h.url=t[2];h.price=r?r[3]:null;h.priceN=r?r[4]:0;h.priceLo=r?r[5]:null;h.priceHi=r?r[6]:null;h.priceAt=r?r[7]||(HOTEL_PRICES||SERP).fetched:null});HOTEL_BY=null}
 const HOTEL_KIND={hotel:'Hotel',apartments:'Hotel apartments',hostel:'Hostel',guest:'Guest house'};
 const hotelName=h=>T.lang==='ar'&&h.name_ar?h.name_ar:h.name;
 function loadHotels(){
@@ -480,6 +484,7 @@ function loadHotels(){
     syncViews();if(sel.value==='hotels')draw()}).catch(()=>{});
   getJSON('data/hotel_stats.json').then(d=>{HOTEL_STATS=d&&d.latest?d:null;if($('metric').value==='hotels')draw()}).catch(()=>{});
   getJSON('data/hotel_prices.json').then(d=>{if(!d||!(d.hotels||[]).length)return;HOTEL_PRICES=d;attachPrices();if($('metric').value==='hotels')draw()}).catch(()=>{});
+  getJSON('data/serp_stays.json').then(d=>{if(!d||!(d.hotels||[]).length)return;SERP=d;attachPrices();if($('metric').value==='hotels')draw()}).catch(()=>{});
 }
 // Which area each hotel is in (official outline, else the nearest area point within 1.5 km); once per data and outlines.
 function hotelsBy(){if(!HOTEL_BY&&HOTELS){HOTEL_BY=new Map();const lab=Transit.assign(HOTELS,AREAS.filter(a=>a.lat!=null),outlinesByLabel());
@@ -524,17 +529,18 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-pw]');if(!
 // prices, Dubai's official average room rate (DET) for the latest month, so the card still gives a sense of a night.
 function hotelPrice(h){
   const st=HOTEL_STATS&&HOTEL_STATS.latest;
-  if(!HOTEL_PRICES)return st&&st.adr?'<p class="muted">'+T("Dubai's average room rate in {month}: AED {adr} a night (all hotels, DET).",{month:safe(monthName(st.month)),adr:fmt(Math.round(st.adr))})+'</p>':'';
+  if(!HOTEL_PRICES&&!SERP)return st&&st.adr?'<p class="muted">'+T("Dubai's average room rate in {month}: AED {adr} a night (all hotels, DET).",{month:safe(monthName(st.month)),adr:fmt(Math.round(st.adr))})+'</p>':'';
   if(!h.price)return '<p class="muted">'+T('No price from booking sites for this place yet (not every place is listed on them).')+'</p>';
-  return stayPrice(h,'room')}
+  return stayPrice(h,'room')+(h.src==='google'?'<p class="muted tnote">'+T('Price: Google Hotels, via SerpApi.')+'</p>':'')}
 // A priced place's lines (hotel or holiday home): its average a night, the nights priced (14 and 19 days after the
 // check: hotel_prices.NIGHTS_AHEAD) and their range. Dates as the rest of the page writes them.
 const dayShort=d=>d?new Date(d+'T00:00:00+04:00').toLocaleDateString(T.locale,{day:'numeric',month:'short',timeZone:'Asia/Dubai'}):'';
 const addDays=(d,n)=>new Date(new Date(d+'T00:00:00Z').getTime()+n*864e5).toISOString().slice(0,10);
 function stayPrice(h,unit){
-  const at=h.priceAt,nights=at?T('{a} and {b}',{a:dayShort(addDays(at,14)),b:dayShort(addDays(at,19))}):'';
-  return '<p class="lead">'+T('Average {aed} a night',{aed:'<b>AED '+fmt(h.price)+'</b>'})+'</p><p class="muted">'+
-    (unit==='unit'?T('Lowest price on booking sites for one unit, 2 adults',{}):T('Lowest price on booking sites for one room, 2 adults',{}))+'. '+
+  const at=h.priceAt,g=h.src==='google',nights=at?(g?dayShort(addDays(at,14)):T('{a} and {b}',{a:dayShort(addDays(at,14)),b:dayShort(addDays(at,19))})):'';
+  return '<p class="lead">'+(g?T('{aed} a night',{aed:'<b>AED '+fmt(h.price)+'</b>'}):T('Average {aed} a night',{aed:'<b>AED '+fmt(h.price)+'</b>'}))+'</p><p class="muted">'+
+    (g?(unit==='unit'?T('Lowest rate on Google Hotels for one unit, 2 adults',{}):T('Lowest rate on Google Hotels for one room, 2 adults',{}))
+      :unit==='unit'?T('Lowest price on booking sites for one unit, 2 adults',{}):T('Lowest price on booking sites for one room, 2 adults',{}))+'. '+
     (h.priceN>1?T('Nights of {nights}: AED {lo} to {hi}.',{nights:safe(nights),lo:fmt(h.priceLo),hi:fmt(h.priceHi)}):T('Night of {nights}.',{nights:safe(nights)}))+' '+
     T('Checked {d}.',{d:safe(at?niceDate(at):'')})+'</p>'}
 // A Tripadvisor rating, only from 5 reviews up (one or two reviews say little).
@@ -553,7 +559,8 @@ function hotelNotes(){
     (st&&st.adr?'<div class="hstat"><b>'+T('Official average room rate: AED {adr} a night',{adr:fmt(Math.round(st.adr))})+'</b><span>'+T('{month}, all of Dubai',{month:safe(mon)})+(st.occupancy!=null?' · '+T('{occ}% of rooms taken',{occ:Math.round(st.occupancy)}):'')+'</span></div>':'')+
     (np&&STAY_HIST?stayTrend('hotels',null,true):'')+
     '<details class="aboutP"><summary>'+T('About these prices')+'</summary>'+
-    (np?'<div class="note">'+T('The lowest price on booking sites for one room, 2 adults, a night, averaged over two sample nights two to three weeks ahead; an area shows the median of its hotels, dashed when fewer than 3 have a price. Updated {d}.',{d:safe(niceDate(HOTEL_PRICES.fetched))})+'</div>':'')+
+    (np?'<div class="note">'+T('The lowest price on booking sites for one room, 2 adults, a night, averaged over two sample nights two to three weeks ahead; an area shows the median of its hotels, dashed when fewer than 3 have a price. Updated {d}.',{d:safe(niceDate((HOTEL_PRICES||SERP).fetched))})+'</div>':'')+
+    (SERP&&HOTELS&&HOTELS.some(h=>h.src==='google')?'<div class="note">'+T('Where booking sites via Xotelo give no price, Google Hotels (via SerpApi) fills in: one night two weeks ahead.')+'</div>':'')+
     (np&&STAY_HIST?stayTrend('hotels',null,false,true):'')+
     '<div class="note">'+(np?T('Hotels: © OpenStreetMap contributors. Prices: booking sites, via Xotelo (TripAdvisor). Tap a hotel for its price and links.'):T('Hotels: © OpenStreetMap contributors. Nightly prices are on booking sites; tap a hotel for links.'))+'</div></details>';
 }
@@ -564,12 +571,13 @@ let HOMES=null,HOME_BY=null,HOMES_DATA=null;const homeLayer=L.layerGroup();
 const STAY=m=>m==='hotels'||m==='homes'; // the places-to-stay views: a nightly budget, any home size
 const STAY_THIN=3; // an area's typical price from fewer priced places is drawn dashed and left out of the dial's ends
 const stayPriced=m=>m==='homes'?!!HOMES:hotelPriced();
-function loadHomes(){getJSON('data/holiday_homes.json').then(d=>{const keep=((d&&d.keep_days)||10)*864e5;
-  const rows=((d&&d.homes)||[]).filter(r=>r[3]&&(!r[7]||Date.now()-new Date(r[7]+'T00:00:00Z')<=keep+864e5));if(!rows.length)return;HOMES_DATA=d;
-  HOMES=rows.map((r,i)=>({i,name:r[0],lat:r[1],lng:r[2],price:r[3],priceN:r[4],priceLo:r[5],priceHi:r[6],priceAt:r[7],rating:r[8],reviews:r[9],url:r[10]}));HOME_BY=null;
+function loadHomes(){Promise.all([getJSON('data/holiday_homes.json').catch(()=>null),getJSON('data/serp_stays.json').catch(()=>null)]).then(([d,g])=>{
+  const rows=((d&&d.homes)||[]).filter(r=>freshRow(r,d.keep_days)).map(r=>[r,'xotelo']).concat(((g&&g.homes)||[]).filter(r=>freshRow(r,g.keep_days)).map(r=>[r,'google']));
+  if(!rows.length)return;HOMES_DATA=d||g;
+  HOMES=rows.map(([r,src],i)=>({i,src,name:r[0],lat:r[1],lng:r[2],price:r[3],priceN:r[4],priceLo:r[5],priceHi:r[6],priceAt:r[7],rating:r[8],reviews:r[9],url:r[10]}));HOME_BY=null;
   const sel=$('metric');if(![...sel.options].some(o=>o.value==='homes')){const o=document.createElement('option');o.value='homes';o.textContent=T('Holiday homes');sel.append(o)}
   if(new URLSearchParams(location.search).get('view')==='homes')sel.value='homes';
-  syncViews();if(sel.value==='homes')draw()}).catch(()=>{})}
+  syncViews();if(sel.value==='homes')draw()})}
 function homesBy(){if(!HOME_BY&&HOMES){HOME_BY=new Map();const lab=Transit.assign(HOMES,AREAS.filter(a=>a.lat!=null),outlinesByLabel());
   HOMES.forEach((h,i)=>{h.area=lab[i];if(!lab[i])return;const g=HOME_BY.get(lab[i])||{n:0,list:[],prices:[]};g.n++;g.list.push(h);g.prices.push(h.price);HOME_BY.set(lab[i],g)});
   HOME_BY.forEach(g=>{g.typical=Math.round(median(g.prices))})}return HOME_BY}
@@ -580,13 +588,14 @@ function drawHomes(){homeLayer.clearLayers();if(!HOMES||$('metric').value!=='hom
   homeLayer.addTo(map)}
 const safeUrl=u=>/^https:\/\/(www\.)?tripadvisor\.[a-z.]+\//.test(u||'')?u:'';
 function openHome(h){
-  const q=encodeURIComponent(h.name+' Dubai'),area=h.area?byLabel(h.area):null,ta=safeUrl(h.url);
+  const q=encodeURIComponent(h.name+' Dubai'),area=h.area?byLabel(h.area):null,g=h.src==='google',ta=g?'':safeUrl(h.url),lst=g&&/^https:\/\//.test(h.url||'')?h.url:'';
   const html='<span class="t">'+safe(h.name)+'</span>'+
     '<p>'+T('Serviced apartment or holiday home')+ratingText(h)+(area?' · '+safe(T.place(area.label)):'')+'</p>'+stayPrice(h,'unit')+
     '<p class="see hlinks"><a href="https://www.google.com/maps/search/?api=1&query='+q+'" target="_blank" rel="noopener">'+T('Google Maps')+'</a>'+
     (ta?'<span class="sep" aria-hidden="true">·</span><a href="'+safe(ta)+'" target="_blank" rel="noopener">'+T('Prices on Tripadvisor')+'</a>':'')+
+    (lst?'<span class="sep" aria-hidden="true">·</span><a href="'+safe(lst)+'" target="_blank" rel="noopener nofollow">'+T('The listing')+'</a>':'')+
     '<span class="sep" aria-hidden="true">·</span><a href="https://www.booking.com/searchresults.html?ss='+q+'" target="_blank" rel="noopener">'+T('Prices on Booking.com')+'</a></p>'+
-    '<p class="muted tnote">'+T('Place and prices: booking sites, via Xotelo (TripAdvisor). Prices are set by the booking site, not this page.')+'</p>';
+    '<p class="muted tnote">'+(g?T('Place and price: Google Hotels vacation rentals, via SerpApi. Prices are set by the listing site, not this page.'):T('Place and prices: booking sites, via Xotelo (TripAdvisor). Prices are set by the booking site, not this page.'))+'</p>';
   clearFocus();L.popup({maxWidth:300}).setLatLng([h.lat,h.lng]).setContent(html).openOn(map);countUse('home');
 }
 function homeSection(a){
@@ -611,7 +620,8 @@ function homeNotes(){
     '<details class="aboutP"><summary>'+T('About these prices')+'</summary>'+
     '<div class="note">'+T('The lowest price on booking sites for one unit, 2 adults, a night, averaged over two sample nights two to three weeks ahead; an area shows the median of its places, dashed when fewer than 3 have a price. Updated {d}.',{d:safe(HOMES_DATA?niceDate(HOMES_DATA.fetched):'')})+'</div>'+
     (STAY_HIST?stayTrend('homes',null,false,true):'')+
-    '<div class="note">'+T('Places and prices: booking sites, via Xotelo (TripAdvisor). Places shown as hotels are not repeated here.')+'</div></details>'}
+    '<div class="note">'+T('Places and prices: booking sites, via Xotelo (TripAdvisor). Places shown as hotels are not repeated here.')+'</div>'+
+    (HOMES&&HOMES.some(h=>h.src==='google')?'<div class="note">'+T('Also Google Hotels vacation rentals (via SerpApi): one night two weeks ahead.')+'</div>':'')+'</details>'}
 // Our own price history for places to stay (collector/stay_history.py, data/stay_history.json): each area's median
 // price a night, one snapshot a day. Loaded the first time a places-to-stay view is drawn.
 let STAY_HIST=null,stayHistAsked=false;
@@ -914,12 +924,12 @@ function hotelSection(a){
   const sub=h=>[h.kind!=='hotel'?T(HOTEL_KIND[h.kind]||'Hotel'):'',h.rating&&h.reviews>=MIN_REVIEWS?T('rated {r} of 5',{r:h.rating}):''].filter(Boolean).join(' · '); // "Hotel" on every row said nothing
   const row=h=>'<tr><td><button type="button" class="hrow" data-h="'+h.i+'">'+safe(hotelName(h))+'</button>'+(sub(h)?'<small>'+sub(h)+'</small>':'')+'</td>'+
     (stars?'<td class="st">'+(h.stars?'<span aria-label="'+safe(T('{n} stars',{n:h.stars}))+'">'+'★'.repeat(Math.round(h.stars))+'</span>':'')+'</td>':'')+
-    (HOTEL_PRICES?'<td class="r">'+(h.price?fmt(h.price):'—')+'</td>':'')+'</tr>';
+    (hotelPriced()?'<td class="r">'+(h.price?fmt(h.price):'—')+'</td>':'')+'</tr>';
   return '<div class="hsec"><p class="lead">'+(x.typical?T('Typical hotel price {aed} a night',{aed:'<b>AED '+fmt(x.typical)+'</b>'})+'<br>':'')+
       (x.prices.length>1?T('From AED {lo} to {hi} a night',{lo:fmt(Math.min(...x.prices)),hi:fmt(Math.max(...x.prices))})+'<br>':'')+
       (x.n===1?T('1 place to stay'):T('{n} places to stay',{n:fmt(x.n)}))+(x.typical?T(', {k} with a price',{k:x.prices.length}):'')+'</p>'+(x.typical?stayTrend('hotels',a.label):'')+
-    (HOTEL_PRICES?'':'<p class="muted">'+T('Nightly prices are on booking sites: each place links to them.')+'</p>')+
-    '<table class="htab"><tr><th>'+T('Place')+'</th>'+(stars?'<th class="st">'+T('Stars')+'</th>':'')+(HOTEL_PRICES?'<th>'+T('AED a night')+'</th>':'')+'</tr>'+
+    (hotelPriced()?'':'<p class="muted">'+T('Nightly prices are on booking sites: each place links to them.')+'</p>')+
+    '<table class="htab"><tr><th>'+T('Place')+'</th>'+(stars?'<th class="st">'+T('Stars')+'</th>':'')+(hotelPriced()?'<th>'+T('AED a night')+'</th>':'')+'</tr>'+
       list.slice(0,HOTEL_ROWS).map(row).join('')+'</table>'+
     (list.length>HOTEL_ROWS?'<p class="muted">'+T('and {n} more: zoom in to see them on the map.',{n:list.length-HOTEL_ROWS})+'</p>':'')+
     crossStay(a,'hotels')+

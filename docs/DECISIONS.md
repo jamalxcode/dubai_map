@@ -682,6 +682,22 @@ Asked: "critique the user interface, especially hotels and holiday homes", then 
 - **Cards:** lists run cheapest first, priced before unpriced; "Hotel" no longer repeats under each name (only other kinds and ratings); each view's area card points to the other ("Holiday homes here: typically AED 1,036 a night · Show holiday homes"); hotels carry Tripadvisor ratings too (`hotel_prices.json` `info`); dates read as elsewhere ("19 Nov 2026"); a place's card names the nights priced ("Nights of 3 Dec and 8 Dec"); on phones the prices lead the sheet, photos and Google links below. The dial's caption is shorter ("Hotels in view · 48 areas · ends: cheapest and dearest area").
 - **Checked:** browser checks for the panel (no home picker or rent check, nightly figures, the prices table cheapest first), the nightly budget (keeps 36 of 72 areas at the median; the rent view keeps its own budget), the view bar clear of the zoom buttons and the sheet list fitting at 320 and 375 px, the nights on a card, the hollow rings rule; all suites pass.
 
+## Decision on 2026-11-19 (sixty-eighth pass): free price sources checked; Google Hotels through SerpApi
+
+The owner sent a list of free sources and asked to get access to them for three pulls a day. Each was checked (three of their sites had to be allowed in the session's network first):
+- **SerpApi (Google Hotels): usable**: free plan 250 searches a month, 50 an hour. Built (`collector/serp_stays.py`), waiting for the owner's key (`SERPAPI_KEY` secret).
+- **Best Time To Book: not usable**: its site and API answer every automated request with a browser checkpoint (HTTP 429); getting past it would be a workaround the project rules out.
+- **Inside Airbnb: no Dubai**: its download page covers about 37 countries, none in the UAE or the Gulf (nearest: Istanbul). CC BY 4.0, if Dubai ever appears.
+- **SearchApi (100 requests in all), StayAPI (50 on signup), FlightPowers (10 a month): too few** for three pulls a day. **AirDNA:** market averages behind an account, no free API, its site may not be copied.
+- **OpenStreetMap, Dubai Data, Dubai Municipality:** already used.
+
+The SerpApi collector, built to switch on by itself when the key is added:
+- **Budget:** two searches a pull (hotels, then vacation rentals), one night two weeks ahead, 2 adults, AED; counted per calendar month in `state.json` and stopped at 240 (a margin under 250); at most every 6 hours, so duplicate triggers cost nothing. Three pulls a day use about 186 a month. The place searched rotates through 24 areas, so the month covers the city instead of repeating "Dubai".
+- **Use:** Google's hotels are matched to our places (the Xotelo matching rules) and used only where Xotelo has no current price; Google's vacation rentals join the Holiday homes view unless one of Xotelo's holiday homes is the same place. Prices before taxes and fees where given, as Xotelo's. Prices older than 10 days dropped; failures keep the last file. The price history counts them like the others.
+- **Page:** a Google-priced card says "Lowest rate on Google Hotels … Night of 3 Dec" and "Price: Google Hotels, via SerpApi"; a Google rental links to its listing; the legends say where Google fills in.
+- **Status page:** a source row, a Hotels figure (searches used of 240, priced counts), and "Needs you": "Add the SerpApi key" with the steps until it is set, then if it fails.
+- **Checked:** Python tests with a fake SerpApi (no key, two searches in AED two weeks ahead, Xotelo first, rentals not twice, the monthly cap and a new month, six hours apart, a rejected key keeps the file); browser checks (a Google-priced hotel and its card, a Google rental in Holiday homes, the key asked for in "Needs you").
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

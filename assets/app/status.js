@@ -35,7 +35,7 @@
   const SOURCE_NAMES = {
     datadubai: 'Dubai Data', 'crosscheck:ccp': 'Continental Club Property', 'crosscheck:dred': 'Dubai Real Estate Data',
     pulse: 'Dubai Pulse API', dld: 'DLD open-data service',
-    hotel_stats: "Dubai's hotel room rates (DET)", hotel_prices: 'Hotel prices (Xotelo)', holiday_homes: 'Holiday homes (Xotelo)'
+    hotel_stats: "Dubai's hotel room rates (DET)", hotel_prices: 'Hotel prices (Xotelo)', holiday_homes: 'Holiday homes (Xotelo)', serp_stays: 'Google Hotels (SerpApi)'
   };
   const STATE_TEXT = {
     ok: T('working'), failed: T('failing'), no_key: T('waiting for the API key'), off: T("off (waiting for DLD's permission)"),
@@ -62,6 +62,7 @@
           : p.live === 'off' ? T('live pages off') : T('checked recently; not asked again yet');
       return live + (p.export_files_updated ? ' · ' + T('{n} export files updated', { n: p.export_files_updated }) : '') + (p.through ? ' · ' + T('data to {d}', { d: day(p.through) }) : '');
     }
+    if (key === 'serp_stays') return p.used != null ? T('{h} hotels and {r} rentals priced · {u} of {m} free searches used this month', { h: fmt(p.hotels), r: fmt(p.homes), u: fmt(p.used), m: 240 }) : '—';
     if (key === 'holiday_homes') return p.priced != null ? T('{n} of {m} priced', { n: fmt(p.priced), m: fmt(p.listed) }) : '—';
     if (key === 'hotel_prices') return p.priced != null ? T('{n} hotels priced', { n: fmt(p.priced) }) : '—';
     if (key === 'hotel_stats') return p.latest ? T('monthly figures to {m}', { m: p.latest }) : '—';
@@ -76,7 +77,7 @@
       : T('{when}: data to {d}, {n} areas.', { when: kuwait(last.at), d: day(last.through), n: fmt(last.areas) });
     const pulled = (last && last.pulled) || {};
     const states = (last && last.sources) || {};
-    const keys = ['datadubai', 'crosscheck:ccp', 'crosscheck:dred', 'pulse', 'dld', 'hotel_stats', 'hotel_prices', 'holiday_homes'];
+    const keys = ['datadubai', 'crosscheck:ccp', 'crosscheck:dred', 'pulse', 'dld', 'hotel_stats', 'hotel_prices', 'holiday_homes', 'serp_stays'];
     const s = state || {};
     const stateOf = k => states[k] || (k.startsWith('crosscheck:') ? ((s.crosscheck || {})[k.slice(11)] || {}).state : (s[k] || {}).state);
     $('pulled').innerHTML = keys.map(k => '<tr><td>' + esc(T(SOURCE_NAMES[k])) + '</td><td>' + esc(pulledText(k, pulled[k])) + '</td><td>' + stateCell(stateOf(k)) + '</td></tr>').join('');
@@ -172,6 +173,11 @@
     // Hotel prices come from Xotelo (free, no key; the owner's choice, 19 Nov). Only a failure needs a person.
     if (hp.state === 'failed') add(T('Hotel prices are failing'), hp.status || '',
       T("Xotelo may be down or may have changed; the last good prices stay up to 10 days, then the Hotels view counts places again. If it stays down, ask for another price source."), 'https://xotelo.com');
+    // Google Hotels via SerpApi (the owner's choice, 19 Nov): asked for until its key is a repository secret.
+    const sp = s.serp_stays || {};
+    if (sp.state === 'no_key') add(T('Add the SerpApi key'), T('It switches on Google Hotels prices: hotels Xotelo has no price for, and vacation rentals in the Holiday homes view (free plan, 250 searches a month).'),
+      T('Sign up at serpapi.com on the Free plan, copy the API key from serpapi.com/manage-api-key, and add it as the repository secret SERPAPI_KEY (Settings, Secrets and variables, Actions). Prices appear after the next pull.'), 'https://serpapi.com/manage-api-key');
+    else if (sp.state === 'failed') add(T('Google Hotels prices are failing'), sp.status || '', T('Check the SERPAPI_KEY secret and the account\'s searches left on serpapi.com; the last good prices stay up to 10 days.'), 'https://serpapi.com/dashboard');
     // Hotel pull checks (thresholds in docs/BUSINESS_RULES.md, "Status page"): each needs a person to look.
     if (ho) {
       if (ho.placesAge != null && ho.placesAge > 15 * 24)
@@ -227,7 +233,7 @@
   const HOURS = iso => iso ? (Date.now() - new Date(iso)) / 36e5 : null;
   function hotels(places, prices, state, homes, hist) {
     const hd = (hist && hist.days) || [], hLast = hd.length ? hd[hd.length - 1].d : null;
-    const s = state || {}, hp = s.hotel_prices || {}, hs = s.hotel_stats || {}, hh = s.holiday_homes || {};
+    const s = state || {}, hp = s.hotel_prices || {}, hs = s.hotel_stats || {}, hh = s.holiday_homes || {}, sp = s.serp_stays || {};
     const hRows = homes && homes.homes ? homes.homes.filter(r => !r[7] || Date.now() - new Date(r[7] + 'T00:00:00Z') <= ((homes.keep_days || 10) + 1) * 864e5) : [];
     const hTried = homes && homes.tried ? Object.keys(homes.tried).length : null;
     const nPlaces = places && places.hotels ? places.hotels.length : null;
@@ -247,6 +253,8 @@
       [T('Nightly prices'), vals.length ? 'AED ' + fmt(vals[0]) + ' – ' + fmt(vals[vals.length - 1]) : '—', med ? T('median AED {m} a night', { m: fmt(med) }) : ''],
       [T('Prices last updated'), kuwait(hp.last_ok_at), oldest ? T('oldest price checked {d}', { d: day(oldest) }) : ''],
       [T('Holiday homes with a price'), fmt(hRows.length) + pc(hRows.length, homes && homes.listed), homes && homes.listed ? T('{a} of {m} asked so far', { a: fmt(hTried), m: fmt(homes.listed) }) + ' · ' + T('serviced apartments and holiday homes in Xotelo\'s list, not shown as hotels') : ''],
+      [T('Google Hotels (SerpApi)'), sp.state === 'no_key' ? T('waiting') : sp.used != null ? T('{u} of {m} searches', { u: fmt(sp.used), m: 240 }) : STATE_TEXT[sp.state] || T('not run yet'),
+        sp.state === 'no_key' ? T('waiting for the SERPAPI_KEY secret') : sp.used != null ? T('this month · {h} hotels and {r} rentals priced', { h: fmt(sp.hotels || 0), r: fmt(sp.homes || 0) }) : ''],
       [T("Dubai's official room rate (DET)"), hs.state === 'ok' ? T('to {m}', { m: hs.latest || '—' }) : hs.state === 'no_key' ? T('waiting') : STATE_TEXT[hs.state] || T('not run yet'), hs.state === 'no_key' ? T('waiting for the Dubai Pulse key') : ''],
       [T("Booking partner's price panel"), widget ? T('on') : T('not set up'), widget ? (window.PRICE_WIDGET.partner || '') : T('see "Needs you"')]
     ];

@@ -41,13 +41,14 @@ def pulled(state):
     dd = (st.get("datadubai") or {}).get("last_pull") or {}
     cc = st.get("crosscheck") or {}
     p = st.get("pulse") or {}
-    hs, hp, hh = st.get("hotel_stats") or {}, st.get("hotel_prices") or {}, st.get("holiday_homes") or {}
+    hs, hp, hh, sp = st.get("hotel_stats") or {}, st.get("hotel_prices") or {}, st.get("holiday_homes") or {}, st.get("serp_stays") or {}
     return {"datadubai": {k: dd.get(k) for k in ("live", "pages", "export_files_updated", "through") if dd.get(k) is not None},
             **{"crosscheck:" + k: {"rows": (v or {}).get("rows"), "through": (v or {}).get("through")} for k, v in cc.items()},
             "pulse": {k: p.get(k) for k in ("rows", "added", "updated") if p.get(k) is not None},
             "hotel_stats": {k: hs.get(k) for k in ("latest", "last_ok_at") if hs.get(k)},
             "hotel_prices": {k: hp.get(k) for k in ("priced", "hotels", "last_ok_at") if hp.get(k) is not None},
-            "holiday_homes": {k: hh.get(k) for k in ("priced", "listed", "last_ok_at") if hh.get(k) is not None}}
+            "holiday_homes": {k: hh.get(k) for k in ("priced", "listed", "last_ok_at") if hh.get(k) is not None},
+            "serp_stays": {k: sp.get(k) for k in ("hotels", "homes", "used", "month") if sp.get(k) is not None}}
 
 
 def append(path, line, keep=KEEP):
