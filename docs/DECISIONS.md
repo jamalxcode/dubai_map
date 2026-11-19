@@ -620,6 +620,8 @@ The owner wants night prices showing but skipped LiteAPI (it needs a card). Of f
 - **DET:** the Hotels view's dial shows Dubai's official average room rate for the latest month, between the lowest and highest month of the past year, and each hotel's card gives that rate; it switches on by itself when the Dubai Pulse key brings `hotel_stats.json`.
 Also fixed "1 places to stay" (now "1 place to stay"). Browser checks use stand-ins for DET's file and a partner.
 
+Merged and deployed on 18 Nov (Tests passed; 180 browser checks). The owner was given the sign-up steps for an affiliate widget (Booking.com's, Expedia Group's or Travelpayouts' programme; create a hotel widget; send its code). The code takes a widget link; if the partner gives a script snippet instead, the card will be adapted to load that snippet on tap the same way.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

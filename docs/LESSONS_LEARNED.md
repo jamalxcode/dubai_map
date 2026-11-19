@@ -85,6 +85,7 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **A test can encode a request the owner later reverses.** The collaborator's status-page check expected the LiteAPI key under "Needs you"; after the owner skipped it, that check had to flip, not be deleted. *Rule:* when the owner changes course, update the tests that captured the old intent so they guard the new one.
 - **Third-party widgets: load on request.** A partner's price panel brings its scripts and maybe cookies. *Rule:* nothing from a partner loads until the visitor taps for it, inside a sandboxed frame, and the page never stores the partner's prices.
 - **Project-wide test rules catch new code too.** The tile-referrer rule failed on a new iframe's referrer policy. *Rule:* run the whole suite after adding any network-facing element, not just the new checks.
+- **Partner widgets come in different shapes.** Some programmes give an https link or iframe, others a script snippet. *Rule:* build the slot around "load on tap, sandboxed, never stored", and adapt it to the code the owner actually brings rather than guessing the format in advance.
 
 ## Accessibility
 
