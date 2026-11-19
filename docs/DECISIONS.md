@@ -656,6 +656,15 @@ Asked, of Xotelo's 325 "condominiums": "add these as their own tab". Xotelo file
 - **Status page:** an eighth source row and an eighth Hotels figure (priced of listed, asked so far); "Needs you" when it fails or hasn't refreshed for 48 hours. The hotel check workflow prices 10 from GitHub's network.
 - **Checked:** Python tests with a fake Xotelo (kinds kept, duplicates and hotels left out, rows, rotation, old prices dropped, failures keep the file, a short list refused); a live trial (11 of 15 priced, e.g. RODA Amwaj Suites about AED 420 a night); browser checks (the view, its dots and no hotel dots, blue labels, dial and key, the area card, a home's card with its Tripadvisor link, accessibility).
 
+## Decision on 2026-11-19 (sixty-sixth pass): hotel and holiday home price history
+
+Asked: "add the hotel price history too". Xotelo only gives today's prices, so the site keeps its own record, as it does for rents.
+- **Collector** (`collector/stay_history.py`, after the build): each area's median price a night and how many places it rests on, plus Dubai's median, for hotels and holiday homes, one entry a day in `stay_history.json`, never deleted. Areas are assigned with the page's own rule, ported to Python (checked: all 120 priced hotels land in the same area as on the page). Prices refresh on a rolling basis, so a day's figure is a smoothed median of the last few days, which suits a trend; a single night's price would swing with weekends and events.
+- **Page:** an area's hotel or holiday home breakdown draws the series (from 3 days) and, once there are four weeks, the change since a day at least 28 days earlier, only when both days rest on 3 or more places, so one hotel coming or going can't make a trend. The legend carries Dubai's line. The file loads only when a places-to-stay view is drawn.
+- **Status page:** the Hotels note says how many days of history there are; "Needs you" when no day was added for 48 hours (a missing day can't be filled in later).
+- **First day:** 19 Nov, hotels 120 places (median AED 317) in 40 areas, holiday homes 20 (median AED 423) in 12.
+- **Checked:** Python tests (the page's area rule, outlines of unplaced areas ignored, old prices left out, one entry a day, days kept when nothing is priced); browser check with 35 days of stand-in history (chart and "+9% since").
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

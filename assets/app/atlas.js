@@ -526,6 +526,7 @@ function hotelNotes(){
   return '<div class="hkey"><i aria-hidden="true"></i>'+T('{n} hotels, hotel apartments, hostels and guest houses',{n:fmt(HOTELS?HOTELS.length:0)})+'</div>'+
     (st&&st.adr?'<div class="hstat"><b>'+T('Official average room rate: AED {adr} a night',{adr:fmt(Math.round(st.adr))})+'</b><span>'+T('{month}, all of Dubai',{month:safe(mon)})+(st.occupancy!=null?' · '+T('{occ}% of rooms taken',{occ:Math.round(st.occupancy)}):'')+'</span></div>'
       :'<div class="note">'+T("Dubai's official average room rate (DET) shows here once Dubai Pulse access is granted.")+'</div>')+
+    (np&&STAY_HIST?stayTrend('hotels',null):'')+
     (np?'<div class="note">'+T('Prices: {n} places, the lowest price on booking sites for one room, 2 adults, a night, averaged over sample nights two to three weeks ahead; an area shows the median of its hotels. Updated {d}.',{n:fmt(np),d:safe(HOTEL_PRICES.fetched)})+'</div>':'')+
     '<div class="note">'+(np?T('Hotels: © OpenStreetMap contributors. Prices: booking sites, via Xotelo (TripAdvisor). Tap a hotel for its price and links.'):T('Hotels: © OpenStreetMap contributors. Nightly prices are on booking sites; tap a hotel for links.'))+'</div>';
 }
@@ -566,15 +567,30 @@ function homeSection(a){
   const list=[...x.list].sort((p,q)=>q.price-p.price||p.name.localeCompare(q.name));
   return '<p class="lead">'+T('Typical holiday home price {aed} a night',{aed:'<b>AED '+fmt(x.typical)+'</b>'})+'<br>'+
       (x.prices.length>1?T('From AED {lo} to {hi} a night',{lo:fmt(Math.min(...x.prices)),hi:fmt(Math.max(...x.prices))})+'<br>':'')+
-      (x.n===1?T('1 holiday home with a price'):T('{n} holiday homes with a price',{n:fmt(x.n)}))+'</p>'+
+      (x.n===1?T('1 holiday home with a price'):T('{n} holiday homes with a price',{n:fmt(x.n)}))+'</p>'+stayTrend('homes',a.label)+
     '<table class="htab"><tr><th>'+T('Place')+'</th><th>'+T('AED a night')+'</th></tr>'+
       list.slice(0,HOTEL_ROWS).map(h=>'<tr><td><button type="button" class="hrow" data-hh="'+h.i+'">'+safe(h.name)+'</button>'+(h.rating?'<small>'+T('rated {r} of 5',{r:h.rating})+'</small>':'')+'</td><td>'+fmt(h.price)+'</td></tr>').join('')+'</table>'+
     (list.length>HOTEL_ROWS?'<p class="muted">'+T('and {n} more: zoom in to see them on the map.',{n:list.length-HOTEL_ROWS})+'</p>':'');
 }
 function homeNotes(){
-  return '<div class="hkey home"><i aria-hidden="true"></i>'+T('{n} holiday homes and serviced apartments with a price',{n:fmt(HOMES?HOMES.length:0)})+'</div>'+
+  return '<div class="hkey home"><i aria-hidden="true"></i>'+T('{n} holiday homes and serviced apartments with a price',{n:fmt(HOMES?HOMES.length:0)})+'</div>'+(STAY_HIST?stayTrend('homes',null):'')+
     '<div class="note">'+T('The lowest price on booking sites for one unit, 2 adults, a night, averaged over sample nights two to three weeks ahead; an area shows the median of its places. Updated {d}.',{d:safe(HOMES_DATA&&HOMES_DATA.fetched)})+'</div>'+
     '<div class="note">'+T('Places and prices: booking sites, via Xotelo (TripAdvisor). Places shown as hotels are not repeated here.')+'</div>'}
+// Our own price history for places to stay (collector/stay_history.py, data/stay_history.json): each area's median
+// price a night, one snapshot a day. Loaded the first time a places-to-stay view is drawn.
+let STAY_HIST=null,stayHistAsked=false;
+function loadStayHist(){if(stayHistAsked)return;stayHistAsked=true;
+  getJSON('data/stay_history.json').then(d=>{if(!d||!(d.days||[]).length)return;STAY_HIST=d;if(STAY($('metric').value))draw()}).catch(()=>{})}
+const TREND_DAYS=28,TREND_MIN=3; // a change is shown against a day at least 4 weeks earlier, from at least 3 places on both days
+function stayTrend(kind,label){
+  const days=(STAY_HIST&&STAY_HIST.days)||[],pts=days.map(d=>{const x=d[kind]&&(label?d[kind].areas[label]:d[kind].all);return x?{m:d.d,v:x[0],n:x[1]}:null}).filter(Boolean);
+  if(!pts.length)return '';
+  const what=kind==='homes'?T('Typical holiday home price a night'):T('Typical hotel price a night');
+  if(pts.length<3)return '<p class="muted trendNote"><small>'+T('Price history kept since {d}: a trend line appears after a few days.',{d:safe(days[0].d)})+'</small></p>';
+  const last=pts.at(-1),cut=new Date(new Date(last.m)-TREND_DAYS*864e5).toISOString().slice(0,10),base=[...pts].reverse().find(p=>p.m<=cut);
+  const chg=base&&base.n>=TREND_MIN&&last.n>=TREND_MIN?Math.round((last.v-base.v)/base.v*100):null;
+  return '<div class="trend"><small>'+T('{what}, {a} to {b}',{what,a:pts[0].m,b:last.m})+(chg!=null?' · <b class="'+(chg>0?'up':chg<0?'down':'')+'">'+T('{sign}{v}% since {d}',{sign:chg>0?'+':'',v:chg,d:base.m})+'</b>':'')+'</small>'+
+    chart(pts,{label:what,stroke:'var(--gold-ink)'})+'</div>'}
 let POINTS=[],LABEL={},animateLabels=true;
 const pct=v=>Number(v).toFixed(1)+'%'; // yields: always one decimal
 const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
@@ -857,7 +873,7 @@ function hotelSection(a){
     (HOTEL_PRICES?'<td>'+(h.price?fmt(h.price):'—')+'</td>':'')+'</tr>';
   return '<p class="lead">'+(x.typical?T('Typical hotel price {aed} a night',{aed:'<b>AED '+fmt(x.typical)+'</b>'})+'<br>':'')+
       (x.prices.length>1?T('From AED {lo} to {hi} a night',{lo:fmt(Math.min(...x.prices)),hi:fmt(Math.max(...x.prices))})+'<br>':'')+
-      (x.n===1?T('1 place to stay'):T('{n} places to stay',{n:fmt(x.n)}))+(x.typical?T(', {k} with a price',{k:x.prices.length}):'')+'</p>'+
+      (x.n===1?T('1 place to stay'):T('{n} places to stay',{n:fmt(x.n)}))+(x.typical?T(', {k} with a price',{k:x.prices.length}):'')+'</p>'+(x.typical?stayTrend('hotels',a.label):'')+
     (HOTEL_PRICES?'':'<p class="muted">'+T('Nightly prices are on booking sites: each place links to them.')+'</p>')+
     '<table class="htab"><tr><th>'+T('Place')+'</th>'+(stars?'<th>'+T('Stars')+'</th>':'')+(HOTEL_PRICES?'<th>'+T('AED a night')+'</th>':'')+'</tr>'+
       list.slice(0,HOTEL_ROWS).map(row).join('')+'</table>'+
@@ -1152,6 +1168,7 @@ function draw(){
   // A change of home or view keeps a focused area in focus: its breakdown reopens with the new figures.
   const legendBox0=$('legend').hidden?'':$('legend').offsetWidth+'x'+$('legend').offsetHeight;
   const kept=FOCUS&&focusPopup?FOCUS:null;relabelKeep=!!kept;renderLabels();relabelKeep=false;if(kept){FOCUS=kept;drawFocus();openArea(kept)}
+  if(STAY(metric))loadStayHist();
   viewStat();drawOutlines();drawHotels();drawHomes();setTimeout(popupMargins,0);
   const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
   $('legend').hidden=!vals.length;

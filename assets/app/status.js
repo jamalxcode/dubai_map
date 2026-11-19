@@ -188,6 +188,9 @@
       else if (ho.homesAge != null && ho.homesAge > 48)
         add(T('Holiday home prices have not refreshed for {n} hours', { n: Math.floor(ho.homesAge) }), T('Each pull should price about 50 holiday homes; prices older than 10 days disappear from the map.'),
           T('Check that the pull is running and read its "Holiday homes" step.'), 'https://github.com/' + REPO + '/actions/workflows/daily-ejari.yml');
+      if (ho.histAge != null && ho.histAge > 48)
+        add(T('The hotel price history has not been updated for {n} days', { n: Math.floor(ho.histAge / 24) }), T('Each pull adds the day\'s prices; a missing day can\'t be filled in later.'),
+          T('Read the pull\'s "Hotel and holiday home price history" step and re-run the pull once it is fixed.'), 'https://github.com/' + REPO + '/actions/workflows/daily-ejari.yml');
       if (ho.matched && ho.tried >= ho.matched && ho.priced < ho.matched * 0.25)
         add(T('Few hotels have a price ({n} of {m})', { n: fmt(ho.priced), m: fmt(ho.matched) }), T('Every matched hotel has been asked, but most came back without rooms.'),
           T('Xotelo may be returning empty rates; check a hotel on xotelo.com. If it persists, ask for another price source.'), 'https://xotelo.com');
@@ -222,7 +225,8 @@
   // Hotels: places from OpenStreetMap (weekly), prices from Xotelo (every pull, about 100 hotels), DET's official
   // rate (Dubai Pulse) and the partner widget. Returns the figures "Needs you" checks.
   const HOURS = iso => iso ? (Date.now() - new Date(iso)) / 36e5 : null;
-  function hotels(places, prices, state, homes) {
+  function hotels(places, prices, state, homes, hist) {
+    const hd = (hist && hist.days) || [], hLast = hd.length ? hd[hd.length - 1].d : null;
     const s = state || {}, hp = s.hotel_prices || {}, hs = s.hotel_stats || {}, hh = s.holiday_homes || {};
     const hRows = homes && homes.homes ? homes.homes.filter(r => !r[7] || Date.now() - new Date(r[7] + 'T00:00:00Z') <= ((homes.keep_days || 10) + 1) * 864e5) : [];
     const hTried = homes && homes.tried ? Object.keys(homes.tried).length : null;
@@ -247,13 +251,14 @@
       [T("Booking partner's price panel"), widget ? T('on') : T('not set up'), widget ? (window.PRICE_WIDGET.partner || '') : T('see "Needs you"')]
     ];
     $('hotels').innerHTML = items.map(([k, v, sub]) => '<div><dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>' + (sub ? '<dd class="sub muted">' + esc(sub) + '</dd>' : '') + '</div>').join('');
-    $('hotelsNote').textContent = T('Each pull prices about 100 hotels on two nights two to three weeks ahead (lowest believable offer on booking sites, one room, 2 adults); prices older than 10 days are hidden. State: {s}.', { s: STATE_TEXT[hp.state] || hp.status || T('not run yet') });
-    return { homesState: hh.state, homesStatus: hh.status, homesAge: HOURS(hh.last_ok_at), nPlaces, placesAge: places && places.fetched ? HOURS(places.fetched + 'T00:00:00Z') : null, matched, tried, priced: rows.length, pricesAge: HOURS(hp.last_ok_at), state: hp.state };
+    $('hotelsNote').textContent = T('Each pull prices about 100 hotels on two nights two to three weeks ahead (lowest believable offer on booking sites, one room, 2 adults); prices older than 10 days are hidden. State: {s}.', { s: STATE_TEXT[hp.state] || hp.status || T('not run yet') }) +
+      ' ' + (hd.length ? T('Price history: {n} days, {a} to {b}.', { n: fmt(hd.length), a: day(hd[0].d), b: day(hLast) }) : T('Price history: not started yet.'));
+    return { histAge: hLast ? HOURS(hLast + 'T23:59:59+04:00') : null, homesState: hh.state, homesStatus: hh.status, homesAge: HOURS(hh.last_ok_at), nPlaces, placesAge: places && places.fetched ? HOURS(places.fetched + 'T00:00:00Z') : null, matched, tried, priced: rows.length, pricesAge: HOURS(hp.last_ok_at), state: hp.state };
   }
 
   async function main() {
-    const [st, state, meta, runsText, places, prices, homes, gh, issues, branches] = await Promise.all([
-      data('status.json'), data('state.json'), data('meta.json'), data('runs.jsonl', true), data('hotels.json'), data('hotel_prices.json'), data('holiday_homes.json'),
+    const [st, state, meta, runsText, places, prices, homes, hist, gh, issues, branches] = await Promise.all([
+      data('status.json'), data('state.json'), data('meta.json'), data('runs.jsonl', true), data('hotels.json'), data('hotel_prices.json'), data('holiday_homes.json'), data('stay_history.json'),
       get(API + 'actions/workflows/daily-ejari.yml/runs?per_page=12').then(j => j.workflow_runs).catch(() => null),
       get(API + 'issues?state=open&labels=data-alert&per_page=50').catch(() => null),
       get(API + 'branches?per_page=100').catch(() => null)
@@ -264,7 +269,7 @@
     used(st);
     leftOut(st);
     pending(st, state || (meta && meta.state));
-    const ho = hotels(places, prices, state, homes);
+    const ho = hotels(places, prices, state, homes, hist);
     const runs = recentRuns(gh, log);
     pubHours(state);
     const nNeeds = needs(st, state || (meta && meta.state), issues, runs, branches, ho);

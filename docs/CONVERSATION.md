@@ -389,6 +389,10 @@ Offered: add Xotelo's own Dubai places, keep a hotel price history, price more n
 
 Built (decisions, sixty-fifth pass): a Holiday homes view with its own collector, dots, cards and area breakdowns, priced like hotels; 256 places (those not already shown as hotels), about 50 priced a pull. Still offered, not asked for yet: the rest of Xotelo's hotels as places, a hotel price history, more nights per hotel.
 
+### 19 Nov · "add the hotel price history too"
+
+Built (decisions, sixty-sixth pass): a daily snapshot of each area's median hotel and holiday home price, never deleted, with a trend line in area cards and Dubai's line in the legend. Trend lines appear after 3 days and the four-week change after 28.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

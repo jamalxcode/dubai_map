@@ -126,6 +126,9 @@ jobs:
         env:
           ALLOW_SHRINK: ${{ inputs.allow_shrink && '1' || '0' }}
         run: python3 collector/build.py
+      - name: "Hotel and holiday home price history (each area's median a night, one snapshot a day, never deleted)"
+        continue-on-error: true  # a history gap is listed on the status page, never a reason to stop the build
+        run: python3 collector/stay_history.py
       - name: Check the data before publishing (stops the commit if it looks broken)
         run: python3 -m unittest discover -s tests -p "test_data.py" -v
       - name: Log this run (data/runs.jsonl, last 300) and when Dubai Data publishes

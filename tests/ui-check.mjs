@@ -567,6 +567,10 @@ try {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.route(/data\/hotel_prices\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ fetched: today, source: 'Xotelo test', currency: 'AED', keep_days: 10, hotels: rows }) }));
+    // 35 days of price history for every area: 300 rising to 334 (+10% over the last four weeks' comparison window).
+    const histDays = Array.from({ length: 35 }, (_, i) => ({ d: new Date(Date.now() - (34 - i) * 864e5).toISOString().slice(0, 10), v: 300 + i }));
+    await page.route(/data\/stay_history\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ days: histDays.map(x => ({ d: x.d,
+      hotels: { all: [x.v, 50], areas: new Proxy({}, {}) } })) }) }));
     await page.goto(BASE + '?view=hotels');
     await page.waitForFunction(() => window.atlasState === 'ready' && HOTEL_PRICES && HOTELS && hotelPriced(), null, { timeout: 15000 }).catch(() => {});
     await page.evaluate(() => draw());
@@ -580,6 +584,10 @@ try {
       `hotel prices: the dial shows the median a night between the lowest and highest area (${v.lo}–${v.hi}); labels are prices; a price older than 10 days is not shown`);
     const sec = await page.evaluate(a => { const d = document.createElement('div'); d.innerHTML = hotelSection(byLabel(a)); return d.textContent; }, v.area);
     check(/From AED [\d,]+ to [\d,]+ a night/.test(sec) && /Typical hotel price AED/.test(sec), `an area's card gives its typical hotel price and its range (${v.area})`);
+    const tr = await page.evaluate(a => { STAY_HIST.days.forEach((d, i) => { d.hotels.areas = { [a]: [d.hotels.all[0], 4] }; });
+      const box = document.createElement('div'); box.innerHTML = hotelSection(byLabel(a)); return { text: box.textContent, svg: !!box.querySelector('.trend svg.chart') }; }, v.area);
+    check(tr.svg && /Typical hotel price a night, \d{4}-\d\d-\d\d to \d{4}-\d\d-\d\d/.test(tr.text) && /\+\d+% since \d{4}-\d\d-\d\d/.test(tr.text),
+      `an area's card draws its hotel price history and the change over four weeks (${(tr.text.match(/[+-]\d+% since \d{4}-\d\d-\d\d/) || [''])[0]})`);
     await page.evaluate(() => openHotel(HOTELS.find(h => h.price)));
     await page.waitForTimeout(300);
     const card = await page.evaluate(() => document.querySelector('.leaflet-popup-content').textContent);
