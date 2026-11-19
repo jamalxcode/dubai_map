@@ -193,7 +193,9 @@
         T('Add DUBAI_PULSE_KEY and DUBAI_PULSE_SECRET as repository secrets.'), 'https://data.dubai');
     if ((s.dld || {}).state === 'off')
       add(T("Ask DLD for written permission"), T("DLD's own open-data service stays off without it."), T('If DLD agrees in writing, set the repository variable DLD_ENABLED=1.'));
-    const stale = (branches || []).filter(b => !['main', 'data'].includes(b.name) && !/^gh-pages$/.test(b.name));
+    // Branches kept on purpose (docs/CONVERSATION.md, open item 4): the site, the published data, and work parked by the owner.
+    const KEEP = ['main', 'data', 'gh-pages', 'rera-check'];
+    const stale = (branches || []).filter(b => !KEEP.includes(b.name));
     if (stale.length) add(T('Delete {n} old branches', { n: stale.length }), stale.map(b => b.name).join(', '),
       T('Coding sessions may not delete branches: delete them under the repository\'s Branches page if they are no longer needed.'), 'https://github.com/' + REPO + '/branches/all');
     $('needs').innerHTML = out.length ? out.map(n => '<li><b>' + esc(n.title) + '</b>' + (n.why ? '<br><span class="muted">' + esc(n.why) + '</span>' : '') +

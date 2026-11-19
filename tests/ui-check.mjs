@@ -498,7 +498,7 @@ try {
       { run_started_at: '2026-11-17T18:00:00Z', created_at: '2026-11-17T18:00:00Z', updated_at: '2026-11-17T18:01:10Z', event: 'workflow_dispatch', conclusion: 'success', html_url: 'https://github.com/x/y/actions/runs/2' },
       { run_started_at: '2026-11-17T10:17:00Z', created_at: '2026-11-17T10:17:00Z', updated_at: '2026-11-17T10:17:20Z', event: 'schedule', conclusion: 'success', html_url: 'https://github.com/x/y/actions/runs/1' }] }) }));
     await page.route(/api\.github\.com\/repos\/.+\/issues/, r => r.fulfill({ contentType: 'application/json', body: '[]' }));
-    await page.route(/api\.github\.com\/repos\/.+\/branches/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify([{ name: 'main' }, { name: 'data' }, { name: 'old-probe' }]) }));
+    await page.route(/api\.github\.com\/repos\/.+\/branches/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify([{ name: 'main' }, { name: 'data' }, { name: 'old-probe' }, { name: 'rera-check' }]) }));
     await page.goto(BASE + 'status/' + q);
     await page.waitForFunction(() => window.statusState, null, { timeout: 15000 }).catch(() => {});
     const st = await page.evaluate(() => ({ state: window.statusState, overall: document.getElementById('overall').textContent,
@@ -509,7 +509,7 @@ try {
       needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), hotels: document.querySelectorAll('#hotels div').length, hotelsText: document.getElementById('hotels').textContent, needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
     // Unresolved issues a person can fix come first, each with what to do (here: the Dubai Pulse key, an old branch).
     // No LiteAPI key is the owner's choice (18 Nov), so it is not asked for.
-    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.some(t => /Hotel prices have not refreshed|لم تُحدَّث أسعار الفنادق/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
+    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && !st.needs.some(t => /rera-check/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.some(t => /Hotel prices have not refreshed|لم تُحدَّث أسعار الفنادق/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
       `${name}: "Needs you" comes first and lists what a person can fix, with what to do, stale hotel prices included (${st.needs.length})`);
     check(st.hotels === 7 && /Xotelo/.test(st.hotelsText) && /AED [\d,]+ – [\d,]+/.test(st.hotelsText), `${name}: the Hotels section gives places, matches, prices, their range and freshness, DET and the partner panel`);
     check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 7 && st.det && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
