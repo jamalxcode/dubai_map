@@ -379,7 +379,8 @@ html.viewerOpen,html.viewerOpen body{overflow:hidden}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip,.leaflet-bar a{background:var(--label)}
 .leaflet-bar a:hover{background:var(--hover)}
 /* The map's bar (atlas.js): rent, sale price or gross yield, then the place-names button (English and Arabic together). */
-.viewSw{display:flex;background:var(--legend);overflow:hidden}
+.viewSw{display:flex;background:var(--legend);overflow:hidden;min-width:0}
+.viewSw .views{min-width:0}
 .viewSw .views{display:flex}
 .viewSw .names{border-inline-start:1px solid var(--line)!important;font-weight:700}
 .viewSw button{border:0;border-inline-end:1px solid var(--line);background:none;color:var(--text);font:600 13px/1 var(--body);padding:0 10px;height:34px;cursor:pointer}
@@ -603,3 +604,31 @@ details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
 @media (min-width:861px) and (max-width:1099px){.big .dialBox{width:150px}.big .dialBox:not(.off) .num{font-size:28px!important}.big .dialMid .dk,.big .dialMid .du{font-size:10px}.band .big .cap{margin-top:2px}}
 .pwidget{margin:8px 0}.pwidget small{display:block;margin-top:4px}
 .pwidget iframe{display:block;width:100%;height:320px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+/* Places-to-stay views (atlas.js stayPanel): the home picker and the rent check step aside; the budget is nightly. */
+.stayMode .controls .f-home,.stayMode #companion{display:none}
+.legend .hkey.none i{width:7px;height:7px;margin:1.5px;border:1.3px solid var(--warmgray);background:var(--legend)}
+.legend details.aboutP{margin-top:4px}
+.legend details.aboutP summary{cursor:pointer;font-size:12px;color:var(--muted);text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:3px;width:max-content}
+.legend details.aboutP summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.legend details.aboutP[open] summary{margin-bottom:4px}
+.cross{margin:8px 0 4px;font-size:13px}.cross .link{font-weight:600;margin-inline-start:4px}
+.htab th:last-child,.htab td.r{text-align:end}
+.htab td.r{white-space:nowrap;font-variant-numeric:tabular-nums;padding-inline-start:8px}
+.htab td:first-child{overflow-wrap:anywhere}
+.bookArea{margin:6px 0 2px;font-size:13px}
+#rows tr.thin td{font-style:italic;color:var(--muted)}
+#rows .link{text-align:start}
+/* The view bar never runs over the zoom buttons: it is given the room beside them (atlas.js fitViewBar) and scrolls. */
+.viewSw .views{overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+.viewSw .views::-webkit-scrollbar{display:none}
+.viewSw .views button{flex:none;white-space:nowrap}
+/* Long place names wrap, so a list never runs past the card or the phone sheet. */
+.htab{table-layout:fixed}
+.htab .hrow{white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+.htab th:last-child,.htab td.r{width:5.6em}
+.htab th.st,.htab td.st{width:4.6em}
+/* With the home picker stepped aside (places-to-stay views), the walk filter and the nightly budget share the row. */
+.stayMode .controls .f-walk{grid-area:1/1}.stayMode .controls .f-range{grid-area:1/2}
+@media (max-width:860px){.stayMode .controls .f-range{grid-area:1/1/2/-1}.stayMode .controls .f-walk{grid-area:2/1/3/-1}}
+@media (max-width:339px){.stayMode .controls .f-range{grid-area:1/1}.stayMode .controls .f-walk{grid-area:2/1}}
+.stayMode .controls .f-range:has(~.f-walk[hidden]),.stayMode .controls .f-walk[hidden]~.f-range{grid-area:1/1/2/-1}

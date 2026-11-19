@@ -19,7 +19,7 @@ OURS = [  # name, name_ar, kind, stars, lat, lng (as in data/hotels.json)
     ["Lonely Hostel", "", "hostel", None, 25.20000, 55.27000],
 ]
 THEIRS = [
-    {"key": "x1", "name": "The Palm Hotel Dubai", "geo": {"latitude": 25.1122, "longitude": 55.1381}},  # same place
+    {"key": "x1", "name": "The Palm Hotel Dubai", "geo": {"latitude": 25.1122, "longitude": 55.1381}, "review_summary": {"rating": 4.5, "count": 120}},  # same place
     {"key": "x2", "name": "Creek Suites", "geo": {"latitude": 25.2503, "longitude": 55.3302}},          # same, shorter name
     {"key": "x3", "name": "Marina Inn", "geo": {"latitude": 25.0900, "longitude": 55.1400}},           # same name, 1.1 km away
     {"key": "x4", "name": "Desert Palace", "geo": {"latitude": 25.2000, "longitude": 55.2701}},        # nearby, other name
@@ -92,6 +92,7 @@ class Collector(unittest.TestCase):
         self.assertEqual(out["currency"], "AED")
         self.assertEqual(self.state()["state"], "ok")
         self.assertEqual(self.state()["matched"], 2)
+        self.assertEqual(out["info"]["Palm Hotel|25.112|55.138"][0], 4.5)  # Tripadvisor rating kept for the card
 
     def test_the_list_is_fetched_once_a_day_and_prices_rotate(self):
         calls = []

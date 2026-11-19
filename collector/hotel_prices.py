@@ -171,6 +171,7 @@ def main(argv=None, today=None, get=None):
     except (OSError, ValueError):
         old = {}
     keys = old.get("keys") or {}  # our place (name|lat|lng) -> Xotelo hotel key
+    info = old.get("info") or {}  # our place -> [Tripadvisor rating, reviews, link], refreshed with the list
     ours_by = {row_key(o[0], o[4], o[5]): o for o in ours}
     try:
         if not keys or st.due(b, "list_at", min_hours=LIST_HOURS):
@@ -179,11 +180,13 @@ def main(argv=None, today=None, get=None):
                 return done("failed", f"Xotelo's Dubai list had only {len(theirs)} hotels; the last prices stay")
             matched = match(ours, theirs)
             keys = {row_key(ours[i][0], ours[i][4], ours[i][5]): t["id"] for i, t in matched.items()}
+            info = {row_key(ours[i][0], ours[i][4], ours[i][5]): [t.get("rating"), t.get("reviews"), t.get("url") or ""] for i, t in matched.items()}
             b["list_at"], b["listed"], b["matched"] = st.now_iso(), len(theirs), len(keys)
             net.log(f"Xotelo lists {len(theirs)} places in Dubai; {len(keys)} of our {len(ours)} matched", "hotel_prices")
     except (net.StopForToday, net.AuthError) as e:
         return done("failed", f"Xotelo: {e}; the last prices stay")
     keys = {k: v for k, v in keys.items() if k in ours_by}
+    info = {k: v for k, v in info.items() if k in keys}
     cutoff = (today - timedelta(days=KEEP_DAYS)).isoformat()
     prev = {row_key(r[0], r[1], r[2]): r for r in old.get("hotels") or [] if len(r) >= 8 and r[7] >= cutoff and row_key(r[0], r[1], r[2]) in keys}
     tried = {k: v for k, v in (old.get("tried") or {}).items() if k in keys}  # when each was last asked, priced or not
@@ -213,7 +216,7 @@ def main(argv=None, today=None, get=None):
         prev[k] = [o[0], o[4], o[5], round(statistics.fmean(ps)), len(ps), min(ps), max(ps), today.isoformat()]
     rows = sorted(prev.values(), key=lambda r: (r[1], r[2], r[0]))
     out = {"fetched": today.isoformat(), "source": SOURCE, "currency": "AED", "adults": 2, "nights": nights,
-           "matched": len(keys), "keep_days": KEEP_DAYS, "hotels": rows, "keys": keys, "tried": tried}
+           "matched": len(keys), "keep_days": KEEP_DAYS, "hotels": rows, "keys": keys, "tried": tried, "info": info}
     net.log(f"priced {len(got)} of {len(todo)} hotels asked ({len(jobs)} requests, {errors} failed); {len(rows)} hotels have a price", "hotel_prices")
     if len(keys) < MIN_HOTELS and len(old.get("keys") or {}) >= MIN_HOTELS:  # a broken match, not fewer prices
         return done("failed", f"only {len(keys)} of our places matched Xotelo's list; the last prices stay", code=1)

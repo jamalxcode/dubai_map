@@ -177,12 +177,13 @@ try {
     if (await page.evaluate(() => !!document.querySelector('.viewSw button[data-m="hotels"]:not([hidden])'))) {
       await page.click('.viewSw button[data-m="hotels"]');
       await page.waitForTimeout(400);
-      const h = await page.evaluate(() => ({ metric: LABEL.metric, dots: document.querySelectorAll('.hdot').length, total: HOTELS.length, priced: hotelPriced(),
+      const h = await page.evaluate(() => ({ metric: LABEL.metric, dots: document.querySelectorAll('.hdot').length, total: HOTELS.length, priced: hotelPriced(), nPriced: HOTELS.filter(x => x.price).length, rings: document.querySelectorAll('.hdot.none').length, zoom: map.getZoom(),
         texts: [...document.querySelectorAll('.rl b')].map(e => e.textContent),
         badges: [...document.querySelectorAll('.rl')].map(e => e.style.getPropertyValue('--c')),
         legend: !!document.querySelector('#legend .hkey'), ramp: !!document.querySelector('#legend .ramp'), url: /view=hotels/.test(location.search) }));
       const biggest = Math.max(0, ...h.texts.map(t => +t.replace(/[^\d]/g, '')));
-      check(h.metric === 'hotels' && h.dots === h.total && h.dots >= 300 && h.texts.length > 0 && h.legend && h.url && (h.priced
+      // With prices, places without one are hollow rings shown only from street level (zoom 14).
+      check(h.metric === 'hotels' && (h.priced ? (h.zoom < 14 ? h.dots === h.nPriced && h.rings === 0 : h.dots === h.total) : h.dots === h.total) && h.total >= 300 && h.texts.length > 0 && h.legend && h.url && (h.priced
         ? h.texts.every(t => /AED|درهم/.test(t)) && h.badges.every(c => /--b[1-6]/.test(c)) && h.ramp      // prices: blue key, as every price
         : biggest <= h.total && h.badges.every(c => /oxblood/.test(c)) && !h.ramp),                           // counts: oxblood, no price key
         `${name}: "Hotels" shows ${h.dots} places to stay and ${h.priced ? 'typical prices a night per area on the blue key' : 'counts per area (largest ' + biggest + ')'}`);
@@ -586,12 +587,25 @@ try {
     check(/From AED [\d,]+ to [\d,]+ a night/.test(sec) && /Typical hotel price AED/.test(sec), `an area's card gives its typical hotel price and its range (${v.area})`);
     const tr = await page.evaluate(a => { STAY_HIST.days.forEach((d, i) => { d.hotels.areas = { [a]: [d.hotels.all[0], 4] }; });
       const box = document.createElement('div'); box.innerHTML = hotelSection(byLabel(a)); return { text: box.textContent, svg: !!box.querySelector('.trend svg.chart') }; }, v.area);
-    check(tr.svg && /Typical hotel price a night, \d{4}-\d\d-\d\d to \d{4}-\d\d-\d\d/.test(tr.text) && /\+\d+% since \d{4}-\d\d-\d\d/.test(tr.text),
-      `an area's card draws its hotel price history and the change over four weeks (${(tr.text.match(/[+-]\d+% since \d{4}-\d\d-\d\d/) || [''])[0]})`);
+    check(tr.svg && /Typical hotel price a night, \d{1,2} \w{3} to \d{1,2} \w{3}/.test(tr.text) && /\+\d+% since \d{1,2} \w{3}/.test(tr.text),
+      `an area's card draws its hotel price history and the change over four weeks (${(tr.text.match(/[+-]\d+% since \d{1,2} \w{3}/) || [''])[0]})`);
     await page.evaluate(() => openHotel(HOTELS.find(h => h.price)));
     await page.waitForTimeout(300);
     const card = await page.evaluate(() => document.querySelector('.leaflet-popup-content').textContent);
-    check(/Average AED [\d,]+ a night/.test(card) && /Lowest price on booking sites/.test(card), "a priced hotel's card gives its average and its range");
+    check(/Average AED [\d,]+ a night/.test(card) && /Lowest price on booking sites/.test(card) && /Nights? of \d{1,2} \w{3}/.test(card), "a priced hotel's card gives its average, its range and the nights priced");
+    // The side panel follows the view: no home picker or rent check, nightly figures, a prices-by-area table.
+    const pan = await page.evaluate(() => { const vis = el => !!el && getComputedStyle(el).display !== 'none' && !el.closest('[hidden]');
+      return { home: vis(document.querySelector('.controls .f-home')), check: vis(document.getElementById('companion')), facts: vis(document.getElementById('stayFacts')), rentFacts: vis(document.querySelector('.facts:not(.stayFacts)')),
+        range: document.getElementById('rangeLbl').textContent, med: document.getElementById('sfMed').textContent, title: document.getElementById('tableTitle').textContent, rows: document.querySelectorAll('#rows button[data-area]').length,
+        first: +((document.querySelector('#rows tr td:nth-child(2)') || {}).textContent || '0').replace(/,/g, ''), second: +((document.querySelector('#rows tr:nth-child(2) td:nth-child(2)') || {}).textContent || '0').replace(/,/g, '') }; });
+    check(!pan.home && !pan.check && pan.facts && !pan.rentFacts && /Nightly budget/.test(pan.range) && /AED [\d,]+/.test(pan.med) && /Hotel prices by area/.test(pan.title) && pan.rows > 3 && pan.first <= pan.second,
+      `the side panel follows the Hotels view: nightly budget, nightly figures (${pan.med}), "${pan.title}" cheapest first (${pan.rows} areas)`);
+    // The nightly budget filters areas by their typical price; the rent view keeps its own (empty) budget.
+    const bud = await page.evaluate(async () => { const all = POINTS.length, lim = String(Math.round(median(POINTS.map(p => p.v)))); $('max').value = lim; draw(); const n = POINTS.length, ok = POINTS.every(p => p.v <= +lim), note = document.getElementById('budgetNote').textContent;
+      $('metric').value = 'median'; $('metric').dispatchEvent(new Event('change')); const rentMax = $('max').value, home = getComputedStyle(document.querySelector('.controls .f-home')).display !== 'none';
+      $('metric').value = 'hotels'; $('metric').dispatchEvent(new Event('change')); const back = $('max').value; $('max').value = ''; draw(); return { all, n, ok, note, rentMax, home, back, lim }; });
+    check(bud.n > 0 && bud.n < bud.all && bud.ok && /a night/.test(bud.note) && bud.rentMax === '' && bud.home && bud.back === bud.lim,
+      `the nightly budget keeps ${bud.n} of ${bud.all} areas (typical AED ${bud.lim} a night or less); the rent view keeps its own budget and its home picker`);
     check(!errors.length, `hotel prices: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await ctx.close();
   }
@@ -625,6 +639,30 @@ try {
     check(!errors.length, `holiday homes: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await axe(page, 'holiday homes view with a card open');
     await ctx.close();
+  }
+  // Phones, places-to-stay views: the view bar stays clear of the zoom buttons, and an area's list fits the sheet.
+  if (await readFile(join(ROOT, 'data/holiday_homes.json')).then(() => true).catch(() => false)) {
+    for (const w of [320, 375]) {
+      const ctx = await browser.newContext({ viewport: { width: w, height: 780 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage();
+      const today = new Date().toISOString().slice(0, 10);
+      const src = JSON.parse(await readFile(join(ROOT, 'data/holiday_homes.json'), 'utf8'));
+      src.homes = src.homes.map(r => Object.assign([...r], { 7: today }));
+      await page.route(/data\/holiday_homes\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(src) }));
+      await page.goto(BASE + '?view=homes');
+      await page.waitForFunction(() => window.atlasState === 'ready' && HOMES, null, { timeout: 15000 }).catch(() => {});
+      await page.evaluate(() => draw());
+      await page.waitForTimeout(400);
+      const bar = await page.evaluate(() => { const v = document.querySelector('.viewSw').getBoundingClientRect(), z = map.zoomControl.getContainer().getBoundingClientRect();
+        return { clear: !(v.left < z.right && v.right > z.left && v.top < z.bottom && v.bottom > z.top), on: document.querySelector('.viewSw button[aria-pressed="true"]')?.dataset.m }; });
+      check(bar.clear && bar.on === 'homes', `${w} px: the view bar stays clear of the zoom buttons (five views; it scrolls)`);
+      await page.evaluate(() => { const g = [...homesBy().entries()].sort((a, b) => b[1].list.length - a[1].list.length)[0]; focusArea(byLabel(g[0])); });
+      await page.waitForTimeout(1600);
+      const sh = await page.evaluate(() => { const s = document.querySelector('.areaSheet:not([hidden])'), t = s && s.querySelector('.htab'), first = s && s.querySelector('.body').children[1];
+        return { open: !!s, fits: !!t && t.getBoundingClientRect().right <= s.getBoundingClientRect().right + 1 && s.scrollWidth <= s.clientWidth + 1, leads: !!first && first.classList.contains('hsec') }; });
+      check(sh.open && sh.fits && sh.leads, `${w} px: a holiday home area's sheet leads with its prices and its list fits the screen`);
+      await ctx.close();
+    }
   }
   // Backup source in use (Dubai Data stuck): the warning sign says so.
   {
