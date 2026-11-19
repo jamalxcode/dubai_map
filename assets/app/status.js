@@ -4,6 +4,7 @@
  *   - the data branch (raw.githubusercontent.com): status.json (counts written by the build), state.json
  *     (each source's state and what it last pulled), runs.jsonl (one line per pull), meta.json;
  *     the site's own copies are the fallback if the data branch can't be reached;
+ *     hotels.json and hotel_prices.json for the Hotels section;
  *   - GitHub's API: the pull's recent runs and the open "data-alert" issues.
  * Nothing here is about visitors. Text goes through T() (i18n.js) like the map page.
  */
@@ -143,7 +144,7 @@
 
   // Unresolved issues a person can fix, each with why it matters and what to do. Every condition the robot
   // can't resolve by itself belongs here (docs/INTERFACE_RULES.md, 7b): add new ones when a new kind appears.
-  function needs(st, state, issues, runs, branches) {
+  function needs(st, state, issues, runs, branches, ho) {
     const s = state || {}, p = (st && st.pending) || {}, out = [];
     const add = (title, why, todo, link) => out.push({ title, why, todo, link });
     for (const u of p.unplaced || [])
@@ -170,6 +171,21 @@
     // Hotel prices come from Xotelo (free, no key; the owner's choice, 19 Nov). Only a failure needs a person.
     if (hp.state === 'failed') add(T('Hotel prices are failing'), hp.status || '',
       T("Xotelo may be down or may have changed; the last good prices stay up to 10 days, then the Hotels view counts places again. If it stays down, ask for another price source."), 'https://xotelo.com');
+    // Hotel pull checks (thresholds in docs/BUSINESS_RULES.md, "Status page"): each needs a person to look.
+    if (ho) {
+      if (ho.placesAge != null && ho.placesAge > 15 * 24)
+        add(T('Places to stay have not refreshed for {n} days', { n: Math.floor(ho.placesAge / 24) }), T('The weekly job reads them from OpenStreetMap; new hotels are missing and closed ones still show.'),
+          T('Open the weekly job ("Place unplaced areas") and read the hotels step; re-run it once OpenStreetMap answers.'), 'https://github.com/' + REPO + '/actions/workflows/geocode.yml');
+      if (ho.state !== 'failed' && ho.pricesAge != null && ho.pricesAge > 48)
+        add(T('Hotel prices have not refreshed for {n} hours', { n: Math.floor(ho.pricesAge) }), T('Each pull should price about 100 hotels; prices older than 10 days disappear from the map.'),
+          T('Check that the pull is running and read its "Hotel prices" step.'), 'https://github.com/' + REPO + '/actions/workflows/daily-ejari.yml');
+      if (ho.nPlaces >= 500 && ho.matched != null && ho.matched < 300)
+        add(T('Only {n} places to stay were found on Xotelo', { n: fmt(ho.matched) }), T('Usually 500 or more match; Xotelo\'s list may have shrunk or changed its names or format.'),
+          T("Read the pull's Hotel prices step for the list size; if Xotelo changed, the collector needs updating."), 'https://xotelo.com');
+      if (ho.matched && ho.tried >= ho.matched && ho.priced < ho.matched * 0.25)
+        add(T('Few hotels have a price ({n} of {m})', { n: fmt(ho.priced), m: fmt(ho.matched) }), T('Every matched hotel has been asked, but most came back without rooms.'),
+          T('Xotelo may be returning empty rates; check a hotel on xotelo.com. If it persists, ask for another price source.'), 'https://xotelo.com');
+    }
     const hs = s.hotel_stats || {};
     if (hs.state === 'failed') add(T("Dubai's hotel room rates are failing"), hs.status || '', T("Check that the Dubai Pulse key still works and that the tourism department's dataset is still published; the last good figures stay meanwhile."), 'https://data.dubai');
     else if (hs.state === 'no_key' && (s.pulse || {}).state !== 'no_key')
@@ -195,9 +211,38 @@
       nNeeds ? T('{n} things need you', { n: nNeeds }) : ''].filter(Boolean).join(' · ');
   }
 
+  // Hotels: places from OpenStreetMap (weekly), prices from Xotelo (every pull, about 100 hotels), DET's official
+  // rate (Dubai Pulse) and the partner widget. Returns the figures "Needs you" checks.
+  const HOURS = iso => iso ? (Date.now() - new Date(iso)) / 36e5 : null;
+  function hotels(places, prices, state) {
+    const s = state || {}, hp = s.hotel_prices || {}, hs = s.hotel_stats || {};
+    const nPlaces = places && places.hotels ? places.hotels.length : null;
+    const isX = prices && /xotelo/i.test(prices.source || '');
+    const keep = ((prices && prices.keep_days) || 10) * 864e5;
+    const rows = isX ? (prices.hotels || []).filter(r => !r[7] || Date.now() - new Date(r[7] + 'T00:00:00Z') <= keep + 864e5) : [];
+    const matched = isX ? Object.keys(prices.keys || {}).length : hp.matched;
+    const tried = isX ? Object.keys(prices.tried || {}).length : null;
+    const vals = rows.map(r => r[3]).sort((a, b) => a - b), med = vals.length ? vals[Math.floor(vals.length / 2)] : null;
+    const oldest = rows.reduce((o, r) => !o || (r[7] && r[7] < o) ? r[7] : o, null);
+    const pc = (a, b) => a != null && b ? ' (' + Math.round(a / b * 100) + '%)' : '';
+    const widget = !!(window.PRICE_WIDGET && /^https:\/\//.test(window.PRICE_WIDGET.url || ''));
+    const items = [
+      [T('Places to stay on the map'), fmt(nPlaces), T('OpenStreetMap, refreshed {d}', { d: day(places && places.fetched) })],
+      [T('Found on Xotelo'), fmt(matched) + pc(matched, nPlaces), hp.listed ? T("of {n} in Xotelo's Dubai list, read {t}", { n: fmt(hp.listed), t: kuwait(hp.list_at) }) : ''],
+      [T('With a current price'), fmt(rows.length) + pc(rows.length, matched), tried != null ? T('{a} of {m} asked so far; {b} had no rooms listed', { a: fmt(tried), m: fmt(matched), b: fmt(Math.max(0, tried - rows.length)) }) : ''],
+      [T('Nightly prices'), vals.length ? 'AED ' + fmt(vals[0]) + ' – ' + fmt(vals[vals.length - 1]) : '—', med ? T('median AED {m} a night', { m: fmt(med) }) : ''],
+      [T('Prices last updated'), kuwait(hp.last_ok_at), oldest ? T('oldest price checked {d}', { d: day(oldest) }) : ''],
+      [T("Dubai's official room rate (DET)"), hs.state === 'ok' ? T('to {m}', { m: hs.latest || '—' }) : hs.state === 'no_key' ? T('waiting') : STATE_TEXT[hs.state] || T('not run yet'), hs.state === 'no_key' ? T('waiting for the Dubai Pulse key') : ''],
+      [T("Booking partner's price panel"), widget ? T('on') : T('not set up'), widget ? (window.PRICE_WIDGET.partner || '') : T('see "Needs you"')]
+    ];
+    $('hotels').innerHTML = items.map(([k, v, sub]) => '<div><dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>' + (sub ? '<dd class="sub muted">' + esc(sub) + '</dd>' : '') + '</div>').join('');
+    $('hotelsNote').textContent = T('Each pull prices about 100 hotels on two nights two to three weeks ahead (lowest believable offer on booking sites, one room, 2 adults); prices older than 10 days are hidden. State: {s}.', { s: STATE_TEXT[hp.state] || hp.status || T('not run yet') });
+    return { nPlaces, placesAge: places && places.fetched ? HOURS(places.fetched + 'T00:00:00Z') : null, matched, tried, priced: rows.length, pricesAge: HOURS(hp.last_ok_at), state: hp.state };
+  }
+
   async function main() {
-    const [st, state, meta, runsText, gh, issues, branches] = await Promise.all([
-      data('status.json'), data('state.json'), data('meta.json'), data('runs.jsonl', true),
+    const [st, state, meta, runsText, places, prices, gh, issues, branches] = await Promise.all([
+      data('status.json'), data('state.json'), data('meta.json'), data('runs.jsonl', true), data('hotels.json'), data('hotel_prices.json'),
       get(API + 'actions/workflows/daily-ejari.yml/runs?per_page=12').then(j => j.workflow_runs).catch(() => null),
       get(API + 'issues?state=open&labels=data-alert&per_page=50').catch(() => null),
       get(API + 'branches?per_page=100').catch(() => null)
@@ -208,9 +253,10 @@
     used(st);
     leftOut(st);
     pending(st, state || (meta && meta.state));
+    const ho = hotels(places, prices, state);
     const runs = recentRuns(gh, log);
     pubHours(state);
-    const nNeeds = needs(st, state || (meta && meta.state), issues, runs, branches);
+    const nNeeds = needs(st, state || (meta && meta.state), issues, runs, branches, ho);
     overall(alerts(issues), runs, st, nNeeds);
     window.statusState = 'ready';
   }

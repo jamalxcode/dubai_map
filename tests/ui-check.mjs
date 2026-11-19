@@ -489,8 +489,8 @@ try {
       const f = r.request().url().split('/data/data/')[1];
       try {
         let body = await readFile(join(ROOT, 'data', f));
-        // Hotel prices without a key: "Needs you" must ask for one.
-        if (f === 'state.json') { const j = JSON.parse(body); j.hotel_prices = { state: 'no_key', status: 'no credentials' }; body = JSON.stringify(j); }
+        // Hotel prices last refreshed 3 days ago: "Needs you" must say so.
+        if (f === 'state.json') { const j = JSON.parse(body); j.hotel_prices = { state: 'ok', status: 'ok', last_ok_at: new Date(Date.now() - 72 * 36e5).toISOString(), listed: 2625, matched: 527, list_at: new Date().toISOString() }; body = JSON.stringify(j); }
         await r.fulfill({ body, contentType: f.endsWith('.json') ? 'application/json' : 'text/plain' }); }
       catch { await r.fulfill({ status: 404, body: 'not found' }); }
     });
@@ -506,11 +506,12 @@ try {
       pulled: document.querySelectorAll('#pulled tr').length, det: /DET|دائرة الاقتصاد/.test(document.getElementById('pulled').textContent), used: document.querySelectorAll('#used tr').length, runs: document.querySelectorAll('#runs tr').length,
       left: document.querySelectorAll('#left li').length, pending: document.querySelectorAll('#pending li').length, alerts: document.getElementById('alerts').textContent,
       sideways: document.documentElement.scrollWidth > innerWidth, dir: document.documentElement.dir,
-      needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
+      needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), hotels: document.querySelectorAll('#hotels div').length, hotelsText: document.getElementById('hotels').textContent, needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
     // Unresolved issues a person can fix come first, each with what to do (here: the Dubai Pulse key, an old branch).
     // No LiteAPI key is the owner's choice (18 Nov), so it is not asked for.
-    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
-      `${name}: "Needs you" comes first and lists what a person can fix, with what to do (${st.needs.length})`);
+    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.some(t => /Hotel prices have not refreshed|لم تُحدَّث أسعار الفنادق/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
+      `${name}: "Needs you" comes first and lists what a person can fix, with what to do, stale hotel prices included (${st.needs.length})`);
+    check(st.hotels === 7 && /Xotelo/.test(st.hotelsText) && /AED [\d,]+ – [\d,]+/.test(st.hotelsText), `${name}: the Hotels section gives places, matches, prices, their range and freshness, DET and the partner panel`);
     check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 7 && st.det && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
       `${name}: shows the totals (${st.contracts} contracts), what each source pulled (hotel sources too), what's in use, left out and waiting, and recent pulls`);
     check(/All fine|كل شيء/.test(st.overall) && /No open alerts|لا تنبيهات/.test(st.alerts), `${name}: says all is fine when the last pull worked and no alert is open`);
@@ -527,6 +528,7 @@ try {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
+    await page.route(/data\/hotel_prices\.json/, r => r.fulfill({ status: 404, body: 'not found' }));  // DET's rate is for when no hotel has a price
     await page.route(/data\/hotel_stats\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ fetched: '2026-11-18', source: 'test',
       months: [{ month: '2026-07', adr: 380 }, { month: '2026-08', adr: 410 }, { month: '2026-09', adr: 520 }, { month: '2026-10', adr: 640 }], latest: { month: '2026-10', adr: 640, occupancy: 78 } }) }));
     await page.route(/assets\/app\/partners\.js/, r => r.fulfill({ contentType: 'application/javascript',

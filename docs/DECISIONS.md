@@ -642,6 +642,11 @@ The owner wants hotel prices and ranges on the map, refuses LiteAPI (its live ke
 - **Removed:** LiteAPI (key, sandbox guard, "Needs you" item, status lines). **Kept:** the partner widget (live prices in the card on tap) and DET's official rate (with the Dubai Pulse key).
 - **Checked:** Python tests with a fake Xotelo (matching, the 60% rule, rotation, list once a day, stale prices dropped, failures keep the file); a live trial (18 of 30 hotels priced: Atlantis about AED 1,960, Signature 1 Hotel about AED 190); browser checks with a priced file (labels are prices, dial, area range, hotel card, a 20-day-old price hidden). The hotel check workflow prices 15 hotels from GitHub's network.
 
+## Decision on 2026-11-19 (sixty-fourth pass): hotel pull figures on the status page
+
+Asked: "add hotel pull stats to status page and if any intervention is needed". The status page gets a **Hotels** section read live from the data branch (`hotels.json`, `hotel_prices.json`, `state.json`): places on the map, how many Xotelo found, how many have a current price (and how many were asked or had no rooms), the price range and median, when prices last updated and the oldest price, DET's state and the partner panel. "Needs you" gains four hotel checks, each with what to do: places not refreshed for 15+ days, prices not refreshed for 48+ hours, fewer than 300 matched, under a quarter priced after every matched hotel was asked (with the existing Xotelo-failing, DET-failing and partner-widget items). On the first day it read 798 places, 527 found, 58 priced (AED 142 to 6,788, median 318). Checked: browser checks (seven figures, a 3-day-old price refresh listed under "Needs you", accessibility in English and Arabic); the DET test now runs without a price file, since DET's rate only shows when no hotel has a price.
+Also answered: Travelpayouts gives no hotel price data any more (its Hotellook API closed on 20 Oct 2025); it is a widget and commission programme only.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

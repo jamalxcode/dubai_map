@@ -369,6 +369,14 @@ Offered: LiteAPI (ready, needs a card), Xotelo (free, no key, unofficial), the p
 
 Built (decisions, sixty-third pass): hotel prices from Xotelo, replacing LiteAPI. 527 of our 798 places matched in a live trial; each pull prices about 100, so all are priced within two days of the merge. The Hotels view becomes a price view on the blue scale, the dial shows the median a night with the lowest and highest area, each area's card gives its typical price and its range, each hotel its average and range. Booking-partner steps given in the reply (Booking.com's affiliate programme or Travelpayouts, then send the widget link).
 
+### 19 Nov · "add hotel pull stats to status page and if any intervention is needed"
+
+Done (decisions, sixty-fourth pass): a Hotels section on the status page and four hotel checks in "Needs you".
+
+### 19 Nov · "for travelpayouts.com, do i get hotel actual rate price data?"
+
+Answered: no. Travelpayouts closed its hotel price API (Hotellook) on 20 Oct 2025; it now gives widgets and commission only. Hotel prices stay with Xotelo; a Travelpayouts widget would add live prices for a visitor's own dates inside a hotel's card.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
