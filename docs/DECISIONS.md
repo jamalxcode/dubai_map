@@ -682,6 +682,8 @@ Asked: "critique the user interface, especially hotels and holiday homes", then 
 - **Cards:** lists run cheapest first, priced before unpriced; "Hotel" no longer repeats under each name (only other kinds and ratings); each view's area card points to the other ("Holiday homes here: typically AED 1,036 a night · Show holiday homes"); hotels carry Tripadvisor ratings too (`hotel_prices.json` `info`); dates read as elsewhere ("19 Nov 2026"); a place's card names the nights priced ("Nights of 3 Dec and 8 Dec"); on phones the prices lead the sheet, photos and Google links below. The dial's caption is shorter ("Hotels in view · 48 areas · ends: cheapest and dearest area").
 - **Checked:** browser checks for the panel (no home picker or rent check, nightly figures, the prices table cheapest first), the nightly budget (keeps 36 of 72 areas at the median; the rent view keeps its own budget), the view bar clear of the zoom buttons and the sheet list fitting at 320 and 375 px, the nights on a card, the hollow rings rule; all suites pass.
 
+Merged and deployed on 19 Nov (Tests passed). Hotel ratings appear once the hotel list is next re-read (once a day), since that is when `info` is saved.
+
 ## Decision on 2026-11-19 (sixty-eighth pass): free price sources checked; Google Hotels through SerpApi
 
 The owner sent a list of free sources and asked to get access to them for three pulls a day. Each was checked (three of their sites had to be allowed in the session's network first):
@@ -697,6 +699,8 @@ The SerpApi collector, built to switch on by itself when the key is added:
 - **Page:** a Google-priced card says "Lowest rate on Google Hotels … Night of 3 Dec" and "Price: Google Hotels, via SerpApi"; a Google rental links to its listing; the legends say where Google fills in.
 - **Status page:** a source row, a Hotels figure (searches used of 240, priced counts), and "Needs you": "Add the SerpApi key" with the steps until it is set, then if it fails.
 - **Checked:** Python tests with a fake SerpApi (no key, two searches in AED two weeks ahead, Xotelo first, rentals not twice, the monthly cap and a new month, six hours apart, a rejected key keeps the file); browser checks (a Google-priced hotel and its card, a Google rental in Holiday homes, the key asked for in "Needs you").
+
+Merged and deployed on 19 Nov (Tests passed); the pull right after recorded `serp_stays` as waiting for its key ("Needs you" asks for it), and priced 273 hotels (from 194) and 40 holiday homes (from 31) from Xotelo.
 
 ## Change log
 

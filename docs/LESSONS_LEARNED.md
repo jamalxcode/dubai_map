@@ -158,3 +158,28 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Problem:** the hotel check workflow went green after the Xotelo change, but its log showed it never priced anything: OpenStreetMap hadn't answered, so there was no places list to price.
 - **Rule:** read what a check printed, not just its colour; when its input was missing, prove the change another way (here, the real pull with the saved list) before reporting it works.
 
+## A check that passes on nothing (19 Nov 2026)
+
+- **Problem:** the nightly budget check set AED 300 a night; every stand-in price was higher, so no area was kept, and "every kept area is under budget" was true of an empty list. The check passed without testing anything.
+- **Rule:** a filter check also asserts that something was kept and something dropped; derive the threshold from the data (here the median), never a fixed number.
+
+## Read a pop-up after it has opened (19 Nov 2026)
+
+- **Problem:** a check opened a second hotel's card and read `.leaflet-popup-content` at once; Leaflet was still fading the first card out, so the check read the old text and failed, though the page was right.
+- **Rule:** close the open pop-up first, wait for the new one (a few hundred ms), and read the newest pop-up, not the first match.
+
+## "The first priced place" changes when a source is added (19 Nov 2026)
+
+- **Problem:** a card check used `HOTELS.find(h => h.price)`; once Google prices joined Xotelo's, the first priced hotel was a Google one, whose card has no "Average" line, and the check failed.
+- **Rule:** a check picks its subject by the property it is about (`h.src === 'xotelo'`), not by order.
+
+## A bot checkpoint is a "no", not a puzzle (19 Nov 2026)
+
+- **Problem:** Best Time To Book was offered as a free price API, but every request (its docs and its API) got a "verify you are a browser" page (HTTP 429).
+- **Rule:** a source that blocks automated requests is not usable; record it as such (decisions) and move on. No headless-browser or CAPTCHA workarounds (CLAUDE.md).
+
+## Checking a source needs it allowed in the session (19 Nov 2026)
+
+- **Problem:** the first attempts to read the sources' pages failed with "host not found": the session's network only reaches allowed hosts, so nothing could be judged.
+- **Rule:** when a source must be checked, ask for its exact hosts to be allowed (the environment tools), then verify coverage, limits and terms from its own pages before building; GitHub's runners reach the open internet, so the collector itself doesn't need this.
+
