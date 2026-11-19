@@ -1,15 +1,18 @@
-"""Nightly prices for the Hotels view, from LiteAPI (Nuitée): data/hotel_prices.json.
+"""Nightly prices for the Hotels view, from Xotelo (free, no key; rates booking sites show on TripAdvisor):
+data/hotel_prices.json.
 
-Once a day (the pull runs three times a day; this waits 20 hours between fetches), for the places to stay on the map
-(data/hotels.json, from OpenStreetMap) that LiteAPI also lists:
-  1. LiteAPI's Dubai hotel list (GET /data/hotels), matched to our places by name and position;
-  2. the cheapest room for 2 adults, one night, on four sample nights over the next month (POST /hotels/min-rates,
-     in AED, batches of 200 hotels: about 20 requests a day);
-  3. each hotel's average of those nights, kept when at least 2 nights had a price.
-The page shows each hotel's average and each area's typical (median) hotel price.
+The owner chose Xotelo on 19 Nov (LiteAPI's live key needs a payment card that bookings could be charged to). On each
+pull (three times a day), for the places to stay on the map (data/hotels.json, from OpenStreetMap):
+  1. once a day, Xotelo's Dubai hotel list (/api/list, 100 a page, about 30 requests), matched to our places by name
+     and position (within 250 m and with similar names; each of theirs used once);
+  2. up to BUDGET matched hotels, never asked first and then those asked longest ago, are priced: one room for 2 adults, one
+     night, on two sample nights about two weeks ahead (a weekday and a weekend night), 3 requests at a time;
+  3. one night's price is the lowest offer among the booking sites, leaving out any offer under 60% of their median
+     (a different room or a member rate, not what most guests pay); a hotel's price is the average of its nights.
+So every matched hotel is refreshed every couple of days. Prices older than 10 days are dropped, never shown as
+current. Xotelo answers in US dollars; AED = USD x 3.6725 (the fixed peg).
 
-Needs LITEAPI_KEY (a free LiteAPI account; repository secret). Without it, or when LiteAPI fails, the current file
-is kept and the state says why. Prices from a sandbox (test) key are never published. Standard library only.
+If most requests fail, nothing is saved and the state says why. Standard library only.
 """
 import argparse
 import json
@@ -18,6 +21,7 @@ import os
 import re
 import statistics
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -25,14 +29,18 @@ import net  # noqa: E402
 import state as st  # noqa: E402
 from transit import BBOX  # noqa: E402
 
-API = os.environ.get("LITEAPI_URL") or "https://api.liteapi.travel/v3.0"
-SOURCE = "LiteAPI (Nuitée): cheapest room for 2 adults, one night, average of sample nights over the next month"
+BASE = os.environ.get("XOTELO_URL") or "https://data.xotelo.com/api"
+LOCATION = "g295424"  # Dubai on TripAdvisor (Xotelo's location key)
+SOURCE = "Xotelo (booking sites' rates on TripAdvisor): lowest offer for one room, 2 adults, one night; average of sample nights"
 OUT = os.path.join("data", "hotel_prices.json")
 HOTELS = os.path.join("data", "hotels.json")
-NIGHTS_AHEAD = (10, 16, 23, 31)  # different weekdays, all within about a month
-MIN_NIGHTS = 2
-MIN_HOTELS = 20  # fewer priced hotels than this looks like a failed run: keep the last prices
-BATCH = 200
+NIGHTS_AHEAD = (14, 19)  # two weeks ahead and five days later: a different weekday, so one is often a weekend night
+BUDGET = int(os.environ.get("XOTELO_BUDGET") or 100)  # hotels asked per pull: 200 requests at most, about 6 minutes
+WORKERS = 3
+KEEP_DAYS = 10
+LIST_HOURS = 20
+MIN_HOTELS = 20  # fewer matched hotels than this, after more before, looks broken: the old file stays
+USD_AED = 3.6725
 LOW, HIGH = 50, 60000  # AED a night: anything outside is a data error, not a price
 STOP = {"hotel", "hotels", "dubai", "the", "by", "and", "&", "resort", "resorts", "suites", "suite", "apartments",
         "apartment", "hotel-apartments", "a", "an", "of", "at", "in", "llc", "uae"}
@@ -48,7 +56,7 @@ def metres(a_lat, a_lng, b_lat, b_lng):
 
 
 def same_place(osm, lite):
-    """One of ours and one of LiteAPI's are the same hotel: close together and with similar names."""
+    """One of ours and one of Xotelo's are the same hotel: close together and with similar names."""
     d = metres(osm[4], osm[5], lite["lat"], lite["lng"])
     if d > 250:
         return None
@@ -63,7 +71,7 @@ def same_place(osm, lite):
 
 
 def match(ours, theirs):
-    """Our place index → LiteAPI hotel, each LiteAPI hotel used once (best pair first)."""
+    """Our place index → Xotelo hotel, each of theirs used once (best pair first)."""
     pairs = []
     for i, o in enumerate(ours):
         for t in theirs:
@@ -83,83 +91,63 @@ def match(ours, theirs):
     return out
 
 
-def headers(key):
-    return {"X-API-Key": key, "Content-Type": "application/json"}
-
-
-def fetch_list(key):
+def fetch_list(get=None):
+    get = get or net.get_json
     theirs, offset = [], 0
-    while True:
-        d = net.get_json(f"{API}/data/hotels?countryCode=AE&cityName=Dubai&limit=1000&offset={offset}",
-                         headers=headers(key), timeout=90, source="hotel_prices")
-        rows = (d or {}).get("data") or []
+    while offset < 6000:
+        d = get(f"{BASE}/list?location_key={LOCATION}&limit=100&offset={offset}&sort=popularity", timeout=30, attempts=2, source="hotel_prices") or {}
+        if d.get("error"):
+            raise net.StopForToday(f"Xotelo: {d['error']}")
+        rows = ((d.get("result") or {}).get("list")) or []
         for h in rows:
-            lat, lng = h.get("latitude"), h.get("longitude")
-            if h.get("id") and h.get("name") and isinstance(lat, (int, float)) and isinstance(lng, (int, float)) \
+            g = h.get("geo") or {}
+            lat, lng = g.get("latitude"), g.get("longitude")
+            if h.get("key") and h.get("name") and isinstance(lat, (int, float)) and isinstance(lng, (int, float)) \
                     and BBOX[0] <= lat <= BBOX[2] and BBOX[1] <= lng <= BBOX[3]:
-                theirs.append({"id": h["id"], "name": h["name"], "lat": lat, "lng": lng, "stars": h.get("stars")})
-        if len(rows) < 1000 or offset >= 20000:
-            return theirs
-        offset += 1000
+                theirs.append({"id": h["key"], "name": h["name"], "lat": lat, "lng": lng})
+        if len(rows) < 100:
+            break
+        offset += 100
+    return theirs
 
 
-def price_of(row):
-    """The amount from one min-rates row, whatever the field is called; None when absent."""
-    for k in ("price", "minRate", "suggestedSellingPrice", "amount"):
-        v = row.get(k)
-        if isinstance(v, dict):
-            v = v.get("amount")
-        if isinstance(v, (int, float)) and v > 0:
-            return float(v)
-    return None
+def night_price(rates):
+    """AED for one night from Xotelo's offers (USD): the lowest offer not under 60% of the offers' median."""
+    vals = sorted(float(r["rate"]) for r in rates or [] if isinstance(r.get("rate"), (int, float)) and r["rate"] > 0)
+    if not vals:
+        return None
+    med = statistics.median(vals)
+    ok = [v for v in vals if v >= 0.6 * med]
+    p = round(ok[0] * USD_AED)
+    return p if LOW <= p <= HIGH else None
 
 
-def fetch_night(key, ids, checkin):
-    """Hotel id → cheapest price for one night. Raises Sandbox for test prices."""
-    out = {}
-    nxt = (date.fromisoformat(checkin) + timedelta(days=1)).isoformat()
-    for k in range(0, len(ids), BATCH):
-        body = {"hotelIds": ids[k:k + BATCH], "occupancies": [{"adults": 2}], "checkin": checkin, "checkout": nxt,
-                "currency": "AED", "guestNationality": "AE", "timeout": 20}
-        d = net.get_json(f"{API}/hotels/min-rates", data=json.dumps(body).encode(), method="POST",
-                         headers=headers(key), timeout=90, source="hotel_prices") or {}
-        if d.get("sandbox") is True:
-            raise Sandbox()
-        for row in d.get("data") or []:
-            hid = row.get("hotelId") or row.get("id")
-            cur = (row.get("currency") or "AED").upper()
-            p = price_of(row)
-            if hid and p and cur == "AED" and LOW <= p <= HIGH:
-                out[hid] = p
-    return out
+def fetch_rates(key, checkin, get=None):
+    get = get or net.get_json
+    out = (date.fromisoformat(checkin) + timedelta(days=1)).isoformat()
+    d = get(f"{BASE}/rates?hotel_key={key}&chk_in={checkin}&chk_out={out}&adults=2&rooms=1&currency=USD",
+            timeout=30, attempts=2, source="hotel_prices") or {}
+    if d.get("error"):
+        return None  # e.g. no availability that night: not a failure of the source
+    res = d.get("result") or {}
+    if (res.get("currency") or "USD").upper() != "USD":
+        return None
+    return night_price(res.get("rates"))
 
 
-class Sandbox(Exception):
-    """The key is LiteAPI's sandbox key: its prices are test data."""
+def row_key(name, lat, lng):
+    return f"{name}|{lat}|{lng}"
 
 
-def build(ours, matched, nights, today):
-    rows = []
-    for i, t in sorted(matched.items()):
-        got = [n[t["id"]] for n in nights.values() if t["id"] in n]
-        if len(got) < MIN_NIGHTS:
-            continue
-        o = ours[i]
-        rows.append([o[0], o[4], o[5], round(statistics.fmean(got)), len(got), round(min(got)), round(max(got))])
-    return {"fetched": today.isoformat(), "source": SOURCE, "currency": "AED", "adults": 2,
-            "nights": sorted(nights), "matched": len(matched), "hotels": rows}
-
-
-def main(argv=None, today=None):
+def main(argv=None, today=None, get=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--hotels", default=HOTELS)
-    ap.add_argument("--force", action="store_true", help="fetch even if fetched in the last 20 hours")
+    ap.add_argument("--budget", type=int, default=BUDGET)
     a = ap.parse_args(argv)
     today = today or date.today()
     s = st.load()
     b = s.setdefault("hotel_prices", {})
-    key = os.environ.get("LITEAPI_KEY")
 
     def done(kind, detail="", code=0):
         st.set_status(b, kind, detail)
@@ -168,40 +156,71 @@ def main(argv=None, today=None):
         net.log(b["status"], "hotel_prices")
         return code
 
-    if not key:
-        return done("no_key", "")
-    if not a.force and not st.due(b, "last_ok_at", min_hours=20):
-        net.log("fetched in the last 20 hours; nothing to do", "hotel_prices")
-        return 0
     try:
         with open(a.hotels, encoding="utf-8") as f:
             ours = json.load(f)["hotels"]
     except (OSError, ValueError, KeyError):
         return done("standby", "no hotels.json yet (the weekly places job makes it)")
     try:
-        theirs = fetch_list(key)
-        matched = match(ours, theirs)
-        net.log(f"LiteAPI lists {len(theirs)} places in Dubai; {len(matched)} of our {len(ours)} matched", "hotel_prices")
-        ids = sorted({t["id"] for t in matched.values()})
-        nights = {}
-        for ahead in NIGHTS_AHEAD:
-            day = (today + timedelta(days=ahead)).isoformat()
-            nights[day] = fetch_night(key, ids, day) if ids else {}
-    except Sandbox:
-        return done("failed", "this is LiteAPI's sandbox (test) key: its prices are not real, so nothing was published. "
-                              "Add the live key from the LiteAPI dashboard as LITEAPI_KEY")
-    except net.AuthError:
-        return done("failed", "LiteAPI rejected the key (HTTP 401): check LITEAPI_KEY")
-    except net.StopForToday as e:
-        return done("failed", f"LiteAPI: {e}; the last prices stay on the map")
-    out = build(ours, matched, nights, today)
-    if len(out["hotels"]) < MIN_HOTELS:
-        return done("failed", f"only {len(out['hotels'])} hotels had prices; the last prices stay on the map", code=1)
+        with open(a.out, encoding="utf-8") as f:
+            old = json.load(f)
+        if "xotelo" not in (old.get("source") or "").lower():
+            old = {}
+    except (OSError, ValueError):
+        old = {}
+    keys = old.get("keys") or {}  # our place (name|lat|lng) -> Xotelo hotel key
+    ours_by = {row_key(o[0], o[4], o[5]): o for o in ours}
+    try:
+        if not keys or st.due(b, "list_at", min_hours=LIST_HOURS):
+            theirs = fetch_list(get)
+            if len(theirs) < 500:
+                return done("failed", f"Xotelo's Dubai list had only {len(theirs)} hotels; the last prices stay")
+            matched = match(ours, theirs)
+            keys = {row_key(ours[i][0], ours[i][4], ours[i][5]): t["id"] for i, t in matched.items()}
+            b["list_at"], b["listed"], b["matched"] = st.now_iso(), len(theirs), len(keys)
+            net.log(f"Xotelo lists {len(theirs)} places in Dubai; {len(keys)} of our {len(ours)} matched", "hotel_prices")
+    except (net.StopForToday, net.AuthError) as e:
+        return done("failed", f"Xotelo: {e}; the last prices stay")
+    keys = {k: v for k, v in keys.items() if k in ours_by}
+    cutoff = (today - timedelta(days=KEEP_DAYS)).isoformat()
+    prev = {row_key(r[0], r[1], r[2]): r for r in old.get("hotels") or [] if len(r) >= 8 and r[7] >= cutoff and row_key(r[0], r[1], r[2]) in keys}
+    tried = {k: v for k, v in (old.get("tried") or {}).items() if k in keys}  # when each was last asked, priced or not
+    todo = sorted(keys, key=lambda k: tried.get(k, ""))[:max(0, a.budget)]  # never asked first, then the longest ago
+    nights = [(today + timedelta(days=n)).isoformat() for n in NIGHTS_AHEAD]
+    jobs = [(k, n) for k in todo for n in nights]
+    got, errors = {}, 0
+
+    def one(job):
+        try:
+            return job, fetch_rates(keys[job[0]], job[1], get), None
+        except (net.StopForToday, net.AuthError) as e:
+            return job, None, e
+
+    with ThreadPoolExecutor(max_workers=WORKERS) as ex:
+        for (k, n), p, err in ex.map(one, jobs):
+            if err:
+                errors += 1
+            elif p:
+                got.setdefault(k, []).append(p)
+    if jobs and errors > len(jobs) / 2:
+        return done("failed", f"Xotelo failed on {errors} of {len(jobs)} requests; the last prices stay")
+    for k in todo:
+        tried[k] = today.isoformat()
+    for k, ps in got.items():
+        o = ours_by[k]
+        prev[k] = [o[0], o[4], o[5], round(statistics.fmean(ps)), len(ps), min(ps), max(ps), today.isoformat()]
+    rows = sorted(prev.values(), key=lambda r: (r[1], r[2], r[0]))
+    out = {"fetched": today.isoformat(), "source": SOURCE, "currency": "AED", "adults": 2, "nights": nights,
+           "matched": len(keys), "keep_days": KEEP_DAYS, "hotels": rows, "keys": keys, "tried": tried}
+    net.log(f"priced {len(got)} of {len(todo)} hotels asked ({len(jobs)} requests, {errors} failed); {len(rows)} hotels have a price", "hotel_prices")
+    if len(keys) < MIN_HOTELS and len(old.get("keys") or {}) >= MIN_HOTELS:  # a broken match, not fewer prices
+        return done("failed", f"only {len(keys)} of our places matched Xotelo's list; the last prices stay", code=1)
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
-    b["last_ok_at"] = st.now_iso()
-    b["hotels"] = len(out["hotels"])
+    b["last_ok_at"], b["priced"], b["hotels"] = st.now_iso(), len(rows), len(rows)
+    if len(rows) < MIN_HOTELS:
+        return done("partial", f"{len(rows)} hotels priced so far; more each pull")
     return done("ok")
 
 

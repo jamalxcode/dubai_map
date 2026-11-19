@@ -1,4 +1,4 @@
-"""collector/hotel_prices.py: LiteAPI nightly prices for our places to stay (LiteAPI faked)."""
+"""collector/hotel_prices.py: Xotelo nightly prices for our places to stay (Xotelo faked)."""
 import json
 import os
 import sys
@@ -19,107 +19,116 @@ OURS = [  # name, name_ar, kind, stars, lat, lng (as in data/hotels.json)
     ["Lonely Hostel", "", "hostel", None, 25.20000, 55.27000],
 ]
 THEIRS = [
-    {"id": "lp1", "name": "The Palm Hotel Dubai", "latitude": 25.1122, "longitude": 55.1381, "stars": 5},  # same place
-    {"id": "lp2", "name": "Creek Suites", "latitude": 25.2503, "longitude": 55.3302, "stars": 4},          # same, shorter name
-    {"id": "lp3", "name": "Marina Inn", "latitude": 25.0900, "longitude": 55.1400},                     # same name, 1.1 km away
-    {"id": "lp4", "name": "Desert Palace", "latitude": 25.2000, "longitude": 55.2701},                  # nearby, other name
-    {"id": "lp5", "name": "Abu Dhabi Hotel", "latitude": 24.45, "longitude": 54.37},                     # outside Dubai
-]
-PRICES = {"lp1": [900, 1100, 1000, 1200], "lp2": [400, None, 420, 380]}  # per sample night
+    {"key": "x1", "name": "The Palm Hotel Dubai", "geo": {"latitude": 25.1122, "longitude": 55.1381}},  # same place
+    {"key": "x2", "name": "Creek Suites", "geo": {"latitude": 25.2503, "longitude": 55.3302}},          # same, shorter name
+    {"key": "x3", "name": "Marina Inn", "geo": {"latitude": 25.0900, "longitude": 55.1400}},           # same name, 1.1 km away
+    {"key": "x4", "name": "Desert Palace", "geo": {"latitude": 25.2000, "longitude": 55.2701}},        # nearby, other name
+    {"key": "x5", "name": "Abu Dhabi Hotel", "geo": {"latitude": 24.45, "longitude": 54.37}},           # outside Dubai
+] + [{"key": f"f{i}", "name": f"Filler {i}", "geo": {"latitude": 24.95 + i * 0.0002, "longitude": 55.05}} for i in range(600)]
+# USD offers per hotel per sample night (Xotelo answers in USD); x2 has one member rate far under the others.
+RATES = {"x1": [[250, 260, 300], [280]], "x2": [[40, 110, 120], []]}
 
 
-def fake_api(sandbox=False, currency="AED", calls=None):
-    night = {"n": 0}
+def fake_xotelo(calls=None, fail=False, list_error=None):
+    seen = {}
 
-    def get_json(url, data=None, headers=None, method=None, **kw):
+    def get(url, **kw):
         if calls is not None:
             calls.append(url)
-        assert headers["X-API-Key"] == "k"
-        if "/data/hotels" in url:
-            return {"data": THEIRS if "offset=0" in url else []}
-        body = json.loads(data)
-        assert body["currency"] == "AED" and body["occupancies"] == [{"adults": 2}]
-        i = night["n"]; night["n"] += 1
-        rows = [{"hotelId": h, "price": PRICES[h][i], "currency": currency} for h in body["hotelIds"] if h in PRICES and PRICES[h][i]]
-        return {"data": rows, "sandbox": sandbox}
-    return get_json
+        if fail:
+            raise net.StopForToday("HTTP 503")
+        if "/list?" in url:
+            if list_error:
+                return {"error": list_error, "result": None}
+            off = int(url.split("offset=")[1].split("&")[0])
+            return {"error": None, "result": {"total_count": len(THEIRS), "list": THEIRS[off:off + 100]}}
+        key = url.split("hotel_key=")[1].split("&")[0]
+        n = seen[key] = seen.get(key, -1) + 1
+        offers = (RATES.get(key) or [[], []])[n % 2]
+        if not offers:
+            return {"error": "no rates", "result": None}
+        return {"error": None, "result": {"currency": "USD", "rates": [{"code": "c", "name": "Site", "rate": r} for r in offers]}}
+    return get
 
 
 class Matching(unittest.TestCase):
     def test_pairs_by_name_and_position(self):
-        theirs = [{"id": t["id"], "name": t["name"], "lat": t["latitude"], "lng": t["longitude"]} for t in THEIRS[:4]]
+        theirs = [{"id": t["key"], "name": t["name"], "lat": t["geo"]["latitude"], "lng": t["geo"]["longitude"]} for t in THEIRS[:5]]
         m = hp.match(OURS, theirs)
-        self.assertEqual({i: t["id"] for i, t in m.items()}, {0: "lp1", 1: "lp2"})
+        self.assertEqual({i: t["id"] for i, t in m.items()}, {0: "x1", 1: "x2"})
 
-    def test_average_needs_two_nights(self):
-        matched = {0: {"id": "lp1"}, 1: {"id": "lp2"}}
-        nights = {"2026-12-01": {"lp1": 900}, "2026-12-02": {"lp1": 1100, "lp2": 400}}
-        out = hp.build(OURS, matched, nights, date(2026, 11, 18))
-        self.assertEqual(out["hotels"], [["Palm Hotel", 25.112, 55.138, 1000, 2, 900, 1100]])
+    def test_night_price_is_the_lowest_believable_offer_in_aed(self):
+        self.assertEqual(hp.night_price([{"rate": 250}, {"rate": 260}, {"rate": 300}]), round(250 * 3.6725))
+        self.assertEqual(hp.night_price([{"rate": 40}, {"rate": 110}, {"rate": 120}]), round(110 * 3.6725))  # 40 is under 60% of the median
+        self.assertIsNone(hp.night_price([]))
+        self.assertIsNone(hp.night_price([{"rate": 5}]))  # AED 18: not a price
 
 
-class Run(unittest.TestCase):
+class Collector(unittest.TestCase):
     def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory()
-        self.data = os.path.join(self.tmp.name, "data")
-        os.makedirs(self.data)
-        self.hotels = os.path.join(self.data, "hotels.json")
+        self.d = tempfile.mkdtemp()
+        self.hotels = os.path.join(self.d, "hotels.json")
+        self.out = os.path.join(self.d, "hotel_prices.json")
         json.dump({"hotels": OURS}, open(self.hotels, "w"))
-        self.out = os.path.join(self.data, "hotel_prices.json")
-        self.patches = [mock.patch.object(store, "DATA", self.data)]
-        for p in self.patches:
-            p.start()
+        self.p = mock.patch.object(store, "DATA", self.d)
+        self.p.start()
+        self.addCleanup(self.p.stop)
 
-    def tearDown(self):
-        for p in self.patches:
-            p.stop()
-        self.tmp.cleanup()
-
-    def run_it(self, env, api=None, extra=()):
-        with mock.patch.dict(os.environ, env, clear=False), mock.patch.object(hp.net, "get_json", api or fake_api()), \
-                mock.patch.object(hp, "MIN_HOTELS", 1):
-            return hp.main(["--hotels", self.hotels, "--out", self.out, *extra], today=date(2026, 11, 18))
+    def run_it(self, get, today=date(2026, 11, 19), budget="100"):
+        with mock.patch.object(hp, "MIN_HOTELS", 1):
+            return hp.main(["--hotels", self.hotels, "--out", self.out, "--budget", budget], today=today, get=get)
 
     def state(self):
-        with open(os.path.join(self.data, "state.json")) as f:
-            return json.load(f)["hotel_prices"]
+        return json.load(open(os.path.join(self.d, "state.json")))["hotel_prices"]
 
-    def test_without_a_key_nothing_is_fetched(self):
-        env = {k: v for k, v in os.environ.items() if k != "LITEAPI_KEY"}
-        with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(hp.net, "get_json", side_effect=AssertionError):
-            self.assertEqual(hp.main(["--hotels", self.hotels, "--out", self.out]), 0)
-        self.assertEqual(self.state()["state"], "no_key")
-        self.assertFalse(os.path.exists(self.out))
-
-    def test_prices_are_saved_once_a_day(self):
-        calls = []
-        self.assertEqual(self.run_it({"LITEAPI_KEY": "k"}, fake_api(calls=calls)), 0)
+    def test_prices_are_saved_with_their_range_and_date(self):
+        self.assertEqual(self.run_it(fake_xotelo()), 0)
         out = json.load(open(self.out))
-        self.assertEqual([h[0] for h in out["hotels"]], ["Palm Hotel", "Creek Suites Hotel Apartments"])
-        self.assertEqual(out["hotels"][0][3], 1050)       # average of 900, 1100, 1000, 1200
-        self.assertEqual(out["hotels"][1][3:5], [400, 3])  # one night had no price
-        self.assertEqual(len(out["nights"]), 4)
+        rows = {r[0]: r for r in out["hotels"]}
+        self.assertEqual(set(rows), {"Palm Hotel", "Creek Suites Hotel Apartments"})
+        a, b = round(250 * 3.6725), round(280 * 3.6725)
+        self.assertEqual(rows["Palm Hotel"][3:], [round((a + b) / 2), 2, a, b, "2026-11-19"])
+        self.assertEqual(rows["Creek Suites Hotel Apartments"][4], 1)  # one night had rooms
+        self.assertEqual(out["currency"], "AED")
         self.assertEqual(self.state()["state"], "ok")
-        n = len(calls)
-        self.assertEqual(self.run_it({"LITEAPI_KEY": "k"}, fake_api(calls=calls)), 0)  # minutes later: no new requests
-        self.assertEqual(len(calls), n)
+        self.assertEqual(self.state()["matched"], 2)
 
-    def test_sandbox_prices_are_never_published(self):
-        self.assertEqual(self.run_it({"LITEAPI_KEY": "k"}, fake_api(sandbox=True)), 0)
-        self.assertFalse(os.path.exists(self.out))
+    def test_the_list_is_fetched_once_a_day_and_prices_rotate(self):
+        calls = []
+        self.run_it(fake_xotelo(calls), budget="1")
+        self.assertTrue(any("/list?" in u for u in calls))
+        first = [u for u in calls if "/rates?" in u]
+        self.assertEqual(len({u.split("hotel_key=")[1].split("&")[0] for u in first}), 1)
+        calls.clear()
+        self.run_it(fake_xotelo(calls), budget="1")
+        self.assertFalse(any("/list?" in u for u in calls))  # matched keys are kept in the file
+        second = {u.split("hotel_key=")[1].split("&")[0] for u in calls if "/rates?" in u}
+        self.assertNotEqual(second, {u.split("hotel_key=")[1].split("&")[0] for u in first})  # the other hotel's turn
+        self.assertEqual(len(json.load(open(self.out))["hotels"]), 2)  # the first hotel's price is kept
+
+    def test_old_prices_are_dropped(self):
+        self.run_it(fake_xotelo())
+        self.run_it(fake_xotelo(), today=date(2026, 12, 5), budget="0")
+        self.assertEqual(json.load(open(self.out))["hotels"], [])
+
+    def test_a_failing_xotelo_keeps_the_last_prices(self):
+        self.run_it(fake_xotelo())
+        before = open(self.out).read()
+        with mock.patch.object(hp.st, "due", return_value=True):
+            self.assertEqual(self.run_it(fake_xotelo(fail=True)), 0)
+        self.assertEqual(open(self.out).read(), before)
         self.assertEqual(self.state()["state"], "failed")
-        self.assertIn("sandbox", self.state()["status"])
 
-    def test_other_currencies_are_ignored(self):
-        self.assertEqual(self.run_it({"LITEAPI_KEY": "k"}, fake_api(currency="USD")), 1)
+    def test_a_short_list_is_not_trusted(self):
+        with mock.patch.object(hp, "fetch_list", return_value=[]):
+            self.run_it(fake_xotelo())
         self.assertFalse(os.path.exists(self.out))
+        self.assertIn("only 0", self.state()["status"])
 
-    def test_a_rejected_key_keeps_the_last_prices(self):
-        open(self.out, "w").write('{"keep":1}')
-        with mock.patch.dict(os.environ, {"LITEAPI_KEY": "k"}), mock.patch.object(hp.net, "get_json", side_effect=net.AuthError("bad key")):
-            self.assertEqual(hp.main(["--hotels", self.hotels, "--out", self.out]), 0)
-        self.assertEqual(json.load(open(self.out)), {"keep": 1})
-        self.assertIn("401", self.state()["status"])
+    def test_without_hotels_json_it_waits(self):
+        os.remove(self.hotels)
+        self.run_it(fake_xotelo())
+        self.assertEqual(self.state()["state"], "standby")
 
 
 if __name__ == "__main__":

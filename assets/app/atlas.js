@@ -451,13 +451,15 @@ window.startCompare=startCompare;
 // (collector/hotels.py, weekly) as small gold-ringed dots, and per-area counts on plain paper labels (counts, not
 // prices, so not on the blue scale). The key carries Dubai's official monthly average room rate and occupancy
 // (DET via Dubai Pulse, collector/hotel_stats.py) when that file exists. Nightly prices are not shown: booking
-// sites' prices are theirs; each hotel links out to look them up.
+// sites' prices are theirs; each hotel links out to look them up. With data/hotel_prices.json (Xotelo), prices show.
 let HOTELS=null,HOTEL_STATS=null,HOTEL_BY=null,HOTEL_PRICES=null;const hotelLayer=L.layerGroup();
-// Nightly prices (LiteAPI, data/hotel_prices.json): each hotel's average over sample nights; an area's figure is the
+// Nightly prices (Xotelo, data/hotel_prices.json): each hotel's average over sample nights; an area's figure is the
 // median of its hotels' averages. Without that file the view counts places (oxblood badges); with it, prices (blue).
 const hotelPriced=()=>!!(HOTELS&&HOTELS.some(h=>h.price));
-function attachPrices(){if(!HOTELS)return;const m=new Map(((HOTEL_PRICES&&HOTEL_PRICES.hotels)||[]).map(r=>[r[0]+'|'+r[1]+'|'+r[2],r]));
-  HOTELS.forEach(h=>{const r=m.get(h.name+'|'+h.lat+'|'+h.lng);h.price=r?r[3]:null;h.priceN=r?r[4]:0;h.priceLo=r?r[5]:null;h.priceHi=r?r[6]:null});HOTEL_BY=null}
+// A price checked more than keep_days ago (10) is not shown: it is no longer a current price.
+function attachPrices(){if(!HOTELS)return;const keep=((HOTEL_PRICES&&HOTEL_PRICES.keep_days)||10)*864e5,fresh=r=>!r[7]||Date.now()-new Date(r[7]+'T00:00:00Z')<=keep+864e5;
+  const m=new Map(((HOTEL_PRICES&&HOTEL_PRICES.hotels)||[]).filter(fresh).map(r=>[r[0]+'|'+r[1]+'|'+r[2],r]));
+  HOTELS.forEach(h=>{const r=m.get(h.name+'|'+h.lat+'|'+h.lng);h.price=r?r[3]:null;h.priceN=r?r[4]:0;h.priceLo=r?r[5]:null;h.priceHi=r?r[6]:null;h.priceAt=r?r[7]||HOTEL_PRICES.fetched:null});HOTEL_BY=null}
 const HOTEL_KIND={hotel:'Hotel',apartments:'Hotel apartments',hostel:'Hostel',guest:'Guest house'};
 const hotelName=h=>T.lang==='ar'&&h.name_ar?h.name_ar:h.name;
 function loadHotels(){
@@ -508,9 +510,10 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-pw]');if(!
 function hotelPrice(h){
   const st=HOTEL_STATS&&HOTEL_STATS.latest;
   if(!HOTEL_PRICES)return st&&st.adr?'<p class="muted">'+T("Dubai's average room rate in {month}: AED {adr} a night (all hotels, DET).",{month:safe(monthName(st.month)),adr:fmt(Math.round(st.adr))})+'</p>':'';
-  if(!h.price)return '<p class="muted">'+T('No price from our hotel price source for this place yet.')+'</p>';
+  if(!h.price)return '<p class="muted">'+T('No price from booking sites for this place yet (not every place is listed on them).')+'</p>';
   return '<p class="lead">'+T('Average {aed} a night',{aed:'<b>AED '+fmt(h.price)+'</b>'})+'</p><p class="muted">'+
-    T('Cheapest room for 2 adults, {n} sample nights over the next month (AED {lo} to {hi}); checked {d}.',{n:h.priceN,lo:fmt(h.priceLo),hi:fmt(h.priceHi),d:safe(HOTEL_PRICES.fetched)})+'</p>'}
+    (h.priceN>1?T('Lowest price on booking sites for one room, 2 adults: {n} sample nights two to three weeks ahead, AED {lo} to {hi}. Checked {d}.',{n:h.priceN,lo:fmt(h.priceLo),hi:fmt(h.priceHi),d:safe(h.priceAt)})
+      :T('Lowest price on booking sites for one room, 2 adults, one night two to three weeks ahead. Checked {d}.',{d:safe(h.priceAt)}))+'</p>'}
 const monthName=m=>m?new Date(m+'-01T00:00:00').toLocaleDateString(T.lang==='ar'?'ar-AE':'en-GB',{month:'long',year:'numeric'}):'';
 function hotelLegend(){
   return '<div class="t">'+T('Hotels per area')+'</div>'+hotelNotes()}
@@ -520,8 +523,8 @@ function hotelNotes(){
   return '<div class="hkey"><i aria-hidden="true"></i>'+T('{n} hotels, hotel apartments, hostels and guest houses',{n:fmt(HOTELS?HOTELS.length:0)})+'</div>'+
     (st&&st.adr?'<div class="hstat"><b>'+T('Official average room rate: AED {adr} a night',{adr:fmt(Math.round(st.adr))})+'</b><span>'+T('{month}, all of Dubai',{month:safe(mon)})+(st.occupancy!=null?' · '+T('{occ}% of rooms taken',{occ:Math.round(st.occupancy)}):'')+'</span></div>'
       :'<div class="note">'+T("Dubai's official average room rate (DET) shows here once Dubai Pulse access is granted.")+'</div>')+
-    (np?'<div class="note">'+T('Prices: {n} places, the cheapest room for 2 adults a night, averaged over sample nights in the next month; an area shows the median of its hotels. Checked {d}.',{n:fmt(np),d:safe(HOTEL_PRICES.fetched)})+'</div>':'')+
-    '<div class="note">'+(np?T('Hotels: © OpenStreetMap contributors. Prices: LiteAPI. Tap a hotel for its price and links.'):T('Hotels: © OpenStreetMap contributors. Nightly prices are on booking sites; tap a hotel for links.'))+'</div>';
+    (np?'<div class="note">'+T('Prices: {n} places, the lowest price on booking sites for one room, 2 adults, a night, averaged over sample nights two to three weeks ahead; an area shows the median of its hotels. Updated {d}.',{n:fmt(np),d:safe(HOTEL_PRICES.fetched)})+'</div>':'')+
+    '<div class="note">'+(np?T('Hotels: © OpenStreetMap contributors. Prices: booking sites, via Xotelo (TripAdvisor). Tap a hotel for its price and links.'):T('Hotels: © OpenStreetMap contributors. Nightly prices are on booking sites; tap a hotel for links.'))+'</div>';
 }
 let POINTS=[],LABEL={},animateLabels=true;
 const pct=v=>Number(v).toFixed(1)+'%'; // yields: always one decimal
@@ -803,6 +806,7 @@ function hotelSection(a){
     (stars?'<td>'+(h.stars?'<span aria-label="'+safe(T('{n} stars',{n:h.stars}))+'">'+'★'.repeat(Math.round(h.stars))+'</span>':'')+'</td>':'')+
     (HOTEL_PRICES?'<td>'+(h.price?fmt(h.price):'—')+'</td>':'')+'</tr>';
   return '<p class="lead">'+(x.typical?T('Typical hotel price {aed} a night',{aed:'<b>AED '+fmt(x.typical)+'</b>'})+'<br>':'')+
+      (x.prices.length>1?T('From AED {lo} to {hi} a night',{lo:fmt(Math.min(...x.prices)),hi:fmt(Math.max(...x.prices))})+'<br>':'')+
       (x.n===1?T('1 place to stay'):T('{n} places to stay',{n:fmt(x.n)}))+(x.typical?T(', {k} with a price',{k:x.prices.length}):'')+'</p>'+
     (HOTEL_PRICES?'':'<p class="muted">'+T('Nightly prices are on booking sites: each place links to them.')+'</p>')+
     '<table class="htab"><tr><th>'+T('Place')+'</th>'+(stars?'<th>'+T('Stars')+'</th>':'')+(HOTEL_PRICES?'<th>'+T('AED a night')+'</th>':'')+'</tr>'+

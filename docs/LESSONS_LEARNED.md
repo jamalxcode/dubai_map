@@ -132,3 +132,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** DET's hotel figures failed on every pull, and each pull waited about 4 minutes for the timeout, but the collector only wrote to the log, so the status page, the run log and "Needs you" never showed it. A review of "are hotel prices being pulled?" was the first time anyone saw it.
 - **Rule:** every collector records its state in `state.json` (`state.set_status`) on every outcome, including "waiting for a key"; a source that changes monthly is asked at most daily with a short wait; tests point `store.DATA` at a temporary folder, so they never touch the loaded data.
+
+## A "never shrink" guard can freeze stale data (19 Nov 2026)
+
+- **Problem:** the hotel price collector refused to save when fewer hotels had a price than before, so prices that had aged out (older than 10 days) were kept forever, shown as current.
+- **Rule:** guard against the cause of a bad shrink (here: far fewer places matched), not the count itself, when dropping old figures is intended; and let the page hide figures past their age on its own.

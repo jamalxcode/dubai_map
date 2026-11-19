@@ -633,6 +633,15 @@ Asked: "review hotel prices, make sure they are correct and being pulled". What 
 - **Status page:** "The last pull" lists both hotel sources (DET and LiteAPI) with their state and DET's latest month; "Waiting" says the room rates wait for the Dubai Pulse key; "Needs you" lists DET when it fails with the key set (or asks for the key if only DET needs it). `run_log.py` records what each hotel source gave.
 - **Checked:** Python tests (a refused download keeps the file and says why, the 20-hour wait, a good answer saved as `ok`, a refused key is `failed`, unbelievable rates left out), page tests and the browser checks (the status page shows seven sources, DET among them).
 
+## Decision on 2026-11-19 (sixty-third pass): hotel prices from Xotelo
+
+The owner wants hotel prices and ranges on the map, refuses LiteAPI (its live key needs a payment card that bookings made with the key could be charged to) and chose Xotelo: free, no key, the rates booking sites (Booking.com, Agoda, Trip.com, Expedia and others) show on TripAdvisor. Amadeus's free self-service API closed in July 2026, so there was no official free alternative.
+- **Collector** (`collector/hotel_prices.py`, rewritten; same output shape, so the page's price view, dial and labels work unchanged): Xotelo's Dubai list once a day (2,600+ hotels), matched to our places with the existing name-and-position rules (527 of 798 in a live trial). Each pull asks up to 100 matched hotels, never asked first and then the longest ago, for one room, 2 adults, on two nights 14 and 19 days ahead, 3 requests at a time (about 6 minutes; Xotelo is a small free service, so no more). A night's price is the lowest offer not under 60% of the median offer (an official-site member rate a third of the others is not what most guests pay), converted at the AED peg.
+- **Honesty:** prices older than 10 days are dropped by the collector and hidden by the page; a place without a price says it isn't listed on booking sites yet; when Xotelo fails the last prices stay, the status page says so, and "Needs you" asks for another source if it stays down.
+- **Ranges:** an area's card gives "From AED … to … a night" across its priced hotels; a hotel's card its average and the range of its nights; the dial the median of the areas in view with the lowest and highest at its ends.
+- **Removed:** LiteAPI (key, sandbox guard, "Needs you" item, status lines). **Kept:** the partner widget (live prices in the card on tap) and DET's official rate (with the Dubai Pulse key).
+- **Checked:** Python tests with a fake Xotelo (matching, the 60% rule, rotation, list once a day, stale prices dropped, failures keep the file); a live trial (18 of 30 hotels priced: Atlantis about AED 1,960, Signature 1 Hotel about AED 190); browser checks with a priced file (labels are prices, dial, area range, hotel card, a 20-day-old price hidden). The hotel check workflow prices 15 hotels from GitHub's network.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

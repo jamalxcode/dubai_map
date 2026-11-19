@@ -34,7 +34,7 @@
   const SOURCE_NAMES = {
     datadubai: 'Dubai Data', 'crosscheck:ccp': 'Continental Club Property', 'crosscheck:dred': 'Dubai Real Estate Data',
     pulse: 'Dubai Pulse API', dld: 'DLD open-data service',
-    hotel_stats: "Dubai's hotel room rates (DET)", hotel_prices: 'Hotel prices (LiteAPI)'
+    hotel_stats: "Dubai's hotel room rates (DET)", hotel_prices: 'Hotel prices (Xotelo)'
   };
   const STATE_TEXT = {
     ok: T('working'), failed: T('failing'), no_key: T('waiting for the API key'), off: T("off (waiting for DLD's permission)"),
@@ -61,6 +61,7 @@
           : p.live === 'off' ? T('live pages off') : T('checked recently; not asked again yet');
       return live + (p.export_files_updated ? ' · ' + T('{n} export files updated', { n: p.export_files_updated }) : '') + (p.through ? ' · ' + T('data to {d}', { d: day(p.through) }) : '');
     }
+    if (key === 'hotel_prices') return p.priced != null ? T('{n} hotels priced', { n: fmt(p.priced) }) : '—';
     if (key === 'hotel_stats') return p.latest ? T('monthly figures to {m}', { m: p.latest }) : '—';
     if (key === 'pulse') return p.rows != null ? T('{rows} rows ({a} new, {u} updated)', { rows: fmt(p.rows), a: fmt(p.added), u: fmt(p.updated) }) : '—';
     return p.rows != null ? T('{rows} rows', { rows: fmt(p.rows) }) + (p.through ? ' · ' + T('data to {d}', { d: day(p.through) }) : '') : '—';
@@ -102,8 +103,6 @@
   function pending(st, state) {
     const p = (st && st.pending) || {};
     const items = [];
-    if (((state || {}).hotel_prices || {}).state === 'no_key')
-      items.push('<li><b>' + esc(T('Hotel prices: off')) + '</b>: ' + esc(T("the owner's choice, since LiteAPI's live key needs a payment card; each place links to booking sites for prices.")) + '</li>');
     const hs = (state || {}).hotel_stats || {};
     if (hs.state === 'no_key')
       items.push('<li><b>' + esc(T("Dubai's hotel room rates: waiting")) + '</b>: ' + esc(T('the tourism department\'s monthly figures come through Dubai Pulse, which needs the same key as rent contracts (see "Needs you").')) + '</li>');
@@ -168,12 +167,9 @@
       add(T("Add a booking partner's price widget"), T('Hotel cards can then show live nightly prices from that partner, in their own panel, when a visitor taps for them.'),
         T("Join a booking site's affiliate programme (Booking.com's or Expedia Group's, for example; free), create a hotel price or search widget in its dashboard, and send its link, or paste it into assets/app/partners.js."), 'https://www.booking.com/affiliate-program/v2/index.html');
     const hp = s.hotel_prices || {};
-    // No key is the owner's choice (18 Nov: LiteAPI's live key needs a payment card), so it is not asked for here;
-    // it shows under "Waiting" instead. A key that is added but rejected or sandbox still needs the owner.
-    if (hp.state === 'failed' && /sandbox|401/.test(hp.status || ''))
-      add(T('Get a LiteAPI key for hotel prices'), hp.state === 'failed' ? hp.status : T('It unlocks each hotel\'s average price a night and each area\'s typical hotel price in the Hotels view.'),
-        T('Create a free account at liteapi.travel, copy the live API key from the dashboard (not the sandbox key) and add it as the repository secret LITEAPI_KEY. Prices appear after the next pull.'), 'https://liteapi.travel');
-    else if (hp.state === 'failed') add(T('Hotel prices are failing'), hp.status || '', T("Open the source's page to see whether it moved or changed; the last good figures stay on the map meanwhile."), 'https://liteapi.travel');
+    // Hotel prices come from Xotelo (free, no key; the owner's choice, 19 Nov). Only a failure needs a person.
+    if (hp.state === 'failed') add(T('Hotel prices are failing'), hp.status || '',
+      T("Xotelo may be down or may have changed; the last good prices stay up to 10 days, then the Hotels view counts places again. If it stays down, ask for another price source."), 'https://xotelo.com');
     const hs = s.hotel_stats || {};
     if (hs.state === 'failed') add(T("Dubai's hotel room rates are failing"), hs.status || '', T("Check that the Dubai Pulse key still works and that the tourism department's dataset is still published; the last good figures stay meanwhile."), 'https://data.dubai');
     else if (hs.state === 'no_key' && (s.pulse || {}).state !== 'no_key')

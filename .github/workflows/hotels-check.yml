@@ -1,12 +1,12 @@
 name: Check the hotel collectors
 
-# When collector/hotels.py or collector/hotel_stats.py changes on any branch: run them (one Overpass request,
-# one Dubai Pulse download) without saving anything, and summarise what came back in the log, so a change can be
+# When collector/hotels.py, hotel_stats.py or hotel_prices.py changes on any branch: run them (one Overpass request,
+# one Dubai Pulse download, Xotelo's Dubai list and prices for 15 hotels) without saving anything, and summarise what came back in the log, so a change can be
 # checked before it is merged. The weekly job and the daily pull save the real files from main.
 on:
   push:
     branches-ignore: [data]
-    paths: [collector/hotels.py, collector/hotel_stats.py, .github/workflows/hotels-check.yml]
+    paths: [collector/hotels.py, collector/hotel_stats.py, collector/hotel_prices.py, .github/workflows/hotels-check.yml]
   workflow_dispatch:
 
 permissions:
@@ -31,6 +31,11 @@ jobs:
             "https://www.dubaipulse.gov.ae/dataset/5ce622ab-91f2-4207-a694-79ac7eb39165/resource/b4ea30a4-42ee-4d82-a7ea-98a5a1363ce4/download/hotel_establishment_performance.csv" || true
           echo "--- first lines:"; head -c 1200 det.csv || true; echo; echo "--- last lines:"; tail -n 3 det.csv || true
           python3 collector/hotel_stats.py --from-file det.csv --out hotel_stats.json || true
+      - name: Hotel prices from Xotelo, 15 hotels (not saved)
+        continue-on-error: true
+        run: |
+          mkdir -p data && echo '{}' > data/state.json
+          [ -f hotels.json ] && python3 collector/hotel_prices.py --hotels hotels.json --out hotel_prices.json --budget 15 || true
       - name: What came back (for the log)
         if: always()
         run: |
@@ -46,4 +51,9 @@ jobs:
               print(len(s["months"]), "months of DET figures, latest:", s["latest"])
           else:
               print("no hotel_stats.json (Dubai Pulse needs access from here)")
+          if os.path.exists("hotel_prices.json"):
+              p = json.load(open("hotel_prices.json"))
+              print(p["matched"], "places matched on Xotelo;", len(p["hotels"]), "priced, e.g.", p["hotels"][:3])
+          else:
+              print("no hotel_prices.json (Xotelo not reachable)")
           PY

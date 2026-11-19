@@ -555,6 +555,36 @@ try {
     await axe(page, 'hotel card with the partner panel');
     await ctx.close();
   }
+  // Hotel prices (Xotelo, data/hotel_prices.json): every other place priced today, one priced too long ago (hidden).
+  if (await readFile(join(ROOT, 'data/hotels.json')).then(() => true).catch(() => false)) {
+    const hs = JSON.parse(await readFile(join(ROOT, 'data/hotels.json'), 'utf8')).hotels;
+    const today = new Date().toISOString().slice(0, 10), old = new Date(Date.now() - 20 * 864e5).toISOString().slice(0, 10);
+    const rows = hs.filter((h, i) => i % 2 === 0).map((h, i) => [h[0], h[4], h[5], 300 + (i * 37) % 900, 2, 250 + (i * 37) % 900, 350 + (i * 37) % 900, i === 0 ? old : today]);
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.route(/data\/hotel_prices\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ fetched: today, source: 'Xotelo test', currency: 'AED', keep_days: 10, hotels: rows }) }));
+    await page.goto(BASE + '?view=hotels');
+    await page.waitForFunction(() => window.atlasState === 'ready' && HOTEL_PRICES && HOTELS && hotelPriced(), null, { timeout: 15000 }).catch(() => {});
+    await page.evaluate(() => draw());
+    await page.waitForTimeout(400);
+    const v = await page.evaluate(() => {
+      const g = [...hotelsBy().entries()].filter(([, x]) => x.prices.length > 1).sort((a, b) => b[1].prices.length - a[1].prices.length)[0];
+      return { kind: document.getElementById('dialKind').textContent, on: !document.getElementById('dialBox').classList.contains('off'), lo: document.getElementById('dialMin').textContent, hi: document.getElementById('dialMax').textContent,
+        labels: [...document.querySelectorAll('.rl b')].map(e => e.textContent), staleHidden: HOTELS[0].price === null, area: g && g[0] };
+    });
+    check(v.on && /Median a night/.test(v.kind) && v.lo && v.hi && v.labels.length && v.labels.every(t => /AED/.test(t)) && v.staleHidden,
+      `hotel prices: the dial shows the median a night between the lowest and highest area (${v.lo}–${v.hi}); labels are prices; a price older than 10 days is not shown`);
+    const sec = await page.evaluate(a => { const d = document.createElement('div'); d.innerHTML = hotelSection(byLabel(a)); return d.textContent; }, v.area);
+    check(/From AED [\d,]+ to [\d,]+ a night/.test(sec) && /Typical hotel price AED/.test(sec), `an area's card gives its typical hotel price and its range (${v.area})`);
+    await page.evaluate(() => openHotel(HOTELS.find(h => h.price)));
+    await page.waitForTimeout(300);
+    const card = await page.evaluate(() => document.querySelector('.leaflet-popup-content').textContent);
+    check(/Average AED [\d,]+ a night/.test(card) && /Lowest price on booking sites/.test(card), "a priced hotel's card gives its average and its range");
+    check(!errors.length, `hotel prices: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await ctx.close();
+  }
   // Backup source in use (Dubai Data stuck): the warning sign says so.
   {
     const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
