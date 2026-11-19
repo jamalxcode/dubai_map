@@ -90,7 +90,8 @@ if(navigator.geolocation){const a=L.DomUtil.create('a','near',map.zoomControl.ge
 // A merged label names its busiest area and how many others it holds ("JLT +12"), so it says where it is.
 // Names are shortened here, once (the label's CSS doesn't cut them again), so "+N" always shows.
 const cut=(t,n)=>t.length>n?t.slice(0,n-1).trimEnd()+'…':t;
-const groupName=g=>{const top=g.reduce((a,b)=>b.n>a.n?b:a,g[0]).a.label;return cut(T.place(top),22)+' +'+(g.length-1)};
+// A merged label names its busiest area and how many more it covers ("JLT + 12 areas"; "+12" alone read as code).
+const groupName=g=>{const top=g.reduce((a,b)=>b.n>a.n?b:a,g[0]).a.label;return g.length===2?T('{name} + 1 area',{name:cut(T.place(top),20)}):T('{name} + {n} areas',{name:cut(T.place(top),20),n:g.length-1})};
 const labelName=g=>g.length===1?cut(T.place(g[0].a.label),28):groupName(g);
 // Base map. Vector tiles (OpenFreeMap: OpenStreetMap data, free, no key) so place and street names can be
 // shown in English, Arabic or both, chosen with the map's language button. MapLibre (1 MB) loads after the
@@ -142,11 +143,21 @@ const viewCtl=new L.Control.View().addTo(map);
 // On narrow maps the five views don't fit beside the zoom buttons: the bar gets the width that's left and scrolls,
 // with the chosen view scrolled into sight.
 function fitViewBar(){const bar=viewCtl.getContainer(),z=map.zoomControl&&map.zoomControl.getContainer();if(!bar||!z)return;
+  if(typeof CHIP_MQ!=='undefined'&&CHIP_MQ.matches){bar.style.maxWidth='';return} // phones: the views are chips above the map
   const m=map.getContainer().getBoundingClientRect(),zr=z.getBoundingClientRect();if(!m.width)return;
   bar.style.maxWidth=Math.max(140,(document.documentElement.dir==='rtl'?zr.left-m.left:m.right-zr.right)-20)+'px';
   const v=bar.querySelector('.views'),on=v&&v.querySelector('button[aria-pressed="true"]');
   if(on&&v.scrollWidth>v.clientWidth&&document.documentElement.dir!=='rtl')v.scrollLeft=Math.max(0,on.offsetLeft-(v.clientWidth-on.offsetWidth)/2)}
 map.on('resize',fitViewBar);addEventListener('load',fitViewBar);
+// Phones: the five views leave the map for a row of chips just above it, where all of them show (they wrap), in
+// either language; the map keeps its layer switches (Metro, place names) in the corner.
+const viewChips=document.createElement('div');viewChips.className='viewChips';
+document.querySelector('.mapPane .mapWrap').before(viewChips);
+const CHIP_MQ=matchMedia('(max-width:860px)');
+function placeViews(){const v=viewCtl.getContainer().querySelector('.views')||viewChips.querySelector('.views');if(!v)return;
+  if(CHIP_MQ.matches){if(v.parentNode!==viewChips)viewChips.append(v)}else if(v.parentNode!==viewCtl.getContainer())viewCtl.getContainer().prepend(v);
+  viewChips.hidden=!CHIP_MQ.matches;fitViewBar()}
+placeViews();CHIP_MQ.addEventListener('change',placeViews);
 // Phones: the map credits fold behind an "i" button (two wrapped lines of credits covered the map's bottom);
 // one tap shows them in full. Wide screens show them as always.
 L.Control.Credits=L.Control.extend({options:{position:'bottomright'},onAdd(){
@@ -158,7 +169,7 @@ new L.Control.Credits().addTo(map);
 const namesBtn=()=>viewCtl.getContainer().querySelector('.names');
 function syncViews(){
   const sel=$('metric'),have=new Set([...sel.options].map(o=>o.value));
-  viewCtl.getContainer().querySelectorAll('button').forEach(b=>{b.hidden=!have.has(b.dataset.m);b.setAttribute('aria-pressed',b.dataset.m===sel.value)});
+  [...viewCtl.getContainer().querySelectorAll('button'),...document.querySelectorAll('.viewChips button')].forEach(b=>{b.hidden=!have.has(b.dataset.m);b.setAttribute('aria-pressed',b.dataset.m===sel.value)});
   fitViewBar();
 }
 // OpenStreetMap tile usage policy: this exact HTTPS URL, visible attribution, no bulk or offline use.
@@ -346,8 +357,9 @@ function openStation(s){
 }
 // A tap on an area in a station's breakdown (pop-up or phone sheet) focuses that area.
 document.addEventListener('click',e=>{const b=e.target.closest('[data-focus]');if(!b)return;const a=AREAS.find(x=>x.label===b.dataset.focus);if(a){closeSheet();focusArea(a)}});
-// The Metro button: fourth on the zoom bar, after Near me.
-const transitBtn=L.DomUtil.create('a','near metroBtn',map.zoomControl.getContainer());
+// The Metro button: a layer, so it sits with the map's other layer switch (place names) in the top-right bar, not
+// among the zoom stack's moves (zoom, All Dubai, Near me).
+const transitBtn=document.createElement('a');transitBtn.className='metroBtn';viewCtl.getContainer().insertBefore(transitBtn,namesBtn());
 transitBtn.href='#';transitBtn.role='button';transitBtn.textContent=T('Metro');transitBtn.title=T('Show Metro and Tram lines');transitBtn.hidden=true;transitBtn.setAttribute('aria-pressed','false');
 L.DomEvent.on(transitBtn,'click',e=>{L.DomEvent.stop(e);showTransit(!transitOn,true)});
 // The walk filter, next to the budget.
@@ -668,7 +680,7 @@ function renderLabels(){
     .filter(r=>r.width&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top)
     .map(r=>{const c=map.containerPointToLayerPoint([r.left-box.left+r.width/2,r.top-box.top+r.height/2]);return {x:c.x,y:c.y,w:r.width,h:r.height}});
   const v0=map.containerPointToLayerPoint([0,0]),ms=map.getSize(),view={x0:v0.x,y0:v0.y,x1:v0.x+ms.x,y1:v0.y+ms.y};
-  const cl=RentLabels.place(items,size,{pad:6,sum:metric==='n'||(metric==='hotels'&&!hotelPriced()),blocks,view});
+  const cl=RentLabels.place(items,size,{pad:4,sum:metric==='n'||(metric==='hotels'&&!hotelPriced()),blocks,view});
   const added=[];MARKERS.clear();
   for(const c of cl){const g=c.members,moved=c.lx!==c.x||c.ly!==c.y,pos=moved?map.layerPointToLatLng([c.lx,c.ly]):L.latLng(c.lat,c.lng);
     if(moved){L.polyline([[c.lat,c.lng],pos],{className:'leader',weight:1.5,interactive:false}).addTo(layer);
@@ -747,7 +759,7 @@ function viewStat(){
     hotels:[T('Median a night'),T('AED a night'),T('Median hotel price a night in view')],homes:[T('Median a night'),T('AED a night'),T('Median holiday home price a night in view')]}[metric]||[T('Median'),'',T('Median in view')];
   const end=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='median_sqm'||STAY(metric)?fmt:(v=>compact(v));
   setDial(true,{kind:D[0],unit:D[1],lo,hi,mid,fmtEnd:end});
-  $('medLabel').textContent=STAY(metric)?(metric==='homes'?T('Holiday homes in view'):T('Hotels in view'))+where+' · '+T('ends: cheapest and dearest area'):D[2]+where+T(', ')+home+' · '+T('lowest and highest area at the ends');
+  $('medLabel').textContent=STAY(metric)?(metric==='homes'?T('Holiday homes in view'):T('Hotels in view'))+where+' · '+T('ends: cheapest and dearest area'):home.charAt(0).toUpperCase()+home.slice(1)+where+' · '+T('ends: cheapest and dearest area');
   if(metric==='yield'){$('med').textContent=mid.toFixed(1)+'%';$('med')._sig=null;$('med').setAttribute('aria-label',$('med').textContent);return}
   const step=metric==='median_sqm'?1:metric==='sale'?1000:STAY(metric)?10:100;
   odometer($('med'),Math.round(mid/step)*step,'');
@@ -783,7 +795,7 @@ async function init(){
     if(!hidden){$('stale').classList.add('on');setTimeout(()=>map.invalidateSize(),0)}
   }
   sources();
-  const un=META.unmatched_areas||[];$('unmatchedN').textContent=un.length;
+  const un=META.unmatched_areas||[];$('unmatchedN').textContent=un.length;$('unmatchedBox').hidden=!un.length; // nothing to open when every area is placed
   $('unmatched').innerHTML=un.map(x=>'<li>'+safe(x.area)+' <span class="muted">('+fmt(x.n)+')</span></li>').join('')||'<li class="muted">'+T('None')+'</li>';
   fillUnits();buildHome();const later=readURL();draw();if(later)later();intro();
   window.atlasState='ready';dispatchEvent(new Event('atlas:ready')); // assets/app/companion.js takes it from here
@@ -796,7 +808,7 @@ function sources(){
   const li=xs=>xs.map(x=>'<li>'+safe(x.name.replace(/,?\s*cross-check$/i,''))+'</li>').join('');
   $('inUse').innerHTML='<p class="srcH">'+T('Figures from')+'</p><ul>'+(figs.length?li(figs):'<li>'+T('Dubai Land Department Ejari contracts')+'</li>')+'</ul>'+
     (checks.length?'<p class="srcH">'+T('Checked against')+'</p><ul>'+li(checks)+'</ul>':'');
-  $('sources').innerHTML=s.map(x=>{const st=x.status||'',cls=/^(ok|in use)/.test(st)?'status-ok':/^(off|no credentials|not run|standby)/.test(st)?'muted':'status-bad';
+  if($('sources'))$('sources').innerHTML=s.map(x=>{const st=x.status||'',cls=/^(ok|in use)/.test(st)?'status-ok':/^(off|no credentials|not run|standby)/.test(st)?'muted':'status-bad';
     return '<li>'+safe(x.name)+': <span class="'+cls+'">'+safe(x.status||T('not run yet'))+'</span>'+(x.last_ok_at?' <span class="muted">('+safe(T('last success {t}',{t:kuwait(x.last_ok_at)}))+')</span>':'')+'</li>'}).join('')||'<li>'+T('Dubai Land Department Ejari contracts')+'</li>';
 }
 
@@ -970,7 +982,7 @@ async function loadPhotos(e){
   box.classList.remove('loading');
   if(!ph.length){box.remove();return}
   box.innerHTML='<div class="strip">'+ph.map((p,i)=>'<a href="'+safe(p.page)+'" target="_blank" rel="noopener" data-i="'+i+'" data-big="'+safe(p.big)+'" data-title="'+safe(p.title)+'" data-credit="'+safe(p.author+(p.lic?', '+p.lic:''))+'" title="'+safe(p.title+' · '+p.author+(p.lic?' · '+p.lic:''))+'">'+
-    '<img src="'+safe(p.src)+'" alt="'+safe(p.title)+'" loading="lazy" onerror="this.parentNode.remove()"><span>'+safe(p.author)+(p.lic?', '+safe(p.lic):'')+'</span></a>').join('')+'</div>'+
+    '<img src="'+safe(p.src)+'" alt="'+safe(p.title)+'" loading="lazy" onerror="this.parentNode.remove()"><span title="'+safe(p.author+(p.lic?', '+p.lic:''))+'">'+safe(T('Photo by {a}',{a:p.author}))+'</span></a>').join('')+'</div>'+
     '<small>'+T('Photos taken near this point, from Wikimedia Commons. Tap one to see it large, with its author and licence.')+'</small>';
   refitPopup(e.popup);box.querySelectorAll('img').forEach(i=>i.addEventListener('load',()=>refitPopup(e.popup),{once:true}));
 }
@@ -1098,7 +1110,7 @@ map.on('popupopen',async e=>{
   body.replaceChildren(...src.childNodes);body.scrollTop=0;el.scrollTop=0;sheetPopup=e.popup;
   // On a phone the pictures come first: photos and the Google links right under the area's name.
   const head=body.querySelector('.t'),see=body.querySelector('.see'),pics=body.querySelector('.pics');
-  if(head&&!body.querySelector('.hsec')){if(see)head.after(see);if(pics)head.after(pics)} // places to stay: the prices lead
+  // Figures first, then the Google links and photos, as in the pop-up (the price is what the card was opened for).
   el.hidden=false;document.documentElement.classList.add('sheetOpen');
   el.focus({preventScroll:true});
 });
@@ -1188,6 +1200,17 @@ function stayFacts(metric){
   $('sfMedT').textContent=T('Dubai median a night');$('sfMed').textContent=all.length?'AED '+fmt(Math.round(median(all))):'—';
   $('sfLowT').textContent=T('Cheapest area');
   $('sfLow').innerHTML=low?safe('AED '+fmt(low.t))+'<small>'+safe(T.place(low.c))+(solid.length?'':' · '+safe(T('few places')))+'</small>':'—'}
+// The rent views' key figures follow the chosen home and view: contracts behind the areas on the map, the cheapest
+// area (highest yield in the yield view; from areas with 10+ contracts when there are any), and areas shown.
+function keyFacts(metric,unit,shown){if(STAY(metric))return;
+  const home=(unit?T.unit(unit):TYPENAME()).toLowerCase(),n=POINTS.reduce((t,p)=>t+(p.n||0),0);
+  $('n12T').textContent=T('Contracts for {home}',{home});odometer($('n12'),n||null);
+  const solid=POINTS.filter(p=>!p.thin&&!p.a.staff),pool=solid.length?solid:POINTS,yieldView=metric==='yield';
+  const best=pool.length?pool.reduce((a,b)=>(yieldView?b.v>a.v:b.v<a.v)?b:a):null;
+  $('mappedT').textContent=yieldView?T('Highest yield'):T('Cheapest area');
+  $('mapped').innerHTML=best?safe(labelText(best.v,metric))+'<small>'+safe(T.place(best.a.label))+'</small>':'—';
+  $('nAreasT').textContent=T('Areas on the map');
+  $('nAreas').innerHTML=safe(fmt(POINTS.length))+'<small>'+safe(T('of {n} with figures',{n:fmt(shown.length)}))+'</small>'}
 function budgetNote(unit,metric){
   if(!BUDGET){budgetEl.hidden=true;return}
   const what=(unit?T.unit(unit):TYPENAME()).toLowerCase(),a='AED '+fmt(BUDGET.lo),b=BUDGET.hi<Infinity?'AED '+fmt(BUDGET.hi):null;
@@ -1267,10 +1290,7 @@ function draw(){
   if(!stayView&&!$('unit').value&&AREAS.some(a=>a.median_kind==='unit'))$('legend').insertAdjacentHTML('beforeend','<div class="note">'+T('Older districts (no all-homes median): pick a unit to see them')+'</div>');
   // Labels keep clear of the legend as it was when they were placed: if the legend changed size (another view's key), place them again.
   if(($('legend').hidden?'':$('legend').offsetWidth+'x'+$('legend').offsetHeight)!==legendBox0){relabelKeep=true;renderLabels();relabelKeep=false}
-  const all=AREAS.reduce((s,a)=>s+a.n,0),placed=shown.reduce((s,a)=>s+a.n,0);
-  odometer($('n12'),all);
-  $('mapped').innerHTML=(all?safe((Math.floor(placed/all*1000)/10).toFixed(1))+'%':'—')+'<small>'+safe(T('of these contracts'))+'</small>';
-  $('nAreas').textContent=fmt(shown.length);
+  keyFacts(metric,unit,shown);
   const kinds=KIND_IN[TYPE];
   const rowKind=r=>AGG?(/^studio/i.test(r.u)?'studio':/apartment/i.test(r.u)?'flat':null):(r.k||'flat');
   view=ROWS.filter(r=>(!kinds||kinds.includes(rowKind(r))||(AGG&&TYPE==='homes'))&&(!unit||r.u===unit)&&r.a>=min&&r.a<=max&&(!q||[r.c,r.ar,r.mp,r.p].filter(Boolean).join(' ').toLowerCase().includes(q)));
@@ -1297,7 +1317,7 @@ function table(){
     let prev=null;
     for(const r of rows){const tr=document.createElement('tr');const same=r.c===prev;prev=r.c;if(same)tr.className='cont';
       {const td=document.createElement('td');td.className='w';if(same){const vh=document.createElement('span');vh.className='vh';vh.textContent=T.place(r.c);td.append(vh)}
-        else{td.append(T.place(r.c));if(r.ar&&r.ar!==r.c){const sm=document.createElement('small');sm.textContent=T.place(r.ar);td.append(sm)}}tr.append(td)}if(!one){cell(tr,T.unit(r.u));tr.lastChild.className='u opt'}cell(tr,fmt(r.a),1);tr.lastChild.className=o('a');cell(tr,fmt(r.n),1);cell(tr,r.s?fmt(r.s):'',1);tr.lastChild.className=o('s');cell(tr,r.y!=null?pct(r.y):'',1);tr.lastChild.className=o('y');tb.append(tr)}
+        else{td.append(T.place(r.c));if(r.ar&&r.ar!==r.c){const sm=document.createElement('small');sm.textContent=T.place(r.ar);td.append(sm)}}tr.append(td)}if(!one){cell(tr,T.unit(r.u));tr.lastChild.className='u opt'}cell(tr,fmt(r.a),1);tr.lastChild.className=o('a');cell(tr,fmt(r.n),1);cell(tr,r.s?fmt(Math.round(r.s/1000)*1000):'',1);tr.lastChild.className=o('s');cell(tr,r.y!=null?pct(r.y):'',1);tr.lastChild.className=o('y');tb.append(tr)}
     if(!view.length)tb.innerHTML='<tr><td colspan="'+(one?5:6)+'">'+T('No areas match. Clear the search or widen the rent range.')+'</td></tr>';
     return;
   }

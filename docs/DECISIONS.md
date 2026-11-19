@@ -702,6 +702,16 @@ The SerpApi collector, built to switch on by itself when the key is added:
 
 Merged and deployed on 19 Nov (Tests passed); the pull right after recorded `serp_stays` as waiting for its key ("Needs you" asks for it), and priced 273 hotels (from 194) and 40 holiday homes (from 31) from Xotelo.
 
+## Decision on 2026-11-19 (sixty-ninth pass): the fifth interface critique
+
+Asked: "critique the user interface", then "do it all, merge on main". Sixteen points:
+- **Phones and Arabic:** in Arabic three of the five views sat off-screen in the map's bar, and in English the fifth read "Holic". On phones the views now leave the map for a row of chips just above it, all visible (wrapping), in both languages (`placeViews`). Area sheets lead with the figures (the Google links and photos follow), as the pop-up does. The compact area check runs the full width (the section had shrunk to its content and centred). The header caption is shorter.
+- **Map:** group labels read "Al Nahda Second + 37 areas" (not "+37"; "+ 1 area" for two). Metro moved from the zoom stack to the map's top-right bar beside place names: one bar for layers, one stack for moving. Labels sit 4 px apart instead of 6 at the opening zoom, so a few more areas show before merging (no-overlap checks still pass).
+- **Side panel:** "On the map: 100.0%" (useful while placing areas, not to visitors) is replaced; the three figures follow the chosen home and view: "Contracts for 1-bedroom apartments" in the areas shown, "Cheapest area" (from areas with 10+ contracts and not industrial; "Highest yield" in the yield view) and "Areas on the map" of those with figures. Sale prices in the table round to the thousand (the CSV keeps them exact).
+- **About:** "Reading the map" explains the price views; the credits name OpenStreetMap places, Xotelo, Google Hotels via SerpApi and DET; "What this is not" says hotel prices are samples, not live booking prices; "Areas not on the map yet" shows only when there are some; the per-source "Data health" list is gone in favour of the status page link.
+- **Small items:** photo captions read "Photo by {author}" (author and licence on hover and when opened); the dial's track is lighter on the oxblood band.
+- **Checked:** new browser checks (all views as chips at 320 px in Arabic and 390 px in English, Metro out of the zoom stack, sheets leading with figures; key figures following the home; group label wording); every suite passes.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

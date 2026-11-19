@@ -122,3 +122,6 @@
    (open on wider screens). */
 .ck-moreinfo summary{color:var(--gold-ink);font-weight:600;cursor:pointer;font-size:14px;margin:4px 0}
 @media (min-width:861px){.ck-moreinfo summary{display:none}}
+/* Phones: the compact area check runs the full width, aligned with the filters under it. */
+@media (max-width:860px){#companion.compact .ck{padding:0;background:none;border:0;box-shadow:none}}
+@media (max-width:860px){#companion{align-self:stretch;width:100%;padding-inline:16px}}

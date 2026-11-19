@@ -27,7 +27,7 @@ One button for the next step (compare, save, set a reminder), and on a wide scre
 - **Prices are written on the map**, each on a badge in its price colour, from the palest blue (cheapest) to deep navy (dearest). The key has a value at every step and ignores the most extreme 5% at each end, so one palace-priced area can't wash out the rest.
 - **Rent, Sale price or Yield:** one tap switches the labels, the colours and the key.
 - **One Home picker** (all homes, studios, 1-bed, 2-bed… or flats of any size) and a rent range. That's all the filtering there is.
-- **Labels never overlap**, and never hide under a button. Crowded areas merge into one label named after the busiest ("JLT +12"); zoom in and they come apart. Tests check this in English and Arabic, from 320 px phones to wide screens.
+- **Labels never overlap**, and never hide under a button. Crowded areas merge into one label named after the busiest ("JLT + 12 areas"); zoom in and they come apart. Tests check this in English and Arabic, from 320 px phones to wide screens.
 - **Official boundaries**, shaded in the same blues, and a big number up top: the typical rent of whatever is on screen, rolling like an odometer as you pan.
 - **Honest about weak figures:** anything from fewer than 10 contracts, or a big jump not yet confirmed, is drawn dashed and says why.
 
@@ -86,7 +86,7 @@ A few things worth knowing:
 
 - **It keeps its own history.** Dubai Data replaces its figures with each publication, so every build saves a small snapshot of every area's rents. From mid-December 2026 the site can say "rent +6% since…", and from November 2027, year on year.
 - **It's polite.** Each source is asked at most every 6 hours, a page a second, with an honest User-Agent. No CAPTCHA tricks, no listing portals, no VPNs. Every source's terms were read first.
-- **It doesn't break quietly.** A bad run publishes nothing smaller than the last good one; a failed source shows up under "Data health"; stale data sends an email. Each pull writes a summary of what changed on its GitHub page.
+- **It doesn't break quietly.** A bad run publishes nothing smaller than the last good one; a failed source shows up on the status page; stale data sends an email. Each pull writes a summary of what changed on its GitHub page.
 - **It's tiny.** No build step, standard-library Python, libraries and fonts served from the site. Running cost: a free GitHub account.
 
 The live **[data status page](https://jamalxcode.github.io/dubai_map/status/)** shows the latest pulls, what each source gave, what's in use, left out or waiting, and any open alerts. The full story of a pull is in **[docs/DATA_PIPELINE.md](docs/DATA_PIPELINE.md)**.

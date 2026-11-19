@@ -145,8 +145,8 @@ try {
     const badges = await page.evaluate(() => [...document.querySelectorAll('.rl')].map(e => [e.style.getPropertyValue('--c'), e.style.getPropertyValue('--on').toUpperCase(), getComputedStyle(e.querySelector('b')).backgroundColor]));
     check(badges.length >= 10 && badges.every(([c, on, bg]) => /--b[1-6]/.test(c) && bg !== 'rgba(0, 0, 0, 0)' && (/--b[56]/.test(c) ? on === '#FFFCF5' : on === '#2B2118')),
       `${name}: each label's figure sits on a badge in its key colour, with readable type (${badges.length})`);
-    check(await page.evaluate(() => !document.querySelector('.pie') && [...document.querySelectorAll('.rl.grp small')].every(e => /\+\d+$/.test(e.textContent))),
-      `${name}: merged labels name their busiest area and how many more ("+N"); no dials`);
+    check(await page.evaluate(() => !document.querySelector('.pie') && [...document.querySelectorAll('.rl.grp small')].every(e => /\+ (1 area|\d+ areas)$/.test(e.textContent))),
+      `${name}: merged labels name their busiest area and how many more ("JLT + 12 areas"); no dials`);
     const scale = await page.evaluate(() => { const vals = POINTS.map(p => p.v).sort((a, b) => a - b);
       const p95 = vals[Math.round(.95 * (vals.length - 1))], p05 = vals[Math.round(.05 * (vals.length - 1))];
       return { top: LABEL.top, p95, p05, max: vals.at(-1), min: vals[0], topColour: LABEL.colorOf(vals.at(-1)), lowColour: LABEL.colorOf(vals[0]),
@@ -162,7 +162,7 @@ try {
     // Map views: rent, sale price, gross yield; each its own key (5th-95th percentile), legend and labels.
     const views = {};
     for (const m of ['sale', 'yield', 'median']) {
-      await page.click(`.viewSw button[data-m="${m}"]`);
+      await page.click(`.views button[data-m="${m}"]`);
       await page.waitForTimeout(300);
       views[m] = await page.evaluate(() => { const vals = POINTS.map(p => p.v).sort((a, b) => a - b);
         return { metric: LABEL.metric, top: LABEL.top, p95: vals[Math.round(.95 * (vals.length - 1))], title: document.querySelector('#legend .t').textContent,
@@ -174,8 +174,8 @@ try {
       `${name}: "Yield" shows gross yields with their own key (top ${views.yield.top}%)`);
     check(views.median.metric === 'median' && views.median.top !== views.sale.top, `${name}: "Rent" switches back`);
     // Hotels (OpenStreetMap): only offered once data/hotels.json is published; groups add hotels, never contracts.
-    if (await page.evaluate(() => !!document.querySelector('.viewSw button[data-m="hotels"]:not([hidden])'))) {
-      await page.click('.viewSw button[data-m="hotels"]');
+    if (await page.evaluate(() => !!document.querySelector('.views button[data-m="hotels"]:not([hidden])'))) {
+      await page.click('.views button[data-m="hotels"]');
       await page.waitForTimeout(400);
       const h = await page.evaluate(() => ({ metric: LABEL.metric, dots: document.querySelectorAll('.hdot').length, total: HOTELS.length, priced: hotelPriced(), nPriced: HOTELS.filter(x => x.price).length, rings: document.querySelectorAll('.hdot.none').length, zoom: map.getZoom(),
         texts: [...document.querySelectorAll('.rl b')].map(e => e.textContent),
@@ -200,7 +200,7 @@ try {
         return c ? { table: !!c.querySelector('.htab .hrow'), folded: !!c.querySelector('details.rentMore:not([open])'), actsFolded: !!c.querySelector('details.rentMore [data-check]') && ![...c.querySelectorAll('[data-check]')].some(x => !x.closest('details.rentMore')), leadFirst: c.querySelector('.lead')?.compareDocumentPosition(c.querySelector('details.rentMore')) === 4 } : null; });
       check(hc && hc.table && hc.folded && hc.leadFirst && hc.actsFolded, `${name}: in the Hotels view an area's card lists its places to stay first, rents and "Check a rent here" folded under them`);
       await page.evaluate(() => { map.closePopup(); try { closeSheet(); } catch (e) {} });
-      await page.click('.viewSw button[data-m="median"]');
+      await page.click('.views button[data-m="median"]');
       await page.waitForTimeout(300);
     }
     const shapes = await page.waitForFunction(() => document.querySelectorAll('.leaflet-outlines-pane path').length, null, { timeout: 5000 }).then(h => h.jsonValue()).catch(() => 0);
@@ -310,7 +310,7 @@ try {
       check(await page.evaluate(() => document.querySelectorAll('#inUse .srcH').length >= 1 && document.querySelectorAll('#inUse ul li').length >= 1),
         'desktop: sources are listed as "Figures from" (and "Checked against")');
       // The address keeps the map's state.
-      await page.click('.viewSw button[data-m="sale"]');
+      await page.click('.views button[data-m="sale"]');
       await page.waitForTimeout(700);
       const qs = await page.evaluate(() => location.search);
       check(/view=sale/.test(qs) && /home=homes:1-bedroom/.test(qs) && /at=2[45]\.\d+,55\.\d+,\d+/.test(qs), `desktop: the address keeps the home, view and map position (${decodeURIComponent(qs)})`);
@@ -333,7 +333,7 @@ try {
         await page.selectOption('#walk', '0');
         await page.waitForTimeout(300);
       }
-      await page.click('.viewSw button[data-m="median"]');
+      await page.click('.views button[data-m="median"]');
     }
     // The finder above the table filters the table only; the map keeps every area.
     const before = await page.evaluate(() => ({ rows: document.querySelectorAll('#rows tr').length, pts: POINTS.length }));
@@ -348,8 +348,8 @@ try {
     check(!clipped.length, `${name}: the zoom bar's buttons fit${clipped.length ? ': ' + clipped.join(', ') : ''}`);
     // Feature use is counted (a stand-in counter here): a view change and a table sort.
     await page.evaluate(() => { window.__ev = []; window.goatcounter = { count: e => window.__ev.push(e.path.replace(/^.*\/event\//, '')) }; });
-    await page.click('.viewSw button[data-m="sale"]');
-    await page.click('.viewSw button[data-m="median"]');
+    await page.click('.views button[data-m="sale"]');
+    await page.click('.views button[data-m="median"]');
     await page.click('#thead button.sort[data-k="a"]');
     const ev = await page.evaluate(() => window.__ev);
     check(ev.includes('view-sale') && ev.includes('table-sort'), `${name}: feature use is counted, by name only (${ev.join(', ')})`);
@@ -359,9 +359,15 @@ try {
         return cx > b.left && cx < b.right && cy > b.top && cy < b.bottom && (r.left < b.left - 1 || r.right > b.right + 1 || r.top < b.top - 1 || r.bottom > b.bottom + 1); }).map(e => e.textContent); });
     check(!crossing.length, `${name}: no label on the map is cut off by its edge${crossing.length ? ': ' + crossing.join(', ') : ''}`);
     // Key figures in big type, freshness in one small line; sources listed once, run status folded away.
-    check(await page.evaluate(() => /^\d+$/.test(document.getElementById('nAreas').textContent) && /Kuwait/.test(document.getElementById('fresh').textContent)
-      && document.querySelectorAll('#inUse li').length >= 1 && !!document.querySelector('#healthBox:not([open]) #sources') && !document.getElementById('foot').textContent.trim()),
-      `${name}: key figures, one freshness line, sources once (status folded under "Data health")`);
+    // The key figures follow the chosen home: its contracts, the cheapest area, areas shown of those with figures.
+    const kf = await page.evaluate(() => ({ n12T: document.getElementById('n12T').textContent, n12: +(document.getElementById('n12').getAttribute('aria-label') || '').replace(/[^\d]/g, ''),
+      cheap: document.getElementById('mapped').textContent, areas: document.getElementById('nAreas').textContent, fresh: document.getElementById('fresh').textContent,
+      inUse: document.querySelectorAll('#inUse li').length, health: !!document.getElementById('healthBox'), status: !!document.querySelector('.statusLink a[href="status/"]'),
+      unm: document.getElementById('unmatchedBox').hidden || +document.getElementById('unmatchedN').textContent > 0, foot: document.getElementById('foot').textContent.trim(),
+      hotels: /Xotelo/.test(document.querySelector('.about').textContent), points: POINTS.length, sum: POINTS.reduce((t, p) => t + (p.n || 0), 0) }));
+    check(/Contracts for /.test(kf.n12T) && kf.n12 > 0 && kf.n12 <= kf.sum + 1 && /AED/.test(kf.cheap) && kf.areas.replace(/,/g, '').startsWith(String(kf.points)) && / of \d+ with figures/.test(kf.areas.replace(/(\d)of/, '$1 of'))
+      && /Kuwait/.test(kf.fresh) && kf.inUse >= 1 && !kf.health && kf.status && kf.unm && !kf.foot && kf.hotels,
+      `${name}: key figures follow the home (${kf.n12T}: ${kf.n12}; cheapest ${kf.cheap}; ${kf.areas}), one freshness line, sources once, a status link, hotel sources credited`);
     if (name === 'phone') {
       const vis = await page.evaluate(() => [...document.querySelectorAll('#thead th')].filter(t => t.offsetParent).map(t => t.textContent));
       check(vis.length === 3, `phone: the table shows the area, the view's figure and contracts only (${vis.join(' | ')})`);
@@ -537,7 +543,7 @@ try {
     await page.route(/widget\.example/, r => r.fulfill({ contentType: 'text/html', body: '<p>prices</p>' }));
     await page.goto(BASE);
     await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
-    await page.click('.viewSw button[data-m="hotels"]');
+    await page.click('.views button[data-m="hotels"]');
     await page.waitForFunction(() => HOTEL_STATS && HOTELS, null, { timeout: 10000 }).catch(() => {});
     await page.evaluate(() => draw());
     await page.waitForTimeout(400);
@@ -633,7 +639,7 @@ try {
     await page.waitForFunction(() => window.atlasState === 'ready' && HOMES && $('metric').value === 'homes', null, { timeout: 15000 }).catch(() => {});
     await page.evaluate(() => draw());
     await page.waitForTimeout(400);
-    const v = await page.evaluate(() => ({ btn: !!document.querySelector('.viewSw button[data-m="homes"]:not([hidden])'), pressed: document.querySelector('.viewSw button[data-m="homes"]')?.getAttribute('aria-pressed'),
+    const v = await page.evaluate(() => ({ btn: !!document.querySelector('.views button[data-m="homes"]:not([hidden])'), pressed: document.querySelector('.views button[data-m="homes"]')?.getAttribute('aria-pressed'),
       dots: document.querySelectorAll('.hhdot').length, hotelDots: document.querySelectorAll('.hdot').length, n: HOMES.length,
       labels: [...document.querySelectorAll('.rl b')].map(e => e.textContent), badges: [...document.querySelectorAll('.rl')].map(e => e.style.getPropertyValue('--c')),
       kind: document.getElementById('dialKind').textContent, legend: document.getElementById('legend').textContent,
@@ -664,7 +670,7 @@ try {
       await page.evaluate(() => draw());
       await page.waitForTimeout(400);
       const bar = await page.evaluate(() => { const v = document.querySelector('.viewSw').getBoundingClientRect(), z = map.zoomControl.getContainer().getBoundingClientRect();
-        return { clear: !(v.left < z.right && v.right > z.left && v.top < z.bottom && v.bottom > z.top), on: document.querySelector('.viewSw button[aria-pressed="true"]')?.dataset.m }; });
+        return { clear: !(v.left < z.right && v.right > z.left && v.top < z.bottom && v.bottom > z.top), on: document.querySelector('.views button[aria-pressed="true"]')?.dataset.m }; });
       check(bar.clear && bar.on === 'homes', `${w} px: the view bar stays clear of the zoom buttons (five views; it scrolls)`);
       await page.evaluate(() => { const g = [...homesBy().entries()].sort((a, b) => b[1].list.length - a[1].list.length)[0]; focusArea(byLabel(g[0])); });
       await page.waitForTimeout(1600);
@@ -673,6 +679,24 @@ try {
       check(sh.open && sh.fits && sh.leads, `${w} px: a holiday home area's sheet leads with its prices and its list fits the screen`);
       await ctx.close();
     }
+  }
+  // Phones, English and Arabic: every view shows as a chip above the map; an area's sheet leads with its figures.
+  for (const [w, q] of [[320, '?lang=ar'], [390, '']]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: 780 }, isMobile: true, hasTouch: true });
+    const page = await ctx.newPage();
+    await page.goto(BASE + q);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(600);
+    const ch = await page.evaluate(() => { const bs = [...document.querySelectorAll('.viewChips button')].filter(b => !b.hidden), m = document.getElementById('map').getBoundingClientRect();
+      return { n: bs.length, have: [...document.getElementById('metric').options].length, inside: bs.every(b => { const r = b.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.bottom <= m.top + 1; }),
+        metro: !!document.querySelector('.viewSw .metroBtn'), inZoom: !!map.zoomControl.getContainer().querySelector('.metroBtn') }; });
+    check(ch.n >= 3 && ch.n === ch.have && ch.inside && ch.metro && !ch.inZoom, `${w} px${q ? ' (Arabic)' : ''}: all ${ch.n} views show as chips above the map; Metro sits with the map's layer switch, not the zoom stack`);
+    await page.evaluate(() => focusArea(AREAS.filter(a => a.lat != null).sort((a, b) => b.n - a.n)[0]));
+    await page.waitForTimeout(1600);
+    const order = await page.evaluate(() => { const b = document.querySelector('.areaSheet:not([hidden]) .body'); if (!b) return null; const kids = [...b.children];
+      const see = kids.findIndex(k => k.classList.contains('see')), fig = kids.findIndex(k => /AED [\d,]+/.test(k.textContent) && !k.classList.contains('see')); return { see, fig }; });
+    check(order && order.fig > 0 && order.see > order.fig, `${w} px${q ? ' (Arabic)' : ''}: an area's sheet leads with its figures, the Google links below`);
+    await ctx.close();
   }
   // Backup source in use (Dubai Data stuck): the warning sign says so.
   {

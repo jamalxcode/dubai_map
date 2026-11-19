@@ -73,9 +73,10 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
 <main>
   <section class="wrap factsArea" aria-label="Key figures" data-t-aria="facts">
     <dl class="facts">
-      <div><dt data-t="d.n12">Contracts, last 12 months</dt><dd id="n12">—</dd></div>
-      <div><dt data-t="d.mapped2">On the map</dt><dd id="mapped">—</dd></div>
-      <div><dt data-t="d.areas">Areas on the map</dt><dd id="nAreas">—</dd></div>
+      <!-- These follow the chosen home and view (atlas.js keyFacts): contracts behind the map, the cheapest area, areas shown. -->
+      <div><dt id="n12T">Contracts, last 12 months</dt><dd id="n12">—</dd></div>
+      <div><dt id="mappedT">Cheapest area</dt><dd id="mapped">—</dd></div>
+      <div><dt id="nAreasT">Areas on the map</dt><dd id="nAreas">—</dd></div>
     </dl>
     <!-- In the Hotels and Holiday homes views these figures replace the rent ones (atlas.js stayFacts). -->
     <dl class="facts stayFacts" id="stayFacts" hidden>
@@ -99,20 +100,22 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
     <div class="wrap">
       <div>
         <h3 data-t="a.read">Reading the map</h3>
-        <p data-t="a.read1">Each label shows an area's typical yearly rent (its median) for the home you picked, on a badge in its price colour. Where areas sit too close to read, they merge into one label named after the busiest area with the number of others ("JLT +12"), showing their contract-weighted average. Tap it to zoom in; tap a single area's label for the breakdown by unit.</p>
+        <p data-t="a.read1">Each label shows an area's typical yearly rent (its median) for the home you picked, on a badge in its price colour. Where areas sit too close to read, they merge into one label named after the busiest area with how many more it covers ("JLT + 12 areas"), showing their contract-weighted average. Tap it to zoom in; tap a single area's label for the breakdown by unit.</p>
         <p data-t="a.read2">Labels sit at an approximate reference point for each area, not on a building.</p>
+        <p data-t="a.read3">In Hotels and Holiday homes each label is an area's typical price a night (the median of its places with a price); dashed labels rest on fewer than 3 places. Solid dots have a price; hollow rings (from street level) are places with none on booking sites.</p>
       </div>
       <div>
         <h3 data-t="a.where">Where the numbers come from</h3>
         <div id="inUse"><p data-t="loading">Loading…</p></div>
         <details id="unmatchedBox"><summary data-t="a.unm">Areas not on the map yet (<span id="unmatchedN">0</span>)</summary><p class="muted" data-t="a.unm2">They are in the table. Map points are added from Dubai Municipality and OpenStreetMap.</p><ul id="unmatched"></ul></details>
         <p class="statusLink"><a href="status/" data-t="a.status">Data status: the latest pulls, counts and alerts →</a></p>
-        <details id="healthBox"><summary data-t="a.health">Data health</summary><p class="muted" data-t="a.health2">Every source the collectors try, and how its last run went.</p><ul id="sources"></ul></details>
       </div>
       <div>
         <h3 data-t="a.not">What this is not</h3>
         <p data-t="a.not1">Not asking prices from listing sites, and not the RERA rental index used for rent increases. An independent tool, not an official DLD or RERA service.</p>
+        <p data-t="a.not2">Hotel and holiday home prices are samples (the lowest offer for two nights two to three weeks ahead), not live booking prices for your dates: the booking site sets the price.</p>
         <p data-t="a.src">Sources: Ejari rent contracts, <a href="https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open" target="_blank" rel="noopener">Dubai Land Department open data</a> via Dubai Pulse. Community boundaries: <a href="https://www.dubaipulse.gov.ae/data/dm-location/dm_community-open" target="_blank" rel="noopener">Dubai Municipality</a>. Community medians: <a href="https://datadubai.ae/" target="_blank" rel="noopener">Dubai Data</a>, Continental Club Property, licensed <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> (reshaped into map labels and the table). Older districts (Deira, Bur Dubai, Karama and others): <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0, median by unit size. A few area points and the map: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL. <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Report a map problem</a>.</p>
+        <p data-t="a.src2">Places to stay: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL. Hotel and holiday home prices: booking sites, via <a href="https://xotelo.com/" target="_blank" rel="noopener">Xotelo</a> (TripAdvisor), and Google Hotels via <a href="https://serpapi.com/" target="_blank" rel="noopener">SerpApi</a> where Xotelo has none. Official room rates, once available: Dubai's Department of Economy and Tourism, via Dubai Pulse.</p>
         <p class="muted" data-t="a.built">Built with Leaflet (BSD-2-Clause), GSAP (standard no-charge licence), Lenis (MIT) and Barlow fonts (SIL OFL). The rolling number and title animation are our own versions of React Bits' Counter and SplitText.</p>
       </div>
     </div>

@@ -415,6 +415,10 @@ Checked each (decisions, sixty-eighth pass): only SerpApi (Google Hotels, 250 fr
 
 Recorded: the live results of passes sixty-seven and sixty-eight (273 hotels and 40 holiday homes priced; SerpApi waiting for its key) and five lessons (tests that pass on nothing, reading a pop-up while it closes, tests that pick "the first priced" place, a source behind a bot checkpoint, checking a source needs it allowed in the session).
 
+### 19 Nov · "critique the user interface, how can it be made better?" → "do it all, merge on main"
+
+Done (decisions, sixty-ninth pass): view chips above the map on phones (all five views, English and Arabic), sheets leading with figures, a full-width area check, a shorter caption, "+ 12 areas" group labels, Metro beside place names, key figures that follow the home, rounded sale prices, an About section that covers hotels and holiday homes, photo credits and a clearer dial track.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

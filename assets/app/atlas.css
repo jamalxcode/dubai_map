@@ -632,3 +632,25 @@ details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
 @media (max-width:860px){.stayMode .controls .f-range{grid-area:1/1/2/-1}.stayMode .controls .f-walk{grid-area:2/1/3/-1}}
 @media (max-width:339px){.stayMode .controls .f-range{grid-area:1/1}.stayMode .controls .f-walk{grid-area:2/1}}
 .stayMode .controls .f-range:has(~.f-walk[hidden]),.stayMode .controls .f-walk[hidden]~.f-range{grid-area:1/1/2/-1}
+/* Phones: the views as a row of chips above the map (atlas.js placeViews); all five show, wrapping when needed. */
+.viewChips{margin:0 0 8px}.viewChips[hidden]{display:none}
+.viewChips .views{display:flex;flex-wrap:wrap;gap:6px;overflow:visible}
+.viewChips .views button{flex:none;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--text);font:600 13.5px/1 var(--body);padding:0 13px;height:34px;cursor:pointer}
+.viewChips .views button[hidden]{display:none}
+.viewChips .views button[aria-pressed="true"]{background:var(--sign);color:var(--on-sign);border-color:var(--sign)}
+.viewChips .views button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+/* Metro: a layer switch, in the top-right bar beside place names (no longer in the zoom stack). */
+.viewSw .metroBtn{display:flex;align-items:center;padding:0 10px;height:34px;border-inline-start:1px solid var(--line);font:600 13px/1 var(--body);color:var(--text);text-decoration:none}
+.viewSw .metroBtn[hidden]{display:none}
+.viewSw .metroBtn.on{background:var(--oxblood);color:var(--ivory)}
+.viewSw .metroBtn:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.viewSw:not(:has(.views)) .metroBtn{border-inline-start:0}
+@media (max-width:400px){.viewSw .metroBtn{padding:0 8px;font-size:12px;height:32px}}
+/* The dial's track shows against the oxblood band in both themes. */
+.dial .dTrack{stroke:rgba(246,241,231,.32)}
+/* Metro and place names keep their size; on wide maps only the views part of the bar gives way (and scrolls). */
+.viewSw .metroBtn,.viewSw .names{flex:none}
+.viewSw .metroBtn{width:auto;line-height:1;border-bottom:0;border-radius:0;background:none}
+.viewSw .metroBtn:hover{background:var(--soft)}.viewSw .metroBtn.on,.viewSw .metroBtn.on:hover{background:var(--oxblood);color:var(--ivory)}
+.leaflet-touch .viewSw a.metroBtn,.viewSw a.metroBtn{width:auto;height:34px;line-height:1}
+@media (max-width:400px){.leaflet-touch .viewSw a.metroBtn,.viewSw a.metroBtn{height:32px}}

@@ -52,7 +52,7 @@ test('no third-party font service, OSM tiles use the policy URL', () => {
 
 test('elements the script relies on exist', () => {
   for (const id of ['map', 'stale', 'staleText', 'med', 'n12', 'mapped', 'fresh', 'home',
-                    'theme', 'search', 'unit', 'metric', 'min', 'max', 'rows', 'thead', 'export', 'sources', 'legend'])
+                    'theme', 'search', 'unit', 'metric', 'min', 'max', 'rows', 'thead', 'export', 'legend', 'n12T', 'mappedT', 'nAreasT', 'unmatchedBox'])
     assert.match(html, new RegExp(`id="${id}"`), id);
 });
 
