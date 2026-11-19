@@ -20,31 +20,36 @@
     }
   },
   "datadubai": {
-    "last_ok_at": "2026-11-18T18:17:24+00:00",
+    "last_ok_at": "2026-11-19T02:19:46+00:00",
     "last_pull": {
-      "at": "2026-11-18T18:17:23+00:00",
+      "at": "2026-11-19T02:17:19+00:00",
       "export_files_updated": 0,
-      "live": "current",
-      "through": "2026-11-17"
+      "live": "updated",
+      "pages": 102,
+      "through": "2026-11-18"
     },
-    "live_checked_at": "2026-11-18T18:17:24+00:00",
+    "live_checked_at": "2026-11-19T02:19:46+00:00",
     "live_pages": 102,
     "published_seen": [
       {
         "seen_at": "2026-11-18T01:01:14+00:00",
         "through": "2026-11-17"
+      },
+      {
+        "seen_at": "2026-11-19T02:19:46+00:00",
+        "through": "2026-11-18"
       }
     ],
     "state": "ok",
     "status": "ok",
-    "through": "2026-11-17"
+    "through": "2026-11-18"
   },
   "dld": {
     "state": "off",
     "status": "off (waiting for DLD's permission)"
   },
   "hotel_prices": {
-    "last_run_at": "2026-11-18T18:21:25+00:00",
+    "last_run_at": "2026-11-19T02:23:47+00:00",
     "state": "no_key",
     "status": "no credentials"
   },

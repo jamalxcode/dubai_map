@@ -1,6 +1,6 @@
 community,community_slug,code,label,slug,n,quality,price_median,psf_median,sqft_median,rent_median,n_rents,yield_pct,url
 Jumeirah Village Circle,jumeirah-village-circle,Studio,Studios,studio,3433,ok,714997.0,1718.1897344374543,410.750821501643,48000.0,7740,7.8,https://datadubai.ae/communities/jumeirah-village-circle/studio/
-Jumeirah Village Circle,jumeirah-village-circle,1 B/R,1-bedroom apartments,1-bedroom,5860,ok,1107757.0,1426.3035702928166,785.2272648989742,70000.0,15743,7.0,https://datadubai.ae/communities/jumeirah-village-circle/1-bedroom/
+Jumeirah Village Circle,jumeirah-village-circle,1 B/R,1-bedroom apartments,1-bedroom,5860,ok,1107757.0,1426.2450961027994,785.2272648989742,70000.0,15743,7.0,https://datadubai.ae/communities/jumeirah-village-circle/1-bedroom/
 Jumeirah Village Circle,jumeirah-village-circle,2 B/R,2-bedroom apartments,2-bedroom,1479,ok,1653858.5,1309.2478893088207,1237.2038632966155,95000.0,4680,6.33,https://datadubai.ae/communities/jumeirah-village-circle/2-bedroom/
 Jumeirah Village Circle,jumeirah-village-circle,3 B/R,3-bedroom apartments,3-bedroom,264,ok,2424550.0,1577.7947777380282,1559.4753411729046,150000.0,906,5.85,https://datadubai.ae/communities/jumeirah-village-circle/3-bedroom/
 Jumeirah Village Circle,jumeirah-village-circle,4 B/R,4-bedroom apartments,4-bedroom,99,ok,3350000.0,1617.0591026302218,1856.774546882427,200000.0,379,6.11,https://datadubai.ae/communities/jumeirah-village-circle/4-bedroom/
@@ -114,10 +114,10 @@ DAMAC HILLS,damac-hills,2 B/R,2-bedroom apartments,2-bedroom,264,ok,2031000.0,16
 DAMAC HILLS,damac-hills,3 B/R,3-bedroom apartments,3-bedroom,20,ok,2975000.0,1218.0685318613455,2815.3007694904277,165000.0,75,5.67,https://datadubai.ae/communities/damac-hills/3-bedroom/
 Palm Jumeirah,palm-jumeirah,Studio,Studios,studio,94,ok,1500000.0,2783.3307511833864,523.664241772928,90000.0,247,6.0,https://datadubai.ae/communities/palm-jumeirah/studio/
 Palm Jumeirah,palm-jumeirah,1 B/R,1-bedroom apartments,1-bedroom,239,ok,3300000.0,2720.8694549546303,1073.7000640667948,145000.0,1086,5.2,https://datadubai.ae/communities/palm-jumeirah/1-bedroom/
-Palm Jumeirah,palm-jumeirah,2 B/R,2-bedroom apartments,2-bedroom,437,ok,5475000.0,2452.1498260347935,1763.8819999862221,203963.0,1619,4.58,https://datadubai.ae/communities/palm-jumeirah/2-bedroom/
+Palm Jumeirah,palm-jumeirah,2 B/R,2-bedroom apartments,2-bedroom,437,ok,5462500.0,2452.1498260347935,1763.8819999862221,203963.0,1619,4.58,https://datadubai.ae/communities/palm-jumeirah/2-bedroom/
 Palm Jumeirah,palm-jumeirah,3 B/R,3-bedroom apartments,3-bedroom,258,ok,5850000.0,2546.367500680443,2338.9977335510225,290000.0,745,5.27,https://datadubai.ae/communities/palm-jumeirah/3-bedroom/
 Palm Jumeirah,palm-jumeirah,4 B/R,4-bedroom apartments,4-bedroom,66,ok,,2755.636616185975,6407.217675546462,625000.0,81,,https://datadubai.ae/communities/palm-jumeirah/4-bedroom/
-Palm Jumeirah,palm-jumeirah,5 B/R,5-bedroom apartments,5-bedroom,18,low,,2350.3925726487796,11529.33208644195,928000.0,108,,
+Palm Jumeirah,palm-jumeirah,5 B/R,5-bedroom apartments,5-bedroom,18,low,,2191.009653947136,11529.33208644195,928000.0,108,,
 Jumeirah Garden City,jumeirah-garden-city,Studio,Studios,studio,584,ok,1034140.0,2419.32902188074,416.77861133500045,58000.0,299,,https://datadubai.ae/communities/jumeirah-garden-city/studio/
 Jumeirah Garden City,jumeirah-garden-city,1 B/R,1-bedroom apartments,1-bedroom,672,ok,1611503.0,2166.7306698196867,734.9598032529399,73000.0,1825,5.31,https://datadubai.ae/communities/jumeirah-garden-city/1-bedroom/
 Jumeirah Garden City,jumeirah-garden-city,2 B/R,2-bedroom apartments,2-bedroom,166,ok,2337607.5,2112.8939702034513,1099.210531754397,95000.0,1440,4.23,https://datadubai.ae/communities/jumeirah-garden-city/2-bedroom/
@@ -140,7 +140,7 @@ Jumeirah Village Triangle,jumeirah-village-triangle,3 B/R,3-bedroom apartments,3
 Jumeirah Village Triangle,jumeirah-village-triangle,4 B/R,4-bedroom apartments,4-bedroom,12,low,3975000.0,1720.6700677510119,2307.7823933425643,225000.0,23,,
 Liwan1,liwan1,Studio,Studios,studio,242,ok,709777.0,1691.4027460788475,416.240415814165,41338.235,422,7.84,https://datadubai.ae/communities/liwan1/studio/
 Liwan1,liwan1,1 B/R,1-bedroom apartments,1-bedroom,593,ok,895940.0,1058.7471285506583,804.2793863365504,50000.0,1812,6.4,https://datadubai.ae/communities/liwan1/1-bedroom/
-Liwan1,liwan1,2 B/R,2-bedroom apartments,2-bedroom,259,ok,1398400.0,1000.0032802897217,1328.0512672136454,72000.0,838,5.41,https://datadubai.ae/communities/liwan1/2-bedroom/
+Liwan1,liwan1,2 B/R,2-bedroom apartments,2-bedroom,259,ok,1398400.0,1000.0033506736563,1328.0512672136454,72000.0,838,5.41,https://datadubai.ae/communities/liwan1/2-bedroom/
 Liwan1,liwan1,3 B/R,3-bedroom apartments,3-bedroom,29,ok,1500000.0,881.321527953453,1769.6945116112454,92500.0,64,7.4,https://datadubai.ae/communities/liwan1/3-bedroom/
 Liwan1,liwan1,4 B/R,4-bedroom apartments,4-bedroom,2,insufficient,,,,,0,,
 Majan,majan,Studio,Studios,studio,3557,ok,692999.0,1809.6817758125776,401.17094123077135,39520.0,613,7.72,https://datadubai.ae/communities/majan/studio/
