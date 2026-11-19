@@ -137,3 +137,24 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the hotel price collector refused to save when fewer hotels had a price than before, so prices that had aged out (older than 10 days) were kept forever, shown as current.
 - **Rule:** guard against the cause of a bad shrink (here: far fewer places matched), not the count itself, when dropping old figures is intended; and let the page hide figures past their age on its own.
+
+## Test data must pass the collector's own filters (19 Nov 2026)
+
+- **Problem:** the holiday homes test built 400 fake hotels at latitude 25.45, outside Dubai's map box, so the collector dropped them, saw a "short list" and stopped; four tests failed for a reason that had nothing to do with what they checked.
+- **Rule:** fake records sit inside every filter the code applies (map box, kinds, dates) unless the test is about that filter; when several tests fail at once, read the collector's log line first.
+
+## Quotes inside translated text break the key check (19 Nov 2026)
+
+- **Problem:** a status message written as `T("Read the pull's \"Hotel prices\" step…")` passed in the browser, but `tests/i18n.test.mjs` read the key with its backslashes and reported it untranslated.
+- **Rule:** no escaped double quotes inside `T()` text; drop the quotes or use single quotes with `\'`, and run the page tests after adding strings.
+
+## Tests that assume data is absent break when it arrives (19 Nov 2026)
+
+- **Problem:** the DET dial test assumed no hotel had a price; once real prices were loaded into `./data`, the page (rightly) showed prices instead and the test failed.
+- **Rule:** a browser check that depends on a file being missing stubs it as missing (`page.route(... 404)`); the same for a file it depends on being present.
+
+## A check that ran is not a check that passed (19 Nov 2026)
+
+- **Problem:** the hotel check workflow went green after the Xotelo change, but its log showed it never priced anything: OpenStreetMap hadn't answered, so there was no places list to price.
+- **Rule:** read what a check printed, not just its colour; when its input was missing, prove the change another way (here, the real pull with the saved list) before reporting it works.
+

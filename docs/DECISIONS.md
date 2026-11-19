@@ -642,10 +642,14 @@ The owner wants hotel prices and ranges on the map, refuses LiteAPI (its live ke
 - **Removed:** LiteAPI (key, sandbox guard, "Needs you" item, status lines). **Kept:** the partner widget (live prices in the card on tap) and DET's official rate (with the Dubai Pulse key).
 - **Checked:** Python tests with a fake Xotelo (matching, the 60% rule, rotation, list once a day, stale prices dropped, failures keep the file); a live trial (18 of 30 hotels priced: Atlantis about AED 1,960, Signature 1 Hotel about AED 190); browser checks with a priced file (labels are prices, dial, area range, hotel card, a 20-day-old price hidden). The hotel check workflow prices 15 hotels from GitHub's network.
 
+Merged and deployed on 19 Nov (Tests passed). The first pull from GitHub priced 58 hotels (AED 142 to 6,788, median 312); by the third pull that day 194 were priced. The hotel check workflow's own trial priced nothing that first time because OpenStreetMap didn't answer it (no places list to price), so the real pull, which loads the saved list, was the proof that Xotelo answers from GitHub.
+
 ## Decision on 2026-11-19 (sixty-fourth pass): hotel pull figures on the status page
 
 Asked: "add hotel pull stats to status page and if any intervention is needed". The status page gets a **Hotels** section read live from the data branch (`hotels.json`, `hotel_prices.json`, `state.json`): places on the map, how many Xotelo found, how many have a current price (and how many were asked or had no rooms), the price range and median, when prices last updated and the oldest price, DET's state and the partner panel. "Needs you" gains four hotel checks, each with what to do: places not refreshed for 15+ days, prices not refreshed for 48+ hours, fewer than 300 matched, under a quarter priced after every matched hotel was asked (with the existing Xotelo-failing, DET-failing and partner-widget items). On the first day it read 798 places, 527 found, 58 priced (AED 142 to 6,788, median 318). Checked: browser checks (seven figures, a 3-day-old price refresh listed under "Needs you", accessibility in English and Arabic); the DET test now runs without a price file, since DET's rate only shows when no hotel has a price.
 Also answered: Travelpayouts gives no hotel price data any more (its Hotellook API closed on 20 Oct 2025); it is a widget and commission programme only.
+
+Merged and deployed on 19 Nov. Live the same day: 798 places, 527 found on Xotelo, 58 then 120 priced; no hotel check in "Needs you" fired. Also on 19 Nov: the owner deleted all 13 old branches; the status page now keeps `rera-check` (parked work) off its old-branch list.
 
 ## Decision on 2026-11-19 (sixty-fifth pass): a Holiday homes view
 
@@ -656,6 +660,8 @@ Asked, of Xotelo's 325 "condominiums": "add these as their own tab". Xotelo file
 - **Status page:** an eighth source row and an eighth Hotels figure (priced of listed, asked so far); "Needs you" when it fails or hasn't refreshed for 48 hours. The hotel check workflow prices 10 from GitHub's network.
 - **Checked:** Python tests with a fake Xotelo (kinds kept, duplicates and hotels left out, rows, rotation, old prices dropped, failures keep the file, a short list refused); a live trial (11 of 15 priced, e.g. RODA Amwaj Suites about AED 420 a night); browser checks (the view, its dots and no hotel dots, blue labels, dial and key, the area card, a home's card with its Tripadvisor link, accessibility).
 
+Merged and deployed on 19 Nov. First pull: 256 candidates, 20 priced of 50 asked (AED 202 to 2,170, median 423; the rest had no units listed for the sample nights, common for apartments booked ahead); by the next pull 31.
+
 ## Decision on 2026-11-19 (sixty-sixth pass): hotel and holiday home price history
 
 Asked: "add the hotel price history too". Xotelo only gives today's prices, so the site keeps its own record, as it does for rents.
@@ -664,6 +670,8 @@ Asked: "add the hotel price history too". Xotelo only gives today's prices, so t
 - **Status page:** the Hotels note says how many days of history there are; "Needs you" when no day was added for 48 hours (a missing day can't be filled in later).
 - **First day:** 19 Nov, hotels 120 places (median AED 317) in 40 areas, holiday homes 20 (median AED 423) in 12.
 - **Checked:** Python tests (the page's area rule, outlines of unplaced areas ignored, old prices left out, one entry a day, days kept when nothing is priced); browser check with 35 days of stand-in history (chart and "+9% since").
+
+Merged and deployed on 19 Nov; the pull right after saved the first day on the data branch: hotels 194 places in 48 areas (median AED 334), holiday homes 31 in 16 (median AED 546). Trend lines from about 21 Nov, the four-week change from about 17 Dec.
 
 ## Change log
 
