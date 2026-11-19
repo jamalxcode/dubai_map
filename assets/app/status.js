@@ -33,7 +33,8 @@
 
   const SOURCE_NAMES = {
     datadubai: 'Dubai Data', 'crosscheck:ccp': 'Continental Club Property', 'crosscheck:dred': 'Dubai Real Estate Data',
-    pulse: 'Dubai Pulse API', dld: 'DLD open-data service'
+    pulse: 'Dubai Pulse API', dld: 'DLD open-data service',
+    hotel_stats: "Dubai's hotel room rates (DET)", hotel_prices: 'Hotel prices (LiteAPI)'
   };
   const STATE_TEXT = {
     ok: T('working'), failed: T('failing'), no_key: T('waiting for the API key'), off: T("off (waiting for DLD's permission)"),
@@ -60,6 +61,7 @@
           : p.live === 'off' ? T('live pages off') : T('checked recently; not asked again yet');
       return live + (p.export_files_updated ? ' · ' + T('{n} export files updated', { n: p.export_files_updated }) : '') + (p.through ? ' · ' + T('data to {d}', { d: day(p.through) }) : '');
     }
+    if (key === 'hotel_stats') return p.latest ? T('monthly figures to {m}', { m: p.latest }) : '—';
     if (key === 'pulse') return p.rows != null ? T('{rows} rows ({a} new, {u} updated)', { rows: fmt(p.rows), a: fmt(p.added), u: fmt(p.updated) }) : '—';
     return p.rows != null ? T('{rows} rows', { rows: fmt(p.rows) }) + (p.through ? ' · ' + T('data to {d}', { d: day(p.through) }) : '') : '—';
   }
@@ -71,7 +73,7 @@
       : T('{when}: data to {d}, {n} areas.', { when: kuwait(last.at), d: day(last.through), n: fmt(last.areas) });
     const pulled = (last && last.pulled) || {};
     const states = (last && last.sources) || {};
-    const keys = ['datadubai', 'crosscheck:ccp', 'crosscheck:dred', 'pulse', 'dld'];
+    const keys = ['datadubai', 'crosscheck:ccp', 'crosscheck:dred', 'pulse', 'dld', 'hotel_stats', 'hotel_prices'];
     const s = state || {};
     const stateOf = k => states[k] || (k.startsWith('crosscheck:') ? ((s.crosscheck || {})[k.slice(11)] || {}).state : (s[k] || {}).state);
     $('pulled').innerHTML = keys.map(k => '<tr><td>' + esc(T(SOURCE_NAMES[k])) + '</td><td>' + esc(pulledText(k, pulled[k])) + '</td><td>' + stateCell(stateOf(k)) + '</td></tr>').join('');
@@ -102,6 +104,9 @@
     const items = [];
     if (((state || {}).hotel_prices || {}).state === 'no_key')
       items.push('<li><b>' + esc(T('Hotel prices: off')) + '</b>: ' + esc(T("the owner's choice, since LiteAPI's live key needs a payment card; each place links to booking sites for prices.")) + '</li>');
+    const hs = (state || {}).hotel_stats || {};
+    if (hs.state === 'no_key')
+      items.push('<li><b>' + esc(T("Dubai's hotel room rates: waiting")) + '</b>: ' + esc(T('the tourism department\'s monthly figures come through Dubai Pulse, which needs the same key as rent contracts (see "Needs you").')) + '</li>');
     const un = p.unplaced || [];
     items.push('<li><b>' + esc(T('{n} areas waiting for a map point', { n: un.length })) + '</b>' + (un.length ? ' ' + esc(T('(see "Needs you")')) : '') + '</li>');
     const uc = p.unconfirmed || [];
@@ -169,6 +174,11 @@
       add(T('Get a LiteAPI key for hotel prices'), hp.state === 'failed' ? hp.status : T('It unlocks each hotel\'s average price a night and each area\'s typical hotel price in the Hotels view.'),
         T('Create a free account at liteapi.travel, copy the live API key from the dashboard (not the sandbox key) and add it as the repository secret LITEAPI_KEY. Prices appear after the next pull.'), 'https://liteapi.travel');
     else if (hp.state === 'failed') add(T('Hotel prices are failing'), hp.status || '', T("Open the source's page to see whether it moved or changed; the last good figures stay on the map meanwhile."), 'https://liteapi.travel');
+    const hs = s.hotel_stats || {};
+    if (hs.state === 'failed') add(T("Dubai's hotel room rates are failing"), hs.status || '', T("Check that the Dubai Pulse key still works and that the tourism department's dataset is still published; the last good figures stay meanwhile."), 'https://data.dubai');
+    else if (hs.state === 'no_key' && (s.pulse || {}).state !== 'no_key')
+      add(T('Get the Dubai Pulse API key'), T("It unlocks Dubai's official hotel room rates and occupancy (DET) for the Hotels view."),
+        T('Add DUBAI_PULSE_KEY and DUBAI_PULSE_SECRET as repository secrets.'), 'https://data.dubai');
     if ((s.dld || {}).state === 'off')
       add(T("Ask DLD for written permission"), T("DLD's own open-data service stays off without it."), T('If DLD agrees in writing, set the repository variable DLD_ENABLED=1.'));
     const stale = (branches || []).filter(b => !['main', 'data'].includes(b.name) && !/^gh-pages$/.test(b.name));

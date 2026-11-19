@@ -622,6 +622,17 @@ Also fixed "1 places to stay" (now "1 place to stay"). Browser checks use stand-
 
 Merged and deployed on 18 Nov (Tests passed; 180 browser checks). The owner was given the sign-up steps for an affiliate widget (Booking.com's, Expedia Group's or Travelpayouts' programme; create a hotel widget; send its code). The code takes a widget link; if the partner gives a script snippet instead, the card will be adapted to load that snippet on tap the same way.
 
+## Decision on 2026-11-19 (sixty-second pass): are hotel prices being pulled? A check, and the gaps it found
+
+Asked: "review hotel prices, make sure they are correct and being pulled". What the check found on 19 Nov:
+- **No nightly price is pulled today, and none is shown as one.** All three sources wait on the owner: LiteAPI is off by their choice (no key; state `no_key`), the partner widget link in `assets/app/partners.js` is empty, and DET's figures need the Dubai Pulse key (the open CSV timed out from GitHub's runners). The page says so: hotel cards link to Google Maps and Booking.com, the Hotels view counts places, and no figure is invented.
+- **The places are right:** 798 places to stay, all inside Dubai's outlines (or 300 m of one), staff housing left out (fifty-eighth pass).
+- **Gap 1, silent source:** `hotel_stats.py` only logged; it never wrote `state.json`, so its failure didn't reach the run log, the status page or "Needs you". It now records `ok` (with the latest month), `no_key` (no Dubai Pulse access) or `failed` (the key is set but refused, or no believable month).
+- **Gap 2, slow pull:** each pull waited about 4 minutes for Dubai Pulse's timeout. It now asks at most once every 20 hours (the figures are monthly), with one 20-second try for the CSV and two for the API (`--force` or `FORCE=1` to ask sooner).
+- **Gap 3, no sanity bounds:** an average room rate outside AED 100–5,000 a night, or occupancy outside 0–100%, is left out of that month (a broken row or a different unit, not a Dubai rate).
+- **Status page:** "The last pull" lists both hotel sources (DET and LiteAPI) with their state and DET's latest month; "Waiting" says the room rates wait for the Dubai Pulse key; "Needs you" lists DET when it fails with the key set (or asks for the key if only DET needs it). `run_log.py` records what each hotel source gave.
+- **Checked:** Python tests (a refused download keeps the file and says why, the 20-hour wait, a good answer saved as `ok`, a refused key is `failed`, unbelievable rates left out), page tests and the browser checks (the status page shows seven sources, DET among them).
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

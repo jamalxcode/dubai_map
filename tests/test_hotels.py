@@ -73,19 +73,47 @@ class HotelStats(unittest.TestCase):
         out = hotel_stats.build("", rows=[{"report_date": "2026-10-01T00:00:00", "adr": "480", "room_occupancy": "80"}])
         self.assertEqual(out["latest"]["month"], "2026-10")
 
-    def test_a_refused_download_keeps_the_current_file(self):
+    def run_main(self, d, argv, env_extra=None, **patch):
+        import store
+        env = {k: v for k, v in os.environ.items() if not k.startswith("DUBAI_PULSE") and k != "FORCE"}
+        env.update(env_extra or {})
+        with mock.patch.dict(os.environ, env, clear=True), mock.patch.object(store, "DATA", d), \
+                mock.patch.multiple(hotel_stats, **patch):
+            code = hotel_stats.main(argv)
+        return code, json.load(open(os.path.join(d, "state.json"))).get("hotel_stats", {})
+
+    def test_a_refused_download_keeps_the_current_file_and_says_why(self):
         with tempfile.TemporaryDirectory() as d:
             out = os.path.join(d, "hotel_stats.json")
             open(out, "w").write('{"keep":1}')
-            env = {k: v for k, v in os.environ.items() if not k.startswith("DUBAI_PULSE")}
-            with mock.patch.dict(os.environ, env, clear=True), \
-                    mock.patch.object(hotel_stats, "fetch_csv", side_effect=hotel_stats.net.StopForToday("HTTP 000")):
-                self.assertEqual(hotel_stats.main(["--out", out]), 0)
-            with mock.patch.dict(os.environ, env, clear=True), \
-                    mock.patch.object(hotel_stats, "fetch_csv", return_value="<html>sign in</html>"):
-                self.assertEqual(hotel_stats.main(["--out", out]), 0)
+            code, b = self.run_main(d, ["--out", out], fetch_csv=mock.Mock(side_effect=hotel_stats.net.StopForToday("timed out")))
+            self.assertEqual((code, b["state"]), (0, "no_key"))
+            self.assertIn("last_try_at", b)
+            # Asked minutes ago: not asked again (monthly figures, at most once a day).
+            fetch = mock.Mock(return_value=CSV)
+            code, b = self.run_main(d, ["--out", out], fetch_csv=fetch)
+            fetch.assert_not_called()
+            code, b = self.run_main(d, ["--out", out, "--force"], fetch_csv=mock.Mock(return_value="<html>sign in</html>"))
+            self.assertEqual(b["state"], "no_key")
             self.assertEqual(json.load(open(out)), {"keep": 1})
 
+    def test_a_good_answer_is_saved_and_marked_ok(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = os.path.join(d, "hotel_stats.json")
+            code, b = self.run_main(d, ["--out", out], fetch_csv=mock.Mock(return_value=CSV))
+            self.assertEqual((code, b["state"], b["latest"]), (0, "ok", "2026-09"))
+            self.assertEqual(json.load(open(out))["latest"]["adr"], 520)
+
+    def test_with_the_key_a_failure_is_failed_not_waiting(self):
+        with tempfile.TemporaryDirectory() as d:
+            code, b = self.run_main(d, ["--out", os.path.join(d, "o.json")], {"DUBAI_PULSE_KEY": "k", "DUBAI_PULSE_SECRET": "s"},
+                                    fetch_api=mock.Mock(side_effect=hotel_stats.net.AuthError("HTTP 401")))
+            self.assertEqual(b["state"], "failed")
+            self.assertIn("401", b["status"])
+
+    def test_unbelievable_rates_are_left_out(self):
+        out = hotel_stats.build("report_date,adr,room_occupancy\n2026-07-01,5.2,70\n2026-08-01,450,180\n2026-09-01,99999,\n")
+        self.assertEqual([(m["month"], m["adr"], m["occupancy"]) for m in out["months"]], [("2026-07", None, 70), ("2026-08", 450, None)])
 
 if __name__ == "__main__":
     unittest.main()

@@ -127,3 +127,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** LiteAPI's sandbox key answers with made-up rates that look real.
 - **Rule:** a collector checks the answer says it is live (`sandbox` false) before saving anything a visitor will read as a fact; test answers stop the run and say which key to use.
+
+## A source that only logs is invisible (19 Nov 2026)
+
+- **Problem:** DET's hotel figures failed on every pull, and each pull waited about 4 minutes for the timeout, but the collector only wrote to the log, so the status page, the run log and "Needs you" never showed it. A review of "are hotel prices being pulled?" was the first time anyone saw it.
+- **Rule:** every collector records its state in `state.json` (`state.set_status`) on every outcome, including "waiting for a key"; a source that changes monthly is asked at most daily with a short wait; tests point `store.DATA` at a temporary folder, so they never touch the loaded data.

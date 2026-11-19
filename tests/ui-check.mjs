@@ -503,7 +503,7 @@ try {
     await page.waitForFunction(() => window.statusState, null, { timeout: 15000 }).catch(() => {});
     const st = await page.evaluate(() => ({ state: window.statusState, overall: document.getElementById('overall').textContent,
       totals: document.querySelectorAll('#totals div').length, contracts: document.querySelector('#totals dd')?.textContent || '',
-      pulled: document.querySelectorAll('#pulled tr').length, used: document.querySelectorAll('#used tr').length, runs: document.querySelectorAll('#runs tr').length,
+      pulled: document.querySelectorAll('#pulled tr').length, det: /DET|دائرة الاقتصاد/.test(document.getElementById('pulled').textContent), used: document.querySelectorAll('#used tr').length, runs: document.querySelectorAll('#runs tr').length,
       left: document.querySelectorAll('#left li').length, pending: document.querySelectorAll('#pending li').length, alerts: document.getElementById('alerts').textContent,
       sideways: document.documentElement.scrollWidth > innerWidth, dir: document.documentElement.dir,
       needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
@@ -511,8 +511,8 @@ try {
     // No LiteAPI key is the owner's choice (18 Nov), so it is not asked for.
     check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
       `${name}: "Needs you" comes first and lists what a person can fix, with what to do (${st.needs.length})`);
-    check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 5 && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
-      `${name}: shows the totals (${st.contracts} contracts), what each source pulled, what's in use, left out and waiting, and recent pulls`);
+    check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 7 && st.det && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
+      `${name}: shows the totals (${st.contracts} contracts), what each source pulled (hotel sources too), what's in use, left out and waiting, and recent pulls`);
     check(/All fine|كل شيء/.test(st.overall) && /No open alerts|لا تنبيهات/.test(st.alerts), `${name}: says all is fine when the last pull worked and no alert is open`);
     check(!st.sideways, `${name}: no sideways scrolling`);
     if (q) check(st.dir === 'rtl', `${name}: reads right to left`);
