@@ -213,7 +213,7 @@
 
   // ---- One headline fact on an area's card (rent, sale price, yield) ---------------------------------------
   window.cardFact = (a, m) => {
-    if (!['median', 'sale', 'yield'].includes(m) || !solid(a)) return '';
+    if (!['median', 'sale', 'sale_psf', 'yield'].includes(m) || !solid(a)) return '';
     const unit = $('unit').value, v = areaValue(a, m, unit); if (v == null) return '';
     const vals = AREAS.filter(solid).map(x => areaValue(x, m, unit)).filter(x => x != null).sort((p, q) => p - q), n = vals.length; if (n < 20) return '';
     const below = vals.filter(x => x < v).length, above = vals.filter(x => x > v).length, home = homeName();

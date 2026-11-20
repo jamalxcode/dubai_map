@@ -27,7 +27,9 @@ class SharePageTests(unittest.TestCase):
         self.assertIn("<title>Jumeirah Village Circle rents: AED 70,000 a year for a 1-bedroom apartment | Dubai Real Estate Atlas</title>", html)
         self.assertIn('property="og:image" content="https://jamalxcode.github.io/dubai_map/assets/share.png"', html)
         self.assertIn("to 13 Nov 2026", html)
-        self.assertIn('href="../../?area=Jumeirah%20Village%20Circle"', html)
+        self.assertIn('href="../../?open=a:Jumeirah%20Village%20Circle"', html)  # opens the area's card
+        self.assertIn('"@type": "FAQPage"', html)
+        self.assertIn('What is the rent for a 1-bedroom apartment in Jumeirah Village Circle?', html)
         self.assertNotIn("http-equiv=\"refresh\"", html, "no automatic redirect: the page stands on its own")
         self.assertIn("<td>1-bedroom apartments</td><td class=r>AED 70,000</td><td class=r>15,000</td>", html)
         self.assertIn("Continental Club Property", sp.page(KARAMA, None))

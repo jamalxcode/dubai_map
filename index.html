@@ -2,6 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Dubai Real Estate Atlas | Ejari</title>
 <meta name="description" content="What tenants actually pay in rent across Dubai, area by area, from Ejari contracts registered with the Dubai Land Department. Not asking prices.">
+<link rel="alternate" type="application/rss+xml" title="Dubai Real Estate Atlas: what changed" href="feed.xml">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Dubai Real Estate Atlas">
 <meta property="og:title" content="Dubai Real Estate Atlas: what tenants actually pay">
 <meta property="og:description" content="Median yearly rent for every Dubai area, from Ejari contracts. Check your rent in seconds.">
@@ -64,7 +65,7 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
       <div class="pair"><input id="min" type="number" min="0" inputmode="numeric" placeholder="Min" data-t-ph="ph.min" aria-label="Min rent (AED)" data-t-aria="f.min"><span aria-hidden="true">–</span><input id="max" type="number" min="0" inputmode="numeric" placeholder="Max" data-t-ph="ph.max" aria-label="Max rent (AED)" data-t-aria="f.max"></div></div>
     <!-- State behind the home picker and the map's Rent / Sale price / Yield bar (atlas.js). -->
     <select id="unit" hidden aria-hidden="true" tabindex="-1"><option value="">All units</option></select>
-    <select id="metric" hidden aria-hidden="true" tabindex="-1"><option value="median">Rent</option><option value="sale">Sale price</option><option value="median_sqm">Rent per m²</option></select>
+    <select id="metric" hidden aria-hidden="true" tabindex="-1"><option value="median">Rent</option><option value="sale">Sale price</option><option value="sale_psf">Sale price per sq ft</option><option value="median_sqm">Rent per m²</option></select>
   </div>
 </nav>
 
@@ -114,6 +115,7 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
         <div id="inUse"><p data-t="loading">Loading…</p></div>
         <details id="unmatchedBox"><summary data-t="a.unm">Areas not on the map yet (<span id="unmatchedN">0</span>)</summary><p class="muted" data-t="a.unm2">They are in the table. Map points are added from Dubai Municipality and OpenStreetMap.</p><ul id="unmatched"></ul></details>
         <p class="statusLink"><a href="status/" data-t="a.status">Data status: the latest pulls, counts and alerts →</a></p>
+        <p class="pagesLink" data-t="a.pages"><a href="stats/">Dubai rents this month</a> · <a href="areas/">All areas</a> · <a href="yields/">Best yields</a> · <a href="feed.xml">What changed (RSS)</a></p>
       </div>
       <div>
         <h3 data-t="a.not">What this is not</h3>

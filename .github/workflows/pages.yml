@@ -47,6 +47,7 @@ jobs:
           cp assets/share.png _site/assets/
           # One small page per area (a/<slug>/) so a shared link shows that area's figure in its preview.
           python3 scripts/share_pages.py _site
+          python3 scripts/site_pages.py _site   # stats, all areas, yields, landing pages, feed.xml; adds them to the sitemap
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload site
