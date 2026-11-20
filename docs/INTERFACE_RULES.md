@@ -107,7 +107,7 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - **Currency:** a small select in the header (`#cur`, AED / USD, EUR and GBP appear when rates load); the key's unit reads the currency.
 - **Per sq ft:** two buttons, Total and Per sq ft, inside the key on the Sale price view; the view bar's Sale price button stays pressed in both.
 - **Near:** a select after the rent range (`.f-life`), hidden until the data loads; the budget note says how many areas are near the choice; cards add a "Nearby:" line (metres under 1 km, km above).
-- **3D:** a toggle styled like the Metro button, before Names; opens a full-map overlay above Leaflet's controls (z-index 1001) with Back to 2D top-start and a how-to note bottom-start; Escape closes; returning keeps the centre.
+- **3D:** a toggle styled like the Metro button, before Names; opens a full-map overlay above Leaflet's controls (z-index 1001); buildings raised to their mapped heights, skipping outlines marked `hide_3d` so tiered towers taper with Back to 2D top-start and a how-to note bottom-start; Escape closes; returning keeps the centre.
 - **Links to pages:** a line under the map links to Market stats, All areas, Best yields and the feed.
 
 ## 6. The rent check

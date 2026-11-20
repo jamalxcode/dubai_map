@@ -773,6 +773,10 @@ Asked: "what features are useful for our map found on keybox.ae… list out the 
 - **Problem found while building:** the 3D overlay sat under Leaflet's zoom bar (z-index 1000), so Back to 2D couldn't be pressed; the overlay now sits at 1001. Up to 60 labels in 3D piled on each other, so the busiest is kept and one that would cover it is hidden until the view gives it room (rechecked as the map moves). The 3D button appears once MapLibre is in, widening the bar, so labels are placed again then. Seen but not changed here (it was on main already): on a phone in Sale price, a label at the top edge can still touch the view bar, and one at the bottom the map credits.
 - **Checked:** Python tests for the site pages, feed and both collectors (stand-in data); browser checks for the currency switch, per sq ft, the Near filter (stand-in lifestyle file), the Nearby line, 3D open and close, no script errors; every suite passes.
 
+## Decision on 2026-11-20 (seventy-seventh pass): the Burj Khalifa in 3D
+
+Asked: "burj khalifah doesn't look right, fix it" (screenshot: a wide block with a thin spire on top). OpenStreetMap draws the tower as stacked tiers (building parts) that taper upward, plus one outline of the whole footprint; the map tiles mark that outline `hide_3d`, meaning "don't raise this when the parts are raised". The 3D view raised it anyway, so the full footprint went up as one fat block around the tiers. The building layer now skips features with `hide_3d` (`fun.js open3d`), which fixes every tiered building, not only the Burj. Checked by reading the tiles' building features around the tower and on screenshots.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".
