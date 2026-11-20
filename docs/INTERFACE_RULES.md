@@ -42,7 +42,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 ### Side panel system (`assets/app/panel.css`, loaded last)
 
-One look for every block of the side panel (and the same blocks on phones): sections on the page's paper divided by one 1 px hairline (no cards, no black rule, no beige table head); one heading style (Barlow Condensed 22 px bold); one field style (40 px high, 42 px on phones, 8 px corners, a lighter paper `--paper`, a gold focus ring); labels 12 px semi-bold muted on one line; spacing from 4, 8, 12, 16, 24, 32 px. Filters: Home and Near Metro / Tram side by side, the budget under them across the panel, the budget line under that (phones: Home and budget on the first row so the map stays high; one column below 340 px). The rent check is a section, not a card: area, rent ("Optional, e.g. 75,000" as its hint) and Check on one row. Key figures in three equal columns on a hairline. The table has no box: a sticky head on the paper, hairline rows, a hover tint. Motion: one entrance on load (GSAP: sections settle from 14 px below, 0.07 s apart), nothing else moves on its own.
+One look for every block of the side panel (and the same blocks on phones): sections on the page's paper divided by one 1 px hairline (no cards, no black rule, no beige table head); one heading style (Barlow Condensed 22 px bold); one field style (40 px high, 42 px on phones, 8 px corners, a lighter paper `--paper`, a gold focus ring); labels 12 px semi-bold muted on one line; spacing from 4, 8, 12, 16, 24, 32 px. Filters: Home and Near side by side, the budget (its exact boxes folded) under them across the panel, the budget line under that (phones: Home and budget on the first row so the map stays high; one column below 340 px). The rent check is a section, not a card: area, rent ("Optional, e.g. 75,000" as its hint) and Check on one row. Key figures in three equal columns on a hairline. The table has no box: a sticky head on the paper, hairline rows, a hover tint. Motion: one entrance on load (GSAP: sections settle from 14 px below, 0.07 s apart), nothing else moves on its own.
 
 ## 4. Map labels
 
@@ -110,6 +110,14 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - **Near:** a select after the rent range (`.f-life`), hidden until the data loads; the budget note says how many areas are near the choice; cards add a "Nearby:" line (metres under 1 km, km above).
 - **3D:** a toggle styled like the Metro button, before Names; opens a full-map overlay above Leaflet's controls (z-index 1001); buildings raised to their mapped heights, skipping outlines marked `hide_3d` so tiered towers taper with Back to 2D top-start and a how-to note bottom-start; Escape closes; returning keeps the centre.
 - **Links to pages:** a line under the map links to Market stats, All areas, Best yields and the feed.
+
+### Review round (20 Nov)
+
+- **Header:** links to Market stats, All areas and Best yields under the title (Arabic pages in Arabic); on phones (600 px and below) the dial's side copy is hidden, as the dial writes its unit.
+- **Controls:** one "Near" select (Metro or Tram station / Places groups); the exact budget boxes in a fold under the budget heading, open when a link carries a budget.
+- **Phones (860 px and below):** the "Dubai right now" facts come after the map.
+- **Area card:** "Check a rent here" and "Compare" pinned to the bottom edge of a scrolling card; "Busiest buildings" and "Details and sources" (nearby, other sources, the DLD note) folded.
+- **Generated pages:** one look (`page_kit.py`): oxblood header with a gold rule, Barlow Condensed headings, gold-underlined links, cards with a gold edge, a dark mode by the device setting, an English / عربي switch.
 
 ## 6. The rent check
 

@@ -125,3 +125,6 @@
 /* Phones: the compact area check runs the full width, aligned with the filters under it. */
 @media (max-width:860px){#companion.compact .ck{padding:0;background:none;border:0;box-shadow:none}}
 @media (max-width:860px){#companion{align-self:stretch;width:100%;padding-inline:16px}}
+/* A long card scrolls: its two actions stay pinned to the card's bottom edge, never half cut off. */
+.leaflet-popup-scrolled .ck-popact{position:sticky;bottom:0;z-index:2;margin:10px 0 0;padding:8px 0 2px;background:var(--label);box-shadow:0 -8px 8px -6px rgba(0,0,0,.12)}
+:root[data-theme="dark"] .leaflet-popup-scrolled .ck-popact{background:var(--panel)}

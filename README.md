@@ -46,6 +46,7 @@ Tap an area and the card is about the view you're in. **Rent:** every home size,
 - **Follow the changes** with the RSS feed (`/feed.xml`): every publication's moves of 5% or more.
 - **3D**: tilt the map and see the city's buildings raised, areas still shaded by price.
 - **Per sq ft** on the Sale price view, **AED, USD, EUR or GBP** for every figure, and a **Near** filter for areas close to a beach, golf course, park, mall or many schools.
+- **In English and Arabic**: every market and area page has an Arabic version (`/ar/stats/`, `/ar/a/dubai-marina/`), and the map downloads its Arabic only when you choose it.
 
 ### 🔗 Share a card
 Every area, hotel and holiday home card has **"Send this to someone: Share link"**: your phone's share sheet, or a line of text plus the link on your computer's clipboard. The link opens the map on that card, in the same view.

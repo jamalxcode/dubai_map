@@ -580,8 +580,8 @@ tbody tr:has(+ tr.cont) td{border-bottom-color:transparent}
 .htab small{display:block;color:var(--muted);font-size:11.5px}
 .hrow{all:unset;cursor:pointer;color:var(--text);text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:3px;text-decoration-thickness:1.5px}
 .hrow:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-details.rentMore{margin:8px 0;border-top:1px solid var(--line);padding-top:6px}
-details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
+details.rentMore,details.cardMore{margin:8px 0;border-top:1px solid var(--line);padding-top:6px}
+details.rentMore summary,details.cardMore summary{cursor:pointer;font-weight:600;color:var(--text)}
 .hlinks{display:flex;flex-wrap:wrap;gap:4px 8px}.hlinks .sep{color:var(--muted)}
 /* The price dial (header): an arc on the price key's blues, a gold-edged knob at the median, the lowest and highest
    area in view at the ends, and the median in the middle. Counts (contracts, places) hide it and show the number. */
@@ -700,3 +700,17 @@ details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
 .psfSw button{border:0;background:none;color:var(--text);font:600 12px/1 var(--body);padding:5px 10px;cursor:pointer}
 .psfSw button[aria-pressed="true"]{background:var(--sign);color:var(--on-sign)}
 .psfSw button:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+/* The exact budget boxes fold away (the map's slider sets the maximum); a shared budget opens them. */
+details.f-range>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;min-height:24px}
+details.f-range>summary::-webkit-details-marker{display:none}
+details.f-range>summary::after{content:"";width:7px;height:7px;border-inline-end:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin-top:-3px;transition:transform .15s}
+details.f-range[open]>summary::after{transform:rotate(-135deg);margin-top:3px}
+details.f-range[open]>summary{margin-bottom:5px}
+/* Phones: the dial already writes its unit, so the side copy goes and the map starts higher;
+   the "Dubai right now" facts move below the map. */
+@media (max-width:600px){.big .dialSide{display:none!important}}
+/* Links to the market pages, under the title. */
+.siteNav{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 0 0;font:600 15px/1.3 var(--body)}
+.siteNav a{color:var(--band-text);text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:4px}
+.siteNav a:hover{color:#E2C766}
+@media (max-width:600px){.siteNav{font-size:14px;margin-top:6px}}

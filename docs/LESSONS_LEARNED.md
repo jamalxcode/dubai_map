@@ -223,3 +223,23 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** in 3D the Burj Khalifa was a fat block: the tiles carry both a tall building's tiers and its full outline, and the outline was raised too.
 - **Rule:** a fill-extrusion of OpenMapTiles buildings filters out `hide_3d` features (`['!=', ['get', 'hide_3d'], true]`).
+
+## A flex item grows to its widest child (20 Nov 2026)
+
+- **Problem:** the facts strip on phones was 687 px wide on a 390 px screen: as a flex item its minimum width is its content's, and its scrolling row of facts is wide; the page hides the overflow, so the tip beside it was simply cut off.
+- **Rule:** a section holding a horizontal scroller gets `min-width:0` (and `max-width:100%`); checks compare its width with the screen's.
+
+## The later stylesheet wins a tie (20 Nov 2026)
+
+- **Problem:** a phone rule in atlas.css moving the facts strip below the map did nothing: fun.css loads later and its rule of the same weight set the order back.
+- **Rule:** a rule about a part a later stylesheet styles goes in that stylesheet (fun.css for the facts strip, the slider and the tour).
+
+## Two sessions, one pass number (20 Nov 2026)
+
+- **Problem:** a parallel session and this one both wrote "seventy-seventh pass"; merging the two branches conflicted in DECISIONS.
+- **Rule:** before numbering a pass, fetch `origin` and look at other open branches; on a clash keep both and renumber the later one.
+
+## Load a big table only for those who need it (20 Nov 2026)
+
+- **Problem:** every visitor downloaded the Arabic tables (about 92 KB), English visitors too.
+- **Rule:** `i18n-ar.js` is written in by `i18n.js` only when the page is in Arabic, while the page is still loading (so it runs before the page scripts); tests load both files when they fake an Arabic page.

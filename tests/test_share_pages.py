@@ -31,9 +31,26 @@ class SharePageTests(unittest.TestCase):
         self.assertIn('"@type": "FAQPage"', html)
         self.assertIn('What is the rent for a 1-bedroom apartment in Jumeirah Village Circle?', html)
         self.assertNotIn("http-equiv=\"refresh\"", html, "no automatic redirect: the page stands on its own")
-        self.assertIn("<td>1-bedroom apartments</td><td class=r>AED 70,000</td><td class=r>15,000</td>", html)
+        self.assertIn("<td>1-bedroom apartments</td><td class=r>70,000</td><td class='r opt'>15,000</td>", html)  # AED in the heading
+        self.assertIn("Median figures in AED.", html)
+        self.assertIn('href="../../stats/">Market stats</a>', html)  # the header leads to the market pages
+        self.assertIn('hreflang="ar" href="https://jamalxcode.github.io/dubai_map/ar/a/jumeirah-village-circle/"', html)
         self.assertIn("Continental Club Property", sp.page(KARAMA, None))
-        self.assertIn("for a studio flat", sp.page(KARAMA, None))
+        self.assertIn("for a studio", sp.page(KARAMA, None))
+
+    def test_arabic_page(self):
+        html = sp.page(dict(JVC, sale_median=1108000, sale_yoy=-6.6), "2026-11-13", "ar")
+        self.assertIn('<html lang="ar" dir="rtl">', html)
+        self.assertIn("إيجارات Jumeirah Village Circle: 70,000 درهم سنويًا لشقة بغرفة نوم", html)  # area names stay in English
+        self.assertIn("13 نوفمبر 2026", html)
+        self.assertIn('href="../../../?lang=ar&amp;open=a:Jumeirah%20Village%20Circle"', html)
+        self.assertIn("<td>شقق بغرفة نوم</td>", html)
+        self.assertIn("بانخفاض 6.6% خلال عام", html)
+        self.assertIn('href="../../../a/jumeirah-village-circle/" lang="en">English</a>', html)
+
+    def test_sale_change_in_words(self):
+        html = sp.page(dict(JVC, sale_median=1108000, sale_yoy=-6.6), "2026-11-13")
+        self.assertIn("AED 1,110,000</b> median sale price, down 6.6% in a year (per sq ft)", html)  # three significant figures
 
     def test_writes_every_area_and_refuses_a_shared_link(self):
         with tempfile.TemporaryDirectory() as root, tempfile.TemporaryDirectory() as out:
@@ -43,8 +60,11 @@ class SharePageTests(unittest.TestCase):
             with mock.patch.object(sp, "ROOT", root), mock.patch("builtins.print"):
                 self.assertEqual(sp.main(out), 2)
                 self.assertTrue(os.path.exists(os.path.join(out, "a", "al-karama", "index.html")))
+                self.assertTrue(os.path.exists(os.path.join(out, "ar", "a", "al-karama", "index.html")))
                 with open(os.path.join(out, "sitemap.xml")) as f:
-                    self.assertIn("a/al-karama/</loc>", f.read())
+                    sm = f.read()
+                    self.assertIn("/a/al-karama/</loc>", sm)
+                    self.assertIn("/ar/a/al-karama/</loc>", sm)
                 with open(os.path.join(root, "data", "areas_flat.json"), "w") as f:
                     json.dump({"areas": [dict(JVC, label="Jumeirah-Village Circle")]}, f)
                 with self.assertRaises(SystemExit):

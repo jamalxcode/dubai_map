@@ -1,7 +1,8 @@
 /* Exploring for fun (assets/app/fun.js): the facts strip, tips, Guess the rent, the tour, "You", the budget slider,
    the card's headline fact, Rent or buy and the stay finder. Same palette and type as the rest of the page. */
 .pane>.funStrip{order:3}
-.funStrip{padding-top:14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+@media (max-width:860px){.pane>.funStrip{order:6}.pane>main{order:7}} /* phones: the facts come after the map */
+.funStrip{min-width:0;max-width:100%;box-sizing:border-box;padding-top:14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
 .funHead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:8px}
 .funHead h2{margin:0;font:700 19px/1.1 var(--cond);letter-spacing:.01em}
 .funTip{flex:1 1 220px;min-width:0;margin:0;font-size:13px;line-height:1.45;color:var(--muted)}

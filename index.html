@@ -37,6 +37,7 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
   <div class="wrap">
     <div>
       <h1 id="title" data-t="title">Dubai Real Estate Atlas</h1>
+      <nav class="siteNav" aria-label="More from the atlas" data-t-aria="nav.aria" data-t="nav.pages"><a href="stats/">Market stats</a><a href="areas/">All areas</a><a href="yields/">Best yields</a></nav>
       <p data-t="tagline">What tenants <b>actually pay</b> per year, from rent contracts registered in Ejari with the Dubai Land Department. Not asking prices.</p>
     </div>
     <div class="big" aria-live="polite">
@@ -62,8 +63,8 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
 <nav class="controls" aria-label="Filters" data-t-aria="filters">
   <div class="wrap">
     <label class="field f-home"><span data-t="f.home">Home</span><select id="home"></select></label>
-    <div class="field f-range" role="group" aria-labelledby="rangeLbl"><span id="rangeLbl" data-t="f.range">Yearly rent budget (AED)</span>
-      <div class="pair"><input id="min" type="number" min="0" inputmode="numeric" placeholder="Min" data-t-ph="ph.min" aria-label="Min rent (AED)" data-t-aria="f.min"><span aria-hidden="true">–</span><input id="max" type="number" min="0" inputmode="numeric" placeholder="Max" data-t-ph="ph.max" aria-label="Max rent (AED)" data-t-aria="f.max"></div></div>
+    <details class="field f-range"><summary><span id="rangeLbl" data-t="f.range">Yearly rent budget (AED)</span></summary>
+      <div class="pair" role="group" aria-labelledby="rangeLbl"><input id="min" type="number" min="0" inputmode="numeric" placeholder="Min" data-t-ph="ph.min" aria-label="Min rent (AED)" data-t-aria="f.min"><span aria-hidden="true">–</span><input id="max" type="number" min="0" inputmode="numeric" placeholder="Max" data-t-ph="ph.max" aria-label="Max rent (AED)" data-t-aria="f.max"></div></details>
     <!-- State behind the home picker and the map's Rent / Sale price / Yield bar (atlas.js). -->
     <select id="unit" hidden aria-hidden="true" tabindex="-1"><option value="">All units</option></select>
     <select id="metric" hidden aria-hidden="true" tabindex="-1"><option value="median">Rent</option><option value="sale">Sale price</option><option value="sale_psf">Sale price per sq ft</option><option value="median_sqm">Rent per m²</option></select>

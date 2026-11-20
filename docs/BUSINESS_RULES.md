@@ -131,6 +131,16 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | 3D | Only where WebGL works; same base map and price colours; up to 60 price labels | `fun.js open3d` |
 | Busiest market | The fact strip names the area with the most contracts (industrial zones left out) | `fun.js` |
 
+### Review round (20 Nov)
+
+| Rule | Value | Where |
+|---|---|---|
+| Typical Dubai figure | The middle contract: each area's median weighted by its contracts (the map's dial for what is on screen; the stats pages for all of Dubai) | `atlas.js wMedian`, `page_kit.w_median` |
+| Rounding on pages | Sentences, lists and headline boxes: three significant figures; tables: exact medians | `page_kit.r3`, `aed` |
+| Rankings | Cheapest, dearest and best-yield lists take areas with 100+ contracts (1-bedroom contracts for the 1-bedroom lists) | `site_pages.RANK_N` |
+| Rent over four weeks | Once a snapshot four weeks older exists: Dubai's typical rent and the biggest moves (areas with 30+ contracts) on the stats page, each area's change on its page; base snapshot as history.py (a year back, else the oldest four weeks old) | `page_kit.base_snapshot`, `collector/history.py baseline` |
+| Near | One picker: a Metro or Tram station within a 10- or 20-minute walk, or a place (beach, golf, park, mall, schools); one choice at a time | `atlas.js nearOptions` |
+
 ## 6. The rent check
 
 | Rule | Value | Where |
@@ -167,6 +177,7 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Site pages | `stats/`, `areas/`, `yields/`, `rents/<home>/`, `rents/1-bedroom-under-<n>/` (AED 50k, 60k, 75k, 100k), all from published files; rankings leave out figures from fewer than 10 contracts and industrial zones; each links to the map with the same view, home and budget | `scripts/site_pages.py` |
 | Feed | `feed.xml`: one item per publication, moves of 5% or more from 30+ contracts between consecutive history snapshots | `site_pages.py` |
 | Questions and answers | Area pages and the stats page carry questions answered from their figures, also as schema.org FAQPage; a question without a figure is left out | `share_pages.faqs`, `site_pages.py` |
+| Languages of generated pages | Every area, stats, directory, yields and rent page also in Arabic under `ar/` (right to left, Western digits, area names as registered); a phrase without Arabic stops the deploy | `scripts/page_kit.py` |
 | Preview figure | 1-bedroom median where known, else the area's own headline figure | `share_pages.headline` |
 | Share image | No made-up figures | `scripts/share_image.mjs` |
 | Language | `?lang=` link (remembered) → saved choice → device language; Arabic reads right to left, the map stays left to right | `index.html`, `assets/app/i18n.js` |
