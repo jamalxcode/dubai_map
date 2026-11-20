@@ -8,7 +8,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 
 ## 1. Principles
 
-- **The rent is the interface.** Rents are written as text on the map, on a badge in their price colour; the colour repeats what the text says, strongly enough to read from across the room.
+- **The rent is the interface.** Rents are written as plain dark text on the map, on a card framed in their price colour (a thick border and a light tint of it); the frame repeats what the text says, strongly enough to read from across the room, and the number stays clear whatever the colour.
 - **One control per job.** One page language switch, one home picker, one view bar on the map, one area search (the rent check); the finder above the table only filters the table.
 - **One core action, one next step.** "Check a rent" is first on the page; each result offers one primary button, everything else is a plain link.
 - **Big and bold, but no wasted scrolling.** On wide screens the title, rent check and filters fit the first screen.
@@ -36,7 +36,7 @@ are in [BUSINESS_RULES.md](BUSINESS_RULES.md); the goals behind both are in
 - **Prices: six blues, lowest to highest:** `#EFF3FF`, `#C6DBEF`, `#9ECAE1`, `#6BAED6`, `#2171B5`, `#084594`. Equal steps between the 5th and 95th percentile of what is shown (extremes keep the end colours); the same scale in light and dark; label badges, outlines, the rent check's colour chip and the legend ramp. Text on a badge is espresso on the four lighter blues (6.5:1 or more) and ivory `#FFFCF5` on the two darkest (5.0:1 and 9.0:1). The lowest step is almost paper-white, so swatches and badges carry a faint outline.
 - **Scale:** the key runs from the 5th to the 95th percentile, so a few extreme areas don't stretch it. The legend writes a value at all seven step edges (38k, 52k … 120k); below the first value takes the lightest blue, above the last the darkest.
 - **Dark mode:** follows the device until the visitor picks; remembered (`theme`). The base map switches with it: OpenFreeMap **Liberty** (detailed, in colour) by day, OpenFreeMap **Dark** lifted to the site's night colours (`tuneDark` in atlas.js) at night. The CSS invert filter is only for the OpenStreetMap fallback tiles.
-- **Contrast:** WCAG AA (4.5:1) in light, dark and Arabic, checked by axe on every push. In dark mode price labels stay light ivory cards, so badges show exactly their key colour, but smaller (15 px figures), with a thin dark edge and no gold stack, so they don't glare on the dark map.
+- **Contrast:** WCAG AA (4.5:1) in light, dark and Arabic, checked by axe on every push. In dark mode price labels stay light ivory cards, so their frames show exactly their key colour, a little smaller (16 px figures) with a thin dark edge, so they don't glare on the dark map. Figures are espresso on a light card in every band, so their contrast doesn't depend on the price colour.
 - **Type:** Barlow (text) and Barlow Condensed (headings, figures), served from the site. Arabic letters come from the device's Arabic font; numbers stay in Barlow. No letter-spacing in Arabic (it breaks letter joining).
 - **Figures:** tabular numbers; AED written before the amount; Western digits in both languages.
 
@@ -46,7 +46,7 @@ One look for every block of the side panel (and the same blocks on phones): sect
 
 ## 4. Map labels
 
-- Each area: the figure (`AED 65k`) on a badge in its price-key colour, with the area name underneath on an ivory card.
+- Each area: the figure (`AED 65k`) in plain espresso type with the area name underneath, on an ivory card framed by a 3.5 px border in its price-key colour, tinted with 17% of it, and a 1 px dark hairline outside (so the palest blue still shows on a light map). Thin figures: the frame is dashed. Groups: a second frame offset behind, in the same colour (a stack of cards). Hover and focus add a gold ring outside.
 - **Names as shown:** names registered in capitals ("TOWN SQUARE") show in title case ("Town Square"), keeping acronyms (JLT, JVC, DIFC…) (`T.place`, the same rule on area pages); search, links and saved areas keep the registered name. Names are shortened once in the script (single areas at 28 letters, groups at 22 plus "+N"); the CSS doesn't cut them again.
 - Labels never overlap. Overlapping labels merge into a group label coloured by the price key like any other (their contract-weighted average), marked by a gold stacked-card outline; every group names its busiest area and how many others it holds ("JLT + 12 areas", "+ 1 area"; `groupName`). At the opening zoom labels sit 4 px apart (`pad`), so a few more areas show before merging.
 - Label boxes are measured as drawn (a hidden label with the same styles, re-measured once the fonts load), so placement holds in both themes and languages.

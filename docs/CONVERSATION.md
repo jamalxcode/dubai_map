@@ -435,6 +435,10 @@ Done (decisions, seventy-first pass): the unit in bold beside the dial for every
 
 Done (decisions, seventy-second pass): every area, hotel and holiday home card has "Send this … to someone: Share link"; the link reopens that card. Card links follow the site's address by themselves; the domain move is open item 7.
 
+### 20 Nov · "have the price border thicker and shaded, rather than the actual number highlighted… the number stays clear and easy to read" (screenshot)
+
+Done (decisions, seventy-third pass): labels framed in their price colour (thick border, light tint), figures plain and dark.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

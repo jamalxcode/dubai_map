@@ -147,24 +147,26 @@ button,input,select{font:inherit;color:inherit}
 /* Rent labels on the map */
 .rl-wrap{background:none;border:0}
 .leader{stroke:var(--text);stroke-opacity:.55;fill:var(--label);fill-opacity:1}
-.rl{position:absolute;transform:translate(-50%,-50%);background:var(--label);color:var(--text);border-radius:7px;padding:4px 7px 4px 4px;white-space:nowrap;cursor:pointer;
-  box-shadow:0 0 0 1px rgba(20,20,20,.18),0 2px 6px rgba(20,20,20,.18);text-align:start}
-/* The price badge: the figure on its price-key colour (espresso or ivory type, 4.5:1 or more on each blue). */
-.rl b{display:inline-block;font:700 17px/1 var(--cond);font-variant-numeric:tabular-nums;background:var(--c,var(--b3));color:var(--on,var(--espresso));
-  padding:3px 6px 2px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(43,33,24,.22)}
-.rl small{padding-inline-start:3px}
+.rl{position:absolute;transform:translate(-50%,-50%);color:var(--text);border-radius:8px;padding:4px 8px 4px 7px;white-space:nowrap;cursor:pointer;text-align:start;
+  /* The price shows in the card's frame, not on the figure (the owner's choice, 20 Nov): a thick border in the area's
+     key colour and a light tint of it, with a thin dark hairline outside so the palest blue still shows on a light map. */
+  border:3.5px solid var(--c,var(--b3));background:color-mix(in srgb,var(--c,var(--b3)) 17%,var(--label));
+  box-shadow:0 0 0 1px rgba(20,20,20,.28),0 2px 6px rgba(20,20,20,.18)}
+/* The figure stays plain: espresso type on the light card, easy to read whatever the price colour. */
+.rl b{display:inline-block;font:700 18px/1 var(--cond);font-variant-numeric:tabular-nums;color:var(--espresso);padding:1px 0 0}
+.rl small{padding-inline-start:0}
 .rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted)} /* names are shortened in atlas.js (labelName), not cut here */
 .rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--gold),0 4px 10px rgba(20,20,20,.25)}
 /* Dark mode: price labels stay light ivory cards, so each badge shows exactly its key colour against the dark
    map, but smaller and softer (a thin edge, no gold stack) so they don't glare. Same contrast as light mode. */
-:root[data-theme="dark"] .rl{--label:#F3EDE2;--text:var(--espresso);--muted:#5E544A;padding:3px 6px 3px 3px;
-  box-shadow:0 0 0 1px rgba(0,0,0,.5),0 1px 4px rgba(0,0,0,.4)}
-:root[data-theme="dark"] .rl b{font-size:15px}
+:root[data-theme="dark"] .rl{--label:#F3EDE2;--text:var(--espresso);--muted:#5E544A;padding:3px 7px 3px 6px;
+  box-shadow:0 0 0 1px rgba(0,0,0,.55),0 1px 4px rgba(0,0,0,.4)}
+:root[data-theme="dark"] .rl b{font-size:16px}
 :root[data-theme="dark"] .rl small{font-size:10.5px}
-:root[data-theme="dark"] .rl.grp{box-shadow:0 0 0 1px rgba(0,0,0,.5),2px 2px 0 0 #CFC6B8,2px 2px 0 1px rgba(0,0,0,.5),0 1px 4px rgba(0,0,0,.4)}
+:root[data-theme="dark"] .rl.grp{box-shadow:0 0 0 1px rgba(0,0,0,.55),3px 3px 0 1px #F3EDE2,3px 3px 0 3.5px var(--c,var(--b3)),0 1px 4px rgba(0,0,0,.4)}
 :root[data-theme="dark"] .leader{fill:#FFFCF5;stroke:var(--ivory)}
 /* Group labels follow the price key like single ones; a gold stacked-card outline and "+N" in the name mark several areas. */
-.rl.grp{box-shadow:0 0 0 1.5px var(--gold),3px 3px 0 0 var(--label),3px 3px 0 1.5px var(--gold),0 3px 9px rgba(20,20,20,.22)} /* a stack of cards: several areas */
+.rl.grp{box-shadow:0 0 0 1px rgba(20,20,20,.28),4px 4px 0 1px var(--label),4px 4px 0 4px var(--c,var(--b3)),0 3px 9px rgba(20,20,20,.22)} /* a stack of cards in the same price colour: several areas */
 
 /* Facts under the map */
 .facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:22px 0 0;border-top:3px solid var(--text)}
@@ -397,7 +399,7 @@ html.viewerOpen,html.viewerOpen body{overflow:hidden}
 @media (min-width:1100px){.band .wrap{padding-top:52px}.band h1,:root[lang="ar"] .band h1{padding-inline-end:0}}
 /* Thin figures (fewer than 10 contracts): a dashed outline and an italic figure; same colours and contrast. */
 .rl{--cd:color-mix(in srgb,var(--c,var(--b3)) 70%,#2B2118)}
-.rl.thin{outline:1.5px dashed var(--cd);outline-offset:-1px}
+.rl.thin{border-style:dashed} /* a thin figure (or one waiting to be confirmed): the price frame is dashed */
 .rl.thin b{font-style:italic}
 .leaflet-popup-content tr.thin td{font-style:italic;color:var(--muted)}
 .legend .thinMark{display:inline-block;width:14px;height:10px;border:1px dashed var(--muted);border-radius:2px;vertical-align:-1px;margin-inline-end:5px}

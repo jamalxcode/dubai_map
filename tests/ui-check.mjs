@@ -142,9 +142,12 @@ try {
     await page.evaluate(v => map.setView(v.c, v.z, { animate: false }), view0);
     await page.waitForTimeout(300);
     // The figure is a badge in its key colour, with dark type on the four light blues and light type on the two dark ones.
-    const badges = await page.evaluate(() => [...document.querySelectorAll('.rl')].map(e => [e.style.getPropertyValue('--c'), e.style.getPropertyValue('--on').toUpperCase(), getComputedStyle(e.querySelector('b')).backgroundColor]));
-    check(badges.length >= 10 && badges.every(([c, on, bg]) => /--b[1-6]/.test(c) && bg !== 'rgba(0, 0, 0, 0)' && (/--b[56]/.test(c) ? on === '#FFFCF5' : on === '#2B2118')),
-      `${name}: each label's figure sits on a badge in its key colour, with readable type (${badges.length})`);
+    // The price shows in each label's frame: a thick border in its key colour; the figure itself is plain dark type.
+    const badges = await page.evaluate(() => [...document.querySelectorAll('.rl')].map(e => { const cs = getComputedStyle(e), b = getComputedStyle(e.querySelector('b'));
+      const probe = document.createElement('i'); probe.style.color = 'var(' + (e.style.getPropertyValue('--c').match(/--b[1-6]/) || ['--b3'])[0] + ')'; e.append(probe); const key = getComputedStyle(probe).color; probe.remove();
+      return [e.style.getPropertyValue('--c'), parseFloat(cs.borderTopWidth), cs.borderTopColor, key, b.backgroundColor, b.color]; }));
+    check(badges.length >= 10 && badges.every(([c, w, bc, key, bg, fg]) => /--b[1-6]/.test(c) && w >= 3 && bc === key && bg === 'rgba(0, 0, 0, 0)' && fg === 'rgb(43, 33, 24)'),
+      `${name}: each label's price shows in a thick border in its key colour; the figure is plain dark type (${badges.length})`);
     check(await page.evaluate(() => !document.querySelector('.pie') && [...document.querySelectorAll('.rl.grp small')].every(e => /\+ (1 area|\d+ areas)$/.test(e.textContent))),
       `${name}: merged labels name their busiest area and how many more ("JLT + 12 areas"); no dials`);
     const scale = await page.evaluate(() => { const vals = POINTS.map(p => p.v).sort((a, b) => a - b);

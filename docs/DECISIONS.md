@@ -732,6 +732,14 @@ Asked (screenshot of a hotel area card): "add a share link with a text before, t
 - **Own domain later:** the card links use the page's own address, so they follow the site with no change. When the domain moves: point it at GitHub Pages (a `CNAME` file and the DNS record), and set `SITE_URL` for `scripts/share_pages.py` and `scripts/check_fresh.py` (the area preview pages, sitemap and freshness check) and the two `og:` addresses in `index.html` (open item 7 in the conversation log).
 - **Checked:** a browser check copies an area's link, finds the text and the link on the clipboard, opens the link in a new page and finds that area's card; a hotel link opens that hotel's card.
 
+## Decision on 2026-11-20 (seventy-third pass): the price in the frame, not behind the number
+
+Asked (screenshot of the Hotels view): "have the price border thicker and shaded, rather than the actual number highlighted; the border shows the heat or how cheap or expensive that property or average is; the number stays clear and easy to read".
+- **Labels:** the figure loses its coloured badge and is plain espresso type; the card gets a 3.5 px border in the area's price-key colour and a light tint of it (17%), with a 1 px dark hairline outside so the palest blue still shows. Thin figures get a dashed frame (it was a dashed outline); groups a second frame behind in the same colour (it was gold). Hover and focus keep a gold ring outside.
+- **Why it's better for reading:** the number's contrast no longer depends on the price colour (espresso on a light card in all six bands), so no figure has to switch to ivory type on the dark blues.
+- **Trade-off:** the cheapest band (`#EFF3FF`) is nearly white, so cheap areas read as a plain card with a dark hairline; that is the key's own lightest step, and the legend shows the same.
+- **Checked:** the label check now verifies each border is at least 3 px in exactly its key colour, with a transparent figure background and espresso type; every browser check passes, axe included; screenshots in light and dark.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".
