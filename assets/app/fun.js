@@ -334,6 +334,9 @@
     m3.on('load', () => {
       const src = Object.keys(m3.getStyle().sources).find(k => m3.getStyle().sources[k].type === 'vector');
       if (src) m3.addLayer({ id: 'bld3d', type: 'fill-extrusion', source: src, 'source-layer': 'building', minzoom: 12,
+        // A tall building drawn in tiers (the Burj Khalifa) also has a full-footprint outline marked hide_3d: raising it too
+        // buries the tiers in one fat block, so only the tiers are raised.
+        filter: ['!=', ['get', 'hide_3d'], true],
         paint: { 'fill-extrusion-color': document.documentElement.dataset.theme === 'dark' ? '#6B6158' : '#D9CFBE', 'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 10],
           'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0], 'fill-extrusion-opacity': 0.85 } });
       // Area outlines in their price colour, and the labels as on the 2D map.

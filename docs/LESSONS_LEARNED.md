@@ -217,3 +217,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the 3D view covered the map at z-index 800, but Leaflet's zoom bar (z-index 1000) stayed on top of its Back to 2D button, so it couldn't be clicked; only a browser click (not a scripted one) showed it.
 - **Rule:** anything drawn over `.mapWrap` goes above 1000, and checks press its buttons with a real click (`page.click`), not `el.click()`.
+
+## Building outlines with parts are flagged, not removed (20 Nov 2026)
+
+- **Problem:** in 3D the Burj Khalifa was a fat block: the tiles carry both a tall building's tiers and its full outline, and the outline was raised too.
+- **Rule:** a fill-extrusion of OpenMapTiles buildings filters out `hide_3d` features (`['!=', ['get', 'hide_3d'], true]`).
