@@ -504,9 +504,10 @@ function hotelsBy(){if(!HOTEL_BY&&HOTELS){HOTEL_BY=new Map();const lab=Transit.a
   HOTEL_BY.forEach(g=>{g.typical=g.prices.length?Math.round(median(g.prices)):null})}return HOTEL_BY}
 // With prices, a priced hotel is a solid gold dot and one without a price a small hollow ring, shown only from street
 // level (zoom 14), so the ~200 priced places aren't lost among ~800 dots. Without any prices every place is a solid dot.
-const UNPRICED_ZOOM=14;
+const UNPRICED_ZOOM=14,DOTS_ZOOM=12; // at the city-wide zoom the labels carry the view; dots from zoom 12
 function drawHotels(){hotelLayer.clearLayers();if(!HOTELS||$('metric').value!=='hotels'){hotelLayer.remove();return}
   const dark=document.documentElement.dataset.theme==='dark',priced=hotelPriced(),near=map.getZoom()>=UNPRICED_ZOOM;
+  if(priced&&map.getZoom()<DOTS_ZOOM){hotelLayer.addTo(map);return}
   for(const h of HOTELS){const r=h.stars>=5?4.5:h.stars>=4?4:3.2;if(priced&&!h.price&&!near)continue;
     L.circleMarker([h.lat,h.lng],priced&&!h.price?{pane:'transit',radius:2.6,weight:1.3,color:dark?'#CFC6B8':'#8A7F72',fillColor:dark?'#2B2118':'#F6F1E7',fillOpacity:1,className:'hdot none'}
       :{pane:'transit',radius:r,weight:1.4,color:dark?'#F6F1E7':'#521825',fillColor:'#C9A227',fillOpacity:1,className:'hdot'})
@@ -594,7 +595,7 @@ function homesBy(){if(!HOME_BY&&HOMES){HOME_BY=new Map();const lab=Transit.assig
   HOMES.forEach((h,i)=>{h.area=lab[i];if(!lab[i])return;const g=HOME_BY.get(lab[i])||{n:0,list:[],prices:[]};g.n++;g.list.push(h);g.prices.push(h.price);HOME_BY.set(lab[i],g)});
   HOME_BY.forEach(g=>{g.typical=Math.round(median(g.prices))})}return HOME_BY}
 function drawHomes(){homeLayer.clearLayers();if(!HOMES||$('metric').value!=='homes'){homeLayer.remove();return}
-  const dark=document.documentElement.dataset.theme==='dark';
+  const dark=document.documentElement.dataset.theme==='dark';if(map.getZoom()<DOTS_ZOOM){homeLayer.addTo(map);return}
   for(const h of HOMES)L.circleMarker([h.lat,h.lng],{pane:'transit',radius:3.6,weight:1.6,color:dark?'#F6F1E7':'#C9A227',fillColor:'#2B2118',fillOpacity:1,className:'hhdot'})
     .bindTooltip(safe(h.name)+' · '+T('AED {v} a night',{v:fmt(h.price)}),{direction:'top',offset:[0,-4]}).on('click',()=>openHome(h)).addTo(homeLayer);
   homeLayer.addTo(map)}
@@ -702,13 +703,14 @@ function renderLabels(){
       if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<span class="t">'+T.count(g.length,'area')+'</span>'+((metric==='n'||(metric==='hotels'&&!hotelPriced()))?safe(labelText(c.val,metric)):T('Typical {v}',{v:safe(labelText(c.val,metric))}))+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(T.place(o.a.label))+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
       else{clearFocus();map.closePopup();map.flyToBounds(b,{padding:[70,70],maxZoom:16,duration:FX?.6:0,animate:!!FX})}});
   }
+  if(window.afterLabels)afterLabels(added.map(m=>m.getElement()&&m.getElement().firstChild).filter(Boolean),metric); // fun.js: count-up, budget slider
   // Labels answer a filter change by settling in from the centre; plain zooming redraws instantly.
   if(FX&&animateLabels){animateLabels=false;
     const els=added.map(m=>m.getElement()&&m.getElement().firstChild).filter(Boolean);
     G.fromTo(els,{opacity:0},{opacity:1,duration:.35,ease:'power1.out',stagger:{each:.008,from:'center'}});}
 }
 map.on('zoomend',renderLabels);
-map.on('zoomend',()=>{if($('metric').value==='hotels'&&hotelPriced())drawHotels()}); // hollow rings appear from street level
+map.on('zoomend',()=>{if($('metric').value==='hotels'&&hotelPriced())drawHotels();if($('metric').value==='homes')drawHomes()}); // dots from zoom 12, hollow rings from street level
 // After a pan, place the labels again (clear of the buttons and inside the edges), except while a breakdown is
 // open: redrawing would close it. It is placed again once the breakdown closes.
 map.on('moveend',()=>{if(!map._popup&&LABEL.metric)renderLabels()});
@@ -911,7 +913,8 @@ function ownSection(a,m,pu){
   const tbl=rows.length?'<table><tr><th>'+T('Unit')+'</th>'+(sale?'<th>'+T('Sale price')+'</th><th>'+T('Annual rent')+'</th><th>'+T('Yield')+'</th>':'<th>'+T('Yield')+'</th><th>'+T('Annual rent')+'</th><th>'+T('Sale price')+'</th>')+'</tr>'+
     rows.slice(0,7).map(u=>'<tr'+(pu&&u.u===pu.u?' class="pick"':'')+'><td>'+safe(T.unit(u.u))+'</td>'+(sale?'<td>'+fmt(k(u.sale))+'</td><td>'+fmt(u.median)+'</td><td>'+(u.yield!=null?Number(u.yield).toFixed(1)+'%':'—')+'</td>'
       :'<td>'+Number(u.yield).toFixed(1)+'%</td><td>'+fmt(u.median)+'</td><td>'+(u.sale?fmt(k(u.sale)):'—')+'</td>')+'</tr>').join('')+'</table><small>'+T('AED; annual rent is the median yearly rent from Ejari contracts; gross yield is annual rent divided by the sale price.')+'</small><br>':'';
-  return lead+(lead?'<p class="allh">'+T('All homes:')+' '+all+'</p>':'<p class="lead">'+all+'</p>')+(sale?saleTrend(a):'')+tbl}
+  const rb=window.rentOrBuy?(pu&&pu.sale&&pu.median?rentOrBuy(pu.sale,pu.median,T.unit(pu.u).toLowerCase()):rentOrBuy(a.sale_median,a.median_kind==='unit'?null:a.median,T('all homes'))):'';
+  return lead+(lead?'<p class="allh">'+T('All homes:')+' '+all+'</p>':'<p class="lead">'+all+'</p>')+(sale?saleTrend(a):'')+tbl+rb}
 // The Rent view's card is about rent: sales get one small line (the sale median, the yield, the picked home's), with
 // a button to the Sale price view, where the card is about sales.
 function salesNote(a,pu){
@@ -943,7 +946,7 @@ function popup(a){
     (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<table><tr><th>'+T('Busiest buildings')+'</th><th>n</th><th>'+T('Median')+'</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
     (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'')+
     (m==='median'||m==='median_sqm'?salesNote(a,pu):'');
-  return '<span class="t" data-label="'+safe(a.label)+'">'+safe(T.place(a.label))+'</span>'+
+  return '<span class="t" data-label="'+safe(a.label)+'">'+safe(T.place(a.label))+'</span>'+(window.cardFact?cardFact(a,m):'')+
     (hv||hh?(hv?hotelSection(a):homeSection(a))+'<details class="rentMore"><summary>'+T('Rents in this area')+'</summary>'+figs+'</details>'
       :sv||yv?ownSection(a,m,pu)+'<details class="rentMore"><summary>'+T('Annual rents in this area')+'</summary>'+figs+'</details>':figs)+
     // See the place: Google links (open a new tab; Google allows these links without a key) and free photos
@@ -1219,7 +1222,7 @@ map.on('moveend',writeURL);
 const SITE=()=>location.origin+location.pathname.replace(/index\.html$/,'');
 function shareLine(kind,key){
   const lead=kind==='a'?T('Send this area to someone:'):kind==='h'?T('Send this hotel to someone:'):T('Send this holiday home to someone:');
-  return '<p class="shareLine"><span>'+lead+'</span> <button type="button" class="link" data-share="'+safe(kind+':'+key)+'">'+T('Share link')+'</button></p>'}
+  return '<p class="shareLine"><span>'+lead+'</span> <button type="button" class="link" data-share="'+safe(kind+':'+key)+'">'+T('Share link')+'</button><span class="sep" aria-hidden="true">·</span><button type="button" class="link" data-img="'+safe(kind+':'+key)+'">'+T('Save as image')+'</button></p>'}
 function shareURL(open){const q=new URLSearchParams();q.set('view',$('metric').value);
   if(!STAY($('metric').value))q.set('home',$('home').value.replace('|',':'));q.set('open',open);if(T.lang==='ar')q.set('lang','ar');
   return SITE()+'?'+q.toString().replace(/%3A/g,':').replace(/%7C/g,'|')}
@@ -1270,7 +1273,7 @@ const budgetEl=(()=>{const p=document.createElement('p');p.id='budgetNote';p.cla
 function stayPanel(metric){const on=STAY(metric);document.documentElement.classList.toggle('stayMode',on);
   $('rangeLbl').textContent=on?T('Nightly budget (AED)'):T('Yearly rent budget (AED)');
   $('min').setAttribute('aria-label',on?T('Min price a night (AED)'):T('Min rent (AED)'));$('max').setAttribute('aria-label',on?T('Max price a night (AED)'):T('Max rent (AED)'));
-  $('stayFacts').hidden=!on;document.querySelector('.facts:not(.stayFacts)').hidden=on;if(on)stayFacts(metric)}
+  $('stayFacts').hidden=!on;document.querySelector('.facts:not(.stayFacts)').hidden=on;if(on)stayFacts(metric);if(window.stayFinder)stayFinder(metric)}
 function stayRows(metric){const g=metric==='homes'?(HOMES&&homesBy()):(hotelPriced()&&hotelsBy());
   return g?[...g].filter(([,x])=>x.prices.length).map(([label,x])=>({c:label,t:x.typical,l:Math.min(...x.prices),h:Math.max(...x.prices),n:x.prices.length})):[]}
 function stayFacts(metric){

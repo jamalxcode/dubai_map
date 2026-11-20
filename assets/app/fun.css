@@ -1,0 +1,59 @@
+/* Exploring for fun (assets/app/fun.js): the facts strip, tips, Guess the rent, the tour, "You", the budget slider,
+   the card's headline fact, Rent or buy and the stay finder. Same palette and type as the rest of the page. */
+.pane>.funStrip{order:3}
+.funStrip{padding-top:14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.funHead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:8px}
+.funHead h2{margin:0;font:700 19px/1.1 var(--cond);letter-spacing:.01em}
+.funTip{flex:1 1 220px;min-width:0;margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
+.funTip .link{margin-inline:6px 2px}
+.funTip .link{font-weight:600;color:var(--text)}
+.funX{border:0;background:none;color:var(--muted);font-size:18px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:50%}
+.funX:hover{background:var(--soft)}.funX:focus-visible{outline:2px solid var(--focus)}
+.funChips{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding-bottom:4px;overscroll-behavior-x:contain}
+.funChip{flex:none;max-width:280px;white-space:normal;text-align:start;border:1px solid var(--line);border-inline-start:4px solid var(--b4);background:var(--panel);color:var(--text);
+  font:500 13px/1.3 var(--body);padding:8px 11px;border-radius:10px;cursor:pointer}
+.funChip:hover{border-color:var(--gold);border-inline-start-color:var(--b5)}
+.funChip:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.funChip.act{border-inline-start-color:var(--gold);font-weight:700}
+.guessBox{margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+.guessBox[hidden]{display:none}
+.guessBox .gq{margin:0 0 8px}.guessBox .gr{margin:0 0 8px;font:700 18px/1.25 var(--cond)}
+.guessBox .gs{display:flex;align-items:center;gap:12px}.guessBox .gs input{flex:1;accent-color:var(--oxblood)}
+.guessBox output{font:700 20px/1 var(--cond);font-variant-numeric:tabular-nums;min-width:9ch}
+.guessBox .ga{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:8px 0 0}
+/* The tour's caption: over the map, bottom centre, moved on by the visitor. */
+.tourBox{position:absolute;z-index:700;left:50%;bottom:18px;transform:translateX(-50%);width:min(440px,calc(100% - 140px));background:var(--legend);color:var(--text);
+  border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:10px;padding:12px 14px;box-shadow:0 6px 22px rgba(0,0,0,.25)}
+.tourBox[hidden]{display:none}
+.tourBox .tStep{margin:0;font:600 12px/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tourBox .tText{margin:6px 0 10px;font-size:15px;line-height:1.4}
+.tourBox .tActs{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0}.tourBox .funX{margin-inline-start:auto}
+@media (max-width:860px){.tourBox{width:calc(100% - 24px);bottom:12px}}
+/* "You" after a rent check: under the area's label. */
+.youWrap{background:none;border:0}
+.you{position:absolute;left:0;top:26px;transform:translateX(-50%);white-space:nowrap;background:var(--oxblood);color:var(--ivory);font:700 12.5px/1 var(--body);
+  padding:5px 9px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.3);pointer-events:none}
+.you::before{content:"";position:absolute;left:50%;top:-5px;margin-left:-5px;border:5px solid transparent;border-top:0;border-bottom-color:var(--oxblood)}
+/* The budget slider on the map (mirrors the Max box). */
+.budgetSlider{background:var(--legend);color:var(--text);padding:7px 10px 6px;border-radius:8px;width:220px}
+.budgetSlider[hidden]{display:none}
+.budgetSlider label{display:flex;flex-direction:column;gap:4px;font:600 12px/1.2 var(--body)}
+.budgetSlider input{width:100%;accent-color:var(--oxblood);margin:0}
+@media (max-width:860px){.budgetSlider{width:180px}.leaflet-bottom.leaflet-left{margin-bottom:6px}}
+/* A card's headline fact: one line, gold rule. */
+.hfact{display:inline-block;margin:2px 0 8px;padding:3px 9px;border-radius:999px;background:var(--soft);border:1px solid var(--gold);font:600 12.5px/1.3 var(--body);color:var(--text)}
+/* Rent or buy, inside sale and yield cards. */
+.rob{margin:10px 0 4px;border-top:1px solid var(--line);padding-top:8px}
+.rob summary{cursor:pointer;font-weight:700}
+.rob .robIn{display:flex;flex-direction:column;gap:2px;margin:8px 0;font-size:13px}.rob .robIn input{accent-color:var(--oxblood)}
+.rob .robOut p{margin:6px 0;font-size:13.5px;line-height:1.4}
+/* Find a stay (Hotels and Holiday homes side panel). */
+.finder{margin:18px 0 0;padding:12px 14px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+.finder[hidden]{display:none}
+.finder .fHead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
+.finder h3{margin:0;font:700 18px/1.1 var(--cond)}
+.finder select{font:inherit;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+.finder ol{margin:8px 0 0;padding-inline-start:22px}.finder li{margin:5px 0}.finder li span{display:block;font-size:12.5px;color:var(--muted)}
+.finder .fNote{margin:6px 0 0;font-size:12px}
+@media (prefers-reduced-motion:reduce){.funChip{transition:none}}
+.budgetSlider.out{float:none;clear:none;width:auto;margin:0 0 8px;border:1px solid var(--line);box-shadow:none;background:var(--panel)}

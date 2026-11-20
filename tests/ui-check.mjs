@@ -186,7 +186,8 @@ try {
         legend: !!document.querySelector('#legend .hkey'), ramp: !!document.querySelector('#legend .ramp'), url: /view=hotels/.test(location.search) }));
       const biggest = Math.max(0, ...h.texts.map(t => +t.replace(/[^\d]/g, '')));
       // With prices, places without one are hollow rings shown only from street level (zoom 14).
-      check(h.metric === 'hotels' && (h.priced ? (h.zoom < 14 ? h.dots === h.nPriced && h.rings === 0 : h.dots === h.total) : h.dots === h.total) && h.total >= 300 && h.texts.length > 0 && h.legend && h.url && (h.priced
+      // With prices: no dots at the city-wide zoom (below 12: the labels carry it), priced dots from 12, hollow rings from 14.
+      check(h.metric === 'hotels' && (h.priced ? (h.zoom < 12 ? h.dots === 0 : h.zoom < 14 ? h.dots === h.nPriced && h.rings === 0 : h.dots === h.total) : h.dots === h.total) && h.total >= 300 && h.texts.length > 0 && h.legend && h.url && (h.priced
         ? h.texts.every(t => /AED|درهم/.test(t)) && h.badges.every(c => /--b[1-6]/.test(c)) && h.ramp      // prices: blue key, as every price
         : biggest <= h.total && h.badges.every(c => /oxblood/.test(c)) && !h.ramp),                           // counts: oxblood, no price key
         `${name}: "Hotels" shows ${h.dots} places to stay and ${h.priced ? 'typical prices a night per area on the blue key' : 'counts per area (largest ' + biggest + ')'}`);
@@ -643,11 +644,11 @@ try {
     await page.evaluate(() => draw());
     await page.waitForTimeout(400);
     const v = await page.evaluate(() => ({ btn: !!document.querySelector('.views button[data-m="homes"]:not([hidden])'), pressed: document.querySelector('.views button[data-m="homes"]')?.getAttribute('aria-pressed'),
-      dots: document.querySelectorAll('.hhdot').length, hotelDots: document.querySelectorAll('.hdot').length, n: HOMES.length,
+      dots: document.querySelectorAll('.hhdot').length, hotelDots: document.querySelectorAll('.hdot').length, n: HOMES.length, zoom: map.getZoom(),
       labels: [...document.querySelectorAll('.rl b')].map(e => e.textContent), badges: [...document.querySelectorAll('.rl')].map(e => e.style.getPropertyValue('--c')),
       kind: document.getElementById('dialKind').textContent, legend: document.getElementById('legend').textContent,
       area: [...homesBy().keys()][0] }));
-    check(v.btn && v.pressed === 'true' && v.dots === v.n && v.hotelDots === 0 && v.labels.length && v.labels.every(t => /AED/.test(t)) && v.badges.every(c => /--b[1-6]/.test(c)) && /Median a night/.test(v.kind) && /Typical holiday home price/.test(v.legend),
+    check(v.btn && v.pressed === 'true' && (v.zoom < 12 ? v.dots === 0 : v.dots === v.n) && v.hotelDots === 0 && v.labels.length && v.labels.every(t => /AED/.test(t)) && v.badges.every(c => /--b[1-6]/.test(c)) && /Median a night/.test(v.kind) && /Typical holiday home price/.test(v.legend),
       `holiday homes: their own view (${v.n} places, own dots, no hotel dots), prices on the blue key, the dial and legend say so`);
     const sec = await page.evaluate(a => { const d = document.createElement('div'); d.innerHTML = homeSection(byLabel(a)); return d.textContent; }, v.area);
     check(/Typical holiday home price AED [\d,]+ a night/.test(sec) && /holiday homes? with a price/.test(sec), `an area's card gives its typical holiday home price (${v.area})`);
@@ -759,6 +760,68 @@ try {
       const ok = v === 'sale' ? /median sale price AED [\d,]+|Median sale price AED [\d,]+/.test(card.lead) && /annual rent/i.test(card.lead) : /gross yield [\d.]+%|Gross yield [\d.]+%/i.test(card.lead) && /annual rent/i.test(card.lead);
       check(card && ok && card.folded && /Annual rents in this area/.test(card.sum), `${v === 'sale' ? 'Sale price' : 'Yield'} view: ${c}'s card leads with ${v === 'sale' ? 'its sale price' : 'its yield'}; rent says "annual rent" and folds away (${card && card.lead.slice(0, 60)})`);
     }
+    await ctx.close();
+  }
+  // Exploring for fun (fun.js): facts strip, tips, Guess the rent, the tour, "You", the slider, Save as image,
+  // Rent or buy, the card's headline fact, the stay finder.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 }, acceptDownloads: true });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready' && document.querySelectorAll('.funChip[data-fact]').length > 0, null, { timeout: 15000 }).catch(() => {});
+    const st = await page.evaluate(() => ({ facts: [...document.querySelectorAll('.funChip[data-fact]')].map(b => b.textContent), tip: (document.querySelector('.funTip') || {}).textContent || '' }));
+    check(st.facts.length >= 3 && st.facts.every(t => /AED|%/.test(t)) && /Tip 1 of 3/.test(st.tip), `"Dubai right now": ${st.facts.length} facts from the data, and the first tip (${(st.facts[0] || '').slice(0, 50)})`);
+    await page.click('.funChip[data-fact="0"]');
+    await page.waitForTimeout(1800);
+    check(await page.evaluate(() => !!document.querySelector('.leaflet-popup-content .t')), 'tapping a fact flies the map to its answer and opens it');
+    await page.click('[data-tip-next]'); await page.click('[data-tip-next]'); await page.click('[data-tip-next]');
+    check(await page.evaluate(() => !document.querySelector('.funTip') && localStorage.getItem('funTip') === '3'), 'the three tips step through and stay gone');
+    // Guess the rent: reveal says how close, with no score.
+    await page.click('[data-guess]');
+    await page.evaluate(() => { const i = document.getElementById('guessIn'); i.value = i.min; i.dispatchEvent(new Event('input', { bubbles: true })); });
+    await page.click('[data-reveal]');
+    const gr = await page.evaluate(() => document.getElementById('guessBox').textContent);
+    check(/rents for AED [\d,]+ a year/.test(gr) && /(low|high|Spot on)/.test(gr) && !/score|points|streak/i.test(gr), `Guess the rent reveals the answer and how close the guess was (${gr.match(/Your guess[^.]*\./) || 'spot on'})`);
+    // The tour: stops with captions, moved on by the visitor.
+    await page.click('[data-tour]');
+    await page.waitForTimeout(600);
+    const t1 = await page.evaluate(() => document.querySelector('.tourBox:not([hidden]) .tStep')?.textContent || '');
+    await page.click('[data-tour-next]');
+    await page.waitForTimeout(600);
+    const t2 = await page.evaluate(() => document.querySelector('.tourBox .tStep')?.textContent || '');
+    await page.keyboard.press('Escape');
+    check(/Stop 1 of [4-6]/.test(t1) && /Stop 2 of/.test(t2) && await page.evaluate(() => document.querySelector('.tourBox').hidden), `the tour steps through its stops and ends on Escape (${t1})`);
+    // "You" after a rent check with a rent.
+    const you = await page.evaluate(() => { const a = AREAS.filter(x => x.lat != null).sort((p, q) => q.n - p.n)[0]; document.dispatchEvent(new CustomEvent('atlas:mine', { detail: { area: a.label, unit: a.by_unit[0].u, rent: a.by_unit[0].median * 1.1 } }));
+      return document.querySelector('.you')?.textContent || ''; });
+    check(/You: AED [\d.k]+ · 10% above/.test(you), `after a rent check, "You" shows on the map (${you})`);
+    // The slider sets the Max box and the map follows.
+    const sl = await page.evaluate(async () => { const all = POINTS.length, i = document.getElementById('bsIn'); const v = Math.round(median(POINTS.map(p => p.v)) / 1000) * 1000;
+      i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); await new Promise(r => setTimeout(r, 450));
+      const out = { all, n: POINTS.length, max: document.getElementById('max').value, txt: document.getElementById('bsTxt').textContent, v };
+      i.value = i.max; i.dispatchEvent(new Event('input', { bubbles: true })); await new Promise(r => setTimeout(r, 450)); out.back = POINTS.length; out.maxBack = document.getElementById('max').value; return out; });
+    check(sl.max === String(sl.v) && sl.n > 0 && sl.n < sl.all && /Up to AED [\d,]+ a year/.test(sl.txt) && sl.back === sl.all && sl.maxBack === '', `the map's budget slider sets the Max box (${sl.txt}: ${sl.n} of ${sl.all} areas) and clears it at the end`);
+    // Sale price card: the headline fact, Rent or buy.
+    await page.evaluate(() => { const s = document.getElementById('metric'); s.value = 'sale'; s.dispatchEvent(new Event('change')); });
+    await page.evaluate(() => focusArea(AREAS.filter(x => x.lat != null && x.sale_median && !x.staff).sort((p, q) => p.sale_median - q.sale_median)[0]));
+    await page.waitForTimeout(1600);
+    const card = await page.evaluate(() => { const c = document.querySelector('.leaflet-popup-content'); const d = c.querySelector('details.rob'); if (d) d.open = true;
+      const inp = d && d.querySelector('[data-rob="d"]'); if (inp) { inp.value = 50; inp.dispatchEvent(new Event('input', { bubbles: true })); }
+      return { fact: (c.querySelector('.hfact') || {}).textContent || '', rob: d ? d.textContent : '' }; });
+    check(/cheapest|dearest|best/i.test(card.fact) && /Rent or buy\?/.test(card.rob) && /50% deposit/.test(card.rob) && /years of rent/.test(card.rob), `a card has a headline fact (${card.fact}) and Rent or buy follows its sliders`);
+    // Save as image downloads a picture of the card.
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 8000 }).catch(() => null), page.click('.leaflet-popup-content [data-img]')]);
+    check(!!dl && /\.png$/.test(dl.suggestedFilename()), `Save as image makes a picture of the card (${dl ? dl.suggestedFilename() : 'none'})`);
+    // Hotels: the stay finder lists the cheapest, and the rating filter narrows it.
+    await page.evaluate(() => { const s = document.getElementById('metric'); if ([...s.options].some(o => o.value === 'hotels')) { s.value = 'hotels'; s.dispatchEvent(new Event('change')); } });
+    await page.waitForTimeout(500);
+    const fd = await page.evaluate(() => { const f = document.querySelector('.finder'); if (!f || f.hidden) return null; const n0 = f.querySelectorAll('li').length, p0 = [...f.querySelectorAll('li span')].map(s => +s.textContent.match(/AED ([\d,]+)/)[1].replace(/,/g, ''));
+      const sel = document.getElementById('fRate'); sel.value = '4.5'; sel.dispatchEvent(new Event('change', { bubbles: true })); return { n0, sorted: p0.every((v, i) => !i || v >= p0[i - 1]), n1: f.querySelectorAll('li').length, txt: f.textContent }; });
+    check(fd === null || (fd.n0 > 0 && fd.sorted && /Find a hotel/.test(fd.txt)), `Hotels: the stay finder lists the cheapest first${fd ? ' (' + fd.n0 + ', then ' + fd.n1 + ' rated 4.5+)' : ' (no hotel prices here)'}`);
+    check(!errors.length, `fun features: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await axe(page, 'fun features (Hotels view with the finder)');
     await ctx.close();
   }
   // Backup source in use (Dubai Data stuck): the warning sign says so.

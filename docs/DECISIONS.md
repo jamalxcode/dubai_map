@@ -753,6 +753,16 @@ Asked (screenshots of Damac Hills 2): "we are looking at sale price, and the tex
 
 Merged and deployed on 20 Nov (Tests passed). Live figures that day: 534,699 contracts in 158 areas (data to 19 Nov); 374 hotels and 53 holiday homes priced; two days of price history; SerpApi still waiting for its key.
 
+## Decision on 2026-11-20 (seventy-fifth pass): more fun, more engaging, from the data itself
+
+Asked: "critique the user interface, how can it be made better? more fun, more engaging?", then "do it all, merge on main". Thirteen ideas, all built in `assets/app/fun.js` and `fun.css` (atlas.js gained only small hooks: `afterLabels`, `cardFact`, `rentOrBuy`, `stayFinder`, the Save as image button, the dots' zoom):
+- **Quick wins:** "You" on the map after a rent check; the "Dubai right now" facts strip; labels counting up on a view change; Save as image on every card.
+- **Bigger:** the budget slider on the map; Rent or buy in sale and yield cards; the 60-second tour; Find a hotel / holiday home; Guess the rent.
+- **Polish:** three first-visit tips; a headline fact on area cards; hotel and holiday home dots from zoom 12.
+- **Rules changed, with the owner's approval in "do it all":** design goal 9 now allows one game, Guess the rent, kept to the answer and how close the guess was (no score, points or streak); CLAUDE.md's one-control-per-job rule now has one exception, the budget slider, which mirrors the Max box both ways.
+- **Problems found while building:** atlas.js's data (`HOTELS`, `HOMES`, `TRANSIT`) are page-level `let`s, not `window` properties, so fun.js reads them by name; Leaflet floats every control, so the slider moved above the map on phones floated beside the map and squeezed it to 133 px (unfloated); the slider appearing after labels were placed left one under it (labels are now re-placed when its size changes; on phones it leaves the map entirely); the tour and guess chips lost contrast in dark mode (a light highlight under light text; removed); the first tip didn't wrap on phones.
+- **Checked:** new browser checks for each feature (facts and their taps, tips, Guess the rent's reveal with no score, the tour's steps and Escape, "You", the slider driving the Max box and the map, the headline fact, Rent or buy following its sliders, Save as image downloading a PNG, the stay finder and its rating filter, no script errors, axe); dot checks updated for zoom 12; every suite passes.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

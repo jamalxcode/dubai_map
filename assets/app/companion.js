@@ -107,6 +107,8 @@
     // One home choice for the page: the map shows the home just checked.
     if (window.setMapHome) window.setMapHome(u);
     render();
+    // The map shows "You" on the area's label (fun.js) when a rent was entered.
+    document.dispatchEvent(new CustomEvent('atlas:mine', { detail: { area: area.label, unit: u, rent: current.rent } }));
     store = RI.remember(store, { area: area.label, unit: u, rent: current.rent, at: new Date().toISOString() });
     save();
     renderMine();

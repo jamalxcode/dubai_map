@@ -447,6 +447,14 @@ Done (decisions, seventy-fourth pass): area cards lead with the view's own figur
 
 Recorded: the live notes for passes seventy-one and seventy-four, six lessons (Leaflet's fixed link width, a shrinking centred section, duplicate translation keys, a Pages deploy that failed on its own, reading rolling counters in tests, links that wait for late data). The README now covers the five views, hotels and holiday homes with their sources, sharing a card, the price history, the status page's "Needs you", the new labels and the owner's checklist for SerpApi, a booking partner and the own domain.
 
+### 20 Nov · "critique the user interface, how can it be made better? more fun, more engaging?" → "do it all, merge on main"
+
+Done (decisions, seventy-fifth pass): the facts strip, first-visit tips, the tour, Guess the rent, "You" on the map, count-up labels, the budget slider, Save as image, Rent or buy, the stay finder, a card's headline fact, dots from zoom 12. Design goal 9 and the one-control rule updated with the owner's approval.
+
+### 20 Nov · "how do I get this? waiting for the SERPAPI_KEY secret"
+
+Answered with the steps (open item 5e): sign up at serpapi.com on the Free plan, copy the key from serpapi.com/manage-api-key, add it in GitHub as the repository secret `SERPAPI_KEY`.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

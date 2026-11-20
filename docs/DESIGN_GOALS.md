@@ -1,6 +1,6 @@
 # Dubai Real Estate Atlas: design goals
 
-**Last updated:** 2026-11-16 (Kuwait time)
+**Last updated:** 2026-11-20 (Kuwait time)
 **Site:** https://jamalxcode.github.io/dubai_map/
 **Status key:** ✅ done · 🔶 partly done · ⏳ planned
 
@@ -22,7 +22,7 @@ These are the goals the owner set while building the project (see [CONVERSATION.
 - ✅ Clicking a group zooms in until it splits. Clicking a single community shows its unit-by-unit breakdown.
 - ✅ One headline number for the screen: **Typical rent in view**, updated as you pan and zoom.
 - ✅ One home picker (all homes, each size, flats of any size) and one view bar on the map (rent, sale price, gross yield) drive the labels and the headline number.
-- ✅ Price at a glance: each figure sits on a badge in one of six blues (palest to deep navy, trimmed to the 5th-95th percentile so extreme areas don't stretch it), with a value at every step of the key. The text carries the information; surfaces use the "golden note" palette (oxblood, ivory, gold leaf, espresso, warm gray).
+- ✅ Price at a glance: each label is framed in one of six blues (a thick border and a light tint, the figure in plain dark type: the owner's choice, 20 Nov) (palest to deep navy, trimmed to the 5th-95th percentile so extreme areas don't stretch it), with a value at every step of the key. The text carries the information; surfaces use the "golden note" palette (oxblood, ivory, gold leaf, espresso, warm gray).
 
 ## 3. Be a good citizen with data sources: never get blocked
 
@@ -81,6 +81,7 @@ Set on 16 Nov from six engagement principles. The test is genuine usefulness and
 - ✅ **Effortless core action:** "Check a rent" is the first thing on the page (one line on phones, so the map stays high). Nicknames, official DLD names and typos all find the area; the home defaults to the area's most common unit.
 - ✅ **One next step:** each result has one primary button (compare with my rent → save → renewal reminder → map); the rest are plain links.
 - ✅ **Rewards are facts:** how your rent compares (with the caveat that half pay more and half less), the same home for less nearby, rank among areas, the trend when contract data exists. Area-to-area comparisons only for the same kind of home. No badges, points, streaks or chance.
+- ✅ **Fun from the data itself** (20 Nov, the owner's "more fun, more engaging"): a strip of facts that fly the map to their answer, a 60-second tour moved on by the visitor (no autoplay, a clear end), **Guess the rent** (the one game, allowed by the owner on 20 Nov: the answer and how close the guess was, never a score, points or a streak), "You" on the map after a rent check, a budget slider to play with, Rent or buy, Save as image, a stay finder. Still no feeds, badges or streaks.
 - ✅ **Relevant triggers under the visitor's control:** renewal and market-check reminders go into their own calendar (lead time and frequency chosen by them; delete the event to stop). A "new figures" note on return only when the data moved on, and it can be switched off. No push notifications.
 - ✅ **Clear stopping points:** no feeds, autoplay or endless scroll. Empty results and errors offer a way forward (suggestions, units with figures, retry).
 - ✅ **Value that accumulates:** My areas (with change since saved), recent checks, the last check and map view resume. Nothing is lost by staying away.
