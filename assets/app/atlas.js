@@ -715,7 +715,7 @@ function renderLabels(){
     .filter(r=>r.width&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top)
     .map(r=>{const c=map.containerPointToLayerPoint([r.left-box.left+r.width/2,r.top-box.top+r.height/2]);return {x:c.x,y:c.y,w:r.width,h:r.height}});
   const v0=map.containerPointToLayerPoint([0,0]),ms=map.getSize(),view={x0:v0.x,y0:v0.y,x1:v0.x+ms.x,y1:v0.y+ms.y};
-  const cl=RentLabels.place(items,size,{pad:4,sum:metric==='n'||(metric==='hotels'&&!hotelPriced()),blocks,view});
+  const cl=RentLabels.place(items,size,{pad:4,sum:metric==='n'||(metric==='hotels'&&!hotelPriced()),blocks,view}).filter(c=>!c.hidden); // hidden: nowhere clear of a control (labels.js)
   const added=[];MARKERS.clear();
   for(const c of cl){const g=c.members,moved=c.lx!==c.x||c.ly!==c.y,pos=moved?map.layerPointToLatLng([c.lx,c.ly]):L.latLng(c.lat,c.lng);
     if(moved){L.polyline([[c.lat,c.lng],pos],{className:'leader',weight:1.5,interactive:false}).addTo(layer);

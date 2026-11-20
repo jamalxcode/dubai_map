@@ -1,6 +1,6 @@
 # Dubai Real Estate Atlas: lessons learned
 
-**Last updated:** 2026-11-16 (Kuwait time)
+**Last updated:** 2026-11-20 (Kuwait time)
 
 What went wrong or surprised us while building the site, what it taught, and the rule we now follow.
 Grouped by topic; newest lessons are mixed in where they belong. The decisions themselves are in
@@ -31,6 +31,7 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Merging hides places.** International City and Warsan vanished into group labels, which looked like missing data. *Rule:* small groups come apart when there is room, groups name their busiest area, and the browser check confirms International City is named at zoom 13.
 - **Fitting the whole city on load merged labels into a few blobs.** Reverted. *Rule:* start at a fixed view where labels read; "All Dubai" is a button.
+- **A "move it or merge it" loop with a round limit can starve.** Labels under the phone's view bar and credits stayed there because the first stuck label (a big group against the legend) never got free and used every round, and whatever was left over was returned as it was. *Rule:* every stuck label gets its turn; a merge only counts if the merged label is clear; the last resort is hiding, never drawing under a control. Check every view at phone widths, not just the opening one, and compare only the part of a label the map doesn't clip.
 - **Controls appear late.** The language button appears only when the vector map loads, after labels were placed, so one label sat under it. *Rule:* re-place labels when a control appears; tests check no label sits under a control.
 - **Picture tiles can't change language.** OpenStreetMap's tiles print names as tagged locally. *Rule:* vector tiles when names must be chosen; keep the picture tiles as a fallback.
 - **Arabic on a WebGL map needs the right-to-left text plugin**, or letters come out unjoined and reversed.

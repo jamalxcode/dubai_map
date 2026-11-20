@@ -90,7 +90,7 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Week of pulls | Fewer than 80% of the last 7 days' pulls succeeding is a problem | `check_fresh.MIN_WEEK_SUCCESS` |
 | Status counts | Written by each build to `status.json`: totals; Dubai Data communities read / used / without a median, bedroom rows with a median; Continental Club DLD areas read / used / already covered by Dubai Data; cross-check rows; unplaced areas, unconfirmed jumps, figures where sources differ | `build.status_counts` |
 | What a pull read | Dubai Data: live result, pages read, export files updated; cross-checks: rows; Dubai Pulse: rows, new, updated; logged per pull in `runs.jsonl` | collectors' `state.json`, `run_log.pulled` |
-| Hidden labels | A label under a button or the legend with no free spot within two label-steps joins its nearest neighbour, and merging runs again | `labels.js` rule 3 |
+| Hidden labels | A label under a button or the legend steps aside (beside its point, two label-steps out, else the nearest free position within a label's width and three heights); with no free spot it joins its nearest neighbour within 1.5 times the two labels' widths whose joined label then has a free spot; else it is hidden, never drawn on a control | `labels.js` rule 3 |
 | Display names | All-capitals names in title case, acronyms kept; registered names for search, links and storage | `i18n.js T.place`, `share_pages.place` |
 | Table order | Clicked header (descending first, Area A–Z), else the view's column; areas with no figure last | `atlas.js table` |
 | Map links | `home`, `view`, `at` (lat, lng, zoom; only accepted near Dubai) in the address | `atlas.js writeURL`, `readURL` |
