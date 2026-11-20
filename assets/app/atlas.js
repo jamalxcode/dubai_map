@@ -311,7 +311,7 @@ const stationName=s=>T.lang==='ar'&&s.name_ar?s.name_ar:s.name;
 const outlinesByLabel=()=>new Map((OUTLINES||[]).map(o=>[o.label,o.rings.map(r=>r.map(([x,y])=>[y,x]))]));
 const walkText=w=>w===20?T('20-minute walk'):T('10-minute walk');
 function loadTransit(){getJSON('data/transit.json').then(d=>{if(!d||!(d.lines||[]).length)return;TRANSIT=d;NEAR=null;
-  transitBtn.hidden=false;walkField.hidden=false;try{if(localStorage.getItem('transit')==='1')showTransit(true,false)}catch(e){}
+  transitBtn.hidden=false;nearOptions();try{if(localStorage.getItem('transit')==='1')showTransit(true,false)}catch(e){}
   if(WALK)draw()}).catch(()=>{})}
 // Line and dot sizes by zoom: bold across the whole city, slimmer as the map zooms in, so close up they don't
 // cover the streets and the base map's own track (scale 1 at zoom 11 and below, about half at zoom 16).
@@ -371,21 +371,24 @@ L.DomEvent.on(transitBtn,'click',e=>{L.DomEvent.stop(e);showTransit(!transitOn,t
 let LIFE=null,LIFE_ON='';
 const LIFE_RULES={beach:[T('a beach'),x=>x.beach!=null&&x.beach<=1500],golf:[T('a golf course'),x=>x.golf!=null&&x.golf<=1500],park:[T('a park'),x=>x.park!=null&&x.park<=800],
   mall:[T('a mall'),x=>x.mall!=null&&x.mall<=1500],schools:[T('10+ schools'),x=>(x.schools||0)>=10]};
-const lifeField=(()=>{const f=document.createElement('label');f.className='field f-life';f.hidden=true;
-  f.innerHTML='<span>'+T('Near')+'</span><select id="life"><option value="">'+T('Anything')+'</option>'+Object.entries(LIFE_RULES).map(([k,[t]])=>'<option value="'+k+'">'+safe(t)+'</option>').join('')+'</select>';
-  document.querySelector('.controls .f-range').after(f);return f})();
-$('life').addEventListener('change',()=>{LIFE_ON=$('life').value;animateLabels=true;draw();countUse('near-'+(LIFE_ON||'any'))});
-getJSON('data/lifestyle.json').then(d=>{if(!d||!d.areas)return;LIFE=d.areas;lifeField.hidden=false;if(window.atlasState==='ready')draw()}).catch(()=>{});
+getJSON('data/lifestyle.json').then(d=>{if(!d||!d.areas)return;LIFE=d.areas;nearOptions();if(window.atlasState==='ready')draw()}).catch(()=>{});
 const km=m=>m<1000?T('{m} m',{m:Math.round(m/10)*10}):T('{k} km',{k:(m/1000).toFixed(1)});
 function lifeLine(a){const x=LIFE&&LIFE[a.label];if(!x)return '';
   const bits=[['beach',T('beach')],['golf',T('golf course')],['park',T('park')],['mall',T('mall')]].filter(([k])=>x[k]!=null&&x[k]<=3000).map(([k,t])=>T('{what} {d}',{what:t,d:km(x[k])}));
   if(x.schools)bits.push(T('{n} schools within 2 km',{n:x.schools}));
   return bits.length?'<p class="lifeLine"><small>'+T('Nearby:')+' '+bits.join(' · ')+' <span class="muted">('+T('straight-line distance, OpenStreetMap')+')</span></small></p>':''}
-// The walk filter, next to the budget.
+// One "Near" picker, next to the budget: a Metro or Tram station within a 10- or 20-minute walk (once the Metro
+// data is in), or a beach, golf course, park, mall or many schools (once lifestyle.json is in). One choice at a time.
 const walkField=(()=>{const f=document.createElement('label');f.className='field f-walk';f.hidden=true;
-  f.innerHTML='<span>'+T('Near Metro / Tram')+'</span><select id="walk"><option value="0">'+T('Anywhere')+'</option><option value="10">'+T('10-minute walk')+'</option><option value="20">'+T('20-minute walk')+'</option></select>';
+  f.innerHTML='<span>'+T('Near')+'</span><select id="walk"><option value="0">'+T('Anywhere')+'</option></select>';
   document.querySelector('.controls .f-range').after(f);return f})();
-$('walk').addEventListener('change',()=>{WALK=+$('walk').value;if(WALK&&!transitOn)showTransit(true,false);animateLabels=true;draw();countUse('walk-'+(WALK||'any'))});
+function nearOptions(){const sel=$('walk'),cur=sel.value;let h='<option value="0">'+T('Anywhere')+'</option>';
+  if(TRANSIT)h+='<optgroup label="'+safe(T('Metro or Tram station'))+'"><option value="10">'+T('10-minute walk')+'</option><option value="20">'+T('20-minute walk')+'</option></optgroup>';
+  if(LIFE)h+='<optgroup label="'+safe(T('Places'))+'">'+Object.entries(LIFE_RULES).map(([k,[t]])=>'<option value="'+k+'">'+safe(t)+'</option>').join('')+'</optgroup>';
+  sel.innerHTML=h;if([...sel.options].some(o=>o.value===cur))sel.value=cur;walkField.hidden=!TRANSIT&&!LIFE}
+$('walk').addEventListener('change',()=>{const v=$('walk').value,n=+v;
+  if(n||v==='0'){WALK=n||0;LIFE_ON=''}else{WALK=0;LIFE_ON=LIFE_RULES[v]?v:''}
+  if(WALK&&!transitOn)showTransit(true,false);animateLabels=true;draw();countUse(LIFE_ON?'near-'+LIFE_ON:'walk-'+(WALK||'any'))});
 // Compare two areas side by side (the collaborator chose it "within the main page"). "Compare" in an area's
 // breakdown or the rent check starts it: a bar on the map asks for the second area (tap its label, or one of the
 // nearest suggested). The comparison opens over the map (a panel on computers, a sheet on phones), the two areas
@@ -715,7 +718,7 @@ function renderLabels(){
     .filter(r=>r.width&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top)
     .map(r=>{const c=map.containerPointToLayerPoint([r.left-box.left+r.width/2,r.top-box.top+r.height/2]);return {x:c.x,y:c.y,w:r.width,h:r.height}});
   const v0=map.containerPointToLayerPoint([0,0]),ms=map.getSize(),view={x0:v0.x,y0:v0.y,x1:v0.x+ms.x,y1:v0.y+ms.y};
-  const cl=RentLabels.place(items,size,{pad:4,sum:metric==='n'||(metric==='hotels'&&!hotelPriced()),blocks,view});
+  const cl=RentLabels.place(items,size,{pad:4,sum:metric==='n'||(metric==='hotels'&&!hotelPriced()),blocks,view}).filter(c=>!c.hidden); // hidden: nowhere clear of a control (labels.js)
   const added=[];MARKERS.clear();
   for(const c of cl){const g=c.members,moved=c.lx!==c.x||c.ly!==c.y,pos=moved?map.layerPointToLatLng([c.lx,c.ly]):L.latLng(c.lat,c.lng);
     if(moved){L.polyline([[c.lat,c.lng],pos],{className:'leader',weight:1.5,interactive:false}).addTo(layer);
@@ -778,7 +781,7 @@ function setDial(on,{kind,unit,lo,hi,mid,fmtEnd}={}){
 }
 function viewStat(){
   const metric=LABEL.metric,b=map.getBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0);
-  const where=vis.length?' · '+T.count(vis.length,'area'):'';
+  const where=vis.length?' · '+T('{what} on screen',{what:T.count(vis.length,'area')}):'';
   // Until hotel prices exist the figure is a count: it says so in the number itself ("809 places"), so it is never
   // read as a price in the spot where prices go. Counts get no dial.
   // Without per-hotel prices but with DET's figures: the night dial shows Dubai's official average room rate for the
@@ -978,7 +981,7 @@ function popup(a){
   const hv=m==='hotels'&&!!HOTELS,hh=m==='homes'&&!!HOMES,figs=(lead?lead+'<p class="allh">'+T('All homes:')+' '+main+'</p>':main)+
     (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+(hv?'':areaHotels(a))+ /* the sale price chart is in the Sale price view's card */
     (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr'+(u.n!=null&&u.n<THIN?' class="thin'+(pu&&u.u===pu.u?' pick':'')+'" title="'+safe(T('Fewer than {n} contracts: a thin figure',{n:THIN}))+'"':pu&&u.u===pu.u?' class="pick"':'')+'><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>'+(a.by_unit.some(u=>u.n!=null&&u.n<THIN)?'<small>'+T('Italic rows: fewer than {n} contracts, so treat them as a rough guide.',{n:THIN})+'</small><br>':''):'')+
-    (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<table><tr><th>'+T('Busiest buildings')+'</th><th>n</th><th>'+T('Median')+'</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
+    (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<details class="rentMore"><summary>'+T('Busiest buildings')+'</summary>'+'<table><tr><th>'+T('Busiest buildings')+'</th><th>n</th><th>'+T('Median')+'</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>'+'</details>':'')+
     (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'')+
     (m==='median'||m==='median_sqm'?salesNote(a,pu):'');
   return '<span class="t" data-label="'+safe(a.label)+'">'+safe(T.place(a.label))+'</span>'+(window.cardFact?cardFact(a,m):'')+
@@ -990,11 +993,12 @@ function popup(a){
       ['https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+a.lat+','+a.lng,T('Street View')],
       ['https://www.google.com/search?tbm=isch&q='+encodeURIComponent(a.label+' Dubai'),T('Photos on Google')]]
       .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+'</p>'+
-    lifeLine(a)+shareLine('a',a.label)+
+    shareLine('a',a.label)+
     (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
     (a.staff?'<p class="staff"><small>'+T('An industrial zone: most homes here are staff accommodation, so rents run well below homes elsewhere. It is left out of comparisons with other areas.')+'</small></p>':'')+
+    '<details class="cardMore"><summary>'+T('Details and sources')+'</summary>'+lifeLine(a)+
     ((a.disagree||[]).length?'<p class="differ"><small>'+T('Other sources differ by more than 15%:')+' '+a.disagree.map(d=>T('{source}, {unit}: AED {theirs} (ours is {pct}%)',{source:safe(d.source),unit:safe(T.unit(d.unit)),theirs:fmt(d.theirs),pct:(d.pct>0?'+':'')+d.pct})).join('; ')+'. '+T('They count differently (new contracts only, or by DLD area), so treat both as a guide.')+'</small></p>':'')+
-    '<small>'+T('DLD area: {list}. The point is an approximate reference for the area, not a building.',{list:a.dld_areas.map(safe).join(', ')})+(a.url?' <a href="'+safe(a.url)+'" target="_blank" rel="noopener">'+T('Dubai Data page')+'</a>':'')+'</small>';
+    '<small>'+T('DLD area: {list}. The point is an approximate reference for the area, not a building.',{list:a.dld_areas.map(safe).join(', ')})+(a.url?' <a href="'+safe(a.url)+'" target="_blank" rel="noopener">'+T('Dubai Data page')+'</a>':'')+'</small></details>';
 }
 
 // (Other views) Places to stay in the area (OpenStreetMap) and, with prices, their typical price a night.
@@ -1298,6 +1302,7 @@ function readURL(){
   if(v&&[...$('metric').options].some(o=>o.value===v))$('metric').value=v;
   const mx=+q.get('max'),mn=+q.get('min'); // a budget from a link (the landing pages: "1-bed under AED 60,000")
   if(mx>0)$('max').value=String(mx);if(mn>0)$('min').value=String(mn);
+  if(mx>0||mn>0)document.querySelector('.f-range').open=true; // a shared budget shows its boxes
   if(at.length===3&&at.every(isFinite)&&Math.abs(at[0]-25.1)<1&&Math.abs(at[1]-55.3)<1.2)map.setView([at[0],at[1]],Math.min(18,Math.max(8,at[2])),{animate:false});
   if(h){const [k,u='']=h.split(':');if([...$('home').options].some(o=>o.value===k+'|'+u)){
     if(k==='homes'){$('unit').value=u;$('home').value=k+'|'+u;unitChosen=true}else return ()=>{$('home').value=k+'|'+u;setHome(k,u)}}}

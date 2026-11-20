@@ -33,9 +33,11 @@ class SitePages(unittest.TestCase):
         for day, m in (("2026-11-17", 50000), ("2026-11-18", 50000), ("2026-11-19", 54000)):
             dump({"through": day, "areas": {"Area 1": {"m": m, "n": 200}, "Area 2": {"m": 60000, "n": 200}}}, os.path.join(self.d, "data", "history", day + ".json"))
         self.out = os.path.join(self.d, "_site")
-        p = mock.patch.object(sp, "ROOT", self.d)
-        p.start()
-        self.addCleanup(p.stop)
+        import page_kit
+        for target in (sp, page_kit):
+            p = mock.patch.object(target, "ROOT", self.d)
+            p.start()
+            self.addCleanup(p.stop)
 
     def read(self, path):
         with open(os.path.join(self.out, path), encoding="utf-8") as f:
@@ -58,6 +60,35 @@ class SitePages(unittest.TestCase):
         self.assertIn("No area moved by 5% or more.", feed)
         self.assertIn("stats/", self.read("sitemap.xml"))
         self.assertIn("class=sortable", self.read("areas/index.html"))
+        # One Dubai figure: the middle contract (contract-weighted), labelled as such.
+        self.assertIn("typical yearly rent for a 1-bedroom, all of Dubai", stats)
+        self.assertIn("the middle contract", stats)
+        # Rankings need 100+ contracts: Area 0-2 have fewer 1-bedroom contracts, so they are not the cheapest.
+        cheapest = stats.split("Cheapest areas for a 1-bedroom")[1].split("</ol>")[0]
+        self.assertNotIn(">Area 0<", cheapest)
+        self.assertIn(">Area 3<", cheapest)
+        # The chart says the change in words, and its scale starts well below the lowest month.
+        self.assertIn("Up 8.9% over 9 months, from AED 1,010 to AED 1,100 per sq ft.", stats)
+        # Every page also in Arabic, right to left, linked both ways and in the sitemap.
+        ar = self.read("ar/stats/index.html")
+        self.assertIn('<html lang="ar" dir="rtl">', ar)
+        self.assertIn("إيجارات دبي هذا الشهر", ar)
+        self.assertIn('href="../../stats/" lang="en">English</a>', ar)
+        self.assertIn('href="../ar/stats/" lang="ar">عربي</a>', stats)
+        self.assertIn("ar/rents/1-bedroom-under-60000/", self.read("sitemap.xml"))
+        self.assertIn("درهم", self.read("ar/rents/studio/index.html"))
+        # No four-week history yet (three days of snapshots): no trend section.
+        self.assertNotIn("Rent over the past four weeks", stats)
+
+    def test_four_week_trend(self):
+        for day, m in (("2026-10-19", 50000), ("2026-11-19", 53000)):
+            dump({"through": day, "areas": {"Area 1": {"m": m, "n": 200}, "Area 2": {"m": 60000, "n": 200}}}, os.path.join(self.d, "data", "history", day + ".json"))
+        os.remove(os.path.join(self.d, "data", "history", "2026-11-17.json"))
+        sp.main(self.out)
+        stats = self.read("stats/index.html")
+        self.assertIn("Rent over the past four weeks", stats)
+        self.assertIn("Area 1: up 6.0%", stats)
+        self.assertIn("since 19 Oct 2026", stats)
 
 
 if __name__ == "__main__":

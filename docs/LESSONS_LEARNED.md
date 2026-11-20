@@ -1,6 +1,6 @@
 # Dubai Real Estate Atlas: lessons learned
 
-**Last updated:** 2026-11-16 (Kuwait time)
+**Last updated:** 2026-11-20 (Kuwait time)
 
 What went wrong or surprised us while building the site, what it taught, and the rule we now follow.
 Grouped by topic; newest lessons are mixed in where they belong. The decisions themselves are in
@@ -31,6 +31,7 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Merging hides places.** International City and Warsan vanished into group labels, which looked like missing data. *Rule:* small groups come apart when there is room, groups name their busiest area, and the browser check confirms International City is named at zoom 13.
 - **Fitting the whole city on load merged labels into a few blobs.** Reverted. *Rule:* start at a fixed view where labels read; "All Dubai" is a button.
+- **A "move it or merge it" loop with a round limit can starve.** Labels under the phone's view bar and credits stayed there because the first stuck label (a big group against the legend) never got free and used every round, and whatever was left over was returned as it was. *Rule:* every stuck label gets its turn; a merge only counts if the merged label is clear; the last resort is hiding, never drawing under a control. Check every view at phone widths, not just the opening one, and compare only the part of a label the map doesn't clip.
 - **Controls appear late.** The language button appears only when the vector map loads, after labels were placed, so one label sat under it. *Rule:* re-place labels when a control appears; tests check no label sits under a control.
 - **Picture tiles can't change language.** OpenStreetMap's tiles print names as tagged locally. *Rule:* vector tiles when names must be chosen; keep the picture tiles as a fallback.
 - **Arabic on a WebGL map needs the right-to-left text plugin**, or letters come out unjoined and reversed.
@@ -222,3 +223,23 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** in 3D the Burj Khalifa was a fat block: the tiles carry both a tall building's tiers and its full outline, and the outline was raised too.
 - **Rule:** a fill-extrusion of OpenMapTiles buildings filters out `hide_3d` features (`['!=', ['get', 'hide_3d'], true]`).
+
+## A flex item grows to its widest child (20 Nov 2026)
+
+- **Problem:** the facts strip on phones was 687 px wide on a 390 px screen: as a flex item its minimum width is its content's, and its scrolling row of facts is wide; the page hides the overflow, so the tip beside it was simply cut off.
+- **Rule:** a section holding a horizontal scroller gets `min-width:0` (and `max-width:100%`); checks compare its width with the screen's.
+
+## The later stylesheet wins a tie (20 Nov 2026)
+
+- **Problem:** a phone rule in atlas.css moving the facts strip below the map did nothing: fun.css loads later and its rule of the same weight set the order back.
+- **Rule:** a rule about a part a later stylesheet styles goes in that stylesheet (fun.css for the facts strip, the slider and the tour).
+
+## Two sessions, one pass number (20 Nov 2026)
+
+- **Problem:** a parallel session and this one both wrote "seventy-seventh pass"; merging the two branches conflicted in DECISIONS.
+- **Rule:** before numbering a pass, fetch `origin` and look at other open branches; on a clash keep both and renumber the later one.
+
+## Load a big table only for those who need it (20 Nov 2026)
+
+- **Problem:** every visitor downloaded the Arabic tables (about 92 KB), English visitors too.
+- **Rule:** `i18n-ar.js` is written in by `i18n.js` only when the page is in Arabic, while the page is still loading (so it runs before the page scripts); tests load both files when they fake an Arabic page.

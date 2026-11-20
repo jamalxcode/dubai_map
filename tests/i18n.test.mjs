@@ -52,6 +52,7 @@ test('Arabic mode: plurals by the last two digits, home types, lists, RTL', asyn
   const doc = { documentElement: { lang: 'ar' }, querySelectorAll: () => [], getElementById: () => null, set title(v) {} };
   const src = read('assets/app/i18n.js');
   const self = { document: doc };
+  new Function('self', 'module', read('assets/app/i18n-ar.js'))(self, undefined); // the Arabic tables, as the page loads them
   const TA = new Function('self', 'module', src + '\nreturn self.T;')(self, undefined);
   assert.equal(TA.lang, 'ar');
   assert.equal(TA('Check a rent'), 'تحقّق من إيجار');
@@ -67,4 +68,17 @@ test('Arabic mode: plurals by the last two digits, home types, lists, RTL', asyn
   assert.equal(TA.unit('Studios'), 'استوديوهات');
   assert.equal(TA.list(['الفلل', 'التجاري', 'الكل']), 'الفلل، التجاري والكل');
   assert.equal(TA('Untranslated thing'), 'Untranslated thing', 'falls back to English');
+});
+
+test('the Arabic tables download only for Arabic pages, right after i18n.js', () => {
+  const run = lang => {
+    const written = [];
+    const doc = { documentElement: { lang }, readyState: 'loading', currentScript: { src: 'https://x/assets/app/i18n.js?v=abc' },
+      write: h => written.push(h), querySelectorAll: () => [], getElementById: () => null };
+    new Function('self', 'module', read('assets/app/i18n.js'))({ document: doc }, undefined);
+    return written;
+  };
+  assert.deepEqual(run('ar'), ['<script src="https://x/assets/app/i18n-ar.js?v=abc"></script>']);
+  assert.deepEqual(run('en'), []);
+  assert.ok(read('assets/app/i18n.js').length < 12000, 'i18n.js stays small: the tables are in i18n-ar.js');
 });

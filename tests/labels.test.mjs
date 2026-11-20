@@ -83,3 +83,60 @@ test('a label under a map button with no free spot joins its nearest neighbour; 
   assert.equal(overlaps(cl), 0);
   assert.ok(cl.some(c => c.members.some(m => m.a.label === 'Under')), 'its area is still on the map, in a group');
 });
+
+// Shown labels against blocks: the page draws only labels without `hidden`.
+const onAnyBlock = (cl, blocks) => cl.filter(c => !c.hidden && blocks.some(b => Math.abs(c.lx - b.x) * 2 < c.w + b.w && Math.abs(c.ly - b.y) * 2 < c.h + b.h));
+
+test('a phone map with the view bar, legend and credits: no shown label touches one, whatever is crowded under it', () => {
+  // 341 x 494, like the map on a 375 px phone: view bar top right, zoom top left, legend and credits bottom right.
+  const view = { x0: 0, y0: 0, x1: 341, y1: 494 };
+  const blocks = [{ x: 262, y: 27, w: 138, h: 34 }, { x: 39, y: 75, w: 58, h: 130 }, { x: 227, y: 404, w: 211, h: 92 }, { x: 317, y: 470, w: 28, h: 28 }];
+  const wide = (m) => ({ w: m.length > 1 ? 170 : 92, h: 50 });
+  let seed = 11;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let run = 0; run < 30; run++) {
+    const pts = Array.from({ length: 60 }, (_, i) => item('A' + i, rnd() * 341, rnd() * 494, 30000 + rnd() * 150000, 1 + Math.round(rnd() * 3000)));
+    // The reported cases: an area right under the view bar, one on the credits.
+    pts.push(item('Maritime', 180, 23, 2.4e6, 400), item('Mina', 200, 30, 2.3e6, 50), item('Hills2', 324, 464, 660000, 300));
+    const cl = RL.place(pts, wide, { pad: 4, view, blocks });
+    assert.deepEqual(onAnyBlock(cl, blocks).map(c => c.members.map(m => m.a.label).join('+')), [], `run ${run}: no shown label on a control`);
+    assert.equal(overlaps(cl.filter(c => !c.hidden)), 0, `run ${run}: shown labels don't overlap`);
+    assert.equal(cl.reduce((s, c) => s + c.members.length, 0), pts.length, `run ${run}: every area is in exactly one label, shown or hidden`);
+  }
+});
+
+test('a label with nowhere to go off a control is hidden, not drawn under it', () => {
+  // The control covers the whole map: there is no free spot and no neighbour to join.
+  const view = { x0: 0, y0: 0, x1: 200, y1: 100 };
+  const cl = RL.place([item('Lost', 100, 50)], size, { view, blocks: [{ x: 100, y: 50, w: 200, h: 100 }] });
+  assert.equal(cl.length, 1);
+  assert.equal(cl[0].hidden, true);
+});
+
+test('a stuck label joins a neighbour when the joined label has room, rather than being hidden', () => {
+  const view = { x0: 0, y0: 0, x1: 400, y1: 300 };
+  // A tall control down the left edge; the stuck label's own spots all fall on it or off the map,
+  // but joined with its neighbour the group's centre lands clear of it.
+  const blocks = [{ x: 60, y: 150, w: 120, h: 300 }];
+  const cl = RL.place([item('Stuck', 20, 150, 50000, 10), item('Near', 230, 150, 50000, 500)], size, { view, blocks });
+  assert.ok(cl.every(c => !c.hidden), 'nothing hidden');
+  assert.deepEqual(onAnyBlock(cl, blocks), []);
+  assert.ok(cl.some(c => c.members.length === 2), 'the two areas share a label');
+});
+
+test('many labels stuck under a panel do not starve a later one under a button (it is still joined or moved)', () => {
+  // The phone bug: the first stuck label (a big group pressed against the legend) used up every round of
+  // step 3, so "Dubai Maritime City + 1 area" under the view bar was returned on the button anyway.
+  const view = { x0: 0, y0: 0, x1: 400, y1: 1000 };
+  const blocks = [{ x: 90, y: 500, w: 180, h: 1000 }, { x: 340, y: 30, w: 120, h: 60 }];
+  const pts = [];
+  for (let i = 0; i < 8; i++) pts.push(item('Lost' + i, 10, 60 + i * 120, 50000, 1000 - i));
+  pts.push(item('Under', 380, 20, 60000, 10), item('Beside', 350, 100, 60000, 500), item('Low', 250, 150, 60000, 400));
+  const cl = RL.place(pts, size, { pad: 4, view, blocks });
+  assert.deepEqual(onAnyBlock(cl, blocks), [], 'no shown label on a control');
+  assert.equal(overlaps(cl.filter(c => !c.hidden)), 0);
+  const under = cl.find(c => c.members.some(m => m.a.label === 'Under'));
+  assert.ok(!under.hidden, 'the area under the button is still shown (moved or joined)');
+  assert.ok(cl.filter(c => c.hidden).every(c => c.members.every(m => m.a.label.startsWith('Lost'))), 'only the areas with nowhere to go are hidden');
+  assert.ok(cl.every(c => !c.members.some(m => m.a.label.startsWith('Lost')) || c.members.every(m => m.a.label.startsWith('Lost'))), 'no join across the map');
+});

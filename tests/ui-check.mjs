@@ -824,6 +824,46 @@ try {
     await axe(page, 'fun features (Hotels view with the finder)');
     await ctx.close();
   }
+  // Review round (20 Nov): the card's actions stay in view, the tip fits a phone, the facts follow the map on phones,
+  // the exact budget folds away, the header links to the market pages, and Arabic downloads only for Arabic pages.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 760 } });
+    const page = await ctx.newPage();
+    const asked = [];
+    page.on('request', r => asked.push(r.url()));
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(800);
+    check(!asked.some(u => /i18n-ar\.js/.test(u)), 'English page: the Arabic tables are not downloaded');
+    const nav = await page.evaluate(() => [...document.querySelectorAll('.siteNav a')].map(a => a.getAttribute('href')).join(' '));
+    check(/stats\/ areas\/ yields\//.test(nav), `the header links to the market pages (${nav})`);
+    await page.evaluate(() => focusArea(AREAS.filter(a => a.lat != null && a.by_unit.length > 4).sort((p, q) => q.n - p.n)[0]));
+    await page.waitForTimeout(1500);
+    const act = await page.evaluate(() => { const b = document.querySelector('.leaflet-popup .ck-popact .btn'), box = document.querySelector('.leaflet-popup-content');
+      if (!b || !box) return null; const r = b.getBoundingClientRect(), q = box.getBoundingClientRect();
+      return { inside: r.top >= q.top - 1 && r.bottom <= q.bottom + 1, scrolls: box.scrollHeight > box.clientHeight + 2, folds: document.querySelectorAll('.leaflet-popup details.cardMore').length }; });
+    check(act && act.inside && act.folds === 1, `desktop card: "Check a rent here" stays fully in view${act && act.scrolls ? ' while the card scrolls' : ''}, details folded under "Details and sources"`);
+    await ctx.close();
+    const ph = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+    await ph.goto(BASE);
+    await ph.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await ph.waitForTimeout(1200);
+    const lay = await ph.evaluate(() => { const top = e => e ? e.getBoundingClientRect().top + scrollY : null, tip = document.querySelector('.funTip'), strip = document.querySelector('.funStrip');
+      return { map: top(document.querySelector('.mapWrap')), strip: top(strip), stripW: strip ? strip.getBoundingClientRect().width : 0, tipR: tip ? tip.getBoundingClientRect().right : 0,
+        side: document.getElementById('dialSide').offsetParent !== null, fold: !document.querySelector('details.f-range').open }; });
+    check(lay.strip > lay.map && lay.stripW <= 390 && lay.tipR <= 390 && !lay.side && lay.fold && lay.map < 700,
+      `phone: the map starts at ${Math.round(lay.map)} px (no side copy by the dial, exact budget folded), the facts come after it and the tip fits the screen`);
+    await ph.context().close();
+    const ar = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+    const askedAr = [];
+    ar.on('request', r => askedAr.push(r.url()));
+    await ar.goto(BASE + '?lang=ar&max=60000');
+    await ar.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    const arOk = await ar.evaluate(() => ({ title: document.getElementById('title').textContent, nav: document.querySelector('.siteNav a').getAttribute('href'), fold: document.querySelector('details.f-range').open }));
+    check(askedAr.some(u => /i18n-ar\.js/.test(u)) && /أطلس/.test(arOk.title) && arOk.nav === 'ar/stats/' && arOk.fold,
+      'Arabic page: the tables download, the page is in Arabic, the header links to the Arabic market pages, and a shared budget opens its boxes');
+    await ar.context().close();
+  }
   // Ideas from other Dubai sites: currency on the map, sale price per sq ft, what's near, 3D.
   {
     const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
@@ -846,9 +886,10 @@ try {
       return { metric: s.value, label: document.querySelector('.rl b').textContent, pressed: document.querySelector('.views button[data-m="sale"]').getAttribute('aria-pressed'), legend: document.getElementById('legend').textContent }; });
     check(psf.metric === 'sale_psf' && /\/sq ft/.test(psf.label) && psf.pressed === 'true' && /per sq ft/.test(psf.legend), `Sale price switches to per sq ft (${psf.label}), the Sale price button staying chosen`);
     const near = await page.evaluate(async () => { const s = document.getElementById('metric'); s.value = 'median'; s.dispatchEvent(new Event('change'));
-      await new Promise(r => setTimeout(r, 300)); const all = POINTS.length, l = document.getElementById('life'); l.value = 'beach'; l.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 300));
-      const out = { all, n: POINTS.length, note: document.getElementById('budgetNote').textContent, shown: !document.querySelector('.f-life').hidden }; l.value = ''; l.dispatchEvent(new Event('change')); return out; });
+      await new Promise(r => setTimeout(r, 300)); const all = POINTS.length, l = document.getElementById('walk'), opts = [...l.querySelectorAll('optgroup')].map(g => g.label + ': ' + [...g.children].map(o => o.value).join('|')); l.value = 'beach'; l.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 300));
+      const out = { all, n: POINTS.length, note: document.getElementById('budgetNote').textContent, shown: !document.querySelector('.f-walk').hidden, opts, life: document.querySelectorAll('#life').length }; l.value = '0'; l.dispatchEvent(new Event('change')); return out; });
     check(near.shown && near.n === near.all - 1 && /near a beach/.test(near.note), `"Near: a beach" keeps the areas near one (${near.n} of ${near.all}): ${near.note.slice(0, 50)}`);
+    check(near.life === 0 && near.opts.length === 2 && /10\|20/.test(near.opts[0]) && /beach\|golf\|park\|mall\|schools/.test(near.opts[1]), `one Near picker: Metro walks and places in one list (${near.opts.join('; ')})`);
     await page.evaluate(() => focusArea(AREAS.filter(x => x.lat != null).sort((p, q) => q.n - p.n)[1]));
     await page.waitForTimeout(1500);
     const life = await page.evaluate(() => (document.querySelector('.leaflet-popup-content .lifeLine') || {}).textContent || '');
@@ -911,6 +952,35 @@ try {
       return { inside: pr.top >= m.top - 1 && pr.bottom <= m.bottom + 1 && pr.left >= m.left - 1 && pr.right <= m.right + 1, hits, h: Math.round(pr.height), mh: Math.round(m.height) };
     });
     check(fit.inside && fit.hits === 0, `${vp.width}×${vp.height}: a full breakdown stays inside the map and clear of its buttons (${fit.h} px card, ${fit.mh} px map, ${fit.hits} overlaps)`);
+    await page.context().close();
+  }
+  // Phones, every view: no label sits on a map control (view bar, zoom, credits, budget slider, full-screen button).
+  // Only the visible part of a label counts: one whose point is off the map is clipped by the map's edge
+  // (overflow hidden), and the budget slider moves out above the map on phones.
+  for (const width of [320, 344, 375]) {
+    const { page, errors } = await open(browser, { width, height: 800 });
+    const views = await page.evaluate(() => [...document.getElementById('metric').options].map(o => o.value));
+    for (const v of views) {
+      await page.evaluate(v => { const s = document.getElementById('metric'); s.value = v; s.dispatchEvent(new Event('change')); }, v);
+      await page.waitForTimeout(300);
+      await page.waitForFunction(() => !map._flyToFrame && !map._animatingZoom && (!window.gsap || !gsap.globalTimeline.getChildren(true, true, false).some(t => t.isActive())), null, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const hit = await page.evaluate(() => {
+        const m = map.getContainer().getBoundingClientRect();
+        const controls = [...document.querySelectorAll('.leaflet-control')].map(e => ({ e, r: e.getBoundingClientRect() })).filter(c => c.r.width && c.r.height);
+        const out = [];
+        for (const el of document.querySelectorAll('.rl')) {
+          const a = el.getBoundingClientRect();
+          const l = Math.max(a.left, m.left), t = Math.max(a.top, m.top), r = Math.min(a.right, m.right), b = Math.min(a.bottom, m.bottom);
+          if (r <= l || b <= t) continue; // wholly outside the map: clipped, not seen
+          for (const c of controls) if (l < c.r.right && c.r.left < r && t < c.r.bottom && c.r.top < b)
+            out.push(`"${el.querySelector('small')?.textContent}" on .${[...c.e.classList].find(k => k !== 'leaflet-control' && k !== 'leaflet-bar') || 'leaflet-control'}`);
+        }
+        return { metric: LABEL.metric, labels: document.querySelectorAll('.rl').length, out };
+      });
+      check(!hit.out.length, `${width} px, ${v} view (${hit.metric}, ${hit.labels} labels): no label overlaps a map control${hit.out.length ? ': ' + hit.out.join(', ') : ''}`);
+    }
+    check(!errors.length, `${width} px views: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await page.context().close();
   }
   // Tablet width: the compact header, so the rent check starts in the top third of the screen.
