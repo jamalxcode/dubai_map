@@ -724,6 +724,8 @@ Asked (screenshot of the header): "there's a blank space to the right, have the 
 - **Also:** on phones a million-dirham sale median ("1,108,000") ran past the dial's ring; such figures now get smaller type (checked inside the ring at 390 px and on desktop).
 - **Checked:** every browser check passes (header heights included); screenshots of Rent, Yield, Hotels, Sale price on a phone, and Arabic.
 
+Merged on 20 Nov. The first Deploy run failed in GitHub's own Pages publishing step (Tests had passed; nothing in our build); re-running the failed job published it.
+
 ## Decision on 2026-11-20 (seventy-second pass): share a card
 
 Asked (screenshot of a hotel area card): "add a share link with a text before, that allows you to send the pop up cell to someone else to share and inform about a certain property; right now the share will be on the github page, in the future it will be moved to its own domain".
@@ -748,6 +750,8 @@ Asked (screenshots of Damac Hills 2): "we are looking at sale price, and the tex
 - **Rent view:** rent only in the main lines (the yield and sale price parts are gone from them); sales get one small line ("Buying here: median sale price AED 1,050,000 · gross yield 6.3% (1-bedroom apartments, AED 1,108,000, 7.0%)") with "Show sale prices", which switches to the Sale price view; the sale chart moved to that view.
 - **Also:** sale prices in cards round to the thousand, as in the table.
 - **Checked:** browser checks for each view (what the card leads with, "annual rent" wording, the folded rents, the sales line and its button, no sale chart in Rent); every suite passes.
+
+Merged and deployed on 20 Nov (Tests passed). Live figures that day: 534,699 contracts in 158 areas (data to 19 Nov); 374 hotels and 53 holiday homes priced; two days of price history; SerpApi still waiting for its key.
 
 ## Change log
 

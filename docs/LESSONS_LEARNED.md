@@ -183,3 +183,33 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Problem:** the first attempts to read the sources' pages failed with "host not found": the session's network only reaches allowed hosts, so nothing could be judged.
 - **Rule:** when a source must be checked, ask for its exact hosts to be allowed (the environment tools), then verify coverage, limits and terms from its own pages before building; GitHub's runners reach the open internet, so the collector itself doesn't need this.
 
+## Leaflet sizes every link in its bars (20 Nov 2026)
+
+- **Problem:** the Metro button, moved into the map's top-right bar, stayed 30 px wide with "Metro" spilling over the place-names button: the bar has Leaflet's `leaflet-bar` class, and `.leaflet-touch .leaflet-bar a` fixes every link's width and height.
+- **Rule:** a link inside a Leaflet bar needs a rule at least as specific as Leaflet's (`.leaflet-touch .viewSw a.metroBtn`) setting `width:auto`; measure the element in the browser rather than trusting the stylesheet.
+
+## A section in a centred column shrinks to its content (20 Nov 2026)
+
+- **Problem:** on phones the area check sat narrow and centred: its parent (`.pane`, `display:contents`) left it a flex child of a centred column, so it took its content's width and auto margins.
+- **Rule:** a full-width section on phones gets `align-self:stretch; width:100%`; when something looks centred, measure its box and its parent's display before adding padding.
+
+## Duplicate translation keys win silently (20 Nov 2026)
+
+- **Problem:** twice a new string ("Dubai Real Estate Atlas", "median sale price AED {v}") was added to `i18n.js` though it already existed; the object literal keeps the last one, so an older translation was quietly replaced and the tests stayed green.
+- **Rule:** before adding a key, `grep -c "'<key>':" assets/app/i18n.js`; after adding, the count must be 1.
+
+## A Pages deploy can fail on its own (20 Nov 2026)
+
+- **Problem:** a merge's Deploy run failed in GitHub's `deploy-pages` step though Tests passed and the build step succeeded.
+- **Rule:** when only the publishing step fails, re-run the failed job once before looking for a cause in the code; say so in the report.
+
+## A rolling counter's text is every digit (20 Nov 2026)
+
+- **Problem:** a check read the contracts figure's `textContent` and got "1.2e58": the odometer draws a strip of digits for each place.
+- **Rule:** tests read a counter's `aria-label` (the number as spoken), never its text.
+
+## A link that opens late data must wait for it (20 Nov 2026)
+
+- **Problem:** a shared hotel link has to open a card whose data (hotels, prices) loads after the page; opening it at start found nothing, and the check itself first ran before prices were in.
+- **Rule:** `openFromURL` retries for up to 12 s and gives up quietly; checks wait for the data (`waitForFunction`) before asserting; a consumed `?open=` is dropped from the address so it doesn't reopen later.
+

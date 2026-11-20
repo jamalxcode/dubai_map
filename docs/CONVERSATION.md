@@ -443,6 +443,10 @@ Done (decisions, seventy-third pass): labels framed in their price colour (thick
 
 Done (decisions, seventy-fourth pass): area cards lead with the view's own figure; rent is "annual rent" outside the Rent view; the Rent card mentions sales in one line with a switch to sale prices.
 
+### 20 Nov · "save to repo convo, decisions and lessons learned and update readme"
+
+Recorded: the live notes for passes seventy-one and seventy-four, six lessons (Leaflet's fixed link width, a shrinking centred section, duplicate translation keys, a Pages deploy that failed on its own, reading rolling counters in tests, links that wait for late data). The README now covers the five views, hotels and holiday homes with their sources, sharing a card, the price history, the status page's "Needs you", the new labels and the owner's checklist for SerpApi, a booking partner and the own domain.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
