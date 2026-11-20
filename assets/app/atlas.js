@@ -520,7 +520,7 @@ function openHotel(h){
     '<p class="see hlinks"><a href="https://www.google.com/maps/search/?api=1&query='+q+'" target="_blank" rel="noopener">'+T('Google Maps')+'</a><span class="sep" aria-hidden="true">·</span>'+
     (safeUrl(h.url)?'<a href="'+safe(safeUrl(h.url))+'" target="_blank" rel="noopener">'+T('Prices on Tripadvisor')+'</a><span class="sep" aria-hidden="true">·</span>':'')+
     '<a href="https://www.booking.com/searchresults.html?ss='+q+'" target="_blank" rel="noopener">'+T('Prices on Booking.com')+'</a></p>'+
-    priceWidget(h)+
+    priceWidget(h)+shareLine('h',h.name+'|'+h.lat+'|'+h.lng)+
     '<p class="muted tnote">'+T('Place: © OpenStreetMap contributors. Prices are set by the booking site, not this page.')+'</p>';
   clearFocus();L.popup({maxWidth:300}).setLatLng([h.lat,h.lng]).setContent(html).openOn(map);countUse('hotel');
 }
@@ -607,6 +607,7 @@ function openHome(h){
     (ta?'<span class="sep" aria-hidden="true">·</span><a href="'+safe(ta)+'" target="_blank" rel="noopener">'+T('Prices on Tripadvisor')+'</a>':'')+
     (lst?'<span class="sep" aria-hidden="true">·</span><a href="'+safe(lst)+'" target="_blank" rel="noopener nofollow">'+T('The listing')+'</a>':'')+
     '<span class="sep" aria-hidden="true">·</span><a href="https://www.booking.com/searchresults.html?ss='+q+'" target="_blank" rel="noopener">'+T('Prices on Booking.com')+'</a></p>'+
+    shareLine('s',h.name+'|'+h.lat+'|'+h.lng)+
     '<p class="muted tnote">'+(g?T('Place and price: Google Hotels vacation rentals, via SerpApi. Prices are set by the listing site, not this page.'):T('Place and prices: booking sites, via Xotelo (TripAdvisor). Prices are set by the booking site, not this page.'))+'</p>';
   clearFocus();L.popup({maxWidth:300}).setLatLng([h.lat,h.lng]).setContent(html).openOn(map);countUse('home');
 }
@@ -805,7 +806,7 @@ async function init(){
   sources();
   const un=META.unmatched_areas||[];$('unmatchedN').textContent=un.length;$('unmatchedBox').hidden=!un.length; // nothing to open when every area is placed
   $('unmatched').innerHTML=un.map(x=>'<li>'+safe(x.area)+' <span class="muted">('+fmt(x.n)+')</span></li>').join('')||'<li class="muted">'+T('None')+'</li>';
-  fillUnits();buildHome();const later=readURL();draw();if(later)later();intro();
+  fillUnits();buildHome();const later=readURL();draw();if(later)later();intro();openFromURL();
   window.atlasState='ready';dispatchEvent(new Event('atlas:ready')); // assets/app/companion.js takes it from here
 }
 
@@ -923,6 +924,7 @@ function popup(a){
       ['https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+a.lat+','+a.lng,T('Street View')],
       ['https://www.google.com/search?tbm=isch&q='+encodeURIComponent(a.label+' Dubai'),T('Photos on Google')]]
       .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+'</p>'+
+    shareLine('a',a.label)+
     (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
     (a.staff?'<p class="staff"><small>'+T('An industrial zone: most homes here are staff accommodation, so rents run well below homes elsewhere. It is left out of comparisons with other areas.')+'</small></p>':'')+
     ((a.disagree||[]).length?'<p class="differ"><small>'+T('Other sources differ by more than 15%:')+' '+a.disagree.map(d=>T('{source}, {unit}: AED {theirs} (ours is {pct}%)',{source:safe(d.source),unit:safe(T.unit(d.unit)),theirs:fmt(d.theirs),pct:(d.pct>0?'+':'')+d.pct})).join('; ')+'. '+T('They count differently (new contracts only, or by DLD area), so treat both as a guide.')+'</small></p>':'')+
@@ -1179,8 +1181,51 @@ let urlT;
 function writeURL(){if(!$('home').options.length)return;clearTimeout(urlT);urlT=setTimeout(()=>{try{const q=new URLSearchParams(location.search),c=map.getCenter();
   q.set('home',$('home').value.replace('|',':'));q.set('view',$('metric').value);q.set('at',c.lat.toFixed(4)+','+c.lng.toFixed(4)+','+map.getZoom());
   if(CMP)q.set('compare',CMP.a.label+'|'+CMP.b.label);else q.delete('compare');
+  if(openDone)q.delete('open');
   history.replaceState(history.state,'','?'+q.toString().replace(/%3A/g,':').replace(/%2C/g,',')+location.hash)}catch(e){}},300)}
 map.on('moveend',writeURL);
+// Sharing a card (an area, a hotel, a holiday home): a link that opens the map on that card, in the same view and
+// for the same home, with a line of text before it that says what it is. The address is the page's own (origin and
+// path), so the links follow the site when it moves from GitHub Pages to its own domain. ?open=a:<area>, h:<hotel>,
+// s:<holiday home> (name|lat|lng, as the data files key them).
+const SITE=()=>location.origin+location.pathname.replace(/index\.html$/,'');
+function shareLine(kind,key){
+  const lead=kind==='a'?T('Send this area to someone:'):kind==='h'?T('Send this hotel to someone:'):T('Send this holiday home to someone:');
+  return '<p class="shareLine"><span>'+lead+'</span> <button type="button" class="link" data-share="'+safe(kind+':'+key)+'">'+T('Share link')+'</button></p>'}
+function shareURL(open){const q=new URLSearchParams();q.set('view',$('metric').value);
+  if(!STAY($('metric').value))q.set('home',$('home').value.replace('|',':'));q.set('open',open);if(T.lang==='ar')q.set('lang','ar');
+  return SITE()+'?'+q.toString().replace(/%3A/g,':').replace(/%7C/g,'|')}
+function shareText(open){const k=open.slice(0,1),key=open.slice(2),m=$('metric').value;
+  if(k==='a'){const a=byLabel(key);if(!a)return T('Dubai Real Estate Atlas');const v=areaValue(a,m,$('unit').value),home=($('unit').value?T.unit($('unit').value):TYPENAME()).toLowerCase();
+    if(v==null)return T('{area} on the Dubai Real Estate Atlas',{area:T.place(a.label)});
+    return m==='hotels'?(hotelPriced()?T('{area}: typical hotel price AED {v} a night',{area:T.place(a.label),v:fmt(v)}):T('{area}: {n} places to stay',{area:T.place(a.label),n:fmt(v)}))
+      :m==='homes'?T('{area}: typical holiday home price AED {v} a night',{area:T.place(a.label),v:fmt(v)})
+      :m==='sale'?T('{area}: median sale price AED {v} ({home})',{area:T.place(a.label),v:fmt(v),home})
+      :m==='yield'?T('{area}: gross rental yield {v}% ({home})',{area:T.place(a.label),v:Number(v).toFixed(1),home})
+      :T('{area}: median rent AED {v} a year ({home}), from Ejari contracts',{area:T.place(a.label),v:fmt(v),home})}
+  const list=k==='h'?HOTELS:HOMES,h=(list||[]).find(x=>x.name+'|'+x.lat+'|'+x.lng===key);if(!h)return T('Dubai Real Estate Atlas');
+  const area=h.area?' · '+T.place(h.area):'';
+  return h.price?T('{name}{area}: about AED {v} a night (lowest on booking sites, checked {d})',{name:k==='h'?hotelName(h):h.name,area,v:fmt(h.price),d:h.priceAt?niceDate(h.priceAt):''})
+    :T('{name}{area} on the Dubai Real Estate Atlas',{name:k==='h'?hotelName(h):h.name,area})}
+document.addEventListener('click',async e=>{const b=e.target.closest&&e.target.closest('[data-share]');if(!b)return;e.preventDefault();
+  const open=b.dataset.share,url=shareURL(open),text=shareText(open),label=b.textContent;
+  countUse('share',{a:'area',h:'hotel',s:'holiday home'}[open[0]]);
+  // Phones: the phone's own share sheet (WhatsApp, Messages…); elsewhere the text and the link go to the clipboard.
+  if(navigator.share&&matchMedia('(pointer:coarse)').matches){try{await navigator.share({title:T('Dubai Real Estate Atlas'),text,url});return}catch(err){if(err&&err.name==='AbortError')return}}
+  let ok=false;try{await navigator.clipboard.writeText(text+'\n'+url);ok=true}catch(_){}
+  if(ok){b.textContent=T('Copied: paste it in a message');setTimeout(()=>{b.textContent=label},2500)}
+  else{const i=document.createElement('input');i.className='shareUrl';i.value=url;i.readOnly=true;i.setAttribute('aria-label',T('Link to share'));b.replaceWith(i);i.select()}});
+// A shared link opens its card once the data it needs is in (areas at start; hotels and holiday homes load later).
+let openDone=false;
+function openFromURL(){const o=new URLSearchParams(location.search).get('open');if(!o){openDone=true;return}
+  const k=o.slice(0,1),key=o.slice(2),t0=Date.now();
+  if(document.referrer&&!document.referrer.startsWith(location.origin))countUse('share-opened',{a:'area',h:'hotel',s:'holiday home'}[k]);
+  const tryOpen=()=>{
+    if(k==='a'){const a=byLabel(key);if(a&&a.lat!=null){focusArea(a);openDone=true;return}}
+    else{const list=k==='h'?HOTELS:HOMES,h=(list||[]).find(x=>x.name+'|'+x.lat+'|'+x.lng===key);
+      if(h){map.setView([h.lat,h.lng],16,{animate:false});(k==='h'?openHotel:openHome)(h);openDone=true;return}}
+    if(Date.now()-t0<12000)setTimeout(tryOpen,300);else openDone=true}; // not found (renamed or gone): the map just opens
+  setTimeout(tryOpen,400)}
 function readURL(){
   const q=new URLSearchParams(location.search),v=q.get('view'),h=q.get('home'),at=(q.get('at')||'').split(',').map(Number);
   if(q.get('at')&&document.referrer&&!document.referrer.startsWith(location.origin))countUse('map-link-opened'); // a shared map link, from elsewhere

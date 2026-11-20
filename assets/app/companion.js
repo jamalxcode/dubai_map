@@ -484,8 +484,9 @@
     wire();
     // Resume: a link's own area wins, then the last check; the map comes back where it was left.
     const qs = new URLSearchParams(location.search);
-    if (store.view && !qs.get('area') && !qs.get('at')) map.setView([store.view.lat, store.view.lng], store.view.z, { animate: false });
-    const start = qs.get('area') ? { area: qs.get('area'), unit: qs.get('unit') || '', rent: null } : store.last && { ...store.last };
+    if (store.view && !qs.get('area') && !qs.get('at') && !qs.get('open')) map.setView([store.view.lat, store.view.lng], store.view.z, { animate: false });
+    // A shared card (?open=) is what the visitor came for: no resumed check opens over it.
+    const start = qs.get('area') ? { area: qs.get('area'), unit: qs.get('unit') || '', rent: null } : !qs.get('open') && store.last && { ...store.last };
     // A link's home (?home=homes:…) is the page's home choice, so a resumed check uses it too.
     const linkHome = (qs.get('home') || '').split(':');
     if (start && linkHome[0] === 'homes' && !qs.get('unit')) start.unit = linkHome[1] || '';

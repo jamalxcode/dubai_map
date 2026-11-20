@@ -724,6 +724,14 @@ Asked (screenshot of the header): "there's a blank space to the right, have the 
 - **Also:** on phones a million-dirham sale median ("1,108,000") ran past the dial's ring; such figures now get smaller type (checked inside the ring at 390 px and on desktop).
 - **Checked:** every browser check passes (header heights included); screenshots of Rent, Yield, Hotels, Sale price on a phone, and Arabic.
 
+## Decision on 2026-11-20 (seventy-second pass): share a card
+
+Asked (screenshot of a hotel area card): "add a share link with a text before, that allows you to send the pop up cell to someone else to share and inform about a certain property; right now the share will be on the github page, in the future it will be moved to its own domain".
+- **On every card** (area, hotel, holiday home): "Send this … to someone:" then **Share link**. Phones get the phone's share sheet (WhatsApp, Messages); computers get a line of text plus the link on the clipboard, so a pasted message says what it is before the link.
+- **The link reopens that card** in the same view and for the same home (`?open=a:<area>`, `h:`/`s:` for a hotel or holiday home, keyed as in the data files). It waits for hotels and holiday homes to load; the resumed rent check and saved map position don't override it.
+- **Own domain later:** the card links use the page's own address, so they follow the site with no change. When the domain moves: point it at GitHub Pages (a `CNAME` file and the DNS record), and set `SITE_URL` for `scripts/share_pages.py` and `scripts/check_fresh.py` (the area preview pages, sitemap and freshness check) and the two `og:` addresses in `index.html` (open item 7 in the conversation log).
+- **Checked:** a browser check copies an area's link, finds the text and the link on the clipboard, opens the link in a new page and finds that area's card; a hotel link opens that hotel's card.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

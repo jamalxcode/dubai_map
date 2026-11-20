@@ -680,3 +680,9 @@ details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
 @media (prefers-reduced-motion:reduce){.viewSw .metroBtn::before,.viewSw .metroBtn::after,.viewSw .names::before,.viewSw .names::after{transition:none}}
 .big .dialBox.long:not(.off) .num{font-size:28px!important}
 @media (max-width:860px){.big .dialBox.long:not(.off) .num{font-size:23px!important}}
+/* Share a card: a line of text, then the link (atlas.js shareLine). */
+.shareLine{margin:10px 0 4px;font-size:13px;color:var(--muted)}
+.shareLine .link{font-weight:700;color:var(--text);margin-inline-start:4px}
+.shareUrl{width:100%;margin:8px 0 4px;font:13px/1.3 var(--body);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text)}
+.areaSheet .shareLine{font-size:14px}
+.areaSheet .shareLine .link{display:inline-flex;align-items:center;min-height:40px}

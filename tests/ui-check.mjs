@@ -698,6 +698,40 @@ try {
     check(order && order.fig > 0 && order.see > order.fig, `${w} px${q ? ' (Arabic)' : ''}: an area's sheet leads with its figures, the Google links below`);
     await ctx.close();
   }
+  // Sharing a card: a line of text and a link; the link reopens that card (an area, a hotel) in the same view.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 }, permissions: ['clipboard-read', 'clipboard-write'] });
+    const page = await ctx.newPage();
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    const a = await page.evaluate(() => AREAS.filter(x => x.lat != null).sort((p, q) => q.n - p.n)[0].label);
+    await page.evaluate(l => focusArea(byLabel(l)), a);
+    await page.waitForTimeout(1500);
+    const line = await page.evaluate(() => { const p = document.querySelector('.leaflet-popup-content .shareLine'); return p && p.textContent; });
+    await page.click('.leaflet-popup-content [data-share]');
+    await page.waitForTimeout(300);
+    const clip = await page.evaluate(() => navigator.clipboard.readText().catch(() => ''));
+    const url = (clip.match(/https?:\/\/\S+/) || [''])[0];
+    check(/Send this area to someone:/.test(line || '') && /median rent AED [\d,]+ a year/.test(clip) && /[?&]open=a:/.test(url) && url.startsWith(BASE),
+      `an area's card has a share line; the link and a line of text are copied (${clip.split('\n')[0].slice(0, 70)})`);
+    const p2 = await ctx.newPage();
+    await p2.goto(url);
+    await p2.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await p2.waitForTimeout(2500);
+    const opened = await p2.evaluate(() => { const t = document.querySelector('.leaflet-popup-content .t'); return t && t.dataset.label; });
+    check(opened === a, `the shared link opens that area's card (${opened})`);
+    await p2.waitForFunction(() => typeof HOTELS !== 'undefined' && HOTELS && HOTELS.some(h => h.price), null, { timeout: 10000 }).catch(() => {});
+    if (await p2.evaluate(() => typeof HOTELS !== 'undefined' && !!(HOTELS && HOTELS.some(h => h.price)))) {
+      const key = await p2.evaluate(() => { const h = HOTELS.find(x => x.price); return h.name + '|' + h.lat + '|' + h.lng; });
+      const hurl = BASE + '?view=hotels&open=h:' + encodeURIComponent(key);
+      await p2.goto(hurl);
+      await p2.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+      await p2.waitForTimeout(3500);
+      const hc = await p2.evaluate(() => { const c = document.querySelector('.leaflet-popup-content'); return c ? c.textContent : ''; });
+      check(/Send this hotel to someone:/.test(hc) && hc.includes(key.split('|')[0]), 'a shared hotel link opens that hotel\'s card');
+    }
+    await ctx.close();
+  }
   // Backup source in use (Dubai Data stuck): the warning sign says so.
   {
     const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
