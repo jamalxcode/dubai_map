@@ -102,6 +102,14 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - Bottom right: legend (the owner's choice, 20 Nov: on this map that corner is mostly desert, so it covers fewer areas than bottom left, where the coast and the city run). It sits above the map credits (wide screens) and the "i" credits button (phones); physical right, as the map stays left to right in Arabic. With All homes picked it adds "Mixed home sizes: pick one for a fair comparison". Its title is a button that folds the notes away, leaving the colour bar and its values (remembered, `legendFolded`; phones start folded).
 - The map container stays left to right in Arabic (it is a picture of the world); its legend and breakdowns read right to left.
 
+### Currency, per sq ft, Near and 3D (20 Nov)
+
+- **Currency:** a small select in the header (`#cur`, AED / USD, EUR and GBP appear when rates load); the key's unit reads the currency.
+- **Per sq ft:** two buttons, Total and Per sq ft, inside the key on the Sale price view; the view bar's Sale price button stays pressed in both.
+- **Near:** a select after the rent range (`.f-life`), hidden until the data loads; the budget note says how many areas are near the choice; cards add a "Nearby:" line (metres under 1 km, km above).
+- **3D:** a toggle styled like the Metro button, before Names; opens a full-map overlay above Leaflet's controls (z-index 1001) with Back to 2D top-start and a how-to note bottom-start; Escape closes; returning keeps the centre.
+- **Links to pages:** a line under the map links to Market stats, All areas, Best yields and the feed.
+
 ## 6. The rent check
 
 - Fields: area (search with nicknames, DLD names and typos), optional yearly rent (written with thousands separators as you type), **Check**. No home field: the check uses the map's **Home** picker.

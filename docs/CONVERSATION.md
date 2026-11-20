@@ -455,6 +455,14 @@ Done (decisions, seventy-fifth pass): the facts strip, first-visit tips, the tou
 
 Answered with the steps (open item 5e): sign up at serpapi.com on the Free plan, copy the key from serpapi.com/manage-api-key, add it in GitHub as the repository secret `SERPAPI_KEY`.
 
+### 20 Nov · "what features are useful for our map found on keybox.ae… list out the features so I can choose what to add"
+
+Listed eleven: 3D map, Market Stats page, price per sq ft, currency switch, busiest areas, richer area pages, areas directory, popular-search landing pages, lifestyle tags, RSS feed of changes, FAQ structured data.
+
+### 20 Nov · "do it all, merge on main"
+
+Done (decisions, seventy-sixth pass): all eleven. New pages `stats/`, `areas/`, `yields/`, `rents/…`, `feed.xml`; the map's 3D view, per sq ft switch, currency switch, Near filter; exchange rates and what's near each area come from two new collectors.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

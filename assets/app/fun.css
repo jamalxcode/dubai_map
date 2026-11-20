@@ -57,3 +57,10 @@
 .finder .fNote{margin:6px 0 0;font-size:12px}
 @media (prefers-reduced-motion:reduce){.funChip{transition:none}}
 .budgetSlider.out{float:none;clear:none;width:auto;margin:0 0 8px;border:1px solid var(--line);box-shadow:none;background:var(--panel)}
+/* 3D: MapLibre over the map, tilted, buildings raised (fun.js open3d). */
+.map3d{position:absolute;inset:0;z-index:1001;background:var(--bg)}
+.map3d .m3{position:absolute;inset:0}
+.map3d .m3x{position:absolute;top:12px;inset-inline-start:12px;z-index:3}
+.map3d .rl3off{visibility:hidden;pointer-events:none}
+.map3d .m3n{position:absolute;z-index:3;bottom:8px;inset-inline-start:12px;margin:0;padding:4px 8px;border-radius:6px;background:var(--legend);color:var(--muted);font-size:12px}
+.rl.rl3{position:absolute;cursor:pointer}

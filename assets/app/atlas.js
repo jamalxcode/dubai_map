@@ -167,9 +167,13 @@ L.Control.Credits=L.Control.extend({options:{position:'bottomright'},onAdd(){
   L.DomEvent.disableClickPropagation(b);return b}});
 new L.Control.Credits().addTo(map);
 const namesBtn=()=>viewCtl.getContainer().querySelector('.names');
+// The legend's Total / Per sq ft switch (Sale price view): the per sq ft figures are a view of their own, behind the
+// same Sale price button.
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-psf]');if(!b)return;const sel=$('metric');if(sel.value===b.dataset.psf)return;
+  sel.value=b.dataset.psf;sel.dispatchEvent(new Event('change'));countUse('sale-'+(b.dataset.psf==='sale'?'total':'per-sqft'))});
 function syncViews(){
   const sel=$('metric'),have=new Set([...sel.options].map(o=>o.value));
-  [...viewCtl.getContainer().querySelectorAll('button'),...document.querySelectorAll('.viewChips button')].forEach(b=>{b.hidden=!have.has(b.dataset.m);b.setAttribute('aria-pressed',b.dataset.m===sel.value)});
+  [...viewCtl.getContainer().querySelectorAll('button'),...document.querySelectorAll('.viewChips button')].forEach(b=>{b.hidden=!have.has(b.dataset.m);b.setAttribute('aria-pressed',b.dataset.m===sel.value||(b.dataset.m==='sale'&&sel.value==='sale_psf'))});
   fitViewBar();
 }
 // OpenStreetMap tile usage policy: this exact HTTPS URL, visible attribution, no bulk or offline use.
@@ -362,6 +366,21 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-focus]');i
 const transitBtn=document.createElement('a');transitBtn.className='metroBtn';viewCtl.getContainer().insertBefore(transitBtn,namesBtn());
 transitBtn.href='#';transitBtn.role='button';transitBtn.textContent=T('Metro');transitBtn.title=T('Show Metro and Tram lines');transitBtn.hidden=true;transitBtn.setAttribute('aria-pressed','false');
 L.DomEvent.on(transitBtn,'click',e=>{L.DomEvent.stop(e);showTransit(!transitOn,true)});
+// What's near each area (collector/lifestyle.py, data/lifestyle.json, weekly from OpenStreetMap): a "Near" filter
+// beside the Metro one and a "Nearby" line in an area's card. Straight-line distance from the area's reference point.
+let LIFE=null,LIFE_ON='';
+const LIFE_RULES={beach:[T('a beach'),x=>x.beach!=null&&x.beach<=1500],golf:[T('a golf course'),x=>x.golf!=null&&x.golf<=1500],park:[T('a park'),x=>x.park!=null&&x.park<=800],
+  mall:[T('a mall'),x=>x.mall!=null&&x.mall<=1500],schools:[T('10+ schools'),x=>(x.schools||0)>=10]};
+const lifeField=(()=>{const f=document.createElement('label');f.className='field f-life';f.hidden=true;
+  f.innerHTML='<span>'+T('Near')+'</span><select id="life"><option value="">'+T('Anything')+'</option>'+Object.entries(LIFE_RULES).map(([k,[t]])=>'<option value="'+k+'">'+safe(t)+'</option>').join('')+'</select>';
+  document.querySelector('.controls .f-range').after(f);return f})();
+$('life').addEventListener('change',()=>{LIFE_ON=$('life').value;animateLabels=true;draw();countUse('near-'+(LIFE_ON||'any'))});
+getJSON('data/lifestyle.json').then(d=>{if(!d||!d.areas)return;LIFE=d.areas;lifeField.hidden=false;if(window.atlasState==='ready')draw()}).catch(()=>{});
+const km=m=>m<1000?T('{m} m',{m:Math.round(m/10)*10}):T('{k} km',{k:(m/1000).toFixed(1)});
+function lifeLine(a){const x=LIFE&&LIFE[a.label];if(!x)return '';
+  const bits=[['beach',T('beach')],['golf',T('golf course')],['park',T('park')],['mall',T('mall')]].filter(([k])=>x[k]!=null&&x[k]<=3000).map(([k,t])=>T('{what} {d}',{what:t,d:km(x[k])}));
+  if(x.schools)bits.push(T('{n} schools within 2 km',{n:x.schools}));
+  return bits.length?'<p class="lifeLine"><small>'+T('Nearby:')+' '+bits.join(' · ')+' <span class="muted">('+T('straight-line distance, OpenStreetMap')+')</span></small></p>':''}
 // The walk filter, next to the budget.
 const walkField=(()=>{const f=document.createElement('label');f.className='field f-walk';f.hidden=true;
   f.innerHTML='<span>'+T('Near Metro / Tram')+'</span><select id="walk"><option value="0">'+T('Anywhere')+'</option><option value="10">'+T('10-minute walk')+'</option><option value="20">'+T('20-minute walk')+'</option></select>';
@@ -666,7 +685,21 @@ function labelBox(top,sub){
   const r={w:Math.ceil(probe.offsetWidth)+2,h:Math.ceil(probe.offsetHeight)+2};probe.remove();BOXES.set(k,r);return r;
 }
 // Nightly prices in full ("AED 1,036": a night's price wants its digits); the key says "a night".
-function labelText(v,metric){return metric==='homes'?'AED '+fmt(v):metric==='hotels'?(hotelPriced()?'AED '+fmt(v):T.count(Math.round(v),'hotel')):metric==='sale'?'AED '+compact(v):metric==='yield'?Number(v).toFixed(1)+'%':metric==='n'?T('{n} contracts',{n:compact(v)}):metric==='median_sqm'?'AED '+fmt(v)+'/m²':'AED '+compact(v)}
+// Currency on the map (labels, the dial, the key): AED, or USD at the fixed peg, or EUR / GBP from data/fx.json
+// (collector/fx.py, the ECB's daily rates). Cards, tables and the budget stay in AED.
+const CUR={code:'AED',rate:1};let FX_RATES={USD:1/3.6725};
+const money=(v,full)=>{const x=v*CUR.rate;return CUR.code+' '+(full||CUR.code!=='AED'&&x<1e4?fmt(x):compact(x))};
+const curText=s=>CUR.code==='AED'?s:String(s).replace(/AED|درهم/,CUR.code);
+// The switch in the header: remembered on this device; EUR and GBP appear once today's rates are in.
+function setCurrency(code){const r=code==='AED'?1:FX_RATES[code];if(!r)code='AED';CUR.code=code;CUR.rate=code==='AED'?1:r;$('cur').value=code;
+  try{localStorage.setItem('cur',code)}catch(e){}}
+$('cur').addEventListener('change',()=>{setCurrency($('cur').value);animateLabels=true;draw();countUse('currency',$('cur').value)});
+(()=>{let saved=null;try{saved=localStorage.getItem('cur')}catch(e){}if(saved)setCurrency(saved);
+  fetch('data/fx.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(d=>{if(!d||!d.per_aed)return;FX_RATES=Object.assign({USD:1/3.6725},d.per_aed);
+    ['EUR','GBP'].forEach(c=>{const o=$('cur').querySelector('option[value="'+c+'"]');if(o)o.hidden=!FX_RATES[c]});
+    if(saved&&saved!==CUR.code&&FX_RATES[saved]){setCurrency(saved);if(window.atlasState==='ready')draw()}}).catch(()=>{})})();
+const MONEY=m=>m==='median'||m==='sale'||m==='sale_psf'||m==='median_sqm'||m==='homes'||(m==='hotels'&&hotelPriced());
+function labelText(v,metric){return metric==='homes'?money(v,1):metric==='hotels'?(hotelPriced()?money(v,1):T.count(Math.round(v),'hotel')):metric==='sale'?money(v):metric==='sale_psf'?money(v,1)+T('/sq ft'):metric==='yield'?Number(v).toFixed(1)+'%':metric==='n'?T('{n} contracts',{n:compact(v)}):metric==='median_sqm'?money(v,1)+'/m²':money(v)}
 
 // Labels that would overlap at this zoom merge into one label with the contract-weighted average.
 function renderLabels(){
@@ -732,8 +765,8 @@ function dialSide(on){const m=LABEL.metric||$('metric').value,el=$('dialSide');
   const home=($('unit').value?T.unit($('unit').value):TYPENAME()).toLowerCase();
   const t={median:[T('AED a year'),T('Median yearly rent, {home}',{home})],sale:[T('Median sale price'),T('AED, from registered sales, {home}',{home})],
     yield:[T('Gross a year (ROI)'),T('Yearly rent as a share of the sale price, {home}',{home})],median_sqm:[T('AED per m² a year'),T('Median rent per square metre, {home}',{home})],
-    hotels:[T('AED a night'),hotelPriced()?T('Typical hotel price, one room for 2'):T("Dubai's official average room rate")],homes:[T('AED a night'),T('Typical holiday home price, one unit for 2')]}[m];
-  el.hidden=!on||!t;if(el.hidden)return;$('dsUnit').textContent=t[0];$('dsWhat').textContent=t[1]}
+    sale_psf:[T('AED per sq ft'),T('Median sale price per sq ft, all homes')],hotels:[T('AED a night'),hotelPriced()?T('Typical hotel price, one room for 2'):T("Dubai's official average room rate")],homes:[T('AED a night'),T('Typical holiday home price, one unit for 2')]}[m];
+  el.hidden=!on||!t;if(el.hidden)return;$('dsUnit').textContent=MONEY(m)?curText(t[0]):t[0];$('dsWhat').textContent=t[1]}
 function setDial(on,{kind,unit,lo,hi,mid,fmtEnd}={}){
   $('dialBox').classList.toggle('off',!on);dialSide(on);if(!on)return;
   $('dialBox').classList.toggle('long',Math.round(mid)>=1e6); // a million-dirham figure gets smaller type, so it stays inside the ring
@@ -764,15 +797,16 @@ function viewStat(){
     $('medLabel').textContent=STAY(metric)?T('No priced places to stay here. Zoom out to see more.'):perUnitOnly?T('Areas here have figures per unit only: pick a unit (e.g. 1 bed) to see them.'):T('Nothing to show here for {type}. Zoom out to see more.',{type:TYPENAME().toLowerCase()});return}
   // Places to stay: the ends come from areas with 3+ priced places (one hotel isn't an area's price), when there are any.
   const ends=STAY(metric)&&vis.some(p=>!p.thin)?vis.filter(p=>!p.thin):vis;
-  const vals=ends.map(p=>p.v),lo=Math.min(...vals),hi=Math.max(...vals),mid=wMedian(vis);
+  const cr=MONEY(metric)?CUR.rate:1; // the dial in the chosen currency
+  const vals=ends.map(p=>p.v*cr),lo=Math.min(...vals),hi=Math.max(...vals),mid=wMedian(vis)*cr;
   const D={median:[T('Median rent'),T('AED a year'),T('Median yearly rent in view')],sale:[T('Median sale price'),T('AED'),T('Median sale price in view')],
     yield:[T('Median yield'),T('gross a year'),T('Median gross yield in view')],median_sqm:[T('Median rent per m²'),T('AED a year'),T('Median rent per m² in view')],
-    hotels:[T('Median a night'),T('AED a night'),T('Median hotel price a night in view')],homes:[T('Median a night'),T('AED a night'),T('Median holiday home price a night in view')]}[metric]||[T('Median'),'',T('Median in view')];
+    sale_psf:[T('Median per sq ft'),T('AED per sq ft'),T('Median sale price per sq ft in view')],hotels:[T('Median a night'),T('AED a night'),T('Median hotel price a night in view')],homes:[T('Median a night'),T('AED a night'),T('Median holiday home price a night in view')]}[metric]||[T('Median'),'',T('Median in view')];
   const end=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='median_sqm'||STAY(metric)?fmt:(v=>compact(v));
-  setDial(true,{kind:D[0],unit:D[1],lo,hi,mid,fmtEnd:end});
+  setDial(true,{kind:D[0],unit:curText(D[1]),lo,hi,mid,fmtEnd:end});
   $('medLabel').textContent=STAY(metric)?(metric==='homes'?T('Holiday homes in view'):T('Hotels in view'))+where+' · '+T('ends: cheapest and dearest area'):home.charAt(0).toUpperCase()+home.slice(1)+where+' · '+T('ends: cheapest and dearest area');
   if(metric==='yield'){$('med').textContent=mid.toFixed(1)+'%';$('med')._sig=null;$('med').setAttribute('aria-label',$('med').textContent);return}
-  const step=metric==='median_sqm'?1:metric==='sale'?1000:STAY(metric)?10:100;
+  const step=metric==='median_sqm'?1:metric==='sale'?1000:metric==='sale_psf'?10:STAY(metric)?10:100;
   odometer($('med'),Math.round(mid/step)*step,'');
 }
 map.on('moveend',viewStat);
@@ -865,6 +899,7 @@ function areaValue(a,metric,unit){
   if(metric==='median_sqm')return u?null:a.median_sqm;
   if(metric==='yield')return u?u.yield:a.yield_pct;
   if(metric==='sale')return u?u.sale:a.sale_median;
+  if(metric==='sale_psf')return a.sale_psf||null; // all homes: Dubai Data gives price per sq ft by area, not by home size
   return u?u.median:a.median;
 }
 // A small line chart with its scale: lowest and highest value on the left, first, middle and last month below.
@@ -939,7 +974,7 @@ function popup(a){
     (a.median_sqm?T('AED {v} per m² a year',{v:fmt(a.median_sqm)})+'<br>':'')+
     (a.rent_change?sinceNote(a.rent_change)+'<br>':'')+(a.unconfirmed?jumpNote(a.unconfirmed)+'<br>':'');
   // In the Hotels view the card leads with the area's places to stay; its rents fold away under them.
-  const m=$('metric').value,sv=m==='sale',yv=m==='yield';
+  const m0=$('metric').value,m=m0==='sale_psf'?'sale':m0,sv=m==='sale',yv=m==='yield';
   const hv=m==='hotels'&&!!HOTELS,hh=m==='homes'&&!!HOMES,figs=(lead?lead+'<p class="allh">'+T('All homes:')+' '+main+'</p>':main)+
     (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+(hv?'':areaHotels(a))+ /* the sale price chart is in the Sale price view's card */
     (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr'+(u.n!=null&&u.n<THIN?' class="thin'+(pu&&u.u===pu.u?' pick':'')+'" title="'+safe(T('Fewer than {n} contracts: a thin figure',{n:THIN}))+'"':pu&&u.u===pu.u?' class="pick"':'')+'><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>'+(a.by_unit.some(u=>u.n!=null&&u.n<THIN)?'<small>'+T('Italic rows: fewer than {n} contracts, so treat them as a rough guide.',{n:THIN})+'</small><br>':''):'')+
@@ -955,7 +990,7 @@ function popup(a){
       ['https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+a.lat+','+a.lng,T('Street View')],
       ['https://www.google.com/search?tbm=isch&q='+encodeURIComponent(a.label+' Dubai'),T('Photos on Google')]]
       .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+'</p>'+
-    shareLine('a',a.label)+
+    lifeLine(a)+shareLine('a',a.label)+
     (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
     (a.staff?'<p class="staff"><small>'+T('An industrial zone: most homes here are staff accommodation, so rents run well below homes elsewhere. It is left out of comparisons with other areas.')+'</small></p>':'')+
     ((a.disagree||[]).length?'<p class="differ"><small>'+T('Other sources differ by more than 15%:')+' '+a.disagree.map(d=>T('{source}, {unit}: AED {theirs} (ours is {pct}%)',{source:safe(d.source),unit:safe(T.unit(d.unit)),theirs:fmt(d.theirs),pct:(d.pct>0?'+':'')+d.pct})).join('; ')+'. '+T('They count differently (new contracts only, or by DLD area), so treat both as a guide.')+'</small></p>':'')+
@@ -1261,6 +1296,8 @@ function readURL(){
   const q=new URLSearchParams(location.search),v=q.get('view'),h=q.get('home'),at=(q.get('at')||'').split(',').map(Number);
   if(q.get('at')&&document.referrer&&!document.referrer.startsWith(location.origin))countUse('map-link-opened'); // a shared map link, from elsewhere
   if(v&&[...$('metric').options].some(o=>o.value===v))$('metric').value=v;
+  const mx=+q.get('max'),mn=+q.get('min'); // a budget from a link (the landing pages: "1-bed under AED 60,000")
+  if(mx>0)$('max').value=String(mx);if(mn>0)$('min').value=String(mn);
   if(at.length===3&&at.every(isFinite)&&Math.abs(at[0]-25.1)<1&&Math.abs(at[1]-55.3)<1.2)map.setView([at[0],at[1]],Math.min(18,Math.max(8,at[2])),{animate:false});
   if(h){const [k,u='']=h.split(':');if([...$('home').options].some(o=>o.value===k+'|'+u)){
     if(k==='homes'){$('unit').value=u;$('home').value=k+'|'+u;unitChosen=true}else return ()=>{$('home').value=k+'|'+u;setHome(k,u)}}}
@@ -1303,6 +1340,8 @@ function budgetNote(unit,metric){
   if(BUDGET.night){const kind=metric==='homes'?T('holiday homes'):T('hotels');
     txt=BUDGET.n?T('<b>{n} of {of} areas</b> have a typical price of {range} a night ({kind}).',{n:BUDGET.n,of:BUDGET.of,range,kind}):T('<b>No area</b> has a typical price of {range} a night ({kind}). Try a wider budget.',{range,kind});
     budgetEl.innerHTML=txt+(BUDGET.swapped?' '+T('(Min was above Max, so they were swapped.)'):'');budgetEl.hidden=false;return}
+  if(BUDGET.life&&!WALK){const what=LIFE_RULES[LIFE_ON][0];
+    budgetEl.innerHTML=BUDGET.n?T('<b>{n} of {of} areas</b> are near {what}.',{n:BUDGET.n,of:BUDGET.of,what:safe(what)}):T('<b>No area</b> is near {what} with figures for this home.',{what:safe(what)});budgetEl.hidden=false;return}
   if(!BUDGET.n)txt=WALK&&!BUDGET.walkOnly?T('<b>No area</b> fits {range} a year within a {walk} of a station for {what}. Try a longer walk, a higher maximum or another home size.',{range,walk,what})
     :WALK?T('<b>No area</b> with figures for {what} is within a {walk} of a station.',{what,walk})
     :T('<b>No area fits</b> {range} a year for {what}. Try a higher maximum or another home size.',{range,what});
@@ -1313,6 +1352,7 @@ function budgetNote(unit,metric){
   if(WALK&&BUDGET.n&&TRANSIT){const best=Transit.stationRents(TRANSIT.stations,AREAS.filter(a=>a.lat!=null),outlinesByLabel(),POINTS.map(p=>({label:p.a.label,v:p.v,n:p.n})),Transit.WALKS[WALK])[0];
     if(best){const l=TRANSIT.lines.find(x=>best.station.lines.includes(x.id));
       txt+=' '+T('Lowest near a station: {station} ({line}), typical {v}.',{station:'<button type="button" class="link" data-station="'+safe(best.station.name)+'">'+safe(stationName(best.station))+'</button>',line:l?safe(lineName(l)):'',v:safe(labelText(best.v,metric))})}}
+  if(LIFE_ON&&LIFE_RULES[LIFE_ON])txt+=' '+T('Only areas near {what}.',{what:safe(LIFE_RULES[LIFE_ON][0])});
   budgetEl.innerHTML=txt+(BUDGET.swapped?' '+T('(Min was above Max, so they were swapped.)'):'');
   budgetEl.hidden=false;
 }
@@ -1345,6 +1385,8 @@ function draw(){
   // Near Metro / Tram: only areas within the chosen walk of a station.
   const near=WALK&&nearMap();
   if(near){POINTS=POINTS.filter(p=>{const x=near.get(p.a.label);const ok=!!x&&x.m<=Transit.WALKS[WALK];if(!ok)OUTSIDE.add(p.a.label);return ok});if(!BUDGET)BUDGET={lo:0,hi:Infinity,walkOnly:true}}
+  // Near a beach, a park…: only areas that pass the chosen rule (lifestyle.json).
+  if(LIFE&&LIFE_ON&&LIFE_RULES[LIFE_ON]){const ok=LIFE_RULES[LIFE_ON][1];POINTS=POINTS.filter(p=>{const x=LIFE[p.a.label],y=!!x&&ok(x);if(!y)OUTSIDE.add(p.a.label);return y});if(!BUDGET)BUDGET={lo:0,hi:Infinity,walkOnly:true,life:true}}
   if(BUDGET){BUDGET.n=POINTS.length;BUDGET.of=allN}
   stayPanel(metric);budgetNote(unit,metric);if(CMP)renderCompare();
   LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};
@@ -1353,13 +1395,14 @@ function draw(){
   const kept=FOCUS&&focusPopup?FOCUS:null;relabelKeep=!!kept;renderLabels();relabelKeep=false;if(kept){FOCUS=kept;drawFocus();openArea(kept)}
   if(STAY(metric))loadStayHist();
   viewStat();drawOutlines();drawHotels();drawHomes();setTimeout(popupMargins,0);
-  const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v));
+  const f=metric==='yield'?(v=>Number(v).toFixed(1)+'%'):metric==='n'?fmt:(v=>'AED '+compact(v*(MONEY(metric)?CUR.rate:1))); // ticks in the chosen currency
   $('legend').hidden=!vals.length;
   // The key: a value at every step (the first and last also cover everything below and above them), and a
   // title button that folds the notes away, leaving just the colour bar (remembered on this device).
   const ticks=vals.length?Array.from({length:7},(_,i)=>f(sc.lo+(sc.hi-sc.lo)*i/6).replace(/^AED /,'')):[];
-  $('legend').innerHTML='<button type="button" class="t" aria-expanded="'+!legendFolded()+'">'+(metric==='n'?T('Contracts'):metric==='hotels'?T('Typical hotel price a night'):metric==='homes'?T('Typical holiday home price a night'):metric==='yield'?T('Typical gross yield'):metric==='sale'?T('Typical sale price'):metric==='median_sqm'?T('Typical rent per m²'):T('Typical yearly rent'))+(metric==='yield'||metric==='n'?'':' <span class="u">(AED)</span>')+'<span class="chev" aria-hidden="true"></span></button>'+
-    '<div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ticks" title="'+safe(T('Below the first value: the lightest blue; above the last: the darkest'))+'">'+ticks.map(t=>'<span>'+t+'</span>').join('')+'</div>';
+  $('legend').innerHTML='<button type="button" class="t" aria-expanded="'+!legendFolded()+'">'+(metric==='n'?T('Contracts'):metric==='hotels'?T('Typical hotel price a night'):metric==='homes'?T('Typical holiday home price a night'):metric==='yield'?T('Typical gross yield'):metric==='sale'?T('Typical sale price'):metric==='sale_psf'?T('Typical sale price per sq ft'):metric==='median_sqm'?T('Typical rent per m²'):T('Typical yearly rent'))+(metric==='yield'||metric==='n'?'':' <span class="u">('+CUR.code+')</span>')+(metric==='sale'||metric==='sale_psf'?'':'')+'<span class="chev" aria-hidden="true"></span></button>'+
+    '<div class="ramp">'+BANDS.map(c=>'<i style="background:'+c+'"></i>').join('')+'</div><div class="ticks" title="'+safe(T('Below the first value: the lightest blue; above the last: the darkest'))+'">'+ticks.map(t=>'<span>'+t+'</span>').join('')+'</div>'+
+    (metric==='sale'||metric==='sale_psf'?'<div class="psfSw" role="group" aria-label="'+safe(T('Sale price shown as'))+'"><button type="button" data-psf="sale" aria-pressed="'+(metric==='sale')+'">'+T('Total price')+'</button><button type="button" data-psf="sale_psf" aria-pressed="'+(metric==='sale_psf')+'">'+T('Per sq ft')+'</button></div>':'');
   $('legend').classList.toggle('folded',legendFolded());
   if(hotelsView&&!hotelPriced()){$('legend').innerHTML=hotelLegend();$('legend').hidden=false;$('legend').classList.remove('folded')}
   else if(hotelsView)$('legend').insertAdjacentHTML('beforeend',hotelNotes());
@@ -1385,7 +1428,7 @@ function table(){
   const tb=$('rows');tb.replaceChildren();
   const cell=(tr,v,r)=>{const td=document.createElement('td');td.textContent=v;if(r)td.className='r';tr.append(td)};
   if(AGG){
-    const m=$('metric').value,one=$('unit').value; // one home size picked: it goes in the subtitle, not on every row
+    const m=$('metric').value==='sale_psf'?'sale':$('metric').value,one=$('unit').value; // one home size picked: it goes in the subtitle, not on every row
     $('tableTitle').textContent=m==='sale'?T('Sale prices by area'):m==='yield'?T('Yields by area'):T('Rents by area');
     $('updated').textContent=(m==='sale'?T('Median sale price by area and unit, from registered sales'):m==='yield'?T('Gross rental yield by area and unit'):T('Median yearly rent by area and unit, last 12 months'))+(one?' · '+T.unit(one):'')+(m==='yield'?'':' · AED');
     // Short headers (the subtitle says medians in AED). On phones only the view's own figure and contracts show

@@ -41,6 +41,12 @@ Tap an area and the card is about the view you're in. **Rent:** every home size,
 - **The side panel follows:** a nightly budget, the cheapest area, and a "prices by area" table you can sort and download.
 - **A price history of our own,** one snapshot a day, so cards will show whether a night in an area is getting dearer.
 
+### 📊 Market pages and more ways to look
+- **Market stats** (`/stats/`): the busiest rental markets, the cheapest and dearest areas for a 1-bedroom, the best yields, sale price per sq ft month by month and what moved. Plus **every area** in one sortable table (`/areas/`), the **best yields** (`/yields/`), and pages for common searches like "1-bedroom under AED 60,000" (`/rents/…`). Each opens the map on the same search.
+- **Follow the changes** with the RSS feed (`/feed.xml`): every publication's moves of 5% or more.
+- **3D**: tilt the map and see the city's buildings raised, areas still shaded by price.
+- **Per sq ft** on the Sale price view, **AED, USD, EUR or GBP** for every figure, and a **Near** filter for areas close to a beach, golf course, park, mall or many schools.
+
 ### 🔗 Share a card
 Every area, hotel and holiday home card has **"Send this to someone: Share link"**: your phone's share sheet, or a line of text plus the link on your computer's clipboard. The link opens the map on that card, in the same view.
 

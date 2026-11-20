@@ -213,3 +213,7 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Problem:** a shared hotel link has to open a card whose data (hotels, prices) loads after the page; opening it at start found nothing, and the check itself first ran before prices were in.
 - **Rule:** `openFromURL` retries for up to 12 s and gives up quietly; checks wait for the data (`waitForFunction`) before asserting; a consumed `?open=` is dropped from the address so it doesn't reopen later.
 
+## An overlay on the map must beat Leaflet's controls (20 Nov 2026)
+
+- **Problem:** the 3D view covered the map at z-index 800, but Leaflet's zoom bar (z-index 1000) stayed on top of its Back to 2D button, so it couldn't be clicked; only a browser click (not a scripted one) showed it.
+- **Rule:** anything drawn over `.mapWrap` goes above 1000, and checks press its buttons with a real click (`page.click`), not `el.click()`.

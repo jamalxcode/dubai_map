@@ -79,6 +79,22 @@ def _units(a, e):
                if any(u.get("n") is not None and u["n"] < 10 for u in a.get("by_unit") or []) else ""))
 
 
+def faqs(a, name, when):
+    """Questions people search for, answered from this area's own figures (nothing else)."""
+    out, by = [], {u.get("u"): u for u in a.get("by_unit") or []}
+    for u, what in (("1-bedroom apartments", "a 1-bedroom apartment"), ("Studios", "a studio"), ("2-bedroom apartments", "a 2-bedroom apartment")):
+        x = by.get(u)
+        if x and x.get("median"):
+            out.append((f"What is the rent for {what} in {name}?", f"The median is {aed(x['median'])} a year" + (f", from {x['n']:,} Ejari contracts" if x.get("n") else "") + (f" to {when}" if when else "") + "."))
+    if a.get("sale_median"):
+        out.append((f"What do homes sell for in {name}?", f"The median sale price is {aed(round(a['sale_median'], -3))}" + (f", {a['sale_yoy']:+.1f}% on a year ago per sq ft" if a.get("sale_yoy") is not None else "") + "."))
+    if a.get("yield_pct") is not None:
+        out.append((f"What is the rental yield in {name}?", f"About {a['yield_pct']:.1f}% a year gross: the yearly rent divided by the sale price."))
+    if a.get("n"):
+        out.append((f"How many rent contracts are registered in {name}?", f"{a['n']:,} in the last 12 months."))
+    return out
+
+
 def page(a, through):
     """A real page per area (figures in the HTML, so search engines and link previews can read them), with a
     button to open the area on the map. No automatic redirect: the page is useful on its own."""
@@ -88,7 +104,7 @@ def page(a, through):
     when = nice_date(a.get("through") or through)
     desc = ("Median yearly rent from Ejari contracts registered with the Dubai Land Department"
             + (f", to {when}" if when else "") + ". Every home type, sale prices and yields, on the map.")
-    target = "../../?area=" + urllib.parse.quote(a["label"])
+    target = "../../?open=a:" + urllib.parse.quote(a["label"])  # opens the area's card on the map
     e = html.escape
     url = SITE + "a/" + slug(a["label"]) + "/"
     ccp = a.get("source") == "ccp"
@@ -105,6 +121,10 @@ def page(a, through):
     if a.get("yield_pct") is not None:
         summary.append(f"<li><b>{a['yield_pct']:.1f}%</b> gross rental yield</li>")
     dld = ", ".join(e(d) for d in a.get("dld_areas") or [])
+    faq = faqs(a, name, when)
+    ld = ('<script type="application/ld+json">' + json.dumps({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+        {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": t}} for q, t in faq]}, ensure_ascii=False).replace("</", "<\\/") + "</script>") if faq else ""
+    faq_html = ("<h2>Questions and answers</h2><dl class=faq>" + "".join(f"<dt>{e(q)}</dt><dd>{e(t)}</dd>" for q, t in faq) + "</dl>") if faq else ""
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(title)} | Dubai Real Estate Atlas</title>
@@ -117,6 +137,7 @@ def page(a, through):
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Dubai Real Estate Atlas: what tenants actually pay, from Ejari contracts">
 <meta name="twitter:card" content="summary_large_image">
+{ld}
 <style>
 body{{margin:0;background:#F6F1E7;color:#2B2118;font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}}
 header{{background:#521825;color:#F6F1E7;padding:18px 20px;border-bottom:3px solid #C9A227}}
@@ -128,7 +149,7 @@ ul{{padding-inline-start:20px}} li{{margin:4px 0}}
 .btn:focus-visible{{outline:3px solid #735B12;outline-offset:2px}}
 table{{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}}
 th,td{{padding:8px 6px;border-bottom:1px solid #D9CFBE;text-align:start}} th{{color:#655B51;font-weight:600}} .r{{text-align:end}}
-tr.thin td{{font-style:italic;color:#655B51}} .note,footer{{color:#655B51;font-size:14px}}
+tr.thin td{{font-style:italic;color:#655B51}} h2{{margin:26px 0 6px;font-size:20px}} .faq dt{{font-weight:700;margin-top:10px}} .faq dd{{margin:3px 0 0}} .note,footer{{color:#655B51;font-size:14px}}
 footer{{max-width:760px;margin:0 auto;padding:0 20px 30px}} footer a{{color:#2B2118}}
 @media (max-width:520px){{th:nth-child(3),td:nth-child(3){{display:none}}}}
 </style>
@@ -140,6 +161,8 @@ footer{{max-width:760px;margin:0 auto;padding:0 20px 30px}} footer a{{color:#2B2
 <ul>{"".join(summary)}</ul>
 <a class=btn href="{e(target)}">Open {e(name)} on the map</a>
 {_units(a, e)}
+{faq_html}
+<p><a href="../../stats/">Dubai rents this month</a> · <a href="../../areas/">All areas</a> · <a href="../../yields/">Best yields</a></p>
 </main>
 <footer><p>Medians from {e(source)}. Not asking prices, and not the RERA rental index. An independent tool, not an official DLD service.
 <a href="../../">See all of Dubai on the map</a>.</p></footer>

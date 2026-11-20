@@ -107,6 +107,9 @@ jobs:
           DUBAI_PULSE_KEY: ${{ secrets.DUBAI_PULSE_KEY }}
           DUBAI_PULSE_SECRET: ${{ secrets.DUBAI_PULSE_SECRET }}
         run: python3 collector/hotel_stats.py
+      - name: "Exchange rates for the map's currency switch (ECB via Frankfurter, once a day)"
+        continue-on-error: true  # without them the map offers AED and USD (the peg) only
+        run: python3 collector/fx.py
       - name: "Hotel prices (Xotelo, free, no key; about 100 hotels a pull on two sample nights, so each is refreshed every couple of days)"
         continue-on-error: true  # a failure keeps the last prices (shown up to 10 days) and the state says why
         timeout-minutes: 15

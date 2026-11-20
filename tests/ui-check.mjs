@@ -692,7 +692,7 @@ try {
     await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(600);
     const ch = await page.evaluate(() => { const bs = [...document.querySelectorAll('.viewChips button')].filter(b => !b.hidden), m = document.getElementById('map').getBoundingClientRect();
-      return { n: bs.length, have: [...document.getElementById('metric').options].length, inside: bs.every(b => { const r = b.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.bottom <= m.top + 1; }),
+      return { n: bs.length, have: [...document.getElementById('metric').options].filter(o => document.querySelector('.views button[data-m="' + o.value + '"]')).length, inside: bs.every(b => { const r = b.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.bottom <= m.top + 1; }),
         metro: !!document.querySelector('.viewSw .metroBtn'), inZoom: !!map.zoomControl.getContainer().querySelector('.metroBtn') }; });
     check(ch.n >= 3 && ch.n === ch.have && ch.inside && ch.metro && !ch.inZoom, `${w} px${q ? ' (Arabic)' : ''}: all ${ch.n} views show as chips above the map; Metro sits with the map's layer switch, not the zoom stack`);
     await page.evaluate(() => focusArea(AREAS.filter(a => a.lat != null).sort((a, b) => b.n - a.n)[0]));
@@ -772,7 +772,7 @@ try {
     await page.goto(BASE);
     await page.waitForFunction(() => window.atlasState === 'ready' && document.querySelectorAll('.funChip[data-fact]').length > 0, null, { timeout: 15000 }).catch(() => {});
     const st = await page.evaluate(() => ({ facts: [...document.querySelectorAll('.funChip[data-fact]')].map(b => b.textContent), tip: (document.querySelector('.funTip') || {}).textContent || '' }));
-    check(st.facts.length >= 3 && st.facts.every(t => /AED|%/.test(t)) && /Tip 1 of 3/.test(st.tip), `"Dubai right now": ${st.facts.length} facts from the data, and the first tip (${(st.facts[0] || '').slice(0, 50)})`);
+    check(st.facts.length >= 3 && st.facts.every(t => /AED|%|contracts/.test(t)) && /Tip 1 of 3/.test(st.tip), `"Dubai right now": ${st.facts.length} facts from the data, and the first tip (${(st.facts[0] || '').slice(0, 50)})`);
     await page.click('.funChip[data-fact="0"]');
     await page.waitForTimeout(1800);
     check(await page.evaluate(() => !!document.querySelector('.leaflet-popup-content .t')), 'tapping a fact flies the map to its answer and opens it');
@@ -822,6 +822,45 @@ try {
     check(fd === null || (fd.n0 > 0 && fd.sorted && /Find a hotel/.test(fd.txt)), `Hotels: the stay finder lists the cheapest first${fd ? ' (' + fd.n0 + ', then ' + fd.n1 + ' rated 4.5+)' : ' (no hotel prices here)'}`);
     check(!errors.length, `fun features: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await axe(page, 'fun features (Hotels view with the finder)');
+    await ctx.close();
+  }
+  // Ideas from other Dubai sites: currency on the map, sale price per sq ft, what's near, 3D.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    // A stand-in lifestyle file: every area near a beach except the busiest one.
+    await page.route(/data\/lifestyle\.json/, async r => { const a = JSON.parse(await readFile(join(ROOT, 'data/areas.json'), 'utf8')).areas.filter(x => x.lat != null).sort((p, q) => q.n - p.n);
+      const areas = Object.fromEntries(a.map((x, i) => [x.label, { beach: i === 0 ? 9000 : 500, golf: 2500, park: 300, mall: 1200, schools: 12 }])); r.fulfill({ contentType: 'application/json', body: JSON.stringify({ areas }) }); });
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(800);
+    const cur = await page.evaluate(async () => { const before = document.querySelector('.rl b').textContent, sel = document.getElementById('cur');
+      sel.value = 'USD'; sel.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 300));
+      const after = document.querySelector('.rl b').textContent, unit = document.getElementById('dialUnit').textContent, eur = !document.querySelector('#cur option[value="EUR"]').hidden;
+      sel.value = 'AED'; sel.dispatchEvent(new Event('change')); return { before, after, unit, eur }; });
+    check(/^AED /.test(cur.before) && /^USD /.test(cur.after) && /USD/.test(cur.unit), `the currency switch shows the map in USD (${cur.before} → ${cur.after})${cur.eur ? ', EUR offered from today\'s rates' : ''}`);
+    const psf = await page.evaluate(async () => { const s = document.getElementById('metric'); s.value = 'sale'; s.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 300));
+      document.querySelector('[data-psf="sale_psf"]').click(); await new Promise(r => setTimeout(r, 300));
+      return { metric: s.value, label: document.querySelector('.rl b').textContent, pressed: document.querySelector('.views button[data-m="sale"]').getAttribute('aria-pressed'), legend: document.getElementById('legend').textContent }; });
+    check(psf.metric === 'sale_psf' && /\/sq ft/.test(psf.label) && psf.pressed === 'true' && /per sq ft/.test(psf.legend), `Sale price switches to per sq ft (${psf.label}), the Sale price button staying chosen`);
+    const near = await page.evaluate(async () => { const s = document.getElementById('metric'); s.value = 'median'; s.dispatchEvent(new Event('change'));
+      await new Promise(r => setTimeout(r, 300)); const all = POINTS.length, l = document.getElementById('life'); l.value = 'beach'; l.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 300));
+      const out = { all, n: POINTS.length, note: document.getElementById('budgetNote').textContent, shown: !document.querySelector('.f-life').hidden }; l.value = ''; l.dispatchEvent(new Event('change')); return out; });
+    check(near.shown && near.n === near.all - 1 && /near a beach/.test(near.note), `"Near: a beach" keeps the areas near one (${near.n} of ${near.all}): ${near.note.slice(0, 50)}`);
+    await page.evaluate(() => focusArea(AREAS.filter(x => x.lat != null).sort((p, q) => q.n - p.n)[1]));
+    await page.waitForTimeout(1500);
+    const life = await page.evaluate(() => (document.querySelector('.leaflet-popup-content .lifeLine') || {}).textContent || '');
+    check(/Nearby: beach 500 m · golf course 2\.5 km · park 300 m · mall 1\.2 km · 12 schools within 2 km/.test(life), `an area's card says what's nearby (${life.slice(0, 60)})`);
+    if (await page.evaluate(() => !!window.maplibregl && (!maplibregl.supported || maplibregl.supported()) && !document.querySelector('.d3Btn').hidden)) {
+      await page.evaluate(() => map.closePopup()); await page.click('.d3Btn'); await page.waitForTimeout(1500);
+      const d3 = await page.evaluate(() => ({ open: !!document.querySelector('.map3d canvas'), pressed: document.querySelector('.d3Btn').getAttribute('aria-pressed') }));
+      await page.click('.m3x'); await page.waitForTimeout(300);
+      const back = await page.evaluate(() => !document.querySelector('.map3d') && document.querySelector('.d3Btn').getAttribute('aria-pressed') !== 'true');
+      check(d3.open && d3.pressed === 'true' && back, '3D opens a tilted map with raised buildings, and Back to 2D returns');
+    } else check(true, '3D: no WebGL in this browser, so the button stays hidden');
+    check(!errors.length, `these features: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await ctx.close();
   }
   // Backup source in use (Dubai Data stuck): the warning sign says so.
