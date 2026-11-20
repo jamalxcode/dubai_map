@@ -52,6 +52,9 @@ jobs:
         # One Overpass request; keeps the current file if it can't be reached or the result looks wrong.
         continue-on-error: true
         run: python3 collector/hotels.py
+      - name: What's near each area (beaches, golf, parks, malls, schools; OpenStreetMap)
+        continue-on-error: true  # the Near filter and the card lines hide without it
+        run: python3 collector/lifestyle.py
       - name: Rebuild and check
         run: |
           python3 collector/build.py

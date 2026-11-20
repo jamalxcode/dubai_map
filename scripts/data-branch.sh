@@ -16,8 +16,8 @@ shopt -s nullglob
 cd "$(git rev-parse --show-toplevel)"
 
 BRANCH=${DATA_BRANCH:-data}
-PAGE_FILES=(data/areas.json 'data/areas_*.json' data/latest.json data/meta.json data/outlines.json data/changes.json data/transit.json data/hotels.json data/hotel_stats.json data/hotel_prices.json data/holiday_homes.json data/stay_history.json data/serp_stays.json)
-GENERATED=(data/areas.json data/areas_*.json data/latest.json data/meta.json data/outlines.json data/changes.json data/transit.json data/hotels.json data/hotel_stats.json data/hotel_prices.json data/holiday_homes.json data/stay_history.json data/serp_stays.json data/status.json data/history data/runs.jsonl data/state.json
+PAGE_FILES=(data/areas.json 'data/areas_*.json' data/latest.json data/meta.json data/outlines.json data/changes.json data/transit.json data/hotels.json data/hotel_stats.json data/hotel_prices.json data/holiday_homes.json data/stay_history.json data/serp_stays.json data/fx.json data/lifestyle.json)
+GENERATED=(data/areas.json data/areas_*.json data/latest.json data/meta.json data/outlines.json data/changes.json data/transit.json data/hotels.json data/hotel_stats.json data/hotel_prices.json data/holiday_homes.json data/stay_history.json data/serp_stays.json data/fx.json data/lifestyle.json data/status.json data/history data/runs.jsonl data/state.json
            data/contracts data/datadubai data/crosscheck data/osm_area_points.csv data/dm_communities.csv data/dm_outlines.json)
 
 # Tell the workflow whether anything changed (step output `changed`), and say it in the log.

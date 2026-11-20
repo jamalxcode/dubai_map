@@ -39,7 +39,7 @@ jobs:
           cp data/outlines.json _site/data/ 2>/dev/null || true  # community outlines (optional: the map works without them)
           cp data/changes.json _site/data/ 2>/dev/null || true  # what changed since the previous publication (optional)
           cp data/transit.json _site/data/ 2>/dev/null || true  # Metro and Tram lines and stations (optional: the layer hides without them)
-          cp data/hotels.json data/hotel_stats.json data/hotel_prices.json data/holiday_homes.json data/stay_history.json data/serp_stays.json _site/data/ 2>/dev/null || true  # Hotels view (optional: the button hides without hotels.json)
+          cp data/hotels.json data/hotel_stats.json data/hotel_prices.json data/holiday_homes.json data/stay_history.json data/serp_stays.json data/fx.json data/lifestyle.json _site/data/ 2>/dev/null || true  # Hotels view (optional: the button hides without hotels.json)
           # The status page (status/) reads the data branch live; these copies are its fallback.
           for f in status.json state.json runs.jsonl; do cp "data/$f" _site/data/ 2>/dev/null || true; done
           mkdir -p _site/status && sed "s/__BUILD__/${GITHUB_SHA::7}/g" status/index.html > _site/status/index.html

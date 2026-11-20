@@ -32,6 +32,8 @@
         if (n) out.push({ id: 'metro', txt: T('Cheapest 1-bed a 10-minute walk from the Metro: {area}, AED {v}', { area: T.place(n.label), v: fmt(unitOf(n, ob).median) }), go: () => { pickView('median'); pickHome(ob); focusArea(n); } });
       }
     }
+    const busy = AREAS.filter(solid).sort((p, q) => q.n - p.n)[0];
+    if (busy) out.unshift({ id: 'busiest', txt: T('Busiest rental market: {area}, {n} contracts a year', { area: T.place(busy.label), n: fmt(busy.n) }), go: () => { pickView('median'); focusArea(busy); } });
     const y = AREAS.filter(a => solid(a) && a.yield_pct != null && a.n >= 200).sort((p, q) => q.yield_pct - p.yield_pct)[0];
     if (y) out.push({ id: 'yield', txt: T('Best yield: {area}, {v}% a year', { area: T.place(y.label), v: Number(y.yield_pct).toFixed(1) }), go: () => { pickView('yield'); focusArea(y); } });
     const r = AREAS.filter(a => solid(a) && a.rent_change && a.rent_change.pct > 0).sort((p, q) => q.rent_change.pct - p.rent_change.pct)[0];
@@ -308,6 +310,67 @@
       window.lastImage = { name: file.name, size: blob.size };
     }, 'image/png');
   });
+
+  // ---- 3D: the city with its buildings raised, tilted, the area labels on top (MapLibre on its own, over the map) ----
+  // The 2D map is Leaflet with MapLibre under it, which can't tilt; 3D opens a MapLibre map in the same place, with
+  // OpenFreeMap's building heights, the area outlines in their price colours and the labels; "Back to 2D" returns.
+  const btn3d = document.createElement('a'); btn3d.className = 'metroBtn d3Btn'; btn3d.href = '#'; btn3d.role = 'button'; btn3d.textContent = T('3D');
+  btn3d.title = T('See the city in 3D'); btn3d.setAttribute('aria-pressed', 'false'); btn3d.hidden = true;
+  viewCtl.getContainer().insertBefore(btn3d, namesBtn());
+  let m3 = null, box3 = null;
+  const canGL = () => window.maplibregl && (!maplibregl.supported || maplibregl.supported());
+  // The button appears once MapLibre is in; the bar grows, so labels are placed again to stay clear of it.
+  setInterval(() => { const h = !canGL(); if (btn3d.hidden !== h) { btn3d.hidden = h; if (window.atlasState === 'ready') renderLabels(); } }, 1500);
+  btn3d.addEventListener('click', e => { e.preventDefault(); m3 ? close3d() : open3d(); });
+  function open3d() {
+    if (!canGL()) return;
+    box3 = document.createElement('div'); box3.className = 'map3d';
+    box3.innerHTML = '<div class="m3" id="m3"></div><button type="button" class="btn primary m3x">' + T('Back to 2D') + '</button><p class="m3n">' + T('Drag with two fingers or right-click to turn and tilt.') + '</p>';
+    document.querySelector('.mapWrap').append(box3);
+    const c = map.getCenter();
+    m3 = new maplibregl.Map({ container: 'm3', style: styleFor(), center: [c.lng, c.lat], zoom: Math.max(11, map.getZoom() - 0.5), pitch: 58, bearing: -18, attributionControl: { compact: true } });
+    btn3d.setAttribute('aria-pressed', 'true'); btn3d.classList.add('on'); countUse('3d');
+    box3.querySelector('.m3x').addEventListener('click', close3d);
+    m3.on('load', () => {
+      const src = Object.keys(m3.getStyle().sources).find(k => m3.getStyle().sources[k].type === 'vector');
+      if (src) m3.addLayer({ id: 'bld3d', type: 'fill-extrusion', source: src, 'source-layer': 'building', minzoom: 12,
+        paint: { 'fill-extrusion-color': document.documentElement.dataset.theme === 'dark' ? '#6B6158' : '#D9CFBE', 'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 10],
+          'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0], 'fill-extrusion-opacity': 0.85 } });
+      // Area outlines in their price colour, and the labels as on the 2D map.
+      const rs = getComputedStyle(document.documentElement), col = c2 => { const v = /var\((--[\w-]+)\)/.exec(c2 || ''); return v ? rs.getPropertyValue(v[1]).trim() : c2; };
+      const byL = new Map(POINTS.map(p => [p.a.label, p]));
+      const feats = (typeof OUTLINES !== 'undefined' && OUTLINES || []).filter(o => byL.has(o.label)).map(o => ({ type: 'Feature', properties: { c: col(LABEL.colorOf(byL.get(o.label).v)) },
+        geometry: { type: 'Polygon', coordinates: o.rings } }));
+      if (feats.length) {
+        m3.addSource('areas', { type: 'geojson', data: { type: 'FeatureCollection', features: feats } });
+        m3.addLayer({ id: 'areas-fill', type: 'fill', source: 'areas', paint: { 'fill-color': ['get', 'c'], 'fill-opacity': 0.28 } }, 'bld3d');
+        m3.addLayer({ id: 'areas-line', type: 'line', source: 'areas', paint: { 'line-color': ['get', 'c'], 'line-width': 2 } });
+      }
+      // Busiest first; a label that would cover one already shown waits until the view gives it room.
+      const els = POINTS.filter(p => !p.thin).sort((p, q) => q.n - p.n).slice(0, 60).map(p => {
+        const el = document.createElement('div'); el.className = 'rl rl3';
+        el.style.setProperty('--c', LABEL.colorOf(p.v)); el.innerHTML = '<b>' + safe(labelText(p.v, LABEL.metric)) + '</b><small>' + safe(T.place(p.a.label)) + '</small>';
+        el.addEventListener('click', () => { const a = p.a; close3d(); focusArea(a); });
+        new maplibregl.Marker({ element: el }).setLngLat([p.a.lng, p.a.lat]).addTo(m3);
+        return el;
+      });
+      let queued = false;
+      const declutter = () => { queued = false; const kept = [];
+        els.forEach(el => { const r = el.getBoundingClientRect();
+          const hit = kept.some(k => r.left < k.right + 4 && r.right + 4 > k.left && r.top < k.bottom + 4 && r.bottom + 4 > k.top);
+          el.classList.toggle('rl3off', hit); if (!hit) kept.push(r); }); };
+      const soon = () => { if (!queued) { queued = true; requestAnimationFrame(declutter); } };
+      m3.on('move', soon); soon();
+    });
+  }
+  function close3d() {
+    if (!m3) return; const c = m3.getCenter(), z = m3.getZoom();
+    try { m3.remove(); } catch (_) { /* already gone */ }
+    m3 = null; if (box3) box3.remove(); box3 = null; btn3d.setAttribute('aria-pressed', 'false'); btn3d.classList.remove('on');
+    map.setView([c.lat, c.lng], Math.round(z + 0.5), { animate: false });
+  }
+  addEventListener('keydown', e => { if (e.key === 'Escape' && m3) close3d(); });
+  window.open3d = open3d; window.close3d = close3d;
 
   // ---- Start: the strip once the rent data is in, again when hotels, holiday homes or Metro arrive ----------
   let tries = 0;

@@ -366,6 +366,21 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-focus]');i
 const transitBtn=document.createElement('a');transitBtn.className='metroBtn';viewCtl.getContainer().insertBefore(transitBtn,namesBtn());
 transitBtn.href='#';transitBtn.role='button';transitBtn.textContent=T('Metro');transitBtn.title=T('Show Metro and Tram lines');transitBtn.hidden=true;transitBtn.setAttribute('aria-pressed','false');
 L.DomEvent.on(transitBtn,'click',e=>{L.DomEvent.stop(e);showTransit(!transitOn,true)});
+// What's near each area (collector/lifestyle.py, data/lifestyle.json, weekly from OpenStreetMap): a "Near" filter
+// beside the Metro one and a "Nearby" line in an area's card. Straight-line distance from the area's reference point.
+let LIFE=null,LIFE_ON='';
+const LIFE_RULES={beach:[T('a beach'),x=>x.beach!=null&&x.beach<=1500],golf:[T('a golf course'),x=>x.golf!=null&&x.golf<=1500],park:[T('a park'),x=>x.park!=null&&x.park<=800],
+  mall:[T('a mall'),x=>x.mall!=null&&x.mall<=1500],schools:[T('10+ schools'),x=>(x.schools||0)>=10]};
+const lifeField=(()=>{const f=document.createElement('label');f.className='field f-life';f.hidden=true;
+  f.innerHTML='<span>'+T('Near')+'</span><select id="life"><option value="">'+T('Anything')+'</option>'+Object.entries(LIFE_RULES).map(([k,[t]])=>'<option value="'+k+'">'+safe(t)+'</option>').join('')+'</select>';
+  document.querySelector('.controls .f-range').after(f);return f})();
+$('life').addEventListener('change',()=>{LIFE_ON=$('life').value;animateLabels=true;draw();countUse('near-'+(LIFE_ON||'any'))});
+getJSON('data/lifestyle.json').then(d=>{if(!d||!d.areas)return;LIFE=d.areas;lifeField.hidden=false;if(window.atlasState==='ready')draw()}).catch(()=>{});
+const km=m=>m<1000?T('{m} m',{m:Math.round(m/10)*10}):T('{k} km',{k:(m/1000).toFixed(1)});
+function lifeLine(a){const x=LIFE&&LIFE[a.label];if(!x)return '';
+  const bits=[['beach',T('beach')],['golf',T('golf course')],['park',T('park')],['mall',T('mall')]].filter(([k])=>x[k]!=null&&x[k]<=3000).map(([k,t])=>T('{what} {d}',{what:t,d:km(x[k])}));
+  if(x.schools)bits.push(T('{n} schools within 2 km',{n:x.schools}));
+  return bits.length?'<p class="lifeLine"><small>'+T('Nearby:')+' '+bits.join(' · ')+' <span class="muted">('+T('straight-line distance, OpenStreetMap')+')</span></small></p>':''}
 // The walk filter, next to the budget.
 const walkField=(()=>{const f=document.createElement('label');f.className='field f-walk';f.hidden=true;
   f.innerHTML='<span>'+T('Near Metro / Tram')+'</span><select id="walk"><option value="0">'+T('Anywhere')+'</option><option value="10">'+T('10-minute walk')+'</option><option value="20">'+T('20-minute walk')+'</option></select>';
@@ -675,6 +690,14 @@ function labelBox(top,sub){
 const CUR={code:'AED',rate:1};let FX_RATES={USD:1/3.6725};
 const money=(v,full)=>{const x=v*CUR.rate;return CUR.code+' '+(full||CUR.code!=='AED'&&x<1e4?fmt(x):compact(x))};
 const curText=s=>CUR.code==='AED'?s:String(s).replace(/AED|درهم/,CUR.code);
+// The switch in the header: remembered on this device; EUR and GBP appear once today's rates are in.
+function setCurrency(code){const r=code==='AED'?1:FX_RATES[code];if(!r)code='AED';CUR.code=code;CUR.rate=code==='AED'?1:r;$('cur').value=code;
+  try{localStorage.setItem('cur',code)}catch(e){}}
+$('cur').addEventListener('change',()=>{setCurrency($('cur').value);animateLabels=true;draw();countUse('currency',$('cur').value)});
+(()=>{let saved=null;try{saved=localStorage.getItem('cur')}catch(e){}if(saved)setCurrency(saved);
+  fetch('data/fx.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null).then(d=>{if(!d||!d.per_aed)return;FX_RATES=Object.assign({USD:1/3.6725},d.per_aed);
+    ['EUR','GBP'].forEach(c=>{const o=$('cur').querySelector('option[value="'+c+'"]');if(o)o.hidden=!FX_RATES[c]});
+    if(saved&&saved!==CUR.code&&FX_RATES[saved]){setCurrency(saved);if(window.atlasState==='ready')draw()}}).catch(()=>{})})();
 const MONEY=m=>m==='median'||m==='sale'||m==='sale_psf'||m==='median_sqm'||m==='homes'||(m==='hotels'&&hotelPriced());
 function labelText(v,metric){return metric==='homes'?money(v,1):metric==='hotels'?(hotelPriced()?money(v,1):T.count(Math.round(v),'hotel')):metric==='sale'?money(v):metric==='sale_psf'?money(v,1)+T('/sq ft'):metric==='yield'?Number(v).toFixed(1)+'%':metric==='n'?T('{n} contracts',{n:compact(v)}):metric==='median_sqm'?money(v,1)+'/m²':money(v)}
 
@@ -967,7 +990,7 @@ function popup(a){
       ['https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+a.lat+','+a.lng,T('Street View')],
       ['https://www.google.com/search?tbm=isch&q='+encodeURIComponent(a.label+' Dubai'),T('Photos on Google')]]
       .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+'</p>'+
-    shareLine('a',a.label)+
+    lifeLine(a)+shareLine('a',a.label)+
     (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
     (a.staff?'<p class="staff"><small>'+T('An industrial zone: most homes here are staff accommodation, so rents run well below homes elsewhere. It is left out of comparisons with other areas.')+'</small></p>':'')+
     ((a.disagree||[]).length?'<p class="differ"><small>'+T('Other sources differ by more than 15%:')+' '+a.disagree.map(d=>T('{source}, {unit}: AED {theirs} (ours is {pct}%)',{source:safe(d.source),unit:safe(T.unit(d.unit)),theirs:fmt(d.theirs),pct:(d.pct>0?'+':'')+d.pct})).join('; ')+'. '+T('They count differently (new contracts only, or by DLD area), so treat both as a guide.')+'</small></p>':'')+
@@ -1317,6 +1340,8 @@ function budgetNote(unit,metric){
   if(BUDGET.night){const kind=metric==='homes'?T('holiday homes'):T('hotels');
     txt=BUDGET.n?T('<b>{n} of {of} areas</b> have a typical price of {range} a night ({kind}).',{n:BUDGET.n,of:BUDGET.of,range,kind}):T('<b>No area</b> has a typical price of {range} a night ({kind}). Try a wider budget.',{range,kind});
     budgetEl.innerHTML=txt+(BUDGET.swapped?' '+T('(Min was above Max, so they were swapped.)'):'');budgetEl.hidden=false;return}
+  if(BUDGET.life&&!WALK){const what=LIFE_RULES[LIFE_ON][0];
+    budgetEl.innerHTML=BUDGET.n?T('<b>{n} of {of} areas</b> are near {what}.',{n:BUDGET.n,of:BUDGET.of,what:safe(what)}):T('<b>No area</b> is near {what} with figures for this home.',{what:safe(what)});budgetEl.hidden=false;return}
   if(!BUDGET.n)txt=WALK&&!BUDGET.walkOnly?T('<b>No area</b> fits {range} a year within a {walk} of a station for {what}. Try a longer walk, a higher maximum or another home size.',{range,walk,what})
     :WALK?T('<b>No area</b> with figures for {what} is within a {walk} of a station.',{what,walk})
     :T('<b>No area fits</b> {range} a year for {what}. Try a higher maximum or another home size.',{range,what});
@@ -1327,6 +1352,7 @@ function budgetNote(unit,metric){
   if(WALK&&BUDGET.n&&TRANSIT){const best=Transit.stationRents(TRANSIT.stations,AREAS.filter(a=>a.lat!=null),outlinesByLabel(),POINTS.map(p=>({label:p.a.label,v:p.v,n:p.n})),Transit.WALKS[WALK])[0];
     if(best){const l=TRANSIT.lines.find(x=>best.station.lines.includes(x.id));
       txt+=' '+T('Lowest near a station: {station} ({line}), typical {v}.',{station:'<button type="button" class="link" data-station="'+safe(best.station.name)+'">'+safe(stationName(best.station))+'</button>',line:l?safe(lineName(l)):'',v:safe(labelText(best.v,metric))})}}
+  if(LIFE_ON&&LIFE_RULES[LIFE_ON])txt+=' '+T('Only areas near {what}.',{what:safe(LIFE_RULES[LIFE_ON][0])});
   budgetEl.innerHTML=txt+(BUDGET.swapped?' '+T('(Min was above Max, so they were swapped.)'):'');
   budgetEl.hidden=false;
 }
@@ -1359,6 +1385,8 @@ function draw(){
   // Near Metro / Tram: only areas within the chosen walk of a station.
   const near=WALK&&nearMap();
   if(near){POINTS=POINTS.filter(p=>{const x=near.get(p.a.label);const ok=!!x&&x.m<=Transit.WALKS[WALK];if(!ok)OUTSIDE.add(p.a.label);return ok});if(!BUDGET)BUDGET={lo:0,hi:Infinity,walkOnly:true}}
+  // Near a beach, a park…: only areas that pass the chosen rule (lifestyle.json).
+  if(LIFE&&LIFE_ON&&LIFE_RULES[LIFE_ON]){const ok=LIFE_RULES[LIFE_ON][1];POINTS=POINTS.filter(p=>{const x=LIFE[p.a.label],y=!!x&&ok(x);if(!y)OUTSIDE.add(p.a.label);return y});if(!BUDGET)BUDGET={lo:0,hi:Infinity,walkOnly:true,life:true}}
   if(BUDGET){BUDGET.n=POINTS.length;BUDGET.of=allN}
   stayPanel(metric);budgetNote(unit,metric);if(CMP)renderCompare();
   LABEL={metric,colorOf,inkOf:sc.inkOf,top:sc.hi||1,lo:sc.lo};

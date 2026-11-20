@@ -121,6 +121,16 @@ A point is a reference for the area, never a building; the page says so. Coordin
 
 | Compare | Two areas for the chosen home: cheaper by the difference as a share of the dearer; within 3% is "about the same"; per home size the lower rent is marked the same way; better = lower rent and sale price, higher yield; distance between the areas' points; suggested second areas are the 3 nearest with a figure for the chosen home | `insights.compare`, `atlas.js renderCompare` |
 
+### Added from the keybox.ae ideas (20 Nov)
+
+| Rule | Value | Where |
+|---|---|---|
+| Per sq ft | Sale price per sq ft: a Total / Per sq ft switch in the key on the Sale price view (hidden view `sale_psf`, the area's `sale_psf`) | `atlas.js` |
+| Currency | AED by default; USD at the peg (3.6725); EUR and GBP only when `fx.json` has them. Converted for display only (labels, dial, key); stored and checked in AED; remembered (`localStorage` `cur`) | `atlas.js setCurrency`, `collector/fx.py` |
+| Near | Beach or golf course within 1.5 km, a park within 800 m, a mall within 1.5 km, 10+ schools within 2 km, in straight line from the area's reference point. Hidden until `lifestyle.json` loads | `atlas.js LIFE_RULES`, `collector/lifestyle.py` |
+| 3D | Only where WebGL works; same base map and price colours; up to 60 price labels | `fun.js open3d` |
+| Busiest market | The fact strip names the area with the most contracts (industrial zones left out) | `fun.js` |
+
 ## 6. The rent check
 
 | Rule | Value | Where |
@@ -154,6 +164,9 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Rule | Value | Where |
 |---|---|---|
 | Area pages | `a/<slug>/` per area: a real page with the area's figures (every home type: rent, contracts, sale price, yield), its trend and sources, and a button to the map (no automatic redirect); listed in `sitemap.xml`. Slug: slug = name lower-cased, accents dropped, anything else → "-". Two areas with the same slug stop the deploy | `scripts/share_pages.py`, `companion.js slug` |
+| Site pages | `stats/`, `areas/`, `yields/`, `rents/<home>/`, `rents/1-bedroom-under-<n>/` (AED 50k, 60k, 75k, 100k), all from published files; rankings leave out figures from fewer than 10 contracts and industrial zones; each links to the map with the same view, home and budget | `scripts/site_pages.py` |
+| Feed | `feed.xml`: one item per publication, moves of 5% or more from 30+ contracts between consecutive history snapshots | `site_pages.py` |
+| Questions and answers | Area pages and the stats page carry questions answered from their figures, also as schema.org FAQPage; a question without a figure is left out | `share_pages.faqs`, `site_pages.py` |
 | Preview figure | 1-bedroom median where known, else the area's own headline figure | `share_pages.headline` |
 | Share image | No made-up figures | `scripts/share_image.mjs` |
 | Language | `?lang=` link (remembered) → saved choice → device language; Arabic reads right to left, the map stays left to right | `index.html`, `assets/app/i18n.js` |
