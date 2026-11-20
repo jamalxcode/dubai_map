@@ -654,3 +654,8 @@ details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
 .viewSw .metroBtn:hover{background:var(--soft)}.viewSw .metroBtn.on,.viewSw .metroBtn.on:hover{background:var(--oxblood);color:var(--ivory)}
 .leaflet-touch .viewSw a.metroBtn,.viewSw a.metroBtn{width:auto;height:34px;line-height:1}
 @media (max-width:400px){.leaflet-touch .viewSw a.metroBtn,.viewSw a.metroBtn{height:32px}}
+/* The key sits bottom right: on this map that corner is mostly desert, so it covers fewer areas than bottom left
+   (the coast and the city run from bottom left to top right). It clears the map credits (wide screens) and the
+   "i" credits button (phones). Physical "right": the map stays left to right in Arabic too. */
+.legend{left:auto;right:12px;bottom:26px}
+@media (max-width:860px){.legend{left:auto;right:8px;bottom:44px}}

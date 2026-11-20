@@ -712,6 +712,10 @@ Asked: "critique the user interface", then "do it all, merge on main". Sixteen p
 - **Small items:** photo captions read "Photo by {author}" (author and licence on hover and when opened); the dial's track is lighter on the oxblood band.
 - **Checked:** new browser checks (all views as chips at 320 px in Arabic and 390 px in English, Metro out of the zoom stack, sheets leading with figures; key figures following the home; group label wording); every suite passes.
 
+## Decision on 2026-11-20 (seventieth pass): the key moves to the bottom right
+
+Asked (screenshot of the Hotels view): "move the bottom left key to the right, it covers less urban areas on the dubai map". Dubai's coast and city run from bottom left to top right, so the bottom-right corner is mostly desert. The key now sits there (`right:12px`, above the map credits on wide screens; `right:8px`, above the "i" credits button on phones). Labels already step out from under the key wherever it is (`labels.js` blocks). Checked: every browser check passes (no label under the key in English and Arabic, desktop and phone); measured on desktop (key 1106–1428 px, credits below it) and at 390 px (key clear of the "i" button).
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

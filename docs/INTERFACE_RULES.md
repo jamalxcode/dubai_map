@@ -82,7 +82,7 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - Top right: one bar, **Rent · Sale price · Yield · Hotels** (what the labels show; a view appears only when the data has it; the only place to pick it), then **A+ع**: place names in English and Arabic together. Without it, place names follow the page language. Shown only when the vector map loaded; remembered (`mapBoth`).
 - Bottom right on phones: **i** folds the map credits away (two wrapped lines covered the map); one tap shows them. Wide screens show the credits as always.
 - **The address keeps the map:** `?home=homes:1-bedroom apartments&view=sale&at=25.08,55.15,13` is written as the map changes (no reload; other parameters kept), and a link with it opens that map. A resumed rent check uses the link's home.
-- Bottom left: legend. With All homes picked it adds "Mixed home sizes: pick one for a fair comparison". Its title is a button that folds the notes away, leaving the colour bar and its values (remembered, `legendFolded`; phones start folded).
+- Bottom right: legend (the owner's choice, 20 Nov: on this map that corner is mostly desert, so it covers fewer areas than bottom left, where the coast and the city run). It sits above the map credits (wide screens) and the "i" credits button (phones); physical right, as the map stays left to right in Arabic. With All homes picked it adds "Mixed home sizes: pick one for a fair comparison". Its title is a button that folds the notes away, leaving the colour bar and its values (remembered, `legendFolded`; phones start folded).
 - The map container stays left to right in Arabic (it is a picture of the world); its legend and breakdowns read right to left.
 
 ## 6. The rent check

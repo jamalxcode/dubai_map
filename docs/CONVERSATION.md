@@ -419,6 +419,14 @@ Recorded: the live results of passes sixty-seven and sixty-eight (273 hotels and
 
 Done (decisions, sixty-ninth pass): view chips above the map on phones (all five views, English and Arabic), sheets leading with figures, a full-width area check, a shorter caption, "+ 12 areas" group labels, Metro beside place names, key figures that follow the home, rounded sale prices, an About section that covers hotels and holiday homes, photo credits and a clearer dial track.
 
+### 20 Nov · "give me the link and status page"
+
+Given: https://jamalxcode.github.io/dubai_map/ and https://jamalxcode.github.io/dubai_map/status/.
+
+### 20 Nov · "move the bottom left key to the right, it covers less urban areas on the dubai map" (screenshot)
+
+Done (decisions, seventieth pass): the key sits bottom right on desktop and phones, above the map credits.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
