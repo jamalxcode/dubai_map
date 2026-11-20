@@ -740,6 +740,15 @@ Asked (screenshot of the Hotels view): "have the price border thicker and shaded
 - **Trade-off:** the cheapest band (`#EFF3FF`) is nearly white, so cheap areas read as a plain card with a dark hairline; that is the key's own lightest step, and the legend shows the same.
 - **Checked:** the label check now verifies each border is at least 3 px in exactly its key colour, with a transparent figure background and espresso type; every browser check passes, axe included; screenshots in light and dark.
 
+## Decision on 2026-11-20 (seventy-fourth pass): an area's card is about the view it was opened in
+
+Asked (screenshots of Damac Hills 2): "we are looking at sale price, and the text pop up talks about rent, which is confusing; when on sale price, focus on sale price; you can still talk about rent but make it clear that you are referring to annual rent", then "the same for rent view, focus on rent, mention sales, but not the main topic".
+- **Sale price view:** the card leads with the sale median (the picked home's, then all homes with the change on a year ago), the sale price chart and a table by home size (sale price, annual rent, yield). Rent only appears as "Annual rent: median AED … a year", and the rent breakdown folds under "Annual rents in this area".
+- **Yield view:** leads with the gross yield and its makings ("Annual rent AED 70,000 a year against a median sale price of AED 1,108,000"), the same table, rents folded.
+- **Rent view:** rent only in the main lines (the yield and sale price parts are gone from them); sales get one small line ("Buying here: median sale price AED 1,050,000 · gross yield 6.3% (1-bedroom apartments, AED 1,108,000, 7.0%)") with "Show sale prices", which switches to the Sale price view; the sale chart moved to that view.
+- **Also:** sale prices in cards round to the thousand, as in the table.
+- **Checked:** browser checks for each view (what the card leads with, "annual rent" wording, the folded rents, the sales line and its button, no sale chart in Rent); every suite passes.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

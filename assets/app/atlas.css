@@ -688,3 +688,4 @@ details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
 .shareUrl{width:100%;margin:8px 0 4px;font:13px/1.3 var(--body);padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--text)}
 .areaSheet .shareLine{font-size:14px}
 .areaSheet .shareLine .link{display:inline-flex;align-items:center;min-height:40px}
+.salesNote{margin:8px 0 4px;color:var(--muted)}.salesNote small{font-size:12.5px}.salesNote .link{font-size:12.5px;font-weight:600;margin-inline-start:4px}

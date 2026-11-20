@@ -894,6 +894,32 @@ function saleTrend(a){
 // a big jump not yet confirmed, other sources more than 15% away.
 const sinceNote=c=>c&&c.pct!=null?'<small class="chg '+(c.pct>0?'up':c.pct<0?'down':'')+'">'+T('Rent {sign}{pct}% since {date}',{sign:c.pct>0?'+':'',pct:c.pct,date:niceDate(c.since)})+'</small>':'';
 const jumpNote=j=>j?'<small class="jump">'+T('Changed {pct}% since the previous update (from AED {from}): waiting for the next update to confirm it.',{pct:(j.pct>0?'+':'')+j.pct,from:fmt(j.from)})+'</small>':'';
+// In the Sale price and Yield views the card leads with that figure (the one on the map's label), for the picked
+// home and for all homes, with a table by home size; rent appears only as "annual rent", and the full rent
+// breakdown folds under "Annual rents in this area".
+function ownSection(a,m,pu){
+  const k=v=>v>=1e5?Math.round(v/1000)*1000:v; // sale prices to the thousand, as in the table
+  const aed=v=>'<b>AED '+fmt(k(v))+'</b>',pct=v=>'<b>'+Number(v).toFixed(1)+'%</b>',sale=m==='sale';
+  const rentLine=(r,n)=>r?T('Annual rent: median AED {v} a year',{v:fmt(r)})+(n!=null?' ('+T.count(n,'contract')+')':''):'';
+  const one=u=>sale?(u.sale?T('{unit}: median sale price {aed}',{unit:safe(T.unit(u.u)),aed:aed(u.sale)})+'<br>'+[rentLine(u.median,u.n),u.yield!=null?T('gross yield {v}%',{v:Number(u.yield).toFixed(1)}):''].filter(Boolean).join(' · '):'')
+    :(u.yield!=null?T('{unit}: gross yield {v}',{unit:safe(T.unit(u.u)),v:pct(u.yield)})+'<br>'+T('Annual rent AED {r} a year against a median sale price of AED {s}',{r:fmt(u.median),s:fmt(k(u.sale))}):'');
+  const lead=pu&&one(pu)?'<p class="lead">'+one(pu)+'</p>':'';
+  const all=sale?(a.sale_median?T('Median sale price {aed}',{aed:aed(a.sale_median)})+(a.sale_yoy!=null?' · <span class="'+(a.sale_yoy>0?'up':a.sale_yoy<0?'down':'')+'">'+T('{sign}{v}% on a year ago',{sign:a.sale_yoy>0?'+':'',v:a.sale_yoy})+'</span>':'')+
+      '<br>'+[rentLine(a.median),a.yield_pct!=null?T('gross yield {v}%',{v:Number(a.yield_pct).toFixed(1)}):''].filter(Boolean).join(' · '):T('No sale price is published for this area.'))
+    :(a.yield_pct!=null?T('Gross yield {v}',{v:pct(a.yield_pct)})+'<br>'+T('Annual rent AED {r} a year against a median sale price of AED {s}',{r:fmt(a.median),s:fmt(k(a.sale_median))}):T('No yield is published for this area.'));
+  const rows=a.by_unit.filter(u=>sale?u.sale:u.yield!=null);
+  const tbl=rows.length?'<table><tr><th>'+T('Unit')+'</th>'+(sale?'<th>'+T('Sale price')+'</th><th>'+T('Annual rent')+'</th><th>'+T('Yield')+'</th>':'<th>'+T('Yield')+'</th><th>'+T('Annual rent')+'</th><th>'+T('Sale price')+'</th>')+'</tr>'+
+    rows.slice(0,7).map(u=>'<tr'+(pu&&u.u===pu.u?' class="pick"':'')+'><td>'+safe(T.unit(u.u))+'</td>'+(sale?'<td>'+fmt(k(u.sale))+'</td><td>'+fmt(u.median)+'</td><td>'+(u.yield!=null?Number(u.yield).toFixed(1)+'%':'—')+'</td>'
+      :'<td>'+Number(u.yield).toFixed(1)+'%</td><td>'+fmt(u.median)+'</td><td>'+(u.sale?fmt(k(u.sale)):'—')+'</td>')+'</tr>').join('')+'</table><small>'+T('AED; annual rent is the median yearly rent from Ejari contracts; gross yield is annual rent divided by the sale price.')+'</small><br>':'';
+  return lead+(lead?'<p class="allh">'+T('All homes:')+' '+all+'</p>':'<p class="lead">'+all+'</p>')+(sale?saleTrend(a):'')+tbl}
+// The Rent view's card is about rent: sales get one small line (the sale median, the yield, the picked home's), with
+// a button to the Sale price view, where the card is about sales.
+function salesNote(a,pu){
+  const k=v=>Math.round(v/1000)*1000;
+  const bits=[a.sale_median?T('median sale price AED {v}',{v:fmt(k(a.sale_median))}):'',a.yield_pct!=null?T('gross yield {v}%',{v:Number(a.yield_pct).toFixed(1)}):''].filter(Boolean);
+  if(!bits.length)return '';
+  const own=pu&&(pu.sale||pu.yield!=null)?' ('+[safe(T.unit(pu.u)).toLowerCase(),pu.sale?'AED '+fmt(k(pu.sale)):'',pu.yield!=null?Number(pu.yield).toFixed(1)+'%':''].filter(Boolean).join(', ')+')':'';
+  return '<p class="salesNote"><small>'+T('Buying here: {what}',{what:bits.join(' · ')})+own+'</small> <button type="button" class="link" data-view="sale">'+T('Show sale prices')+'</button></p>'}
 function popup(a){
   const types=Object.entries(a.reg_types||{}).map(([k,v])=>safe(k)+' '+fmt(v)).join(', ');
   const aed=v=>'<b>AED '+fmt(v)+'</b>';
@@ -901,23 +927,25 @@ function popup(a){
   // highlights its row, and gives the all-homes figure on the line under it.
   const pick=$('unit').value,pu=pick&&TYPE==='homes'?a.by_unit.find(u=>u.u===pick&&u.median):null;
   const lead=pu?'<p class="lead">'+(pu.n!=null?T('{unit}: median {aed} a year from {n}',{unit:safe(T.unit(pu.u)),aed:aed(pu.median),n:T.count(pu.n,'contract')}):T('{unit}: median {aed} a year',{unit:safe(T.unit(pu.u)),aed:aed(pu.median)}))+
-      (pu.yield!=null||pu.sale?'<br>'+[pu.yield!=null?T('Gross yield {v}%',{v:Number(pu.yield).toFixed(1)}):'',pu.sale?T('median sale price AED {v}',{v:fmt(pu.sale)}):''].filter(Boolean).join(T(', ')):'')+(pu.chg?'<br>'+sinceNote(pu.chg):'')+(pu.unconfirmed?'<br>'+jumpNote(pu.unconfirmed):'')+'</p>':'';
+      (pu.chg?'<br>'+sinceNote(pu.chg):'')+(pu.unconfirmed?'<br>'+jumpNote(pu.unconfirmed):'')+'</p>':'';
   // The area-wide figures: the main lines, or a smaller "All homes:" block under the picked home's figure.
   const main=
     (a.median_kind==='unit'?T('Median for {unit} {aed} a year (no all-homes median is published for this area); ',{unit:safe(T.unit(a.median_unit||'')).toLowerCase(),aed:aed(a.median)})
       :a.median_kind==='typical'?T('Typical {aed} a year (average of the bedroom medians below) from ',{aed:aed(a.median)}):T('Median {aed} a year from ',{aed:aed(a.median)}))+T.count(a.n,'contract')+
     (a.p25!=null?'<br>'+T('Middle half pay AED {a} to {b}',{a:fmt(a.p25),b:fmt(a.p75)}):'')+'<br>'+
     (a.median_sqm?T('AED {v} per m² a year',{v:fmt(a.median_sqm)})+'<br>':'')+
-    (a.yield_pct!=null?T('Gross yield {v}%',{v:Number(a.yield_pct).toFixed(1)})+(a.sale_median?T(', median sale price AED {v}',{v:fmt(a.sale_median)}):'')+'<br>':'')+
     (a.rent_change?sinceNote(a.rent_change)+'<br>':'')+(a.unconfirmed?jumpNote(a.unconfirmed)+'<br>':'');
   // In the Hotels view the card leads with the area's places to stay; its rents fold away under them.
-  const hv=$('metric').value==='hotels'&&!!HOTELS,hh=$('metric').value==='homes'&&!!HOMES,figs=(lead?lead+'<p class="allh">'+T('All homes:')+' '+main+'</p>':main)+
-    (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+saleTrend(a)+(hv?'':areaHotels(a))+
+  const m=$('metric').value,sv=m==='sale',yv=m==='yield';
+  const hv=m==='hotels'&&!!HOTELS,hh=m==='homes'&&!!HOMES,figs=(lead?lead+'<p class="allh">'+T('All homes:')+' '+main+'</p>':main)+
+    (types?'<small>'+types+'</small><br>':'')+spark(a.monthly)+(hv?'':areaHotels(a))+ /* the sale price chart is in the Sale price view's card */
     (a.by_unit.length?'<table><tr><th>'+T('Unit')+'</th><th>'+T('Contracts')+'</th><th>'+T('Median AED')+'</th></tr>'+a.by_unit.slice(0,7).map(u=>'<tr'+(u.n!=null&&u.n<THIN?' class="thin'+(pu&&u.u===pu.u?' pick':'')+'" title="'+safe(T('Fewer than {n} contracts: a thin figure',{n:THIN}))+'"':pu&&u.u===pu.u?' class="pick"':'')+'><td>'+safe(T.unit(u.u))+'</td><td>'+fmt(u.n)+'</td><td>'+fmt(u.median)+'</td></tr>').join('')+'</table>'+(a.by_unit.some(u=>u.n!=null&&u.n<THIN)?'<small>'+T('Italic rows: fewer than {n} contracts, so treat them as a rough guide.',{n:THIN})+'</small><br>':''):'')+
     (a.top_projects&&a.top_projects.filter(p=>p.p!=='—').length?'<table><tr><th>'+T('Busiest buildings')+'</th><th>n</th><th>'+T('Median')+'</th></tr>'+a.top_projects.filter(p=>p.p!=='—').slice(0,5).map(p=>'<tr><td>'+safe(p.p)+'</td><td>'+fmt(p.n)+'</td><td>'+fmt(p.median)+'</td></tr>').join('')+'</table>':'')+
-    (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'');
+    (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'')+
+    (m==='median'||m==='median_sqm'?salesNote(a,pu):'');
   return '<span class="t" data-label="'+safe(a.label)+'">'+safe(T.place(a.label))+'</span>'+
-    (hv||hh?(hv?hotelSection(a):homeSection(a))+'<details class="rentMore"><summary>'+T('Rents in this area')+'</summary>'+figs+'</details>':figs)+
+    (hv||hh?(hv?hotelSection(a):homeSection(a))+'<details class="rentMore"><summary>'+T('Rents in this area')+'</summary>'+figs+'</details>'
+      :sv||yv?ownSection(a,m,pu)+'<details class="rentMore"><summary>'+T('Annual rents in this area')+'</summary>'+figs+'</details>':figs)+
     // See the place: Google links (open a new tab; Google allows these links without a key) and free photos
     // taken near the point (Wikimedia Commons, filled in when the breakdown opens; see loadPhotos).
     '<p class="see">'+[['https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a.label+', Dubai'),T('Google Maps')],

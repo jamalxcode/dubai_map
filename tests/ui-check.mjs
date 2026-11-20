@@ -735,6 +735,32 @@ try {
     }
     await ctx.close();
   }
+  // In the Sale price and Yield views an area's card leads with that figure; rent appears as "annual rent" and the
+  // rent breakdown folds under "Annual rents in this area".
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    // Rent view: rent leads; sales are one small line with a button to the Sale price view, no sale chart.
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.evaluate(() => focusArea(AREAS.filter(x => x.lat != null && x.sale_median && x.yield_pct != null).sort((p, q) => q.n - p.n)[0]));
+    await page.waitForTimeout(1600);
+    const rc = await page.evaluate(() => { const e = document.querySelector('.leaflet-popup-content'), lead = e.querySelector('p.lead') || e.querySelector('p.allh');
+      return { lead: (lead || {}).textContent || '', note: (e.querySelector('.salesNote') || {}).textContent || '', btn: !!e.querySelector('.salesNote [data-view="sale"]'), chart: /Sale price per sq ft/.test(e.textContent) }; });
+    check(/a year/.test(rc.lead) && !/sale price/i.test(rc.lead) && /Buying here: median sale price AED/.test(rc.note) && rc.btn && !rc.chart,
+      `Rent view: the card leads with rent; sales are one small line with a button to sale prices (${rc.note.slice(0, 70)})`);
+    for (const v of ['sale', 'yield']) {
+      await page.goto(BASE + '?view=' + v);
+      await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+      const c = await page.evaluate(m => { const a = AREAS.filter(x => x.lat != null && x.sale_median && x.yield_pct != null).sort((p, q) => q.n - p.n)[0]; focusArea(a); return a.label; }, v);
+      await page.waitForTimeout(1600);
+      const card = await page.evaluate(() => { const e = document.querySelector('.leaflet-popup-content'); const d = e && e.querySelector('details.rentMore');
+        const lead = e && [...e.children].find(k => k.matches('p.lead,p.allh')); return e ? { lead: lead ? lead.textContent : '', folded: !!d && !d.open, sum: d ? d.querySelector('summary').textContent : '' } : null; });
+      const ok = v === 'sale' ? /median sale price AED [\d,]+|Median sale price AED [\d,]+/.test(card.lead) && /annual rent/i.test(card.lead) : /gross yield [\d.]+%|Gross yield [\d.]+%/i.test(card.lead) && /annual rent/i.test(card.lead);
+      check(card && ok && card.folded && /Annual rents in this area/.test(card.sum), `${v === 'sale' ? 'Sale price' : 'Yield'} view: ${c}'s card leads with ${v === 'sale' ? 'its sale price' : 'its yield'}; rent says "annual rent" and folds away (${card && card.lead.slice(0, 60)})`);
+    }
+    await ctx.close();
+  }
   // Backup source in use (Dubai Data stuck): the warning sign says so.
   {
     const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
