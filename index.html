@@ -38,6 +38,7 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
     </div>
     <div class="big" aria-live="polite">
       <!-- The price dial (atlas.js setDial): the median of what's on screen, between its lowest and highest area. -->
+      <div class="dialRow">
       <div class="dialBox" id="dialBox">
         <svg class="dial" id="dial" viewBox="0 0 200 172" aria-hidden="true" focusable="false">
           <defs><linearGradient id="dialGrad" gradientUnits="userSpaceOnUse" x1="20" y1="0" x2="180" y2="0"><stop offset="0" stop-color="#C6DBEF"/><stop offset=".55" stop-color="#6BAED6"/><stop offset="1" stop-color="#2171B5"/></linearGradient></defs>
@@ -45,6 +46,9 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
         </svg>
         <div class="dialMid"><span class="dk" id="dialKind">Median rent</span><span class="num"><span id="med" aria-label="—">—</span></span><span class="du" id="dialUnit">AED a year</span></div>
         <span class="dEnd dMin" id="dialMin"></span><span class="dEnd dMax" id="dialMax"></span>
+      </div>
+      <!-- Beside the dial, in bold: what the figure is (atlas.js dialSide). -->
+      <div class="dialSide" id="dialSide" hidden><b id="dsUnit"></b><span id="dsWhat"></span></div>
       </div>
       <span class="cap" id="medLabel">Median yearly rent in view</span>
     </div>

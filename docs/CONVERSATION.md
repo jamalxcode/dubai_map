@@ -427,6 +427,10 @@ Given: https://jamalxcode.github.io/dubai_map/ and https://jamalxcode.github.io/
 
 Done (decisions, seventieth pass): the key sits bottom right on desktop and phones, above the map credits.
 
+### 20 Nov · "there's a blank space to the right, have the text boldly shown… AED A YEAR, MEDIAN SALE PRICE, GROSS A YEAR (ROI), AED A NIGHT, AED A NIGHT; also the and more like a toggle; the metro button is a toggle, have it look different" (screenshot)
+
+Done (decisions, seventy-first pass): the unit in bold beside the dial for every view, and Metro and place names as switches.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.

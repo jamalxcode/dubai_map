@@ -724,8 +724,16 @@ const dialPt=a=>{const t=a*Math.PI/180;return [DIAL.cx+DIAL.r*Math.cos(t),DIAL.c
 const dialArc=(a,b)=>{const [x0,y0]=dialPt(a),[x1,y1]=dialPt(b);return 'M'+x0.toFixed(1)+' '+y0.toFixed(1)+' A'+DIAL.r+' '+DIAL.r+' 0 '+(b-a>180?1:0)+' 1 '+x1.toFixed(1)+' '+y1.toFixed(1)};
 $('dialTrack').setAttribute('d',dialArc(DIAL.a0,DIAL.a1));
 function wMedian(ps){const s=[...ps].sort((x,y)=>x.v-y.v),N=s.reduce((t,p)=>t+(p.n||1),0);let c=0;for(const p of s){c+=p.n||1;if(c>=N/2)return p.v}return null}
+// Beside the dial, in bold, what its figure is: the owner wants it seen at a glance (20 Nov).
+function dialSide(on){const m=LABEL.metric||$('metric').value,el=$('dialSide');
+  const home=($('unit').value?T.unit($('unit').value):TYPENAME()).toLowerCase();
+  const t={median:[T('AED a year'),T('Median yearly rent, {home}',{home})],sale:[T('Median sale price'),T('AED, from registered sales, {home}',{home})],
+    yield:[T('Gross a year (ROI)'),T('Yearly rent as a share of the sale price, {home}',{home})],median_sqm:[T('AED per m² a year'),T('Median rent per square metre, {home}',{home})],
+    hotels:[T('AED a night'),hotelPriced()?T('Typical hotel price, one room for 2'):T("Dubai's official average room rate")],homes:[T('AED a night'),T('Typical holiday home price, one unit for 2')]}[m];
+  el.hidden=!on||!t;if(el.hidden)return;$('dsUnit').textContent=t[0];$('dsWhat').textContent=t[1]}
 function setDial(on,{kind,unit,lo,hi,mid,fmtEnd}={}){
-  $('dialBox').classList.toggle('off',!on);if(!on)return;
+  $('dialBox').classList.toggle('off',!on);dialSide(on);if(!on)return;
+  $('dialBox').classList.toggle('long',Math.round(mid)>=1e6); // a million-dirham figure gets smaller type, so it stays inside the ring
   const f=hi>lo?Math.min(1,Math.max(0,(mid-lo)/(hi-lo))):.5,a=DIAL.a0+(DIAL.a1-DIAL.a0)*f,[kx,ky]=dialPt(a);
   $('dialFill').setAttribute('d',f>0.002?dialArc(DIAL.a0,a):'');$('dialKnob').setAttribute('cx',kx.toFixed(1));$('dialKnob').setAttribute('cy',ky.toFixed(1));
   $('dialKind').textContent=kind;$('dialUnit').textContent=unit;

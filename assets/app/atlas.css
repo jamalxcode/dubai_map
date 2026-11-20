@@ -659,3 +659,24 @@ details.rentMore summary{cursor:pointer;font-weight:600;color:var(--text)}
    "i" credits button (phones). Physical "right": the map stays left to right in Arabic too. */
 .legend{left:auto;right:12px;bottom:26px}
 @media (max-width:860px){.legend{left:auto;right:8px;bottom:44px}}
+/* The dial and, beside it in bold, what its figure is (atlas.js dialSide), filling the band's empty right side. */
+.big .dialRow{display:flex;align-items:center;gap:22px}
+.big .dialRow .dialBox{margin-inline-start:0;flex:none}
+.big .dialSide{min-width:0;text-align:start}
+.big .dialSide[hidden]{display:none}
+.big .dialSide b{display:block;font:700 clamp(26px,2.6vw,38px)/1.02 var(--cond);letter-spacing:.02em;text-transform:uppercase;color:#E2C766}
+.big .dialSide span{display:block;margin-top:8px;font-size:14px;line-height:1.35;color:var(--band-muted)}
+:root[lang="ar"] .big .dialSide b{letter-spacing:0;text-transform:none}
+@media (max-width:860px){.big .dialRow{gap:14px}.big .dialSide b{font-size:22px}.big .dialSide span{font-size:12.5px;margin-top:5px}}
+@media (max-width:360px){.big .dialSide b{font-size:19px}.big .dialSide span{display:none}}
+/* Metro and English + Arabic place names are on/off layers, so they look like switches, not like the views. */
+.viewSw .metroBtn,.viewSw .names{position:relative;padding-inline-start:38px!important}
+.viewSw .metroBtn::before,.viewSw .names::before{content:"";position:absolute;left:9px;top:50%;width:24px;height:14px;margin-top:-7px;border-radius:7px;background:#B9AFA2;transition:background .15s}
+.viewSw .metroBtn::after,.viewSw .names::after{content:"";position:absolute;left:11px;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#FFFCF5;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
+.viewSw .metroBtn.on::before,.viewSw .names[aria-pressed="true"]::before{background:var(--oxblood)}
+.viewSw .metroBtn.on::after,.viewSw .names[aria-pressed="true"]::after{left:23px}
+.viewSw .metroBtn.on,.viewSw .metroBtn.on:hover,.viewSw button.names[aria-pressed="true"]{background:none;color:var(--text)}
+:root[data-theme="dark"] .viewSw .metroBtn.on::before,:root[data-theme="dark"] .viewSw .names[aria-pressed="true"]::before{background:var(--gold)}
+@media (prefers-reduced-motion:reduce){.viewSw .metroBtn::before,.viewSw .metroBtn::after,.viewSw .names::before,.viewSw .names::after{transition:none}}
+.big .dialBox.long:not(.off) .num{font-size:28px!important}
+@media (max-width:860px){.big .dialBox.long:not(.off) .num{font-size:23px!important}}

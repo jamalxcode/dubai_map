@@ -716,6 +716,14 @@ Asked: "critique the user interface", then "do it all, merge on main". Sixteen p
 
 Asked (screenshot of the Hotels view): "move the bottom left key to the right, it covers less urban areas on the dubai map". Dubai's coast and city run from bottom left to top right, so the bottom-right corner is mostly desert. The key now sits there (`right:12px`, above the map credits on wide screens; `right:8px`, above the "i" credits button on phones). Labels already step out from under the key wherever it is (`labels.js` blocks). Checked: every browser check passes (no label under the key in English and Arabic, desktop and phone); measured on desktop (key 1106–1428 px, credits below it) and at 390 px (key clear of the "i" button).
 
+## Decision on 2026-11-20 (seventy-first pass): what the figure is, in bold; switches for layers
+
+Asked (screenshot of the header): "there's a blank space to the right, have the text boldly shown as it is important to see: AED A YEAR, MEDIAN SALE PRICE, GROSS A YEAR (ROI), AED A NIGHT, AED A NIGHT", and "the metro button is a toggle, have it look different" (read as Metro and the place-names button, both on/off layers).
+- **Beside the dial:** the view's unit in large bold gold capitals ("AED A YEAR", "MEDIAN SALE PRICE", "GROSS A YEAR (ROI)", "AED A NIGHT") with one plain line naming the figure and the home ("Median yearly rent, 1-bedroom apartments"); in Arabic too. Hidden when the dial is (a count of places has no unit).
+- **Switches:** Metro and A+ع carry a small track-and-knob switch and no longer fill like a chosen view, so layers and views look different.
+- **Also:** on phones a million-dirham sale median ("1,108,000") ran past the dial's ring; such figures now get smaller type (checked inside the ring at 390 px and on desktop).
+- **Checked:** every browser check passes (header heights included); screenshots of Rent, Yield, Hotels, Sale price on a phone, and Arabic.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".
