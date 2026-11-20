@@ -913,6 +913,35 @@ try {
     check(fit.inside && fit.hits === 0, `${vp.width}×${vp.height}: a full breakdown stays inside the map and clear of its buttons (${fit.h} px card, ${fit.mh} px map, ${fit.hits} overlaps)`);
     await page.context().close();
   }
+  // Phones, every view: no label sits on a map control (view bar, zoom, credits, budget slider, full-screen button).
+  // Only the visible part of a label counts: one whose point is off the map is clipped by the map's edge
+  // (overflow hidden), and the budget slider moves out above the map on phones.
+  for (const width of [320, 344, 375]) {
+    const { page, errors } = await open(browser, { width, height: 800 });
+    const views = await page.evaluate(() => [...document.getElementById('metric').options].map(o => o.value));
+    for (const v of views) {
+      await page.evaluate(v => { const s = document.getElementById('metric'); s.value = v; s.dispatchEvent(new Event('change')); }, v);
+      await page.waitForTimeout(300);
+      await page.waitForFunction(() => !map._flyToFrame && !map._animatingZoom && (!window.gsap || !gsap.globalTimeline.getChildren(true, true, false).some(t => t.isActive())), null, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(300);
+      const hit = await page.evaluate(() => {
+        const m = map.getContainer().getBoundingClientRect();
+        const controls = [...document.querySelectorAll('.leaflet-control')].map(e => ({ e, r: e.getBoundingClientRect() })).filter(c => c.r.width && c.r.height);
+        const out = [];
+        for (const el of document.querySelectorAll('.rl')) {
+          const a = el.getBoundingClientRect();
+          const l = Math.max(a.left, m.left), t = Math.max(a.top, m.top), r = Math.min(a.right, m.right), b = Math.min(a.bottom, m.bottom);
+          if (r <= l || b <= t) continue; // wholly outside the map: clipped, not seen
+          for (const c of controls) if (l < c.r.right && c.r.left < r && t < c.r.bottom && c.r.top < b)
+            out.push(`"${el.querySelector('small')?.textContent}" on .${[...c.e.classList].find(k => k !== 'leaflet-control' && k !== 'leaflet-bar') || 'leaflet-control'}`);
+        }
+        return { metric: LABEL.metric, labels: document.querySelectorAll('.rl').length, out };
+      });
+      check(!hit.out.length, `${width} px, ${v} view (${hit.metric}, ${hit.labels} labels): no label overlaps a map control${hit.out.length ? ': ' + hit.out.join(', ') : ''}`);
+    }
+    check(!errors.length, `${width} px views: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await page.context().close();
+  }
   // Tablet width: the compact header, so the rent check starts in the top third of the screen.
   {
     const { page } = await open(browser, { width: 960, height: 800 });

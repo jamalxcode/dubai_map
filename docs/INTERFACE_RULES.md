@@ -52,6 +52,7 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - Label boxes are measured as drawn (a hidden label with the same styles, re-measured once the fonts load), so placement holds in both themes and languages.
 - A group of up to 3 comes apart when each label fits at its point or just beside it; a moved label has a thin line to a dot at its point.
 - Labels keep clear of the zoom bar, the view bar and the legend, and are re-placed when a control appears, the legend folds or the map is panned (not while a breakdown is open; then once it closes).
+- **No label is ever drawn on a map control** (any `.leaflet-control`: view bar, zoom, credits, full-screen button, budget slider; and the legend), in any view, at any width. A label that can't step aside joins a nearby neighbour if the joined label has room, else it is hidden until the view gives it room (`hidden` in labels.js rule 3). The browser check switches through every view at 320, 344 and 375 px.
 - A label whose point is on the map stays fully inside its edges (a line joins it to its point if it had to slide); crowded edges merge rather than cut labels off.
 - **Thin figures** (fewer than 10 contracts): a dashed outline (the price colour darkened slightly) and an italic figure; same colours and contrast.
 - **Community outlines** under the labels: official boundaries, filled with the area's price colour at 32% and outlined at 70%, redrawn with every view, filter and type change.
