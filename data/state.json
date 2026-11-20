@@ -20,14 +20,15 @@
     }
   },
   "datadubai": {
-    "last_ok_at": "2026-11-19T18:17:24+00:00",
+    "last_ok_at": "2026-11-20T00:42:02+00:00",
     "last_pull": {
-      "at": "2026-11-19T18:17:23+00:00",
+      "at": "2026-11-20T00:39:57+00:00",
       "export_files_updated": 0,
-      "live": "current",
-      "through": "2026-11-18"
+      "live": "updated",
+      "pages": 102,
+      "through": "2026-11-19"
     },
-    "live_checked_at": "2026-11-19T18:17:24+00:00",
+    "live_checked_at": "2026-11-20T00:42:02+00:00",
     "live_pages": 102,
     "published_seen": [
       {
@@ -37,30 +38,34 @@
       {
         "seen_at": "2026-11-19T02:19:46+00:00",
         "through": "2026-11-18"
+      },
+      {
+        "seen_at": "2026-11-20T00:42:02+00:00",
+        "through": "2026-11-19"
       }
     ],
     "state": "ok",
     "status": "ok",
-    "through": "2026-11-18"
+    "through": "2026-11-19"
   },
   "dld": {
     "state": "off",
     "status": "off (waiting for DLD's permission)"
   },
   "holiday_homes": {
-    "last_ok_at": "2026-11-19T18:27:00+00:00",
-    "last_run_at": "2026-11-19T18:27:00+00:00",
-    "list_at": "2026-11-19T04:05:49+00:00",
+    "last_ok_at": "2026-11-20T00:53:22+00:00",
+    "last_run_at": "2026-11-20T00:53:22+00:00",
+    "list_at": "2026-11-20T00:50:00+00:00",
     "listed": 256,
-    "priced": 52,
+    "priced": 53,
     "state": "ok",
     "status": "ok"
   },
   "hotel_prices": {
     "hotels": 374,
-    "last_ok_at": "2026-11-19T18:23:01+00:00",
-    "last_run_at": "2026-11-19T18:23:01+00:00",
-    "list_at": "2026-11-19T03:13:31+00:00",
+    "last_ok_at": "2026-11-20T00:49:28+00:00",
+    "last_run_at": "2026-11-20T00:49:28+00:00",
+    "list_at": "2026-11-20T00:43:26+00:00",
     "listed": 2625,
     "matched": 527,
     "priced": 374,
@@ -68,7 +73,7 @@
     "status": "ok"
   },
   "hotel_stats": {
-    "last_try_at": "2026-11-19T03:12:35+00:00",
+    "last_try_at": "2026-11-20T00:42:02+00:00",
     "state": "no_key",
     "status": "no credentials"
   },
@@ -77,7 +82,7 @@
     "status": "no credentials"
   },
   "serp_stays": {
-    "last_run_at": "2026-11-19T18:27:00+00:00",
+    "last_run_at": "2026-11-20T00:53:23+00:00",
     "state": "no_key",
     "status": "no credentials"
   }
