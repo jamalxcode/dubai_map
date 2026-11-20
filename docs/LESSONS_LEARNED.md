@@ -243,3 +243,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** every visitor downloaded the Arabic tables (about 92 KB), English visitors too.
 - **Rule:** `i18n-ar.js` is written in by `i18n.js` only when the page is in Arabic, while the page is still loading (so it runs before the page scripts); tests load both files when they fake an Arabic page.
+
+## Undo one edit, not the whole file (20 Nov 2026)
+
+- **Problem:** to drop one experiment in atlas.js, a session reached for `git checkout <file>`, which would also have thrown away every other uncommitted change in it (the currency switch, the Near filter); the command was blocked before it ran.
+- **Rule:** undo a single change by editing it back (or commit first, then revert that commit); never restore a whole file that holds uncommitted work.

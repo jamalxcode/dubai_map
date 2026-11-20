@@ -475,6 +475,10 @@ Done: the keybox.ae round (seventy-sixth pass) and the Burj Khalifa fix (seventy
 
 Done (decisions, seventy-ninth pass): pinned card actions, the tip fitting phones, one Dubai figure and one way of rounding, rankings from 100+ contracts, a clearer chart, one Near picker, the budget boxes folded, a shorter phone header, the facts after the map, one look and Arabic versions for the generated pages, header links to them, rent over four weeks (from mid-December), a tidier card, Arabic downloaded only when chosen. The label fix from the parallel session (seventy-eighth pass) is merged in.
 
+### 20 Nov · "save to repo convo, decisions and lessons learned"
+
+Done: the review round (seventy-ninth pass) and the merged label fix (seventy-eighth pass) are in decisions, this log and lessons learned; added the lesson on undoing one change without losing uncommitted work.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
