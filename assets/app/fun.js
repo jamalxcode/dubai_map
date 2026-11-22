@@ -51,7 +51,7 @@
   let FACTS = [], sig = '';
   function renderStrip() {
     FACTS = facts();
-    const s = FACTS.map(f => f.id).join() + '|' + T.lang;
+    const s = FACTS.map(f => f.id).join() + '|' + T.lang + '|' + (STAY($('metric').value) ? 'stay' : 'rent');
     if (s === sig) return; sig = s;
     strip.innerHTML = '<div class="funHead"><h2>' + T('Dubai right now') + '</h2>' + tipsHtml() + '</div><div class="funChips">' +
       FACTS.map((f, i) => '<button type="button" class="funChip" data-fact="' + i + '">' + safe(f.txt) + '</button>').join('') +
@@ -70,8 +70,12 @@
   // First visit: three tips, one at a time, in the strip (never over the map or a control); gone once dismissed.
   let tip = +(LS.get('funTip') || 0);
   function tipsHtml() {
-    const tips = [T('Tip 1 of 3: pick your home (studio, 1-bed…) with Home, and every figure follows.'), T('Tip 2 of 3: tap an area on the map for its breakdown, photos and a link to share.'),
-      T('Tip 3 of 3: switch the map between Rent, Sale price, Yield, Hotels and Holiday homes.')];
+    // The tips fit the view: in Hotels and Holiday homes there is no Home picker, so they talk about places to stay.
+    const tips = STAY($('metric').value)
+      ? [T('Tip 1 of 3: each label is an area\'s typical price a night; tap a dot for one place\'s price, rating and links.'), T('Tip 2 of 3: set a nightly budget with the slider on the map, and the list below keeps the places within it.'),
+        T('Tip 3 of 3: switch the map between Rent, Sale price, Yield, Hotels and Holiday homes.')]
+      : [T('Tip 1 of 3: pick your home (studio, 1-bed…) with Home, and every figure follows.'), T('Tip 2 of 3: tap an area on the map for its breakdown, photos and a link to share.'),
+        T('Tip 3 of 3: switch the map between Rent, Sale price, Yield, Hotels and Holiday homes.')];
     if (tip >= tips.length) return '';
     return '<p class="funTip" role="status">' + tips[tip] + ' <button type="button" class="link" data-tip-next>' + (tip < tips.length - 1 ? T('Next tip') : T('Got it')) + '</button>' +
       '<button type="button" class="funX" data-tip-x aria-label="' + safe(T('Hide the tips')) + '">×</button></p>';
@@ -262,7 +266,7 @@
     finder.hidden = false;
     finder.innerHTML = '<div class="fHead"><h3>' + (metric === 'homes' ? T('Find a holiday home') : T('Find a hotel')) + '</h3><label>' + T('Rated') + ' <select id="fRate">' +
       [[0, T('any')], [4, T('4 or more')], [4.5, T('4.5 or more')]].map(([v, t]) => '<option value="' + v + '"' + (v === minRating ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label></div>' +
-      (pool.length ? '<ol>' + pool.map((x, i) => '<li><button type="button" class="link" data-find="' + i + '">' + safe(x.k === 'hotels' ? hotelName(x.h) : x.h.name) + '</button><span>AED ' + fmt(x.h.price) + (x.h.area ? ' · ' + safe(T.place(x.h.area)) : '') + (x.h.rating && x.h.reviews >= MIN_REVIEWS ? ' · ' + T('rated {r}', { r: x.h.rating }) : '') + '</span></li>').join('') + '</ol>'
+      (pool.length ? '<ol>' + pool.map((x, i) => '<li><button type="button" class="link" data-find="' + i + '">' + safe(x.k === 'hotels' ? hotelName(x.h) : x.h.name) + '</button><span>AED ' + fmt(x.h.price) + (x.h.area ? ' · ' + safe(T.place(x.h.area)) : '') + (x.h.rating && x.h.reviews >= MIN_REVIEWS ? ' · ' + T('rated {r}', { r: Math.round(x.h.rating * 10) / 10 }) : '') + '</span></li>').join('') + '</ol>'
         : '<p class="muted">' + T('Nothing matches: widen the budget or the rating.') + '</p>') +
       '<p class="muted fNote">' + T('Cheapest first, within your nightly budget.') + '</p>';
     finder._pool = pool;
@@ -382,4 +386,5 @@
     else setTimeout(wait, 300);
   })();
   window.funRefresh = () => { sig = ''; renderStrip(); };
+  $('metric').addEventListener('change', () => renderStrip()); // tips follow the view
 })();

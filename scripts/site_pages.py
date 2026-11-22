@@ -54,6 +54,13 @@ def unit_of(a, u):
     return next((x for x in a.get("by_unit") or [] if x.get("u") == u), {})
 
 
+def weight(a, u):
+    """A home type's contracts, for weighting; where the source gives none per type (the older districts), a share of
+    the area's total, as the map does (atlas.js), so the pages' typical figure matches the map's."""
+    x = u if isinstance(u, dict) else unit_of(a, u)
+    return x.get("n") if x.get("n") is not None else round((a.get("n") or 0) / max(1, len(a.get("by_unit") or [])))
+
+
 def solid(a):
     return a.get("lat") is not None and not a.get("staff") and (a.get("n") or 0) >= THIN
 
@@ -115,7 +122,7 @@ def area_link(a, depth, lang="en"):
 def dubai_one_bed(areas):
     """Dubai's typical 1-bedroom rent: the middle contract across every area with a figure (as the map's dial)."""
     one = "1-bedroom apartments"
-    return w_median([(unit_of(a, one).get("median"), unit_of(a, one).get("n")) for a in areas if solid(a) and unit_of(a, one).get("median")])
+    return w_median([(unit_of(a, one).get("median"), weight(a, one)) for a in areas if a.get("lat") is not None and unit_of(a, one).get("median")])
 
 
 def stats_page(areas, through, ccp_through, lang="en", snaps=None):
@@ -229,7 +236,7 @@ def unit_page(areas, through, u, s, max_=None, lang="en"):
             f"<table class=sortable><thead><tr><th>{L('Area')}</th><th class=r>{L('AED a year')}</th><th class=r>{L('Contracts')}</th><th class='r opt'>{L('Gross yield')}</th></tr></thead><tbody>" + rows + "</tbody></table>" + sort_script())
     what = t(lang, WHAT[u])
     faq = [(t(lang, "What is the cheapest area in Dubai for {what}?", what=what), t(lang, "{area}, where the median is {v} a year ({n} contracts).", area=place(items[0][0]['label']), v=aed(items[0][1]['median'], lang), n=f"{(items[0][1].get('n') or 0):,}")),
-           (t(lang, "What is the typical rent for {what} in Dubai?", what=what), t(lang, "About {v} a year: half of these areas' registered contracts are below it.", v=aed(w_median([(x['median'], x.get('n')) for _, x in items]), lang)))] if items else []
+           (t(lang, "What is the typical rent for {what} in Dubai?", what=what), t(lang, "About {v} a year: half of these areas' registered contracts are below it.", v=aed(w_median([(x['median'], weight(a, x)) for a, x in items]), lang)))] if items else []
     return path, page(lang, path, title, t(lang, "{title}: {n} areas, cheapest first, from Ejari rent contracts.", title=title, n=len(items)), body, faq)
 
 

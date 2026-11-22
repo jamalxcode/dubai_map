@@ -141,6 +141,16 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Rent over four weeks | Once a snapshot four weeks older exists: Dubai's typical rent and the biggest moves (areas with 30+ contracts) on the stats page, each area's change on its page; base snapshot as history.py (a year back, else the oldest four weeks old) | `page_kit.base_snapshot`, `collector/history.py baseline` |
 | Near | One picker: a Metro or Tram station within a 10- or 20-minute walk, or a place (beach, golf, park, mall, schools); one choice at a time | `atlas.js nearOptions` |
 
+### Second critique (22 Nov)
+
+| Rule | Value | Where |
+|---|---|---|
+| Weight without a per-type count | A share of the area's contracts (area total ÷ home types), on the map and the pages alike | `atlas.js draw`, `site_pages.weight` |
+| Big label groups | More than 8 areas: the label shows the busiest area's own figure at its point, "Area · N more nearby"; up to 8: the contract-weighted average; counts add up | `labels.js lead`, `atlas.js LEAD` |
+| Not holiday homes | Hostels, dorms, capsules, bunks, shared rooms, "bed in …" listings | `hotel_prices.shared_bed` |
+| Ratings | One decimal | `hotel_prices.rating1`, `atlas.js r1` |
+| Holiday homes asked per pull | 80 (Xotelo) | `holiday_homes.BUDGET` |
+
 ## 6. The rent check
 
 | Rule | Value | Where |

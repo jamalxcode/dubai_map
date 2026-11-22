@@ -91,7 +91,10 @@ if(navigator.geolocation){const a=L.DomUtil.create('a','near',map.zoomControl.ge
 // Names are shortened here, once (the label's CSS doesn't cut them again), so "+N" always shows.
 const cut=(t,n)=>t.length>n?t.slice(0,n-1).trimEnd()+'…':t;
 // A merged label names its busiest area and how many more it covers ("JLT + 12 areas"; "+12" alone read as code).
-const groupName=g=>{const top=g.reduce((a,b)=>b.n>a.n?b:a,g[0]).a.label;return g.length===2?T('{name} + 1 area',{name:cut(T.place(top),20)}):T('{name} + {n} areas',{name:cut(T.place(top),20),n:g.length-1})};
+// A group of more than LEAD areas shows its busiest area's own figure (labels.js lead), named "Area · 12 more nearby".
+const LEAD=8,leadGroup=g=>g.length>LEAD&&!sumView();
+const sumView=()=>{const m=LABEL.metric||$('metric').value;return m==='n'||(m==='hotels'&&!hotelPriced())};
+const groupName=g=>{const top=g.reduce((a,b)=>b.n>a.n?b:a,g[0]).a.label;if(leadGroup(g))return T('{name} · {n} more nearby',{name:cut(T.place(top),20),n:g.length-1});return g.length===2?T('{name} + 1 area',{name:cut(T.place(top),20)}):T('{name} + {n} areas',{name:cut(T.place(top),20),n:g.length-1})};
 const labelName=g=>g.length===1?cut(T.place(g[0].a.label),28):groupName(g);
 // Base map. Vector tiles (OpenFreeMap: OpenStreetMap data, free, no key) so place and street names can be
 // shown in English, Arabic or both, chosen with the map's language button. MapLibre (1 MB) loads after the
@@ -580,7 +583,8 @@ function stayPrice(h,unit){
     T('Checked {d}.',{d:safe(at?niceDate(at):'')})+'</p>'}
 // A Tripadvisor rating, only from 5 reviews up (one or two reviews say little).
 const MIN_REVIEWS=5;
-const ratingText=h=>h.rating&&h.reviews>=MIN_REVIEWS?' · '+T('rated {r} of 5 ({n} reviews)',{r:h.rating,n:fmt(h.reviews)}):'';
+const r1=v=>v==null||v===''?v:Math.round(+v*10)/10; // ratings to one decimal (sites send 4.2999997)
+const ratingText=h=>h.rating&&h.reviews>=MIN_REVIEWS?' · '+T('rated {r} of 5 ({n} reviews)',{r:r1(h.rating),n:fmt(h.reviews)}):'';
 const monthName=m=>m?new Date(m+'-01T00:00:00').toLocaleDateString(T.lang==='ar'?'ar-AE':'en-GB',{month:'long',year:'numeric'}):'';
 function hotelLegend(){
   return '<div class="t">'+T('Hotels per area')+'</div>'+hotelNotes()}
@@ -642,7 +646,7 @@ function homeSection(a){
       (x.prices.length>1?T('From AED {lo} to {hi} a night',{lo:fmt(Math.min(...x.prices)),hi:fmt(Math.max(...x.prices))})+'<br>':'')+
       (x.n===1?T('1 holiday home with a price'):T('{n} holiday homes with a price',{n:fmt(x.n)}))+'</p>'+stayTrend('homes',a.label)+
     '<table class="htab"><tr><th>'+T('Place')+'</th><th>'+T('AED a night')+'</th></tr>'+
-      list.slice(0,HOTEL_ROWS).map(h=>'<tr><td><button type="button" class="hrow" data-hh="'+h.i+'">'+safe(h.name)+'</button>'+(h.rating&&h.reviews>=MIN_REVIEWS?'<small>'+T('rated {r} of 5',{r:h.rating})+'</small>':'')+'</td><td class="r">'+fmt(h.price)+'</td></tr>').join('')+'</table>'+
+      list.slice(0,HOTEL_ROWS).map(h=>'<tr><td><button type="button" class="hrow" data-hh="'+h.i+'">'+safe(h.name)+'</button>'+(h.rating&&h.reviews>=MIN_REVIEWS?'<small>'+T('rated {r} of 5',{r:r1(h.rating)})+'</small>':'')+'</td><td class="r">'+fmt(h.price)+'</td></tr>').join('')+'</table>'+
     (list.length>HOTEL_ROWS?'<p class="muted">'+T('and {n} more: zoom in to see them on the map.',{n:list.length-HOTEL_ROWS})+'</p>':'')+crossStay(a,'homes')+'</div>';
 }
 // Each places-to-stay view points to the other where the area has figures for it, with a button to switch.
@@ -673,8 +677,10 @@ function stayTrend(kind,label,chartOnly,noteOnly){
   if(noteOnly)return '';
   const last=pts.at(-1),cut=new Date(new Date(last.d)-TREND_DAYS*864e5).toISOString().slice(0,10),base=[...pts].reverse().find(p=>p.d<=cut);
   const chg=base&&base.n>=TREND_MIN&&last.n>=TREND_MIN?Math.round((last.v-base.v)/base.v*100):null;
-  return '<div class="trend"><small>'+T('{what}, {a} to {b}',{what,a:pts[0].m,b:last.m})+(chg!=null?' · <b class="'+(chg>0?'up':chg<0?'down':'')+'">'+T('{sign}{v}% since {d}',{sign:chg>0?'+':'',v:chg,d:base.m})+'</b>':'')+'</small>'+
-    chart(pts,{label:what,stroke:'var(--gold-ink)'})+'</div>'}
+  const out='<div class="trend"><small>'+T('{what}, {a} to {b}',{what,a:pts[0].m,b:last.m})+(chg!=null?' · <b class="'+(chg>0?'up':chg<0?'down':'')+'">'+T('{sign}{v}% since {d}',{sign:chg>0?'+':'',v:chg,d:base.m})+'</b>':'')+'</small>'+
+    chart(pts,{label:what,stroke:'var(--gold-ink)'})+'</div>';
+  // In the key the chart folds away (it took a big corner of the map); cards show it open.
+  return chartOnly?'<details class="trendFold"><summary>'+T('Price history')+(chg!=null?' · '+T('{sign}{v}% since {d}',{sign:chg>0?'+':'',v:chg,d:base.m}):'')+'</summary>'+out+'</details>':out}
 let POINTS=[],LABEL={},animateLabels=true;
 const pct=v=>Number(v).toFixed(1)+'%'; // yields: always one decimal
 const compact=v=>v>=1e6?(v/1e6).toFixed(v>=1e7?0:2).replace(/\.?0+$/,'')+'M':v>=1e4?Math.round(v/1e3)+'k':v>=1e3?(v/1e3).toFixed(1).replace(/\.0$/,'')+'k':String(Math.round(v));
@@ -718,7 +724,7 @@ function renderLabels(){
     .filter(r=>r.width&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top)
     .map(r=>{const c=map.containerPointToLayerPoint([r.left-box.left+r.width/2,r.top-box.top+r.height/2]);return {x:c.x,y:c.y,w:r.width,h:r.height}});
   const v0=map.containerPointToLayerPoint([0,0]),ms=map.getSize(),view={x0:v0.x,y0:v0.y,x1:v0.x+ms.x,y1:v0.y+ms.y};
-  const cl=RentLabels.place(items,size,{pad:4,sum:metric==='n'||(metric==='hotels'&&!hotelPriced()),blocks,view}).filter(c=>!c.hidden); // hidden: nowhere clear of a control (labels.js)
+  const cl=RentLabels.place(items,size,{pad:4,sum:metric==='n'||(metric==='hotels'&&!hotelPriced()),blocks,view,lead:LEAD}).filter(c=>!c.hidden); // hidden: nowhere clear of a control (labels.js)
   const added=[];MARKERS.clear();
   for(const c of cl){const g=c.members,moved=c.lx!==c.x||c.ly!==c.y,pos=moved?map.layerPointToLatLng([c.lx,c.ly]):L.latLng(c.lat,c.lng);
     if(moved){L.polyline([[c.lat,c.lng],pos],{className:'leader',weight:1.5,interactive:false}).addTo(layer);
@@ -736,7 +742,7 @@ function renderLabels(){
     // One area: zoom to it and set it apart (focusArea); the breakdown opens once the map has arrived.
     if(c.single){MARKERS.set(g[0].a.label,m);m.on('click',()=>{if(CMP_PICK){if(CMP_PICK.label!==g[0].a.label)openCompare(CMP_PICK,g[0].a);return}if(FOCUS&&FOCUS.label===g[0].a.label&&m.isPopupOpen())return;focusArea(g[0].a)})}
     else m.on('click',()=>{const b=L.latLngBounds(g.map(o=>[o.a.lat,o.a.lng])),z=map.getBoundsZoom(b,false,L.point(140,140));
-      if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<span class="t">'+T.count(g.length,'area')+'</span>'+((metric==='n'||(metric==='hotels'&&!hotelPriced()))?safe(labelText(c.val,metric)):T('Typical {v}',{v:safe(labelText(c.val,metric))}))+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(T.place(o.a.label))+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
+      if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<span class="t">'+T.count(g.length,'area')+'</span>'+((metric==='n'||(metric==='hotels'&&!hotelPriced()))?safe(labelText(c.val,metric)):c.lead?T('The label shows {area}: {v}',{area:safe(T.place(c.lead.a.label)),v:safe(labelText(c.val,metric))}):T('Typical {v}',{v:safe(labelText(c.val,metric))}))+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(T.place(o.a.label))+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
       else{clearFocus();map.closePopup();map.flyToBounds(b,{padding:[70,70],maxZoom:16,duration:FX?.6:0,animate:!!FX})}});
   }
   if(window.afterLabels)afterLabels(added.map(m=>m.getElement()&&m.getElement().firstChild).filter(Boolean),metric); // fun.js: count-up, budget slider
@@ -985,8 +991,11 @@ function popup(a){
     (a.source==='ccp'?'<small>'+T('Figures:')+' <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0'+(a.through?T(', to {d}',{d:safe(a.through)}):'')+'.</small><br>':'')+
     (m==='median'||m==='median_sqm'?salesNote(a,pu):'');
   return '<span class="t" data-label="'+safe(a.label)+'">'+safe(T.place(a.label))+'</span>'+(window.cardFact?cardFact(a,m):'')+
+    
     (hv||hh?(hv?hotelSection(a):homeSection(a))+'<details class="rentMore"><summary>'+T('Rents in this area')+'</summary>'+figs+'</details>'
       :sv||yv?ownSection(a,m,pu)+'<details class="rentMore"><summary>'+T('Annual rents in this area')+'</summary>'+figs+'</details>':figs)+
+    // Other sources disagree by more than 15%: said right under the figures, not folded away.
+    ((a.disagree||[]).length?'<p class="differ"><small>'+T('Other sources differ by more than 15%:')+' '+a.disagree.map(d=>T('{source}, {unit}: AED {theirs} (ours is {pct}%)',{source:safe(d.source),unit:safe(T.unit(d.unit)),theirs:fmt(d.theirs),pct:(d.pct>0?'+':'')+d.pct})).join('; ')+'. '+T('They count differently (new contracts only, or by DLD area), so treat both as a guide.')+'</small></p>':'')+
     // See the place: Google links (open a new tab; Google allows these links without a key) and free photos
     // taken near the point (Wikimedia Commons, filled in when the breakdown opens; see loadPhotos).
     '<p class="see">'+[['https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a.label+', Dubai'),T('Google Maps')],
@@ -997,7 +1006,6 @@ function popup(a){
     (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
     (a.staff?'<p class="staff"><small>'+T('An industrial zone: most homes here are staff accommodation, so rents run well below homes elsewhere. It is left out of comparisons with other areas.')+'</small></p>':'')+
     '<details class="cardMore"><summary>'+T('Details and sources')+'</summary>'+lifeLine(a)+
-    ((a.disagree||[]).length?'<p class="differ"><small>'+T('Other sources differ by more than 15%:')+' '+a.disagree.map(d=>T('{source}, {unit}: AED {theirs} (ours is {pct}%)',{source:safe(d.source),unit:safe(T.unit(d.unit)),theirs:fmt(d.theirs),pct:(d.pct>0?'+':'')+d.pct})).join('; ')+'. '+T('They count differently (new contracts only, or by DLD area), so treat both as a guide.')+'</small></p>':'')+
     '<small>'+T('DLD area: {list}. The point is an approximate reference for the area, not a building.',{list:a.dld_areas.map(safe).join(', ')})+(a.url?' <a href="'+safe(a.url)+'" target="_blank" rel="noopener">'+T('Dubai Data page')+'</a>':'')+'</small></details>';
 }
 
@@ -1013,7 +1021,7 @@ function hotelSection(a){
   // Priced places first, cheapest first; then the rest by stars and name.
   const list=[...x.list].sort((p,q)=>(!p.price)-(!q.price)||(p.price||0)-(q.price||0)||(q.stars||0)-(p.stars||0)||p.name.localeCompare(q.name));
   const stars=list.slice(0,HOTEL_ROWS).some(h=>h.stars); // no column of blanks when none of them has a rating
-  const sub=h=>[h.kind!=='hotel'?T(HOTEL_KIND[h.kind]||'Hotel'):'',h.rating&&h.reviews>=MIN_REVIEWS?T('rated {r} of 5',{r:h.rating}):''].filter(Boolean).join(' · '); // "Hotel" on every row said nothing
+  const sub=h=>[h.kind!=='hotel'?T(HOTEL_KIND[h.kind]||'Hotel'):'',h.rating&&h.reviews>=MIN_REVIEWS?T('rated {r} of 5',{r:r1(h.rating)}):''].filter(Boolean).join(' · '); // "Hotel" on every row said nothing
   const row=h=>'<tr><td><button type="button" class="hrow" data-h="'+h.i+'">'+safe(hotelName(h))+'</button>'+(sub(h)?'<small>'+sub(h)+'</small>':'')+'</td>'+
     (stars?'<td class="st">'+(h.stars?'<span aria-label="'+safe(T('{n} stars',{n:h.stars}))+'">'+'★'.repeat(Math.round(h.stars))+'</span>':'')+'</td>':'')+
     (hotelPriced()?'<td class="r">'+(h.price?fmt(h.price):'—')+'</td>':'')+'</tr>';

@@ -148,8 +148,8 @@ try {
       return [e.style.getPropertyValue('--c'), parseFloat(cs.borderTopWidth), cs.borderTopColor, key, b.backgroundColor, b.color]; }));
     check(badges.length >= 10 && badges.every(([c, w, bc, key, bg, fg]) => /--b[1-6]/.test(c) && w >= 3 && bc === key && bg === 'rgba(0, 0, 0, 0)' && fg === 'rgb(43, 33, 24)'),
       `${name}: each label's price shows in a thick border in its key colour; the figure is plain dark type (${badges.length})`);
-    check(await page.evaluate(() => !document.querySelector('.pie') && [...document.querySelectorAll('.rl.grp small')].every(e => /\+ (1 area|\d+ areas)$/.test(e.textContent))),
-      `${name}: merged labels name their busiest area and how many more ("JLT + 12 areas"); no dials`);
+    check(await page.evaluate(() => !document.querySelector('.pie') && [...document.querySelectorAll('.rl.grp small')].every(e => /\+ (1 area|\d+ areas)$|· \d+ more nearby$/.test(e.textContent))),
+      `${name}: merged labels name their busiest area and how many more ("JLT + 12 areas", or "JVC · 21 more nearby" for a big group); no dials`);
     const scale = await page.evaluate(() => { const vals = POINTS.map(p => p.v).sort((a, b) => a - b);
       const p95 = vals[Math.round(.95 * (vals.length - 1))], p05 = vals[Math.round(.05 * (vals.length - 1))];
       return { top: LABEL.top, p95, p05, max: vals.at(-1), min: vals[0], topColour: LABEL.colorOf(vals.at(-1)), lowColour: LABEL.colorOf(vals[0]),
@@ -540,6 +540,7 @@ try {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     await page.route(/data\/hotel_prices\.json/, r => r.fulfill({ status: 404, body: 'not found' }));  // DET's rate is for when no hotel has a price
+    await page.route(/data\/serp_stays\.json/, r => r.fulfill({ status: 404, body: 'not found' }));  // nor from Google Hotels
     await page.route(/data\/hotel_stats\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ fetched: '2026-11-18', source: 'test',
       months: [{ month: '2026-07', adr: 380 }, { month: '2026-08', adr: 410 }, { month: '2026-09', adr: 520 }, { month: '2026-10', adr: 640 }], latest: { month: '2026-10', adr: 640, occupancy: 78 } }) }));
     await page.route(/assets\/app\/partners\.js/, r => r.fulfill({ contentType: 'application/javascript',
@@ -850,9 +851,9 @@ try {
     await ph.waitForTimeout(1200);
     const lay = await ph.evaluate(() => { const top = e => e ? e.getBoundingClientRect().top + scrollY : null, tip = document.querySelector('.funTip'), strip = document.querySelector('.funStrip');
       return { map: top(document.querySelector('.mapWrap')), strip: top(strip), stripW: strip ? strip.getBoundingClientRect().width : 0, tipR: tip ? tip.getBoundingClientRect().right : 0,
-        side: document.getElementById('dialSide').offsetParent !== null, fold: !document.querySelector('details.f-range').open }; });
-    check(lay.strip > lay.map && lay.stripW <= 390 && lay.tipR <= 390 && !lay.side && lay.fold && lay.map < 700,
-      `phone: the map starts at ${Math.round(lay.map)} px (no side copy by the dial, exact budget folded), the facts come after it and the tip fits the screen`);
+        side: document.getElementById('dialSide').offsetParent !== null, fold: !document.querySelector('details.f-range').open, check: top(document.getElementById('companion')) }; });
+    check(lay.strip > lay.map && lay.stripW <= 390 && lay.tipR <= 390 && !lay.side && lay.fold && lay.map < 560 && lay.check > lay.map,
+      `phone: the map starts at ${Math.round(lay.map)} px (small dial, Home and Near on one row, budget folded); the rent check and the facts come after it; the tip fits the screen`);
     await ph.context().close();
     const ar = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
     const askedAr = [];
@@ -863,6 +864,23 @@ try {
     check(askedAr.some(u => /i18n-ar\.js/.test(u)) && /أطلس/.test(arOk.title) && arOk.nav === 'ar/stats/' && arOk.fold,
       'Arabic page: the tables download, the page is in Arabic, the header links to the Arabic market pages, and a shared budget opens its boxes');
     await ar.context().close();
+  }
+  // Second critique (22 Nov): big groups speak for their busiest area, ratings to one decimal, tips fit the view,
+  // the key's price history folds away.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(1200);
+    const g = await page.evaluate(() => { const big = [...document.querySelectorAll('.rl.grp small')].map(e => e.textContent);
+      return { big: big.filter(t => /more nearby/.test(t)), avg: big.filter(t => /\+ (9|[1-9]\d) areas/.test(t)) }; });
+    check(g.avg.length === 0, `phone, all of Dubai: no label averages more than 8 areas${g.big.length ? ' (e.g. "' + g.big[0] + '")' : ''}`);
+    const st = await page.evaluate(async () => { const s = document.getElementById('metric'); s.value = 'homes'; s.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 1500));
+      const tip = (document.querySelector('.funTip') || {}).textContent || '', txt = document.body.innerText;
+      return { tip, long: (txt.match(/rated \d\.\d{2,}/) || [''])[0], fold: !!document.querySelector('.legend details.trendFold:not([open])') || !document.querySelector('.legend .trend') }; });
+    check(!/with Home/.test(st.tip) && !st.long && st.fold, `Holiday homes: the tip is about places to stay, ratings have one decimal, the key's price history is folded (${st.tip.slice(0, 40)})`);
+    await ctx.close();
   }
   // Ideas from other Dubai sites: currency on the map, sale price per sq ft, what's near, 3D.
   {

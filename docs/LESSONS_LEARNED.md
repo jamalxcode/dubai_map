@@ -248,3 +248,13 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** to drop one experiment in atlas.js, a session reached for `git checkout <file>`, which would also have thrown away every other uncommitted change in it (the currency switch, the Near filter); the command was blocked before it ran.
 - **Rule:** undo a single change by editing it back (or commit first, then revert that commit); never restore a whole file that holds uncommitted work.
+
+## A new source can break a test's stand-in world (22 Nov 2026)
+
+- **Problem:** a browser check blocked `hotel_prices.json` to see the page with no hotel prices; once the SerpApi key went in, `serp_stays.json` priced hotels too and the check failed, on the live data CI reads.
+- **Rule:** a check that removes a kind of data blocks every file that can supply it; adding a source means searching the checks for the files it stands beside.
+
+## Two ways to weigh one figure give two figures (22 Nov 2026)
+
+- **Problem:** the pages counted a figure without a per-type count as one contract; the map gave it a share of its area's contracts; "typical" differed by AED 8,000.
+- **Rule:** one weighting rule, written once per language and named the same (`weight` in site_pages.py, the comment in atlas.js); a test or check compares the two.

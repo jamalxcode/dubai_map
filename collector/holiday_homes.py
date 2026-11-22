@@ -33,7 +33,7 @@ KINDS = {"Condominium", "Villa", "Cottage"}
 SOURCE = "Xotelo (booking sites' rates on TripAdvisor): lowest offer for one unit, 2 adults, one night; average of sample nights"
 OUT = os.path.join("data", "holiday_homes.json")
 HOTEL_PRICES = os.path.join("data", "hotel_prices.json")
-BUDGET = int(os.environ.get("HOMES_BUDGET") or 50)  # places asked per pull: 100 requests at most, about 3 minutes
+BUDGET = int(os.environ.get("HOMES_BUDGET") or 80)  # places asked per pull: 160 requests at most, about 5 minutes
 MIN_PLACES = 100  # Xotelo's list normally has about 300 of these: fewer means the list is broken
 
 
@@ -72,8 +72,8 @@ def main(argv=None, today=None, get=None):
                 hotels = set()
             places = {}
             for t in theirs:
-                if t.get("type") in KINDS and t["id"] not in hotels and t["id"] not in places:
-                    places[t["id"]] = [t["name"], round(t["lat"], 5), round(t["lng"], 5), t.get("rating"), t.get("reviews"), t.get("url") or ""]
+                if t.get("type") in KINDS and t["id"] not in hotels and t["id"] not in places and not hp.shared_bed(t.get("name")):
+                    places[t["id"]] = [t["name"], round(t["lat"], 5), round(t["lng"], 5), hp.rating1(t.get("rating")), t.get("reviews"), t.get("url") or ""]
             if len(places) < MIN_PLACES:
                 return done("failed", f"only {len(places)} holiday homes in Xotelo's list (usually about 300); the last prices stay")
             b["list_at"], b["listed"] = st.now_iso(), len(places)
@@ -106,9 +106,9 @@ def main(argv=None, today=None, get=None):
         tried[k] = today.isoformat()
     for k, ps in got.items():
         name, lat, lng, rating, reviews, url = places[k]
-        rows[k] = [name, lat, lng, round(statistics.fmean(ps)), len(ps), min(ps), max(ps), today.isoformat(), rating, reviews, url, k]
+        rows[k] = [name, lat, lng, round(statistics.fmean(ps)), len(ps), min(ps), max(ps), today.isoformat(), hp.rating1(rating), reviews, url, k]
     out = {"fetched": today.isoformat(), "source": SOURCE, "currency": "AED", "adults": 2, "keep_days": hp.KEEP_DAYS,
-           "nights": nights, "listed": len(places), "homes": sorted(rows.values(), key=lambda r: (r[1], r[2], r[0])),
+           "nights": nights, "listed": len(places), "homes": sorted((r for r in rows.values() if not hp.shared_bed(r[0])), key=lambda r: (r[1], r[2], r[0])),
            "places": places, "tried": tried}
     net.log(f"priced {len(got)} of {len(todo)} asked ({len(jobs)} requests, {errors} failed); {len(rows)} have a price", "holiday_homes")
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
