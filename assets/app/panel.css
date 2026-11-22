@@ -78,9 +78,9 @@
 /* ---- Phones: same fields and rules, a little tighter ---- */
 @media (max-width:860px){
   :root{--fieldH:42px;--secPadY:18px}
-  /* Home and budget share the first row, so the map still starts high on the first screen. */
-  .controls .wrap{gap:10px;padding-top:14px;padding-bottom:14px}
-  .controls .f-home{grid-area:1/1}.controls .f-range{grid-area:1/2}.controls .f-walk{grid-area:2/1/3/-1}.controls .budgetNote{grid-area:3/1/4/-1}
+  /* Home and Near share the first row; the budget fold is a slim line under them, so the map starts high. */
+  .controls .wrap{gap:8px 10px;padding-top:12px;padding-bottom:10px}
+  .controls .f-home{grid-area:1/1}.controls .f-walk{grid-area:1/2}.controls .f-range{grid-area:2/1/3/-1}.controls .budgetNote{grid-area:3/1/4/-1}
   .facts dd{font-size:22px}
 }
 @media (max-width:339px){

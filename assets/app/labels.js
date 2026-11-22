@@ -1,13 +1,15 @@
 /* Map label placement for the Dubai Real Estate Atlas: no DOM, no Leaflet, so the rules are unit-tested
  * (tests/labels.test.mjs). The page projects areas to pixels, asks for placements, then draws them.
  *
- *   RentLabels.place(items, size, { pad, sum, blocks })
+ *   RentLabels.place(items, size, { pad, sum, blocks, view, lead })
  *     items  [{ a, v, n, x, y, lat, lng }]: an area, its value, its contract count (the weight),
  *            its point in layer pixels and on the map.
  *     size   (members, val) -> { w, h }: the box of a label that shows these members.
  *     pad    gap kept between labels (px).  sum: the value is a count, so groups add up.
  *     blocks [{ x, y, w, h }]: boxes labels must avoid (map buttons, legend), centre and size.
- *   -> [{ members, N, val, lat, lng, single, x, y, lx, ly, w, h, hidden }]: (x, y) is the label's point,
+ *     lead   a merged label of more than this many areas shows its busiest area's own value, at that area's
+ *            point (lead: that area), instead of an average over many areas that tells a reader little.
+ *   -> [{ members, N, val, lat, lng, single, x, y, lx, ly, w, h, hidden, lead }]: (x, y) is the label's point,
  *      (lx, ly) where the label sits; they differ when a label was moved beside its point.
  *      hidden: true when the label could go nowhere clear of a block; the page doesn't draw it.
  *
@@ -34,15 +36,17 @@
 
   const MAX_SPLIT = 3;
 
-  function place(items, size, { pad = 6, sum = false, blocks = [], view = null } = {}) {
+  function place(items, size, { pad = 6, sum = false, blocks = [], view = null, lead = Infinity } = {}) {
     const make = members => {
       const N = members.reduce((s, o) => s + o.n, 0);
       const w = o => (N ? o.n / N : 1 / members.length);
-      const val = sum ? N : members.reduce((s, o) => s + o.v * w(o), 0);
-      const at = k => members.reduce((s, o) => s + o[k] * w(o), 0);
+      // A big group (more than `lead` areas) speaks for its busiest area: that area's own value, at its point.
+      const top = !sum && members.length > lead ? members.reduce((p, q) => (q.n > p.n ? q : p), members[0]) : null;
+      const val = sum ? N : top ? top.v : members.reduce((s, o) => s + o.v * w(o), 0);
+      const at = k => (top ? top[k] : members.reduce((s, o) => s + o[k] * w(o), 0));
       const x = at('x'), y = at('y');
       const box = size(members, val);
-      return keepIn({ members, N, val, lat: at('lat'), lng: at('lng'), single: members.length === 1, x, y, lx: x, ly: y, w: box.w, h: box.h });
+      return keepIn({ members, N, val, lat: at('lat'), lng: at('lng'), single: members.length === 1, x, y, lx: x, ly: y, w: box.w, h: box.h, lead: top });
     };
     // 0. Inside the map: a label whose point is on screen starts fully inside the edges (a line joins it to its
     //    point if it had to slide), so crowded edges merge instead of cutting labels off.

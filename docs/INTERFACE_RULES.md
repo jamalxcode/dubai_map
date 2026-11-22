@@ -119,6 +119,13 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - **Area card:** "Check a rent here" and "Compare" pinned to the bottom edge of a scrolling card; "Busiest buildings" and "Details and sources" (nearby, other sources, the DLD note) folded.
 - **Generated pages:** one look (`page_kit.py`): oxblood header with a gold rule, Barlow Condensed headings, gold-underlined links, cards with a gold edge, a dark mode by the device setting, an English / عربي switch.
 
+### Second critique (22 Nov)
+
+- **Phones:** the rent check follows the map; Home and Near share the first filter row, the budget fold under them; the dial is 158 px wide; the slider is one line. The five view chips keep wrapping so every view stays in sight.
+- **Labels:** big groups (more than 8 areas) read "Area · N more nearby" and show that area's figure; tapping one says "The label shows Area: figure" above the list.
+- **Stays:** the key's price history folds under "Price history"; tips in Hotels and Holiday homes are about places to stay.
+- **Area card:** "Other sources differ by more than 15%" sits right under the figures.
+
 ## 6. The rent check
 
 - Fields: area (search with nicknames, DLD names and typos), optional yearly rent (written with thousands separators as you type), **Check**. No home field: the check uses the map's **Home** picker.

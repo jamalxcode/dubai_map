@@ -140,3 +140,20 @@ test('many labels stuck under a panel do not starve a later one under a button (
   assert.ok(cl.filter(c => c.hidden).every(c => c.members.every(m => m.a.label.startsWith('Lost'))), 'only the areas with nowhere to go are hidden');
   assert.ok(cl.every(c => !c.members.some(m => m.a.label.startsWith('Lost')) || c.members.every(m => m.a.label.startsWith('Lost'))), 'no join across the map');
 });
+
+test('a big group speaks for its busiest area: its own value, at its point (lead)', () => {
+  // Twelve areas piled together: with lead 8 the label shows the busiest one's figure, not a 12-area average.
+  const pts = Array.from({ length: 12 }, (_, i) => item('A' + i, (i % 4) * 5, Math.floor(i / 4) * 5, 40000 + i * 10000, i === 7 ? 900 : 100));
+  const [c] = RL.place(pts, size, { lead: 8 });
+  assert.equal(c.members.length, 12);
+  assert.equal(c.lead.a.label, 'A7');
+  assert.equal(c.val, 110000);
+  assert.equal(c.x, pts[7].x); assert.equal(c.y, pts[7].y);
+  // Small groups keep the weighted average; counts (sum) always add up.
+  const few = RL.place(pts.slice(0, 4), size, { lead: 8 })[0];
+  assert.equal(few.lead, null);
+  assert.equal(few.val, 55000);
+  const counts = RL.place(pts, size, { lead: 8, sum: true })[0];
+  assert.equal(counts.lead, null);
+  assert.equal(counts.val, 2000);
+});

@@ -714,3 +714,14 @@ details.f-range[open]>summary{margin-bottom:5px}
 .siteNav a{color:var(--band-text);text-decoration:underline;text-decoration-color:var(--gold);text-decoration-thickness:2px;text-underline-offset:4px}
 .siteNav a:hover{color:#E2C766}
 @media (max-width:600px){.siteNav{font-size:14px;margin-top:6px}}
+/* Phones: the map near the top. The rent check comes after the map (Home and Near share a row: panel.css); the five
+   view chips keep wrapping, so every view stays in sight. */
+@media (max-width:860px){
+  .pane>#companion{order:6}
+  details.f-range:not([open])>summary{min-height:20px}
+}
+/* Phones: a smaller dial, so the header takes less of the first screen. */
+@media (max-width:600px){.big .dialBox{width:158px}.big .num{font-size:38px!important}.band .wrap{gap:4px;padding-bottom:12px}.big .cap{margin-top:2px}}
+/* The key's price history folds away. */
+.legend details.trendFold{margin:4px 0 2px}.legend details.trendFold>summary{cursor:pointer;font-size:12px;color:var(--muted)}
+.legend details.trendFold[open]>summary{margin-bottom:4px}

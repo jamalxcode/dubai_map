@@ -68,11 +68,11 @@ def parse(payload, kind, checked):
         if not (BBOX[0] <= lat <= BBOX[2] and BBOX[1] <= lng <= BBOX[3]) or not (hp.LOW <= price <= hp.HIGH):
             continue
         is_rental = (p.get("type") or "").lower() == "vacation rental"
-        if (kind == "homes") != is_rental:
+        if (kind == "homes") != is_rental or (kind == "homes" and hp.shared_bed(p["name"])):
             continue
         lat, lng = round(lat, 5), round(lng, 5)
         rows.append({"name": p["name"].strip(), "lat": lat, "lng": lng, "price": price, "checked": checked,
-                     "rating": p.get("overall_rating"), "reviews": p.get("reviews"), "stars": p.get("hotel_class"),
+                     "rating": hp.rating1(p.get("overall_rating")), "reviews": p.get("reviews"), "stars": p.get("hotel_class"),
                      "link": p.get("link") or "", "token": p.get("property_token") or f"{p['name']}|{lat}|{lng}"})
     return rows
 
@@ -162,14 +162,14 @@ def main(argv=None, today=None, get=None):
         o, v = ours[i], seen[t["id"]]
         if hp.row_key(o[0], o[4], o[5]) in priced:
             continue
-        hotels.append([o[0], o[4], o[5], v["price"], 1, v["price"], v["price"], v["checked"], v.get("rating"), v.get("reviews"), v.get("stars")])
+        hotels.append([o[0], o[4], o[5], v["price"], 1, v["price"], v["price"], v["checked"], hp.rating1(v.get("rating")), v.get("reviews"), v.get("stars")])
     # Vacation rentals: their own places, unless one of Xotelo's holiday homes is the same one.
     xh = (load(HOMES, {}) or {}).get("places") or {}
     xo = [[p[0], "", "", None, p[1], p[2]] for p in xh.values()]
     rentals = [{"id": k, "name": v["name"], "lat": v["lat"], "lng": v["lng"]} for k, v in seen.items() if v["kind"] == "homes"]
     dup = {t["id"] for t in hp.match(xo, rentals).values()} if xo and rentals else set()
-    homes = [[v["name"], v["lat"], v["lng"], v["price"], 1, v["price"], v["price"], v["checked"], v.get("rating"), v.get("reviews"), v.get("link") or "", k]
-             for k, v in seen.items() if v["kind"] == "homes" and k not in dup]
+    homes = [[v["name"], v["lat"], v["lng"], v["price"], 1, v["price"], v["price"], v["checked"], hp.rating1(v.get("rating")), v.get("reviews"), v.get("link") or "", k]
+             for k, v in seen.items() if v["kind"] == "homes" and k not in dup and not hp.shared_bed(v["name"])]
 
     out = {"fetched": today.isoformat(), "source": SOURCE, "currency": "AED", "adults": 2, "keep_days": KEEP_DAYS,
            "month": month, "used": b["used"], "monthly": MONTHLY, "last_query": q,

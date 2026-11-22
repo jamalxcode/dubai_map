@@ -41,6 +41,18 @@ KEEP_DAYS = 10
 LIST_HOURS = 20
 MIN_HOTELS = 20  # fewer matched hotels than this, after more before, looks broken: the old file stays
 USD_AED = 3.6725
+# A bed in a shared room (hostels, dorms, capsules) is not a holiday home: its price would drag an area's typical night
+# down and top the "Find a holiday home" list. Such listings are left out of holiday homes (serp_stays, holiday_homes).
+SHARED_BED = re.compile(r"\b(hostel|hostels|dorm|dorms|dormitory|capsule|bunk|shared room|bed in)\b", re.I)
+
+
+def shared_bed(name):
+    return bool(SHARED_BED.search(name or ""))
+
+
+def rating1(v):
+    """A guest rating to one decimal (sites send 4.2999997); None stays None."""
+    return round(float(v), 1) if isinstance(v, (int, float)) else None
 LOW, HIGH = 50, 60000  # AED a night: anything outside is a data error, not a price
 STOP = {"hotel", "hotels", "dubai", "the", "by", "and", "&", "resort", "resorts", "suites", "suite", "apartments",
         "apartment", "hotel-apartments", "a", "an", "of", "at", "in", "llc", "uae"}
