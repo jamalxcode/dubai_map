@@ -104,6 +104,20 @@ class SerpStays(unittest.TestCase):
         self.run_it(fake(calls), force=False)
         self.assertEqual(len(calls), 2)
 
+    def test_rules_apply_between_searches(self):
+        # A pull that doesn't search still rebuilds the rows from what it holds: shared beds out, ratings to one decimal.
+        calls = []
+        self.run_it(fake(calls), force=False)
+        d = json.load(open(self.out))
+        d["seen"]["h:Bunk"] = {"kind": "homes", "name": "JBR Shared Hostel Premium", "lat": 25.08, "lng": 55.13, "price": 90, "checked": "2026-11-19", "rating": 4.2999997}
+        d["seen"]["h:Marina Loft"]["rating"] = 4.2999997
+        json.dump(d, open(self.out, "w"))
+        self.run_it(fake(calls), force=False)
+        self.assertEqual(len(calls), 2, "no search the second time")
+        homes = json.load(open(self.out))["homes"]
+        self.assertNotIn("JBR Shared Hostel Premium", [r[0] for r in homes])
+        self.assertIn(4.3, [r[8] for r in homes])
+
     def test_a_rejected_key_keeps_the_file(self):
         self.run_it(fake())
         before = open(self.out).read()

@@ -804,6 +804,7 @@ Asked: "critique the web app, how can we make it better?", then "do it all, merg
 - **Labels at city zoom:** a merged label of more than 8 areas no longer shows an average over all of them ("Al Nahda Second + 52 areas: AED 53k" told nobody anything); it shows its busiest area's own figure at that area's point, named "Area · 52 more nearby" (`labels.js` lead, `LEAD` in atlas.js). Groups of up to 8 keep the weighted average; counts still add up.
 - **Other sources:** an area whose figure another source puts more than 15% away says so right under its figures, not inside "Details and sources".
 - **Found while checking:** since the SerpApi key went in, `serp_stays.json` prices some hotels, so the browser check that blocks Xotelo's prices to see DET's rate got Google's prices instead and failed; it now blocks both.
+- **Found after merging:** the first pull on the new code left the hostels in Google's list: a scheduled pull still on the old code had just searched, so the new one skipped its search (at most one every few hours) and kept the file. `serp_stays.py` now rebuilds its rows from the places it holds on every pull, searching or not; `holiday_homes.py` rounds every row's rating, not only new ones.
 - **Checked:** Python tests for the shared-bed rule and ratings; a label test for lead groups; browser checks for the phone layout (map top, rent check after the map), no label averaging more than 8 areas, tips, ratings and the folded history in Holiday homes; every suite passes.
 
 ## Change log

@@ -108,7 +108,7 @@ def main(argv=None, today=None, get=None):
         name, lat, lng, rating, reviews, url = places[k]
         rows[k] = [name, lat, lng, round(statistics.fmean(ps)), len(ps), min(ps), max(ps), today.isoformat(), hp.rating1(rating), reviews, url, k]
     out = {"fetched": today.isoformat(), "source": SOURCE, "currency": "AED", "adults": 2, "keep_days": hp.KEEP_DAYS,
-           "nights": nights, "listed": len(places), "homes": sorted((r for r in rows.values() if not hp.shared_bed(r[0])), key=lambda r: (r[1], r[2], r[0])),
+           "nights": nights, "listed": len(places), "homes": sorted((r[:8] + [hp.rating1(r[8])] + r[9:] for r in rows.values() if not hp.shared_bed(r[0])), key=lambda r: (r[1], r[2], r[0])),
            "places": places, "tried": tried}
     net.log(f"priced {len(got)} of {len(todo)} asked ({len(jobs)} requests, {errors} failed); {len(rows)} have a price", "holiday_homes")
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)

@@ -258,3 +258,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the pages counted a figure without a per-type count as one contract; the map gave it a share of its area's contracts; "typical" differed by AED 8,000.
 - **Rule:** one weighting rule, written once per language and named the same (`weight` in site_pages.py, the comment in atlas.js); a test or check compares the two.
+
+## A rule change waits for the next fetch unless rows are rebuilt (22 Nov 2026)
+
+- **Problem:** the shared-bed filter lived on the path that runs after a search; between searches the collector returned early and kept its old file, so the hostels stayed on the map after the fix was merged.
+- **Rule:** a collector rebuilds its published rows from what it holds on every pull, fetching or not; rules applied to rows (filters, rounding) run on that rebuild, not only on fresh results.

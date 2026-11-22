@@ -103,6 +103,39 @@ def load(path, default=None):
         return default
 
 
+def write(out_path, seen, today, month, used, q):
+    """Rows for the page from every place we hold (hotels matched to ours where Xotelo has no current price; vacation
+    rentals that aren't Xotelo holiday homes or shared beds), written to out_path. Needs no search."""
+    cutoff = (today - timedelta(days=KEEP_DAYS)).isoformat()
+    seen = {k: v for k, v in seen.items() if v.get("checked", "") >= cutoff}
+    # Hotels: matched to our places, only where Xotelo has no current price.
+    ours = (load(HOTELS, {}) or {}).get("hotels") or []
+    xp = load(HOTEL_PRICES, {}) or {}
+    priced = {hp.row_key(r[0], r[1], r[2]) for r in xp.get("hotels") or [] if len(r) >= 8 and r[7] >= cutoff}
+    theirs = [{"id": k, "name": v["name"], "lat": v["lat"], "lng": v["lng"]} for k, v in seen.items() if v["kind"] == "hotels"]
+    hotels = []
+    for i, t in hp.match(ours, theirs).items():
+        o, v = ours[i], seen[t["id"]]
+        if hp.row_key(o[0], o[4], o[5]) in priced:
+            continue
+        hotels.append([o[0], o[4], o[5], v["price"], 1, v["price"], v["price"], v["checked"], hp.rating1(v.get("rating")), v.get("reviews"), v.get("stars")])
+    # Vacation rentals: their own places, unless one of Xotelo's holiday homes is the same one.
+    xh = (load(HOMES, {}) or {}).get("places") or {}
+    xo = [[p[0], "", "", None, p[1], p[2]] for p in xh.values()]
+    rentals = [{"id": k, "name": v["name"], "lat": v["lat"], "lng": v["lng"]} for k, v in seen.items() if v["kind"] == "homes"]
+    dup = {t["id"] for t in hp.match(xo, rentals).values()} if xo and rentals else set()
+    homes = [[v["name"], v["lat"], v["lng"], v["price"], 1, v["price"], v["price"], v["checked"], hp.rating1(v.get("rating")), v.get("reviews"), v.get("link") or "", k]
+             for k, v in seen.items() if v["kind"] == "homes" and k not in dup and not hp.shared_bed(v["name"])]
+
+    out = {"fetched": today.isoformat(), "source": SOURCE, "currency": "AED", "adults": 2, "keep_days": KEEP_DAYS,
+           "month": month, "used": used, "monthly": MONTHLY, "last_query": q,
+           "hotels": sorted(hotels, key=lambda r: (r[1], r[2])), "homes": sorted(homes, key=lambda r: (r[1], r[2])), "seen": seen}
+    os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+    return hotels, homes
+
+
 def main(argv=None, today=None, get=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default=OUT)
@@ -127,6 +160,9 @@ def main(argv=None, today=None, get=None):
         b["month"], b["used"] = month, 0
     if not a.force and not st.due(b, "last_try_at", min_hours=MIN_HOURS):
         net.log(f"searched {st.hours_since(b, 'last_try_at'):.1f} h ago; next after {MIN_HOURS} h", "serp_stays")
+        old = load(a.out, {}) or {}
+        if old.get("seen"):  # no search, but the rows are rebuilt from what we hold, so rule changes apply at once
+            write(a.out, old["seen"], today, old.get("month") or month, b["used"], old.get("last_query"))
         return 0
     if b["used"] + PER_PULL > MONTHLY:
         return done("standby", f"this month's {MONTHLY} free searches are used; back on the 1st")
@@ -152,31 +188,7 @@ def main(argv=None, today=None, get=None):
         for r in found[kind]:
             seen[kind[0] + ":" + r["token"]] = dict(r, kind=kind)
 
-    # Hotels: matched to our places, only where Xotelo has no current price.
-    ours = (load(HOTELS, {}) or {}).get("hotels") or []
-    xp = load(HOTEL_PRICES, {}) or {}
-    priced = {hp.row_key(r[0], r[1], r[2]) for r in xp.get("hotels") or [] if len(r) >= 8 and r[7] >= cutoff}
-    theirs = [{"id": k, "name": v["name"], "lat": v["lat"], "lng": v["lng"]} for k, v in seen.items() if v["kind"] == "hotels"]
-    hotels = []
-    for i, t in hp.match(ours, theirs).items():
-        o, v = ours[i], seen[t["id"]]
-        if hp.row_key(o[0], o[4], o[5]) in priced:
-            continue
-        hotels.append([o[0], o[4], o[5], v["price"], 1, v["price"], v["price"], v["checked"], hp.rating1(v.get("rating")), v.get("reviews"), v.get("stars")])
-    # Vacation rentals: their own places, unless one of Xotelo's holiday homes is the same one.
-    xh = (load(HOMES, {}) or {}).get("places") or {}
-    xo = [[p[0], "", "", None, p[1], p[2]] for p in xh.values()]
-    rentals = [{"id": k, "name": v["name"], "lat": v["lat"], "lng": v["lng"]} for k, v in seen.items() if v["kind"] == "homes"]
-    dup = {t["id"] for t in hp.match(xo, rentals).values()} if xo and rentals else set()
-    homes = [[v["name"], v["lat"], v["lng"], v["price"], 1, v["price"], v["price"], v["checked"], hp.rating1(v.get("rating")), v.get("reviews"), v.get("link") or "", k]
-             for k, v in seen.items() if v["kind"] == "homes" and k not in dup and not hp.shared_bed(v["name"])]
-
-    out = {"fetched": today.isoformat(), "source": SOURCE, "currency": "AED", "adults": 2, "keep_days": KEEP_DAYS,
-           "month": month, "used": b["used"], "monthly": MONTHLY, "last_query": q,
-           "hotels": sorted(hotels, key=lambda r: (r[1], r[2])), "homes": sorted(homes, key=lambda r: (r[1], r[2])), "seen": seen}
-    os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
-    with open(a.out, "w", encoding="utf-8") as f:
-        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+    hotels, homes = write(a.out, seen, today, month, b["used"], q)
     b["last_ok_at"], b["hotels"], b["homes"] = st.now_iso(), len(hotels), len(homes)
     return done("ok")
 
