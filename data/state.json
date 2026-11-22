@@ -20,9 +20,9 @@
     }
   },
   "datadubai": {
-    "last_ok_at": "2026-11-22T09:50:21+00:00",
+    "last_ok_at": "2026-11-22T10:00:22+00:00",
     "last_pull": {
-      "at": "2026-11-22T09:50:19+00:00",
+      "at": "2026-11-22T10:00:22+00:00",
       "export_files_updated": 0,
       "live": "current",
       "through": "2026-11-20"
@@ -62,22 +62,22 @@
     "status": "ok"
   },
   "holiday_homes": {
-    "last_ok_at": "2026-11-22T09:59:34+00:00",
-    "last_run_at": "2026-11-22T09:59:34+00:00",
+    "last_ok_at": "2026-11-22T10:11:18+00:00",
+    "last_run_at": "2026-11-22T10:11:18+00:00",
     "list_at": "2026-11-21T23:29:09+00:00",
     "listed": 256,
-    "priced": 59,
+    "priced": 60,
     "state": "ok",
     "status": "ok"
   },
   "hotel_prices": {
-    "hotels": 380,
-    "last_ok_at": "2026-11-22T09:55:47+00:00",
-    "last_run_at": "2026-11-22T09:55:47+00:00",
+    "hotels": 381,
+    "last_ok_at": "2026-11-22T10:05:08+00:00",
+    "last_run_at": "2026-11-22T10:05:08+00:00",
     "list_at": "2026-11-21T23:22:49+00:00",
     "listed": 2625,
     "matched": 527,
-    "priced": 380,
+    "priced": 381,
     "state": "ok",
     "status": "ok"
   },
