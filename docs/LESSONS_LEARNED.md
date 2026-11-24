@@ -279,3 +279,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** Overpass and the GTFS mirror were blocked or dropped from the session, and artifact and log downloads too.
 - **Rule:** push a check workflow that runs the collector on GitHub's runners and prints a summary; merge the collector first (nothing visible changes without its file), let the weekly job publish the data, then build the page against the real file loaded from the data branch. Keep big outputs out of logs read into the conversation.
+
+## A threshold made for one measure breaks another (24 Nov 2026)
+
+- **Problem:** Peaks' camera looked for areas with 100+ contracts; in the hotel and holiday home views the weight is places with a price (a handful), so it found none and the map failed with a NaN position.
+- **Rule:** when a feature starts serving another measure, every threshold in it gets that measure's own value (and a fallback when nothing passes); the browser check runs it in each view.

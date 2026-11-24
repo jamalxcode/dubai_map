@@ -395,10 +395,16 @@
   btnP.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); mP ? closePeaks() : openPeaks(); });
 
   // The surface: a grid of heights over the areas' box (pure arithmetic, from AREAS and the Home picker).
-  function weightOf(a, unit) { const bu = unit ? a.by_unit.find(u => u.u === unit) : null;
+  // Peaks follow the map's view (the owner's request, 24 Nov): rent, sale price (or per sq ft), yield, or a night in a
+  // hotel or holiday home; each area weighs as in that view (its contracts, or its places with a price).
+  const peakMetric = () => { const m = $('metric').value; return m === 'hotels' && !hotelPriced() ? 'median' : m; };
+  function weightOf(a, unit, m) {
+    if (m === 'hotels') return ((hotelsBy() || new Map()).get(a.label) || { prices: [] }).prices.length || 1;
+    if (m === 'homes') return ((homesBy() || new Map()).get(a.label) || { prices: [] }).prices.length || 1;
+    const bu = unit && !STAY(m) ? a.by_unit.find(u => u.u === unit) : null;
     return bu ? (bu.n != null ? bu.n : Math.round((a.n || 0) / Math.max(1, a.by_unit.length))) || 1 : (a.n || 1); }
-  function buildSurface(unit) {
-    const pts = AREAS.filter(a => a.lat != null).map(a => ({ a, v: areaValue(a, 'median', unit), w: weightOf(a, unit) })).filter(p => p.v != null);
+  function buildSurface(unit, m) {
+    const pts = AREAS.filter(a => a.lat != null).map(a => ({ a, v: areaValue(a, m, STAY(m) ? '' : unit), w: weightOf(a, unit, m) })).filter(p => p.v != null && p.v > 0);
     if (pts.length < 5) return null;
     const vs = pts.map(p => p.v).sort((x, y) => x - y), q = f => vs[Math.min(vs.length - 1, Math.max(0, Math.round(f * (vs.length - 1))))];
     const lo = q(0.05), hi = q(0.95), cx = Math.cos(25.15 * Math.PI / 180), s2 = 2 * PEAK_SIGMA * PEAK_SIGMA;
@@ -412,7 +418,7 @@
         if (!sw) continue;
         const norm = Math.min(1, Math.max(0, (sv / sw - lo) / (hi - lo || 1))), m = Math.min(1, sk / 0.6), land = m * m * (3 - 2 * m);
         h[j * nx + i] = land * Math.pow(norm, 1.25) * PEAK_H; } }
-    return { lat0, lng0, nx, ny, h, lo, hi, pts };
+    return { lat0, lng0, nx, ny, h, lo, hi, pts, m };
   }
   function heightAt(la, ln) { const S = SURF; if (!S) return 0;
     const fy = (la - S.lat0) / PEAK_STEP, fx = (ln - S.lng0) / PEAK_STEP, i = Math.floor(fx), j = Math.floor(fy);
@@ -436,23 +442,30 @@
   function openPeaks() {
     if (!canGL()) return;
     if (m3) close3d();
-    const unit = $('unit').value; SURF = buildSurface(unit); surfVer++;
+    const unit = $('unit').value, pm = peakMetric(); SURF = buildSurface(unit, pm); surfVer++;
     if (!SURF) return;
     peaksProtocol();
     const rs = getComputedStyle(document.documentElement), blue = k => rs.getPropertyValue('--b' + k).trim();
-    const home = ($('unit').value ? T.unit($('unit').value) : TYPENAME()).toLowerCase();
+    const home = ($('unit').value ? T.unit($('unit').value) : TYPENAME()).toLowerCase(), stay = STAY(pm), yld = pm === 'yield';
+    const fig = v => labelText(v, pm);
+    const title = { median: T('Rent as mountains: {home}', { home: safe(home) }), sale: T('Sale price as mountains: {home}', { home: safe(home) }),
+      sale_psf: T('Sale price per sq ft as mountains: {home}', { home: safe(home) }), yield: T('Yield as mountains: {home}', { home: safe(home) }),
+      hotels: T('A hotel night as mountains'), homes: T('A holiday home night as mountains') }[pm] || T('Rent as mountains: {home}', { home: safe(home) });
     boxP = document.createElement('div'); boxP.className = 'map3d peaks';
     boxP.innerHTML = '<div class="m3" id="mP"></div><button type="button" class="btn primary m3x">' + T('Back to the map') + '</button>' +
-      '<div class="pkKey"><b>' + T('Rent as mountains: {home}', { home: safe(home) }) + '</b>' +
-      '<span class="pkBar" aria-hidden="true"></span><span class="pkEnds"><span>' + safe(money(SURF.lo)) + '</span><span>' + safe(money(SURF.hi)) + '+</span></span>' +
-      '<small class="pkHow">' + T('Peaks are the dearest areas; sea level is the cheapest.') + '</small>' +
-      '<small><i class="pkRing" aria-hidden="true"></i>' + T('Good value: among the cheapest busy areas') + '</small>' +
-      '<small class="muted">' + T('Heights come from each area\'s median yearly rent, smoothed between areas: a picture of the market, not one building\'s price.') + '</small></div>' +
+      '<div class="pkKey"><b>' + title + '</b>' +
+      '<span class="pkBar" aria-hidden="true"></span><span class="pkEnds"><span>' + safe(fig(SURF.lo)) + '</span><span>' + safe(fig(SURF.hi)) + '+</span></span>' +
+      '<small class="pkHow">' + (yld ? T('Peaks are the highest yields; sea level is the lowest.') : T('Peaks are the dearest areas; sea level is the cheapest.')) + '</small>' +
+      (yld ? '' : '<small><i class="pkRing" aria-hidden="true"></i>' + T('Good value: among the cheapest busy areas') + '</small>') +
+      '<small class="muted">' + (stay ? T('Heights come from each area\'s typical price a night, smoothed between areas: a picture of the market, not one place\'s price.')
+        : yld ? T('Heights come from each area\'s gross yield, smoothed between areas: a picture of the market, not one home\'s return.')
+        : /^sale/.test(pm) ? T('Heights come from each area\'s median sale price, smoothed between areas: a picture of the market, not one home\'s price.')
+        : T('Heights come from each area\'s median yearly rent, smoothed between areas: a picture of the market, not one building\'s price.')) + '</small></div>' +
       '<p class="m3n">' + T('Drag with two fingers or right-click to turn and tilt.') + '</p>';
     document.querySelector('.mapWrap').append(boxP);
     boxP.querySelector('.pkBar').style.background = 'linear-gradient(90deg,' + [1, 2, 3, 4, 5, 6].map(blue).join(',') + ')';
     // Start looking from inland towards the sea, over the dearest areas (unless the map was already zoomed in on a spot).
-    const top = [...SURF.pts].filter(p => !p.a.staff && p.w >= 100).sort((p, q) => q.v - p.v).slice(0, 10);
+    const busyCam = SURF.pts.filter(p => !p.a.staff && p.w >= (STAY(pm) ? 3 : 100)), top = (busyCam.length ? busyCam : SURF.pts).slice().sort((p, q) => q.v - p.v).slice(0, 10);
     const near = map.getZoom() >= 13, c = near ? map.getCenter() : { lat: top.reduce((t, p) => t + p.a.lat, 0) / top.length - 0.03, lng: top.reduce((t, p) => t + p.a.lng, 0) / top.length + 0.03 };
     mP = new maplibregl.Map({ container: 'mP', style: styleFor(), center: [c.lng, c.lat], zoom: near ? map.getZoom() - 0.5 : 10.5, pitch: 62, bearing: -38, maxPitch: 80, attributionControl: { compact: true } });
     btnP.setAttribute('aria-pressed', 'true'); countUse('peaks');
@@ -469,14 +482,17 @@
       mP.setTerrain({ source: 'pkDem', exaggeration: 1 });
       mP.setSky && mP.setSky({ 'sky-color': '#BFD3E6', 'horizon-color': '#F6F1E7', 'fog-color': '#F6F1E7', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.85 });
       // Names on the peaks (the dearest busy areas, spread out) and gold rings on the best value (the cheapest busy areas).
-      const busy = SURF.pts.filter(p => !p.a.staff && (p.w || 0) >= 100), far = (p, list) => list.every(q => Math.hypot(p.a.lat - q.a.lat, p.a.lng - q.a.lng) > 0.025);
+      // Busy: 100+ contracts (3+ places with a price for nights); value rings need 300+ contracts (5+ places). A yield's
+      // peaks are already the good news, so it has no rings.
+      const minW = stay ? 3 : 100, ringW = stay ? 5 : 300;
+      const busy = SURF.pts.filter(p => !p.a.staff && (p.w || 0) >= minW), far = (p, list) => list.every(q => Math.hypot(p.a.lat - q.a.lat, p.a.lng - q.a.lng) > 0.025);
       const pick = (arr, k) => arr.reduce((out, p) => (out.length < k && far(p, out) ? out.concat([p]) : out), []);
-      const tops = pick([...busy].sort((p, q) => q.v - p.v), 7), lows = pick([...busy].filter(p => p.w >= 300).sort((p, q) => p.v - q.v), 4);
+      const tops = pick([...busy].sort((p, q) => q.v - p.v), 7), lows = yld ? [] : pick([...busy].filter(p => p.w >= ringW).sort((p, q) => p.v - q.v), 4);
       const pkEls = [];
       for (const [list, cls] of [[tops, 'pk top'], [lows, 'pk low']]) for (const p of list) {
         const el = document.createElement('button'); el.type = 'button'; el.className = cls;
-        el.innerHTML = '<span class="pkCard"><b>' + safe(money(p.v)) + '</b><small>' + safe(T.place(p.a.label)) + '</small></span>';
-        el.setAttribute('aria-label', T.place(p.a.label) + ': ' + money(p.v));
+        el.innerHTML = '<span class="pkCard"><b>' + safe(fig(p.v)) + '</b><small>' + safe(T.place(p.a.label)) + '</small></span>';
+        el.setAttribute('aria-label', T.place(p.a.label) + ': ' + fig(p.v));
         el.addEventListener('click', () => { const a = p.a; closePeaks(); focusArea(a); });
         new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.a.lng, p.a.lat]).addTo(mP); pkEls.push(el); }
       // Peaks first, dearest first: a card that would cover one already shown waits until the view gives it room.
@@ -495,6 +511,11 @@
     map.setView([c.lat, c.lng], Math.round(z + 0.3), { animate: false });
   }
   addEventListener('keydown', e => { if (e.key === 'Escape' && mP) closePeaks(); });
+  // Switching the view (or the home) while Peaks is open redraws the mountains for it, from the same spot.
+  const redrawPeaks = () => { if (!mP) return; const c = mP.getCenter(), z = mP.getZoom(), b = mP.getBearing(), pt = mP.getPitch();
+    closePeaks(); map.setView([c.lat, c.lng], Math.round(z), { animate: false }); openPeaks(); if (mP) mP.jumpTo({ center: c, zoom: z, bearing: b, pitch: pt }); };
+  $('metric').addEventListener('change', () => setTimeout(redrawPeaks, 0));
+  $('home').addEventListener('change', () => setTimeout(redrawPeaks, 0));
   window.openPeaks = openPeaks; window.closePeaks = closePeaks; window.peaksHeight = heightAt;
 
   // ---- Start: the strip once the rent data is in, again when hotels, holiday homes or Metro arrive ----------

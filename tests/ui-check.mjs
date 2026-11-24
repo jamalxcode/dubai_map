@@ -905,6 +905,14 @@ try {
         return { open: !!document.querySelector('.map3d.peaks canvas'), pressed: document.querySelector('.views .peaksBtn').getAttribute('aria-pressed'),
           hiH: peaksHeight(hi.lat, hi.lng), loH: peaksHeight(lo.lat, lo.lng), sea: peaksHeight(24.6, 54.6), tops: document.querySelectorAll('.pk.top').length, lows: document.querySelectorAll('.pk.low').length,
           key: (document.querySelector('.pkKey') || {}).textContent || '', hiName: hi.label, loName: lo.label }; });
+      // Peaks follows the view: switching to Hotels and Yield while it is open redraws it for that view.
+      await page.click('.views button[data-m="hotels"]'); await page.waitForTimeout(4000);
+      const ph = await page.evaluate(() => ({ key: (document.querySelector('.pkKey b') || {}).textContent || '', top: (document.querySelector('.pk.top b') || {}).textContent || '' }));
+      await page.click('.views button[data-m="yield"]'); await page.waitForTimeout(4000);
+      const py = await page.evaluate(() => ({ key: (document.querySelector('.pkKey b') || {}).textContent || '', top: (document.querySelector('.pk.top b') || {}).textContent || '', rings: document.querySelectorAll('.pk.low').length }));
+      check(/hotel night/i.test(ph.key) && /^AED [\d,]+$/.test(ph.top) && /^Yield as mountains/.test(py.key) && /%$/.test(py.top) && py.rings === 0,
+        `Peaks follows the view: "${ph.key}" (top ${ph.top}), then "${py.key}" (top ${py.top}, no value rings)`);
+      await page.click('.views button[data-m="median"]'); await page.waitForTimeout(800);
       await page.click('.map3d.peaks .m3x'); await page.waitForTimeout(300);
       const back = await page.evaluate(() => !document.querySelector('.map3d') && document.querySelector('.views .peaksBtn').getAttribute('aria-pressed') === 'false');
       check(pk.open && pk.pressed === 'true' && pk.hiH > pk.loH + 1000 && pk.sea === 0 && pk.tops >= 3 && pk.lows >= 2 && /Rent as mountains/.test(pk.key) && back,

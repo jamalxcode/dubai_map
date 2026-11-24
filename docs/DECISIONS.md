@@ -855,6 +855,14 @@ Asked: "add Dubai bus routes and lines in addition to the metro lines and statio
 - **How it was checked without Overpass or the feed reachable from the session:** a check workflow (`routes-check.yml`) ran the collector on GitHub's runners and printed what it built; the collector was merged first, the weekly job published `routes.json`, and the map was built and tested against that real file.
 - **Checked:** Python tests on a stand-in feed (polyline, most-run shape, stops of both directions, Arabic names, marine kinds, the safety check); browser checks for both layers, a stop's card and route pick, a marine station's card, the phone bar at 390 px and 320 px Arabic, and the status page's new item; every suite passes; screenshots on desktop and phone.
 
+## Decision on 2026-11-24 (eighty-seventh pass): Peaks follows the view
+
+Asked: "does Peaks apply to apartments, holiday homes, hotels? which one?" (answer: rent only, for the home picked), then "yes make it follow the view, merge on main".
+- **What changed:** Peaks now draws the view the map is on: yearly rent (the home picked), sale price or sale price per sq ft, gross yield, a hotel night or a holiday home night (`peakMetric` in fun.js; the Hotels view counts places until prices exist, so then it falls back to rent). Each area weighs as in that view (its contracts, or its places with a price), and labels use the view's own wording (AED 145k, AED 3.3M, 9.3%, AED 2,216). The key's title, the "peaks are…" line and the footnote follow; yield has no gold value rings (its peaks are already the good news). Busy areas for names and rings: 100+ contracts (300+ for rings), or 3+ places with a price (5+ for rings) for nights.
+- **Switching while open:** on desktop the map's view bar stays above the mountains, and picking another view (or home) redraws them from the same spot and angle.
+- **Found while checking:** the camera picked its starting spot from areas with 100+ contracts, which no area has for nights, and failed (NaN position); it now uses the same busy rule as the names, falling back to every area.
+- **Checked:** a browser run through every view with Peaks open (titles, scales, labels, rings, no errors); the Peaks browser check now switches to Hotels and Yield while open; every suite passes.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".
