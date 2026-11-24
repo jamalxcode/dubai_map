@@ -838,6 +838,13 @@ Asked: "have the left panel also transparent slightly to let the user know there
 - **Found while checking:** the panel's background, the tour box and the 3D "Back" button kept their old values because panel.css and fun.css load after atlas.css (the lesson "the later stylesheet wins a tie" again); the rules now live in panel.css or carry `.mapWrap` in front.
 - **Checked:** the desktop layout check now asks for a full-window map with the panel floating over it, slightly see-through; the dial and "All Dubai" checks use the open part; every browser check, axe's contrast checks included, passes; screenshots in English, Arabic, light and dark mode.
 
+## Decision on 2026-11-24 (eighty-fifth pass): more glass
+
+Asked: "make the left panel more transparent but still readable and bottom right rectangle also transparent but readable also" (screenshot of Peaks).
+- **Side panel (computers):** 58% solid (was 72%) with a stronger blur (6 px, a touch more colour) so the map shows clearly behind it while text reads as before; the header stays 94%.
+- **Floating boxes:** the map's key, the Peaks key, the budget slider on the map, the tour box and the 3D how-to line share a new see-through tint (`--glass`: 60% ivory, 64% espresso in dark mode) with an 8 px blur; the view bar's buttons stay solid.
+- **Checked:** every browser check, axe's contrast checks included, passes (the layout check now accepts 50% and up); screenshots in light and dark mode and in Peaks.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

@@ -27,7 +27,7 @@ html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopp
   --band:var(--oxblood);--band-text:var(--ivory);--band-muted:#E8DCCB;
   /* Light theme (default): ivory paper */
   --bg:var(--ivory);--text:var(--espresso);--panel:var(--soft);--line:#D9CFBE;--muted:#655B51;--hover:#F0E9DC;
-  --label:#FFFCF5;--legend:rgba(255,252,245,.95);--map-bg:var(--soft);--disabled:#A59A8C;--ok:#1C6B3A;--bad:#9A3B00;
+  --label:#FFFCF5;--legend:rgba(255,252,245,.95);--glass:rgba(255,252,245,.6);--map-bg:var(--soft);--disabled:#A59A8C;--ok:#1C6B3A;--bad:#9A3B00;
   --tiles:grayscale(.85) contrast(.95) brightness(1.04) sepia(.08);
   --b1:#EFF3FF;--b2:#C6DBEF;--b3:#9ECAE1;--b4:#6BAED6;--b5:#2171B5;--b6:#084594; /* prices: blue, lowest to highest */
   color-scheme:light;
@@ -41,7 +41,7 @@ html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopp
   --sign:var(--gold);--sign-ink:#D9B547;--on-sign:var(--espresso);--gold-ink:var(--gold);--focus:var(--gold);
   --band:var(--oxblood);--band-muted:#E8DCCB;
   --bg:#1E1712;--text:var(--ivory);--panel:#2A211A;--line:#43372C;--muted:#B3A898;--hover:#251D17;
-  --label:#2A211A;--legend:rgba(42,33,26,.94);--map-bg:#221A14;--disabled:#62574C;--ok:#7FD39B;--bad:#FFB27A;
+  --label:#2A211A;--legend:rgba(42,33,26,.94);--glass:rgba(42,33,26,.64);--map-bg:#221A14;--disabled:#62574C;--ok:#7FD39B;--bad:#FFB27A;
 
   --tiles:invert(1) hue-rotate(180deg) grayscale(.8) brightness(.82) contrast(.9);
   color-scheme:dark;
@@ -754,3 +754,7 @@ details.f-range[open]>summary{margin-bottom:5px}
   [dir="rtl"] .mapWrap .mapNote,[dir="rtl"] .mapWrap .cmpPick,[dir="rtl"] .mapWrap .tourBox{left:calc((100% - var(--paneW)) / 2)}
   .mapWrap .tourBox{z-index:1001}
 }
+/* The boxes floating over the map (the key, the Peaks key, the budget slider, the tour, the 3D how-to line) are
+   see-through glass (the owner's request, 24 Nov): a light tint and a blur behind, so the map shows yet the text reads. */
+.mapWrap .legend,.mapWrap .map3d.peaks .pkKey,.mapWrap .budgetSlider:not(.out),.mapWrap .tourBox,.mapWrap .map3d .m3n{
+  background:var(--glass);-webkit-backdrop-filter:blur(8px) saturate(1.1);backdrop-filter:blur(8px) saturate(1.1);opacity:1}

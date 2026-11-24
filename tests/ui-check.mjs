@@ -118,7 +118,7 @@ try {
       const pane = await page.evaluate(() => { const r = document.querySelector('.mapWrap').getBoundingClientRect(), p = document.querySelector('.pane'), pr = p.getBoundingClientRect();
         const a = (getComputedStyle(p).backgroundColor.match(/[\d.]+/g) || []).map(Number), alpha = a.length > 3 ? a[3] : 1;
         return { left: r.left, w: r.width / innerWidth, top: r.top, h: r.height / innerHeight, pw: pr.width, alpha, zoom: map.zoomControl.getContainer().getBoundingClientRect().left }; });
-      check(pane.left <= 1 && pane.w >= 0.98 && pane.top <= 1 && pane.h >= 0.98 && pane.pw >= 400 && pane.alpha >= 0.6 && pane.alpha < 0.95 && pane.zoom >= pane.pw,
+      check(pane.left <= 1 && pane.w >= 0.98 && pane.top <= 1 && pane.h >= 0.98 && pane.pw >= 400 && pane.alpha >= 0.5 && pane.alpha < 0.95 && pane.zoom >= pane.pw,
         `desktop: the map fills the window and the panel (${Math.round(pane.pw)} px) floats over it, slightly see-through (${Math.round(pane.alpha * 100)}% solid), the zoom buttons beside it`);
       await page.evaluate(() => scrollTo(0, 1500));
       const still = await page.evaluate(() => document.querySelector('.mapWrap').getBoundingClientRect().top);
