@@ -816,6 +816,13 @@ Asked: "let's add a new view, where prices are shown as mountain ranges similar 
 - **Kept as a button, not a metric:** "Peaks" is not an option of `#metric` (it shows rent for the home picked, and every other part of the page keeps working on the chosen view); `syncViews` now only manages buttons with a `data-m`.
 - **Checked:** a browser check opens Peaks, compares heights (Palm Jumeirah 3,600 m, Abu Hail about 120 m, open sea 0), counts the named peaks and value rings, and returns with "Back to the map", with no script errors; the chips check counts metric buttons only; screenshots on desktop and an Arabic phone (the key trimmed on phones).
 
+## Decision on 2026-11-24 (eighty-second pass): Peaks, lighter signs and a wider view
+
+Asked: "make the signs less obstructive, and see through for the peak view so that more can be seen for overall Dubai terrain" (screenshot: big cards covering the peaks).
+- **Signs:** smaller (figure 12.5 px, name 9.5 px), see-through (58% ivory with a light blur, a thin translucent edge), a shorter stem and a smaller gold ring; a sign comes up to full strength when hovered or focused. Seven named peaks and four value rings instead of eight and five.
+- **View:** the camera starts further out and a little lower (zoom 10.5, pitch 62), centred further inland, so most of Dubai's terrain shows at once; the key is a little narrower and slightly see-through.
+- **Checked:** the Peaks browser check and every suite pass; screenshots on desktop and an Arabic phone.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

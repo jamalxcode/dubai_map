@@ -453,8 +453,8 @@
     boxP.querySelector('.pkBar').style.background = 'linear-gradient(90deg,' + [1, 2, 3, 4, 5, 6].map(blue).join(',') + ')';
     // Start looking from inland towards the sea, over the dearest areas (unless the map was already zoomed in on a spot).
     const top = [...SURF.pts].filter(p => !p.a.staff && p.w >= 100).sort((p, q) => q.v - p.v).slice(0, 10);
-    const near = map.getZoom() >= 13, c = near ? map.getCenter() : { lat: top.reduce((t, p) => t + p.a.lat, 0) / top.length - 0.018, lng: top.reduce((t, p) => t + p.a.lng, 0) / top.length + 0.012 };
-    mP = new maplibregl.Map({ container: 'mP', style: styleFor(), center: [c.lng, c.lat], zoom: near ? map.getZoom() - 0.5 : 11.2, pitch: 68, bearing: -38, maxPitch: 80, attributionControl: { compact: true } });
+    const near = map.getZoom() >= 13, c = near ? map.getCenter() : { lat: top.reduce((t, p) => t + p.a.lat, 0) / top.length - 0.03, lng: top.reduce((t, p) => t + p.a.lng, 0) / top.length + 0.03 };
+    mP = new maplibregl.Map({ container: 'mP', style: styleFor(), center: [c.lng, c.lat], zoom: near ? map.getZoom() - 0.5 : 10.5, pitch: 62, bearing: -38, maxPitch: 80, attributionControl: { compact: true } });
     btnP.setAttribute('aria-pressed', 'true'); countUse('peaks');
     boxP.querySelector('.m3x').addEventListener('click', closePeaks);
     mP.on('load', () => {
@@ -471,7 +471,7 @@
       // Names on the peaks (the dearest busy areas, spread out) and gold rings on the best value (the cheapest busy areas).
       const busy = SURF.pts.filter(p => !p.a.staff && (p.w || 0) >= 100), far = (p, list) => list.every(q => Math.hypot(p.a.lat - q.a.lat, p.a.lng - q.a.lng) > 0.025);
       const pick = (arr, k) => arr.reduce((out, p) => (out.length < k && far(p, out) ? out.concat([p]) : out), []);
-      const tops = pick([...busy].sort((p, q) => q.v - p.v), 8), lows = pick([...busy].filter(p => p.w >= 300).sort((p, q) => p.v - q.v), 5);
+      const tops = pick([...busy].sort((p, q) => q.v - p.v), 7), lows = pick([...busy].filter(p => p.w >= 300).sort((p, q) => p.v - q.v), 4);
       const pkEls = [];
       for (const [list, cls] of [[tops, 'pk top'], [lows, 'pk low']]) for (const p of list) {
         const el = document.createElement('button'); el.type = 'button'; el.className = cls;

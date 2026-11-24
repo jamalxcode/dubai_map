@@ -128,7 +128,7 @@ One look for every block of the side panel (and the same blocks on phones): sect
 
 ### Peaks (24 Nov)
 
-- A sixth button in the view bar (and the phone chips), "Peaks", shown when WebGL works; pressed while open. Opens a full-map overlay like 3D: "Back to the map" top-start, the key bottom-end (title, blue scale with its two ends, what heights mean, the gold value ring; trimmed on phones), Escape closes. Named peaks are light cards with a navy edge on a stem; value areas have a gold edge and a glowing gold ring at the foot.
+- A sixth button in the view bar (and the phone chips), "Peaks", shown when WebGL works; pressed while open. Opens a full-map overlay like 3D: "Back to the map" top-start, the key bottom-end (title, blue scale with its two ends, what heights mean, the gold value ring; trimmed on phones), Escape closes. Named peaks are small see-through cards (58% ivory, light blur, thin navy edge) on a short stem, full strength on hover or focus; value areas have a gold edge and a small glowing gold ring at the foot. The view opens wide (zoom 10.5, pitch 62) so most of Dubai shows.
 
 ## 6. The rent check
 
