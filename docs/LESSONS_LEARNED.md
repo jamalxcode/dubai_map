@@ -204,6 +204,7 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 - **Problem:** a merge's Deploy run failed in GitHub's `deploy-pages` step though Tests passed and the build step succeeded.
 - **Rule:** when only the publishing step fails, re-run the failed job once before looking for a cause in the code; say so in the report.
 - **Also (24 Nov):** re-running only the failed deploy job fails with "Multiple artifacts named github-pages"; re-run the whole workflow run instead.
+- **Then (24 Nov, third time in a day):** "No artifacts named github-pages" right after the upload: GitHub's list lags. `pages.yml` now waits 45 s and deploys a second time when the first try fails (every deploy reuses it).
 
 ## A rolling counter's text is every digit (20 Nov 2026)
 

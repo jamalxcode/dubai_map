@@ -20,7 +20,7 @@ jobs:
       cancel-in-progress: false
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -57,4 +57,12 @@ jobs:
           path: _site
       - name: Deploy
         id: deployment
+        continue-on-error: true  # GitHub's artifact list sometimes lags the upload ("No artifacts named github-pages"); try again below
+        uses: actions/deploy-pages@v4
+      - name: Wait before trying again
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 45
+      - name: Deploy (second try)
+        id: retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
