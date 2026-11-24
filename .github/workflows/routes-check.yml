@@ -43,7 +43,7 @@ jobs:
               print("stations:", [(s[2], s[3]) for s in d["marine"]["stations"]][:30])
               print("sample bus:", [(r["ref"], r["name"], len(r["path"])) for r in d["bus"]["routes"][:20]])
           PY
-      - name: RTA's GTFS feed (Mobility Database mirror): what it holds
+      - name: "RTA's GTFS feed (Mobility Database mirror), what it holds"
         if: always()
         run: |
           curl -sSL --max-time 120 -o gtfs.zip https://files.mobilitydatabase.org/mdb-3359/latest.zip -w "HTTP %{http_code}, %{size_download} bytes\n" || true
