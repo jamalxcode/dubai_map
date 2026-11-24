@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 const read = f => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
 const require = createRequire(import.meta.url);
 const T = require('../assets/app/i18n.js'); // no document here: English, but the tables are exposed
-const code = read('assets/app/atlas.js') + read('assets/app/companion.js') + read('assets/app/status.js') + read('assets/app/fun.js');
+const code = read('assets/app/atlas.js') + read('assets/app/companion.js') + read('assets/app/status.js') + read('assets/app/fun.js') + read('assets/app/routes.js');
 
 // Every string literal handed to T(...), including both arms of T(cond ? 'a' : 'b').
 function keys(src) {

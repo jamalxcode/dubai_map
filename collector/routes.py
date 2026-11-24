@@ -30,11 +30,15 @@ import zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import net  # noqa: E402
+import state as st  # noqa: E402
+import store  # noqa: E402
 from transit import BBOX, simplify  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data", "routes.json")
 FEED_URL = os.environ.get("RTA_GTFS_URL") or "https://files.mobilitydatabase.org/mdb-3359/latest.zip"
+# A newer copy downloaded from Dubai Pulse by someone in the UAE (re-saved as a zip) and committed here wins over the mirror.
+INBOX = os.path.join(ROOT, "data", "inbox", "rta_gtfs.zip")
 SOURCE = "Roads and Transport Authority (RTA), GTFS timetable feed (Dubai Pulse open data), via the Mobility Database"
 MIN = {"bus_routes": 100, "bus_stops": 1500, "marine_routes": 5}
 UAE = (22.5, 51.5, 26.3, 56.5)  # intercity routes run to Abu Dhabi, Al Ain, Sharjah and Hatta: fine; outside the UAE: broken data
@@ -199,17 +203,31 @@ def main(argv=None, today=None):
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--from-file", help="a GTFS zip saved earlier (tests, offline runs)")
     a = ap.parse_args(argv)
-    path = a.from_file
+    path, via = a.from_file, "file"
+    s = st.load() if not a.from_file else {}
+    b = s.setdefault("routes", {})
     try:
+        if not path and os.path.exists(INBOX):
+            path, via = INBOX, "inbox"
         if not path:
-            path = os.path.join(tempfile.mkdtemp(), "gtfs.zip")
+            path, via = os.path.join(tempfile.mkdtemp(), "gtfs.zip"), "mirror"
             download(path)
         z = zipfile.ZipFile(path)
     except Exception as e:  # noqa: BLE001 - any failure keeps the current file
         net.log(f"RTA's feed not reachable ({e}); keeping the current file", "routes")
+        if s:
+            st.set_status(b, "failed", f"RTA's feed not reachable ({e}); the current routes stay")
+            st.save(s)
         return 0
     out = build(z, today)
+    out["via"] = via
     bad = check(out)
+    if s:
+        b["feed_from"], b["feed_to"], b["via"] = out["feed"]["from"], out["feed"]["to"], via
+        st.set_status(b, "failed" if bad else "ok", ("; ".join(bad[:3]) + "; the current routes stay") if bad else "")
+        if not bad:
+            b["last_ok_at"] = st.now_iso()
+        st.save(s)
     net.log(f"feed {out['feed']['from']} to {out['feed']['to']}; bus: {len(out['bus']['routes'])} routes, {len(out['bus']['stops'])} stops; "
             f"marine: {len(out['marine']['routes'])} routes, {len(out['marine']['stations'])} stations", "routes")
     if bad:

@@ -169,6 +169,13 @@
     if (!(window.PRICE_WIDGET && /^https:\/\//.test(window.PRICE_WIDGET.url || '')))
       add(T("Add a booking partner's price widget"), T('Hotel cards can then show live nightly prices from that partner, in their own panel, when a visitor taps for them.'),
         T("Join a booking site's affiliate programme (Booking.com's or Expedia Group's, for example; free), create a hotel price or search widget in its dashboard, and send its link, or paste it into assets/app/partners.js."), 'https://www.booking.com/affiliate-program/v2/index.html');
+    // Bus and boat routes come from RTA's GTFS feed (collector/routes.py). The mirror's copy can lag Dubai Pulse's, which
+    // answers only from the UAE: once the timetable has run out, ask for a newer copy by hand.
+    const ro = s.routes || {};
+    if (ro.state === 'failed') add(T('Bus and boat routes are failing'), ro.status || '', T("The Mobility Database's copy of RTA's feed may have moved; the last good routes stay on the map."), 'https://mobilitydatabase.org/feeds/gtfs/mdb-3359');
+    else if (ro.feed_to && ro.feed_to < new Date().toISOString().slice(0, 10))
+      add(T('Bus and boat timetables are out of date'), T("The RTA timetable feed in use runs to {d}. A newer one is on Dubai Pulse, which answers only from the UAE.", { d: day(ro.feed_to) }),
+        T('Someone in the UAE downloads rta_gtfs-open from Dubai Pulse, saves it as a zip named rta_gtfs.zip and adds it to data/inbox/ on main; the weekly run then uses it.'), 'https://www.dubaipulse.gov.ae/data/rta-public-transports/rta_gtfs-open');
     const hp = s.hotel_prices || {};
     // Hotel prices come from Xotelo (free, no key; the owner's choice, 19 Nov). Only a failure needs a person.
     if (hp.state === 'failed') add(T('Hotel prices are failing'), hp.status || '',

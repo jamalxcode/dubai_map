@@ -758,3 +758,12 @@ details.f-range[open]>summary{margin-bottom:5px}
    see-through glass (the owner's request, 24 Nov): a light tint and a blur behind, so the map shows yet the text reads. */
 .mapWrap .legend,.mapWrap .map3d.peaks .pkKey,.mapWrap .budgetSlider:not(.out),.mapWrap .tourBox,.mapWrap .map3d .m3n{
   background:var(--glass);-webkit-backdrop-filter:blur(8px) saturate(1.1);backdrop-filter:blur(8px) saturate(1.1);opacity:1}
+/* Phones: five layer switches (Metro, 3D, Bus, Boats, A+ع) must fit beside the zoom buttons: compact pills (filled
+   oxblood when on, no slider graphic), and the bar never reaches the zoom stack (it scrolls if it must). */
+@media (max-width:860px){
+  .viewSw{max-width:calc(100vw - 114px);overflow-x:auto;scrollbar-width:none}
+  .viewSw::-webkit-scrollbar{display:none}
+  .viewSw .metroBtn,.viewSw .names{padding:0 8px!important;font-size:12px}
+  .viewSw .metroBtn::before,.viewSw .metroBtn::after,.viewSw .names::before,.viewSw .names::after{display:none}
+  .viewSw .metroBtn.on,.viewSw .metroBtn.on:hover,.viewSw button.names[aria-pressed="true"]{background:var(--oxblood);color:var(--ivory)}
+}

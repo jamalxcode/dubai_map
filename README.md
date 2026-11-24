@@ -27,6 +27,7 @@ One button for the next step (compare, save, set a reminder), and on a wide scre
 - **Prices are written on the map** in plain, easy type, on a card framed in its price colour: the thicker and deeper the blue frame, the dearer the area, from the palest blue (cheapest) to deep navy (dearest). The key has a value at every step and ignores the most extreme 5% at each end, so one palace-priced area can't wash out the rest.
 - **Five views: Rent, Sale price, Yield, Hotels, Holiday homes.** One tap switches the labels, the colours, the key, the big number up top (with its unit in bold beside it: "AED A YEAR", "GROSS A YEAR (ROI)", "AED A NIGHT") and the side panel. On phones the views sit as chips above the map.
 - **Metro and Tram** as an on/off layer, with a "near a station" filter and the rent near each station.
+- **Buses and boats**: every RTA bus route and stop, and the abras, water buses and ferries, as two more layers; tap a stop for its buses, tap a number to see that route.
 - **One Home picker** (all homes, studios, 1-bed, 2-bed… or flats of any size) and a rent range. That's all the filtering there is.
 - **Labels never overlap**, and never hide under a button. Crowded areas merge into one label named after the busiest ("JLT + 12 areas"); zoom in and they come apart. Tests check this in English and Arabic, from 320 px phones to wide screens.
 - **Official boundaries**, shaded in the same blues, and a big number up top: the typical rent of whatever is on screen, rolling like an odometer as you pan.
