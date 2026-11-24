@@ -1,0 +1,48 @@
+name: Check the bus and marine collector
+
+# When collector/routes.py changes on any branch: run it against OpenStreetMap (one Overpass request) and print what
+# came back, so a change can be checked before it is merged. Saves nothing to the data branch (the weekly "Place
+# unplaced areas" job does that, from main).
+on:
+  push:
+    branches-ignore: [data]
+    paths: [collector/routes.py, .github/workflows/routes-check.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Fetch and build (not saved)
+        run: python3 collector/routes.py --out routes.json --save-raw overpass.json
+      - name: What came back (for the log)
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, collections, os, sys
+          if not os.path.exists("overpass.json"): print("no response (Overpass not reachable)"); sys.exit(0)
+          raw = json.load(open("overpass.json")); els = raw.get("elements") or []
+          print("remark:", raw.get("remark")); print("elements:", collections.Counter(e["type"] for e in els))
+          rels = [e for e in els if e["type"] == "relation"]
+          for kind in ("bus", "ferry"):
+              rs = [e for e in rels if e.get("tags", {}).get("route") == kind]
+              print(kind, "relations:", len(rs), "operators:", collections.Counter(e["tags"].get("operator", "?") for e in rs).most_common(4))
+              for e in rs[:15]:
+                  t = e["tags"]; print("  ", t.get("ref"), "|", t.get("name:en") or t.get("name"), "|", t.get("from"), "->", t.get("to"), "| members", len(e.get("members") or []))
+          if os.path.exists("routes.json"):
+              d = json.load(open("routes.json")); print("routes.json KB:", os.path.getsize("routes.json") // 1024)
+              print("bus routes:", len(d["bus"]["routes"]), "stops:", len(d["bus"]["stops"]), "named stops:", sum(1 for s in d["bus"]["stops"] if s[2]))
+              print("marine:", [(r["ref"], r["kind"], len(r["path"])) for r in d["marine"]["routes"]][:20])
+              print("stations:", [(s[2], s[3]) for s in d["marine"]["stations"]][:30])
+              print("sample bus:", [(r["ref"], r["name"], len(r["path"])) for r in d["bus"]["routes"][:20]])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: routes, path: "routes.json\noverpass.json", retention-days: 7 }
