@@ -499,12 +499,16 @@ Done (decisions, eighty-second pass): smaller, see-through signs (full strength 
 
 Done (decisions, eighty-third pass): map labels 50% see-through with a light blur (72% in dark mode, so the figures stay readable), full strength when hovered or opened.
 
+### 24 Nov · "have the left panel also transparent slightly to let the user know there is something behind it, but not too transparent where it becomes unreadable"
+
+Done (decisions, eighty-fourth pass): on computers the map fills the window and the panel floats over it, 72% solid with a light blur, so the map shows faintly behind while the text stays easy to read; everything that depends on what's on screen uses the uncovered part.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
 2. **Arabic area names**: from DLD's own Arabic field once contract-level data arrives (the interface is already in Arabic). A native speaker's read of the Arabic interface text would also help.
 3. ~~Areas off the map~~: done 18 Nov. Al Twar Fifth was found in OpenStreetMap as "Al Twar 5" (thanks to the owner's lead), and Al Aryam and Al Waha Villas are placed; every contract is on the map.
-4. ~~Old branches~~: done on 19 Nov; the owner deleted all thirteen. Left: `main`, `data` (the published figures) and `rera-check` (the RERA renewal calculator, parked by the collaborator; the status page doesn't count it as old). Sessions may not delete branches: list new stale ones here. **To delete (merged):** `keybox-ideas`, `burj-3d`, `review-round`, `claude/affectionate-clarke-eppwbg`, `critique-2`, `peaks`, `peaks-signs`, `see-through-labels`.
+4. ~~Old branches~~: done on 19 Nov; the owner deleted all thirteen. Left: `main`, `data` (the published figures) and `rera-check` (the RERA renewal calculator, parked by the collaborator; the status page doesn't count it as old). Sessions may not delete branches: list new stale ones here. **To delete (merged):** `keybox-ideas`, `burj-3d`, `review-round`, `claude/affectionate-clarke-eppwbg`, `critique-2`, `peaks`, `peaks-signs`, `see-through-labels`, `panel-over-map`.
 4b. **Rent history** starts showing changes about four weeks after the first snapshot (16 Nov 2026), so from mid-December; year-on-year from November 2027.
 5a. **Street View inside the breakdown** (option 3): needs the owner's Google Maps Embed API key (free, billing enabled, restricted to the site's address).
 5b. ~~Hotel prices~~: done on 19 Nov with Xotelo (free, no key); LiteAPI rejected by the owner (its live key needs a payment card that bookings could be charged to). DET's official, city-wide hotel figures still arrive with the Dubai Pulse key (item 1).

@@ -263,3 +263,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the shared-bed filter lived on the path that runs after a search; between searches the collector returned early and kept its old file, so the hostels stayed on the map after the fix was merged.
 - **Rule:** a collector rebuilds its published rows from what it holds on every pull, fetching or not; rules applied to rows (filters, rounding) run on that rebuild, not only on fresh results.
+
+## A panel over the map changes what "on screen" means (24 Nov 2026)
+
+- **Problem:** with the map under the side panel, the dial counted areas hidden behind it, "All Dubai" centred the city behind it and a shared link saved a centre the reader couldn't see.
+- **Rule:** anything that asks what is on screen uses the open part (`viewBounds`, `visCenter`, `framePad` in atlas.js), and the panel counts as a control for labels; checks measure the open part too.

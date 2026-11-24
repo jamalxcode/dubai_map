@@ -59,7 +59,8 @@
 
 /* ---- The side panel on computers: the same rhythm, edge to edge ---- */
 @media (min-width:1100px){
-  .pane{background:var(--bg)}
+  /* Floats over the map, slightly see-through (24 Nov): the map shows faintly behind, the text stays easy to read. */
+  .pane{background:color-mix(in srgb,var(--bg) 72%,transparent);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
   .pane .wrap{padding-left:28px;padding-right:28px}
   .pane .controls .wrap{padding-top:20px;padding-bottom:20px}
   .pane #companion .ck{padding-top:var(--secPadY);padding-bottom:var(--secPadY)}

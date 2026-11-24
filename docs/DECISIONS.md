@@ -830,6 +830,14 @@ Asked: "the see-through signs look very well in the peak view, let's give regula
 - **Dark mode:** 72% instead of 50%: at 50% the light card over the dark map turned mid-grey and the dark figures lost contrast; 72% keeps them clear and still lets the map through.
 - **Checked:** every browser check, axe's contrast checks included, passes; screenshots in light and dark mode.
 
+## Decision on 2026-11-24 (eighty-fourth pass): the side panel floats over the map
+
+Asked: "have the left panel also transparent slightly to let the user know there is something behind it, but not too transparent where it becomes unreadable" (screenshot of the desktop page).
+- **Layout (computers, 1100 px and up):** the map now fills the window and the side panel floats over its inline-start side (left in English, right in Arabic) instead of standing beside it; phones and tablets are unchanged. The panel is 72% solid with a 2 px blur (the streets and price colours show faintly behind it, every line of text stays crisp, light and dark mode alike); its oxblood header stays 94% solid, because its gold "actually pay" lost contrast at less. A soft shadow marks the panel's edge.
+- **What follows the panel:** the zoom bar, the budget slider and the slide-away tab sit at its edge; the view bar's width, "All Dubai", the dial's "areas on screen", labels (the panel counts as a control, so none sits under it), 3D and Peaks' buttons, the tour, notes and the compare picker all use the part of the map the panel leaves open (`coverX`, `viewBounds`, `framePad` in atlas.js). A shared link saves and restores the centre of that open part (`visCenter`, `setVisView`), so a friend sees the same spot. Hiding the panel now just slides it off; the map no longer resizes.
+- **Found while checking:** the panel's background, the tour box and the 3D "Back" button kept their old values because panel.css and fun.css load after atlas.css (the lesson "the later stylesheet wins a tie" again); the rules now live in panel.css or carry `.mapWrap` in front.
+- **Checked:** the desktop layout check now asks for a full-window map with the panel floating over it, slightly see-through; the dial and "All Dubai" checks use the open part; every browser check, axe's contrast checks included, passes; screenshots in English, Arabic, light and dark mode.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

@@ -69,8 +69,26 @@ window.priceKey=unit=>{
   return SCALES[k]={top,color:sc.colorOf,share:v=>Math.min(100,Math.round(v/top*100))};
 };
 // "All Dubai": back to the whole city (placed areas, leaving out far-off Hatta so the city isn't a dot).
+// Computers (1100 px and up): the map fills the window and the side panel floats over its inline-start side, half
+// see-through (atlas.css). coverX() gives the strip of the map the panel covers (container pixels), or null; the parts
+// of the page that ask what is "on screen" (the dial, labels, framing) use the uncovered part only.
+function coverX(){if(!matchMedia('(min-width:1100px)').matches||document.documentElement.classList.contains('mapWide'))return null;
+  const pane=document.querySelector('.pane'),m=map.getContainer().getBoundingClientRect();if(!pane)return null;
+  const r=pane.getBoundingClientRect();if(!r.width||r.right<=m.left||r.left>=m.right)return null;
+  return {x0:Math.max(0,r.left-m.left),x1:Math.min(m.width,r.right-m.left)}}
+function viewBounds(){const c=coverX(),sz=map.getSize();if(!c)return map.getBounds();
+  const a=c.x0<=1?c.x1:0,b=c.x0<=1?sz.x:c.x0; // the uncovered part: right of the panel (or left of it, right to left)
+  return L.latLngBounds(map.containerPointToLatLng([a,sz.y]),map.containerPointToLatLng([b,0]))}
+window.viewBounds=viewBounds;
+// The centre of what the reader can see, and setting the view so a point sits there (links keep the same spot).
+function visCenter(){return viewBounds().getCenter()}
+function setVisView(ll,z){map.setView(ll,z,{animate:false});const c=coverX();if(!c)return;
+  const sz=map.getSize(),vc=c.x0<=1?(c.x1+sz.x)/2:c.x0/2;map.panBy([sz.x/2-vc,0],{animate:false})}
+// Padding for framing: the panel's side counts as covered.
+function framePad(p){const c=coverX();if(!c)return {padding:[p,p]};
+  return c.x0<=1?{paddingTopLeft:[c.x1+p,p],paddingBottomRight:[p,p]}:{paddingTopLeft:[p,p],paddingBottomRight:[map.getSize().x-c.x0+p,p]}}
 function fitDubai(animate){const pts=(CACHE.homes||AREAS).filter(x=>x.lat!=null&&x.lng<55.7).map(x=>[x.lat,x.lng]);
-  if(pts.length)map.fitBounds(pts,{padding:[30,30],animate:!!animate})}
+  if(pts.length)map.fitBounds(pts,Object.assign(framePad(30),{animate:!!animate}))}
 // "All Dubai" is the third button of the zoom bar (+, −, All Dubai).
 {const a=L.DomUtil.create('a','fit',map.zoomControl.getContainer());
   a.href='#';a.role='button';a.textContent=T('All Dubai');a.title=T('Show all of Dubai');
@@ -148,7 +166,8 @@ const viewCtl=new L.Control.View().addTo(map);
 function fitViewBar(){const bar=viewCtl.getContainer(),z=map.zoomControl&&map.zoomControl.getContainer();if(!bar||!z)return;
   if(typeof CHIP_MQ!=='undefined'&&CHIP_MQ.matches){bar.style.maxWidth='';return} // phones: the views are chips above the map
   const m=map.getContainer().getBoundingClientRect(),zr=z.getBoundingClientRect();if(!m.width)return;
-  bar.style.maxWidth=Math.max(140,(document.documentElement.dir==='rtl'?zr.left-m.left:m.right-zr.right)-20)+'px';
+  const cov=typeof coverX==='function'?coverX():null,u1=cov&&cov.x0>1?m.left+cov.x0:m.right; // the side panel may cover the far side
+  bar.style.maxWidth=Math.max(140,(cov?u1-zr.right:document.documentElement.dir==='rtl'?zr.left-m.left:m.right-zr.right)-20)+'px';
   const v=bar.querySelector('.views'),on=v&&v.querySelector('button[aria-pressed="true"]');
   if(on&&v.scrollWidth>v.clientWidth&&document.documentElement.dir!=='rtl')v.scrollLeft=Math.max(0,on.offsetLeft-(v.clientWidth-on.offsetWidth)/2)}
 map.on('resize',fitViewBar);addEventListener('load',fitViewBar);
@@ -720,7 +739,9 @@ function renderLabels(){
   const size=(members,val)=>labelBox(labelText(val,metric),labelName(members));
   const items=POINTS.map(p=>{const pt=map.latLngToLayerPoint([p.a.lat,p.a.lng]);return Object.assign({x:pt.x,y:pt.y,lat:p.a.lat,lng:p.a.lng},p)});
   const box=map.getContainer().getBoundingClientRect();
+  const cov=coverX(),mr=map.getContainer().getBoundingClientRect();
   const blocks=[...map.getContainer().parentNode.querySelectorAll('.leaflet-control,.legend,.mapWideBtn')].map(e=>e.getBoundingClientRect())
+    .concat(cov?[{left:mr.left+cov.x0,right:mr.left+cov.x1,top:mr.top,bottom:mr.bottom,width:cov.x1-cov.x0,height:mr.height}]:[]) // the side panel over the map
     .filter(r=>r.width&&r.left<box.right&&r.right>box.left&&r.top<box.bottom&&r.bottom>box.top)
     .map(r=>{const c=map.containerPointToLayerPoint([r.left-box.left+r.width/2,r.top-box.top+r.height/2]);return {x:c.x,y:c.y,w:r.width,h:r.height}});
   const v0=map.containerPointToLayerPoint([0,0]),ms=map.getSize(),view={x0:v0.x,y0:v0.y,x1:v0.x+ms.x,y1:v0.y+ms.y};
@@ -743,7 +764,7 @@ function renderLabels(){
     if(c.single){MARKERS.set(g[0].a.label,m);m.on('click',()=>{if(CMP_PICK){if(CMP_PICK.label!==g[0].a.label)openCompare(CMP_PICK,g[0].a);return}if(FOCUS&&FOCUS.label===g[0].a.label&&m.isPopupOpen())return;focusArea(g[0].a)})}
     else m.on('click',()=>{const b=L.latLngBounds(g.map(o=>[o.a.lat,o.a.lng])),z=map.getBoundsZoom(b,false,L.point(140,140));
       if(z<=map.getZoom()||map.getZoom()>=16)L.popup({maxWidth:320}).setLatLng([c.lat,c.lng]).setContent('<span class="t">'+T.count(g.length,'area')+'</span>'+((metric==='n'||(metric==='hotels'&&!hotelPriced()))?safe(labelText(c.val,metric)):c.lead?T('The label shows {area}: {v}',{area:safe(T.place(c.lead.a.label)),v:safe(labelText(c.val,metric))}):T('Typical {v}',{v:safe(labelText(c.val,metric))}))+'<br>'+[...g].sort((x,y)=>y.n-x.n).map(o=>safe(T.place(o.a.label))+': <b>'+safe(labelText(o.v,metric))+'</b>').join('<br>')).openOn(map);
-      else{clearFocus();map.closePopup();map.flyToBounds(b,{padding:[70,70],maxZoom:16,duration:FX?.6:0,animate:!!FX})}});
+      else{clearFocus();map.closePopup();map.flyToBounds(b,Object.assign(framePad(70),{maxZoom:16,duration:FX?.6:0,animate:!!FX}))}});
   }
   if(window.afterLabels)afterLabels(added.map(m=>m.getElement()&&m.getElement().firstChild).filter(Boolean),metric); // fun.js: count-up, budget slider
   // Labels answer a filter change by settling in from the centre; plain zooming redraws instantly.
@@ -786,7 +807,7 @@ function setDial(on,{kind,unit,lo,hi,mid,fmtEnd}={}){
   $('dialMin').setAttribute('aria-label',T('Lowest area: {v}',{v:fmtEnd(lo)}));$('dialMax').setAttribute('aria-label',T('Highest area: {v}',{v:fmtEnd(hi)}));
 }
 function viewStat(){
-  const metric=LABEL.metric,b=map.getBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0);
+  const metric=LABEL.metric,b=viewBounds(),vis=POINTS.filter(p=>b.contains([p.a.lat,p.a.lng])),N=vis.reduce((s,p)=>s+p.n,0);
   const where=vis.length?' · '+T('{what} on screen',{what:T.count(vis.length,'area')}):'';
   // Until hotel prices exist the figure is a count: it says so in the number itself ("809 places"), so it is never
   // read as a price in the spot where prices go. Counts get no dial.
@@ -1124,23 +1145,13 @@ function animateWide(on){
   const root=document.documentElement,pane=document.querySelector('.pane'),wrap=map.getContainer().parentNode;
   wideBtn.classList.toggle('flip',on); // the arrow turns as the move starts
   if(WIDE_MQ.matches){
-    const rtl=root.dir==='rtl',sign=rtl?1:-1,side=rtl?'right':'left';
-    // The panel, lifted out of the page where it stands, slides over the map; it has the page's background.
-    const lift=(W,top)=>{pane.style.cssText='display:block;position:fixed;top:'+top+'px;'+side+':0;width:'+W+'px;z-index:1050;background:var(--bg);will-change:transform'};
-    const done=()=>{wideAnim=null;pane.style.cssText='';G.set(wrap,{clearProps:'transform,willChange'})};
-    if(on){
-      const W=pane.getBoundingClientRect().width;pane._y=scrollY;lift(W,-scrollY);
-      setWide(true,true,true);                    // map at full width now, centre kept; labels re-placed at the end
-      G.set(wrap,{x:-sign*W/2,willChange:'transform'}); // drawn where it was, then slides into place
-      wideAnim=G.timeline({defaults:{duration:.55,ease:'power3.inOut'},onComplete(){done();if(LABEL.metric)renderLabels()}})
-        .to(pane,{x:sign*W},0).to(wrap,{x:0},0);
-    }else{
-      root.classList.remove('mapWide');const W=pane.getBoundingClientRect().width;root.classList.add('mapWide'); // its width when open
-      const y=pane._y||0;lift(W,-y);G.set(pane,{x:sign*W});G.set(wrap,{willChange:'transform'}); // back where the reader left it
-      wideAnim=G.timeline({defaults:{duration:.55,ease:'power3.inOut'},onComplete(){done();setWide(false,true);
-        if(y){scrollTo(0,y);if(lenis){try{lenis.resize()}catch(e){}lenis.scrollTo(y,{immediate:true,force:true})}}}})
-        .to(pane,{x:0},0).to(wrap,{x:-sign*W/2},0);
-    }
+    // Computers: the map already fills the window under the panel, so only the panel moves: it slides off the map's
+    // side (and back); nothing is resized or redrawn while it plays.
+    const sign=root.dir==='rtl'?1:-1,fin=()=>{wideAnim=null;G.set(pane,{clearProps:'transform,willChange'})};
+    if(on){const W=pane.getBoundingClientRect().width;G.set(pane,{willChange:'transform'});
+      wideAnim=G.to(pane,{x:sign*W,duration:.45,ease:'power3.inOut',onComplete(){fin();setWide(true,true)}})}
+    else{setWide(false,true,true);const W=pane.getBoundingClientRect().width;
+      wideAnim=G.fromTo(pane,{x:sign*W},{x:0,duration:.45,ease:'power3.inOut',onComplete(){fin();if(LABEL.metric)renderLabels()}})}
     return;
   }
   // Narrow screens: clip from the map's box on the page to the whole screen, or back.
@@ -1256,7 +1267,7 @@ L.DomEvent.disableClickPropagation($('legend'));
 // The address keeps what the map shows (home, view, position), so a copied link opens the same map.
 // Written without reloading; other parameters (lang, area, unit) are kept.
 let urlT;
-function writeURL(){if(!$('home').options.length)return;clearTimeout(urlT);urlT=setTimeout(()=>{try{const q=new URLSearchParams(location.search),c=map.getCenter();
+function writeURL(){if(!$('home').options.length)return;clearTimeout(urlT);urlT=setTimeout(()=>{try{const q=new URLSearchParams(location.search),c=visCenter();
   q.set('home',$('home').value.replace('|',':'));q.set('view',$('metric').value);q.set('at',c.lat.toFixed(4)+','+c.lng.toFixed(4)+','+map.getZoom());
   if(CMP)q.set('compare',CMP.a.label+'|'+CMP.b.label);else q.delete('compare');
   if(openDone)q.delete('open');
@@ -1311,7 +1322,7 @@ function readURL(){
   const mx=+q.get('max'),mn=+q.get('min'); // a budget from a link (the landing pages: "1-bed under AED 60,000")
   if(mx>0)$('max').value=String(mx);if(mn>0)$('min').value=String(mn);
   if(mx>0||mn>0)document.querySelector('.f-range').open=true; // a shared budget shows its boxes
-  if(at.length===3&&at.every(isFinite)&&Math.abs(at[0]-25.1)<1&&Math.abs(at[1]-55.3)<1.2)map.setView([at[0],at[1]],Math.min(18,Math.max(8,at[2])),{animate:false});
+  if(at.length===3&&at.every(isFinite)&&Math.abs(at[0]-25.1)<1&&Math.abs(at[1]-55.3)<1.2)setVisView([at[0],at[1]],Math.min(18,Math.max(8,at[2])));
   if(h){const [k,u='']=h.split(':');if([...$('home').options].some(o=>o.value===k+'|'+u)){
     if(k==='homes'){$('unit').value=u;$('home').value=k+'|'+u;unitChosen=true}else return ()=>{$('home').value=k+'|'+u;setHome(k,u)}}}
 }

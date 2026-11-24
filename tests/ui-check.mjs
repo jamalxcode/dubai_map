@@ -98,7 +98,7 @@ try {
     check(start.labels >= 10, `${name}: map shows rent labels (${start.labels})`);
     check(start.overlaps === 0, `${name}: no labels overlap at the start (${start.overlaps})`);
     // The price dial: the median of what's on screen between the lowest and highest area, in the view's unit.
-    const dial = await page.evaluate(() => { const vals = POINTS.filter(p => map.getBounds().contains([p.a.lat, p.a.lng])).map(p => p.v);
+    const dial = await page.evaluate(() => { const vb = window.viewBounds ? viewBounds() : map.getBounds(), vals = POINTS.filter(p => vb.contains([p.a.lat, p.a.lng])).map(p => p.v);
       const num = s => +String(s).replace(/[^\d.]/g, '') * (/k$/.test(s) ? 1000 : /M$/.test(s) ? 1e6 : 1);
       return { on: !document.getElementById('dialBox').classList.contains('off'), kind: document.getElementById('dialKind').textContent, unit: document.getElementById('dialUnit').textContent,
         med: num(document.getElementById('med').getAttribute('aria-label')), lo: num(document.getElementById('dialMin').textContent), hi: num(document.getElementById('dialMax').textContent),
@@ -114,8 +114,12 @@ try {
     check(tops.every(t => Math.abs(t - tops[0]) <= 2), `${name}: the three key figures line up (${tops.join(', ')})`);
     check(!(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)), `${name}: no sideways scrolling`);
     if (name === 'desktop') {
-      const pane = await page.evaluate(() => { const r = document.querySelector('.mapWrap').getBoundingClientRect(); return { left: r.left, top: r.top, h: r.height / innerHeight }; });
-      check(pane.left >= 400 && pane.top <= 1 && pane.h >= 0.98, `desktop: map is a full-height pane on the right (left ${Math.round(pane.left)} px, ${Math.round(pane.h * 100)}% high)`);
+      // The map fills the window; the side panel floats over its left side, slightly see-through (24 Nov).
+      const pane = await page.evaluate(() => { const r = document.querySelector('.mapWrap').getBoundingClientRect(), p = document.querySelector('.pane'), pr = p.getBoundingClientRect();
+        const a = (getComputedStyle(p).backgroundColor.match(/[\d.]+/g) || []).map(Number), alpha = a.length > 3 ? a[3] : 1;
+        return { left: r.left, w: r.width / innerWidth, top: r.top, h: r.height / innerHeight, pw: pr.width, alpha, zoom: map.zoomControl.getContainer().getBoundingClientRect().left }; });
+      check(pane.left <= 1 && pane.w >= 0.98 && pane.top <= 1 && pane.h >= 0.98 && pane.pw >= 400 && pane.alpha >= 0.6 && pane.alpha < 0.95 && pane.zoom >= pane.pw,
+        `desktop: the map fills the window and the panel (${Math.round(pane.pw)} px) floats over it, slightly see-through (${Math.round(pane.alpha * 100)}% solid), the zoom buttons beside it`);
       await page.evaluate(() => scrollTo(0, 1500));
       const still = await page.evaluate(() => document.querySelector('.mapWrap').getBoundingClientRect().top);
       check(Math.abs(still) <= 1, 'desktop: the map pane stays in place while the left pane scrolls');
@@ -216,7 +220,7 @@ try {
     await page.evaluate(() => map.setView([24.5, 54.3], 8, { animate: false }));
     await page.click('.leaflet-bar a.fit');
     await page.waitForTimeout(500);
-    const fit = await page.evaluate(() => ({ z: map.getZoom(), c: map.getCenter() }));
+    const fit = await page.evaluate(() => ({ z: map.getZoom(), c: (window.viewBounds ? viewBounds() : map.getBounds()).getCenter() }));
     check(fit.z >= 9 && fit.c.lng > 55 && fit.c.lng < 55.5, `${name}: "All Dubai" brings the whole city back (zoom ${fit.z})`);
     if (name === 'phone') {
       const top = await page.evaluate(() => document.querySelector('.mapWrap').getBoundingClientRect().top / innerHeight);

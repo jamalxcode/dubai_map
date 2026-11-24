@@ -134,6 +134,10 @@ One look for every block of the side panel (and the same blocks on phones): sect
 
 - Price labels' card: its tint at 50% opacity with a 1.5 px blur (72% in dark mode); full strength on hover, focus or when its area is open (`--cardA` in atlas.css).
 
+### The panel over the map (24 Nov)
+
+- Computers (1100 px and up): the map fills the window; the side panel (`--paneW`: the larger of 440 px and 34% of the width) floats over its inline-start side, 72% solid with a 2 px blur (panel.css), its header 94%; map controls, the slide-away tab, 3D/Peaks buttons, the tour, notes and the compare picker sit in the open part. Hiding the panel slides it off (`--paneW` becomes 0).
+
 ## 6. The rent check
 
 - Fields: area (search with nicknames, DLD names and typos), optional yearly rent (written with thousands separators as you type), **Check**. No home field: the check uses the map's **Home** picker.

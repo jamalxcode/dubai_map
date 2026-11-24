@@ -372,7 +372,7 @@
       if (!found && typeof popup === 'function') L.popup({ maxWidth: 320 }).setLatLng([area.lat, area.lng]).setContent(popup(area)).openOn(map);
     };
     if (scroll) el('map').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (map.getZoom() === 14 && map.getBounds().contains([area.lat, area.lng])) { open(); return; }
+    if (map.getZoom() === 14 && (window.viewBounds ? viewBounds() : map.getBounds()).contains([area.lat, area.lng])) { open(); return; }
     map.once('moveend', () => setTimeout(open, 50));
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) map.setView([area.lat, area.lng], 14);
     else map.flyTo([area.lat, area.lng], 14, { duration: 0.8 });

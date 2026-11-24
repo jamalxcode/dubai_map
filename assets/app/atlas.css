@@ -730,3 +730,27 @@ details.f-range[open]>summary{margin-bottom:5px}
 /* The key's price history folds away. */
 .legend details.trendFold{margin:4px 0 2px}.legend details.trendFold>summary{cursor:pointer;font-size:12px;color:var(--muted)}
 .legend details.trendFold[open]>summary{margin-bottom:4px}
+/* Computers (1100 px and up): the map fills the window and the side panel floats over its inline-start side, slightly
+   see-through with a soft blur (the owner's request, 24 Nov), so it reads as a sheet over the map yet stays easy to read.
+   Map controls and the slide-away tab move to the panel's edge; "Hide the panel" slides it off (atlas.js animateWide). */
+@media (min-width:1100px){
+  :root{--paneW:max(440px,34vw)}
+  :root.mapWide{--paneW:0px}
+  .layout{grid-template-columns:var(--paneW) minmax(0,1fr)}
+  .mapPane{position:fixed;inset:0;height:100vh;height:100svh;z-index:0;padding:0}
+  .mapPane .mapWrap{border-inline-start:0}
+  .pane{position:relative;z-index:2; /* its see-through background: panel.css, loaded last */
+    box-shadow:1px 0 0 var(--line),8px 0 24px rgba(43,33,24,.10);min-height:100vh;min-height:100svh}
+  [dir="rtl"] .pane{box-shadow:-1px 0 0 var(--line),-8px 0 24px rgba(43,33,24,.10)}
+  .pane .controls,.pane .about{background:transparent}
+  .pane>.band{background:color-mix(in srgb,var(--band) 94%,transparent)} /* nearly solid: its gold words keep their contrast */
+  .leaflet-left{left:var(--paneW)}
+  [dir="rtl"] .leaflet-left{left:0}[dir="rtl"] .leaflet-right{right:var(--paneW)}
+  .mapWideBtn{left:var(--paneW)}
+  [dir="rtl"] .mapWideBtn{left:auto;right:var(--paneW)}
+  .mapWrap .map3d .m3x,.mapWrap .map3d .m3n{inset-inline-start:calc(var(--paneW) + 12px)}
+  /* Things centred on the map sit in the middle of the part the panel leaves open. */
+  .mapWrap .mapNote,.mapWrap .cmpPick,.mapWrap .tourBox{left:calc(var(--paneW) + (100% - var(--paneW)) / 2);max-width:calc(100% - var(--paneW) - 32px)}
+  [dir="rtl"] .mapWrap .mapNote,[dir="rtl"] .mapWrap .cmpPick,[dir="rtl"] .mapWrap .tourBox{left:calc((100% - var(--paneW)) / 2)}
+  .mapWrap .tourBox{z-index:1001}
+}
