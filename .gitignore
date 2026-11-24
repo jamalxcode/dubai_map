@@ -15,6 +15,7 @@ __pycache__/
 /data/dm_outlines.json
 /data/outlines.json
 /data/transit.json
+/data/routes.json
 /data/hotels.json
 /data/hotel_stats.json
 /data/hotel_prices.json

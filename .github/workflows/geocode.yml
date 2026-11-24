@@ -5,7 +5,8 @@ name: Place unplaced areas
 #      Keeps the current file if the sources can't be reached.
 #   2. Look up whatever DLD areas are still unplaced on OpenStreetMap, accept only
 #      results that pass the checks in geocode_missing.py, list the rest for review.
-#   3. Refresh the Metro and Tram lines and stations (collector/transit.py, OpenStreetMap).
+#   3. Refresh the Metro and Tram lines and stations (collector/transit.py, OpenStreetMap), and the bus and marine
+#      routes (collector/routes.py, RTA's GTFS feed).
 #   4. Refresh the hotels for the Hotels view (collector/hotels.py, OpenStreetMap).
 on:
   schedule:
@@ -48,6 +49,10 @@ jobs:
         # One Overpass request; keeps the current file if it can't be reached or the result looks wrong.
         continue-on-error: true
         run: python3 collector/transit.py
+      - name: Bus and marine routes (RTA's GTFS feed)
+        # One download (about 16 MB); keeps the current file if it can't be reached or the result looks wrong.
+        continue-on-error: true
+        run: python3 collector/routes.py
       - name: Hotels (OpenStreetMap)
         # One Overpass request; keeps the current file if it can't be reached or the result looks wrong.
         continue-on-error: true

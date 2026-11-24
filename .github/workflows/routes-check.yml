@@ -1,0 +1,40 @@
+name: Check the bus and marine collector
+
+# When collector/routes.py changes on any branch: run it against RTA's GTFS feed and print what it built, so a change
+# can be checked before it is merged. Saves nothing to the data branch (the weekly "Place unplaced areas" job does that).
+on:
+  push:
+    branches-ignore: [data]
+    paths: [collector/routes.py, .github/workflows/routes-check.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Fetch and build (not saved)
+        run: python3 collector/routes.py --out routes.json
+      - name: What it built (for the log)
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os, sys, collections
+          sys.path.insert(0, "collector"); import routes as rt
+          if not os.path.exists("routes.json"): print("nothing built"); sys.exit(0)
+          d = json.load(open("routes.json")); print("routes.json:", os.path.getsize("routes.json") // 1024, "KB; feed", d["feed"])
+          print("bus routes:", len(d["bus"]["routes"]), "points:", sum(len(rt.decode(r["line"])) for r in d["bus"]["routes"]), "stops:", len(d["bus"]["stops"]), "with Arabic:", sum(1 for s in d["bus"]["stops"] if s[3]))
+          print("marine:", [(r["ref"], r["kind"], r["name"]) for r in d["marine"]["routes"]])
+          print("stations:", [(s[2], s[4]) for s in d["marine"]["stations"]][:30])
+          print("sample bus:", [(r["ref"], r["name"]) for r in d["bus"]["routes"][:25]])
+          print("busiest stops:", sorted(((len(s[4]), s[2]) for s in d["bus"]["stops"]), reverse=True)[:10])
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: routes, path: routes.json, retention-days: 7 }
