@@ -43,6 +43,26 @@ jobs:
               print("stations:", [(s[2], s[3]) for s in d["marine"]["stations"]][:30])
               print("sample bus:", [(r["ref"], r["name"], len(r["path"])) for r in d["bus"]["routes"][:20]])
           PY
+      - name: RTA's GTFS feed (Mobility Database mirror): what it holds
+        if: always()
+        run: |
+          curl -sSL --max-time 120 -o gtfs.zip https://files.mobilitydatabase.org/mdb-3359/latest.zip -w "HTTP %{http_code}, %{size_download} bytes\n" || true
+          python3 - <<'PY'
+          import zipfile, csv, io, collections, os, sys
+          if not os.path.exists("gtfs.zip") or os.path.getsize("gtfs.zip") < 1000: print("no feed"); sys.exit(0)
+          z = zipfile.ZipFile("gtfs.zip")
+          for i in z.infolist(): print(f"{i.filename:24} {i.file_size//1024:>8} KB")
+          rd = lambda n: list(csv.DictReader(io.TextIOWrapper(z.open(n), "utf-8-sig"))) if n in z.namelist() else []
+          for n in ("feed_info.txt", "agency.txt"): print(n, rd(n)[:3])
+          cal = rd("calendar.txt"); print("calendar:", min((c["start_date"] for c in cal), default=None), "to", max((c["end_date"] for c in cal), default=None), len(cal), "services")
+          cd = rd("calendar_dates.txt"); print("calendar_dates:", min((c["date"] for c in cd), default=None), "to", max((c["date"] for c in cd), default=None))
+          routes = rd("routes.txt"); print("routes by type:", collections.Counter(r["route_type"] for r in routes))
+          for t in sorted({r["route_type"] for r in routes}):
+              print(" type", t, [(r.get("route_short_name"), r.get("route_long_name"), r.get("route_color")) for r in routes if r["route_type"] == t][:12])
+          print("columns routes:", list(routes[0].keys()) if routes else None)
+          st = rd("stops.txt"); print("stops:", len(st), "columns:", list(st[0].keys()) if st else None, st[:2])
+          tr = rd("trips.txt"); print("trips:", len(tr), "with shape_id:", sum(1 for t in tr if t.get("shape_id")))
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: routes, path: "routes.json\noverpass.json", retention-days: 7 }
