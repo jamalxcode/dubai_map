@@ -130,6 +130,10 @@ One look for every block of the side panel (and the same blocks on phones): sect
 
 - A sixth button in the view bar (and the phone chips), "Peaks", shown when WebGL works; pressed while open. Opens a full-map overlay like 3D: "Back to the map" top-start, the key bottom-end (title, blue scale with its two ends, what heights mean, the gold value ring; trimmed on phones), Escape closes. Named peaks are small see-through cards (58% ivory, light blur, thin navy edge) on a short stem, full strength on hover or focus; value areas have a gold edge and a small glowing gold ring at the foot. The view opens wide (zoom 10.5, pitch 62) so most of Dubai shows.
 
+### See-through labels (24 Nov)
+
+- Price labels' card: its tint at 50% opacity with a 1.5 px blur (72% in dark mode); full strength on hover, focus or when its area is open (`--cardA` in atlas.css).
+
 ## 6. The rent check
 
 - Fields: area (search with nicknames, DLD names and typos), optional yearly rent (written with thousands separators as you type), **Check**. No home field: the check uses the map's **Home** picker.

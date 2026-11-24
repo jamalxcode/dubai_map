@@ -150,16 +150,21 @@ button,input,select{font:inherit;color:inherit}
 .rl{position:absolute;transform:translate(-50%,-50%);color:var(--text);border-radius:8px;padding:4px 8px 4px 7px;white-space:nowrap;cursor:pointer;text-align:start;
   /* The price shows in the card's frame, not on the figure (the owner's choice, 20 Nov): a thick border in the area's
      key colour and a light tint of it, with a thin dark hairline outside so the palest blue still shows on a light map. */
-  border:3.5px solid var(--c,var(--b3));background:color-mix(in srgb,var(--c,var(--b3)) 17%,var(--label));
+  border:3.5px solid var(--c,var(--b3));
+  /* See-through (the owner's choice, 24 Nov): the card is half transparent with a light blur, so the map shows behind it;
+     full strength when hovered or focused. */
+  --cardA:50%;background:color-mix(in srgb,color-mix(in srgb,var(--c,var(--b3)) 17%,var(--label)) var(--cardA),transparent);
+  -webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px);
   box-shadow:0 0 0 1px rgba(20,20,20,.28),0 2px 6px rgba(20,20,20,.18)}
 /* The figure stays plain: espresso type on the light card, easy to read whatever the price colour. */
 .rl b{display:inline-block;font:700 18px/1 var(--cond);font-variant-numeric:tabular-nums;color:var(--espresso);padding:1px 0 0}
 .rl small{padding-inline-start:0}
 .rl small{display:block;font-size:11px;line-height:1.25;color:var(--muted)} /* names are shortened in atlas.js (labelName), not cut here */
+.rl:hover,.rl:focus-visible,.rl.focus,:root[data-theme="dark"] .rl:hover,:root[data-theme="dark"] .rl:focus-visible,:root[data-theme="dark"] .rl.focus{--cardA:100%}
 .rl:hover,.rl:focus-visible{z-index:1000;box-shadow:0 0 0 2px var(--gold),0 4px 10px rgba(20,20,20,.25)}
 /* Dark mode: price labels stay light ivory cards, so each badge shows exactly its key colour against the dark
    map, but smaller and softer (a thin edge, no gold stack) so they don't glare. Same contrast as light mode. */
-:root[data-theme="dark"] .rl{--label:#F3EDE2;--text:var(--espresso);--muted:#5E544A;padding:3px 7px 3px 6px;
+:root[data-theme="dark"] .rl{--label:#F3EDE2;--text:var(--espresso);--muted:#5E544A;padding:3px 7px 3px 6px;--cardA:72%; /* dark map: a little more solid, so dark type keeps its contrast */
   box-shadow:0 0 0 1px rgba(0,0,0,.55),0 1px 4px rgba(0,0,0,.4)}
 :root[data-theme="dark"] .rl b{font-size:16px}
 :root[data-theme="dark"] .rl small{font-size:10.5px}

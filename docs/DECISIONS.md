@@ -823,6 +823,13 @@ Asked: "make the signs less obstructive, and see through for the peak view so th
 - **View:** the camera starts further out and a little lower (zoom 10.5, pitch 62), centred further inland, so most of Dubai's terrain shows at once; the key is a little narrower and slightly see-through.
 - **Checked:** the Peaks browser check and every suite pass; screenshots on desktop and an Arabic phone.
 
+## Decision on 2026-11-24 (eighty-third pass): see-through map labels
+
+Asked: "the see-through signs look very well in the peak view, let's give regular signs also a 50% transparency".
+- **What changed:** the price labels' card (the light tint of their key colour) is now 50% transparent with a light blur (1.5 px), so streets and outlines show behind it; the thick price frame, the dark figure and the stacked frame for groups are unchanged. A label hovered, focused or in focus (its area open) goes back to full strength. The 3D view's labels share the style.
+- **Dark mode:** 72% instead of 50%: at 50% the light card over the dark map turned mid-grey and the dark figures lost contrast; 72% keeps them clear and still lets the map through.
+- **Checked:** every browser check, axe's contrast checks included, passes; screenshots in light and dark mode.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".
