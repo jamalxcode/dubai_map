@@ -269,3 +269,13 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** with the map under the side panel, the dial counted areas hidden behind it, "All Dubai" centred the city behind it and a shared link saved a centre the reader couldn't see.
 - **Rule:** anything that asks what is on screen uses the open part (`viewBounds`, `visCenter`, `framePad` in atlas.js), and the panel counts as a control for labels; checks measure the open part too.
+
+## Look at a source's coverage before building on it (24 Nov 2026)
+
+- **Problem:** OpenStreetMap carries Dubai's Metro and Tram well, so it looked like the place for buses; it has about ten of 180-odd bus routes and one ferry.
+- **Rule:** before writing a collector, count what the source actually has against what exists (a probe run is enough); prefer the operator's own open feed (here RTA's GTFS) when the open map is thin.
+
+## When the session can't reach a source, let the runner probe it (24 Nov 2026)
+
+- **Problem:** Overpass and the GTFS mirror were blocked or dropped from the session, and artifact and log downloads too.
+- **Rule:** push a check workflow that runs the collector on GitHub's runners and prints a summary; merge the collector first (nothing visible changes without its file), let the weekly job publish the data, then build the page against the real file loaded from the data branch. Keep big outputs out of logs read into the conversation.

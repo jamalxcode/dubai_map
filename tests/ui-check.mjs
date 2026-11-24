@@ -6,6 +6,7 @@
 //   node tests/ui-check.mjs            (needs: npm i --no-save playwright axe-core; data loaded)
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -505,7 +506,7 @@ try {
       try {
         let body = await readFile(join(ROOT, 'data', f));
         // Hotel prices last refreshed 3 days ago: "Needs you" must say so.
-        if (f === 'state.json') { const j = JSON.parse(body); j.serp_stays = { state: 'no_key', status: 'no credentials' }; j.hotel_prices = { state: 'ok', status: 'ok', last_ok_at: new Date(Date.now() - 72 * 36e5).toISOString(), listed: 2625, matched: 527, list_at: new Date().toISOString() }; body = JSON.stringify(j); }
+        if (f === 'state.json') { const j = JSON.parse(body); j.serp_stays = { state: 'no_key', status: 'no credentials' }; j.routes = { state: 'ok', status: 'ok', feed_from: '2025-08-29', feed_to: '2025-12-31', via: 'mirror' }; j.hotel_prices = { state: 'ok', status: 'ok', last_ok_at: new Date(Date.now() - 72 * 36e5).toISOString(), listed: 2625, matched: 527, list_at: new Date().toISOString() }; body = JSON.stringify(j); }
         await r.fulfill({ body, contentType: f.endsWith('.json') ? 'application/json' : 'text/plain' }); }
       catch { await r.fulfill({ status: 404, body: 'not found' }); }
     });
@@ -524,7 +525,7 @@ try {
       needs: [...document.querySelectorAll('#needs li')].map(li => li.textContent), hotels: document.querySelectorAll('#hotels div').length, hotelsText: document.getElementById('hotels').textContent, needsFirst: document.querySelector('main section')?.classList.contains('needs') }));
     // Unresolved issues a person can fix come first, each with what to do (here: the Dubai Pulse key, an old branch).
     // No LiteAPI key is the owner's choice (18 Nov), so it is not asked for.
-    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && !st.needs.some(t => /rera-check/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.some(t => /Hotel prices have not refreshed|لم تُحدَّث أسعار الفنادق/.test(t)) && st.needs.some(t => /SerpApi/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
+    check(st.needsFirst && st.needs.some(t => /old-probe/.test(t)) && !st.needs.some(t => /rera-check/.test(t)) && st.needs.some(t => /Dubai Pulse|دبي بالس/.test(t)) && !st.needs.some(t => /LiteAPI/.test(t)) && st.needs.some(t => /timetables are out of date|جداول الحافلات/.test(t)) && st.needs.some(t => /price widget|أداة أسعار/.test(t)) && st.needs.some(t => /Hotel prices have not refreshed|لم تُحدَّث أسعار الفنادق/.test(t)) && st.needs.some(t => /SerpApi/.test(t)) && st.needs.every(t => /What to do|ما العمل/.test(t)),
       `${name}: "Needs you" comes first and lists what a person can fix, with what to do, stale hotel prices included (${st.needs.length})`);
     check(st.hotels === 9 && /Xotelo/.test(st.hotelsText) && /AED [\d,]+ – [\d,]+/.test(st.hotelsText), `${name}: the Hotels section gives places, matches, prices, their range and freshness, DET and the partner panel`);
     check(st.state === 'ready' && /[\d,]{5,}/.test(st.contracts) && st.totals === 5 && st.pulled === 9 && st.det && st.used === 3 && st.runs === 2 && st.left >= 3 && st.pending >= 3,
@@ -912,6 +913,46 @@ try {
     check(!errors.length, `Peaks: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await ctx.close();
   }
+  // Bus and Boats (routes.js, data/routes.json from RTA's GTFS feed): two layer switches beside Metro.
+  if (existsSync(join(ROOT, 'data/routes.json'))) {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.click('.busBtn'); await page.click('.boatBtn');
+    await page.waitForFunction(() => window.routesData && routesData(), null, { timeout: 10000 }).catch(() => {});
+    const st = await page.evaluate(async () => { const d = routesData(), s = routesState();
+      const stop = d.bus.stops.find(x => x[4].length >= 3), rid = stop[4][0];
+      map.setView([stop[0], stop[1]], 15, { animate: false }); await new Promise(r => setTimeout(r, 400));
+      const shown = routesState().stopsShown;
+      openRouteStop('bus', stop); await new Promise(r => setTimeout(r, 300));
+      const card = document.querySelector('.leaflet-popup-content'), chips = [...card.querySelectorAll('[data-route]')].map(b => b.textContent);
+      card.querySelector('[data-route]').click(); await new Promise(r => setTimeout(r, 900));
+      const boat = d.marine.stations.find(x => x[4].length); openRouteStop('boat', boat); await new Promise(r => setTimeout(r, 300));
+      const bcard = document.querySelector('.leaflet-popup-content').textContent;
+      return { bus: s.bus, boat: s.boat, routes: d.bus.routes.length, stops: d.bus.stops.length, marine: d.marine.routes.length, shown, chips, rid, pick: routesState().pick,
+        feed: /RTA timetable feed/.test(card.textContent), bcard, pressed: document.querySelector('.busBtn').getAttribute('aria-pressed') }; });
+    check(st.bus && st.boat && st.pressed === 'true' && st.routes >= 100 && st.stops >= 1500 && st.marine >= 5,
+      `Bus and Boats: ${st.routes} bus routes, ${st.stops} stops and ${st.marine} boat routes load when turned on`);
+    check(st.shown && st.chips.length >= 3 && st.pick === st.rid && st.feed, `a bus stop's card lists its buses (${st.chips.slice(0, 5).join(', ')}…); a number picks its route out (${st.pick}); the card dates RTA's feed`);
+    check(/Abra|Water bus|Ferry/.test(st.bcard), `a marine station's card names its boats (${st.bcard.slice(0, 70)})`);
+    check(!errors.length, `Bus and Boats: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await ctx.close();
+    for (const [w, q] of [[390, ''], [320, '?lang=ar']]) {
+      const pc = await browser.newContext({ viewport: { width: w, height: 800 } }); const pp = await pc.newPage();
+      await pp.goto(BASE + q); await pp.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+      await pp.waitForTimeout(800);
+      const bar = await pp.evaluate(() => { const v = document.querySelector('.viewSw').getBoundingClientRect(), z = map.zoomControl.getContainer().getBoundingClientRect();
+        return { clear: v.left >= z.right || v.right <= z.left || v.top >= z.bottom, n: document.querySelectorAll('.viewSw .metroBtn:not([hidden])').length }; });
+      const ar = q ? await pp.evaluate(async () => { showRoutes('bus', true); await new Promise(r => { const t = setInterval(() => { if (routesData()) { clearInterval(t); r(); } }, 100); });
+        const s = routesData().bus.stops.find(x => x[3]); openRouteStop('bus', s); await new Promise(r => setTimeout(r, 300));
+        return (document.querySelector('.areaSheet:not([hidden]) .t, .leaflet-popup-content .t') || {}).textContent === s[3]; }) : true;
+      check(bar.clear && bar.n >= 3 && ar, `${w} px${q ? ' (Arabic)' : ''}: the layer switches (${bar.n}) sit beside the zoom buttons, not over them${q ? '; stop names in Arabic' : ''}`);
+      await pc.close();
+    }
+  } else check(true, 'Bus and Boats: no routes.json loaded here, so the switches hide');
   // Ideas from other Dubai sites: currency on the map, sale price per sq ft, what's near, 3D.
   {
     const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });

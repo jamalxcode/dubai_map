@@ -139,6 +139,10 @@ One look for every block of the side panel (and the same blocks on phones): sect
 
 - Computers (1100 px and up): the map fills the window; the side panel (`--paneW`: the larger of 440 px and 34% of the width) floats over its inline-start side, 58% solid with a 6 px blur (panel.css), its header 94%; map controls, the slide-away tab, 3D/Peaks buttons, the tour, notes and the compare picker sit in the open part. Hiding the panel slides it off (`--paneW` becomes 0).
 
+### Bus and Boats (24 Nov)
+
+- Two layer switches beside Metro. Bus routes are faint lines (muted espresso, 50%; intercity dashed) under the price labels, stops from zoom 14; a picked route is bold espresso (ivory at night) on a casing with its stops. Boats are dashed espresso lines on an ivory casing with ringed stations, always shown. Cards: the route or stop name, route-number chips that pick a route out, and the feed's dates. On phones the five layer switches are compact pills (filled oxblood when on) that stay right of the zoom buttons.
+
 ## 6. The rent check
 
 - Fields: area (search with nicknames, DLD names and typos), optional yearly rent (written with thousands separators as you type), **Check**. No home field: the check uses the map's **Home** picker.

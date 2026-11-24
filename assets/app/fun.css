@@ -89,3 +89,7 @@
 .pk:focus-visible .pkCard{outline:3px solid var(--focus,#735B12);outline-offset:2px}
 @media (max-width:600px){.map3d.peaks .pkKey{bottom:28px;width:auto;inset-inline-start:10px;inset-inline-end:10px;padding:6px 9px;gap:3px;font-size:11px}.map3d.peaks .pkKey .muted,.map3d.peaks .pkKey .pkHow,.map3d.peaks .m3n{display:none}.map3d.peaks .pkKey b{font-size:13.5px}}
 .pk.pkOff{visibility:hidden;pointer-events:none}
+/* Bus and Boats (routes.js): route numbers on a stop's card pick that route out. */
+.leaflet-popup-content .rchip,.areaSheet .rchip{all:unset;cursor:pointer;display:inline-block;margin:2px 3px 2px 0;padding:2px 8px;border-radius:999px;
+  border:1.5px solid var(--line);background:var(--panel);color:var(--text);font:600 12.5px/1.4 var(--body)}
+.leaflet-popup-content .rchip:hover,.leaflet-popup-content .rchip:focus-visible,.areaSheet .rchip:hover{border-color:var(--gold-ink);outline:none}

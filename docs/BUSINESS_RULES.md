@@ -160,6 +160,17 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Good value | The 4 cheapest areas with 300+ contracts, spread out the same way | `fun.js openPeaks` |
 | Colour | The six-step blue price scale by height | `fun.js openPeaks` |
 
+### Buses and boats (24 Nov)
+
+| Rule | Value | Where |
+|---|---|---|
+| Source | RTA's GTFS feed (Dubai Pulse open data) via the Mobility Database's copy; a copy in `data/inbox/rta_gtfs.zip` wins | `collector/routes.py` |
+| Route line | The most-run shape, one direction, about 12 m tolerance; intercity when it leaves Dubai's box | `routes.py build` |
+| Stops | Those the most-run trip of each direction serves; English and Arabic names | `routes.py build` |
+| Marine kinds | CR: abra; FR: ferry; "taxi" in the name: water taxi; otherwise water bus | `routes.py marine_kind` |
+| Safety | 100+ bus routes, 1,500+ stops, 5+ marine routes, all inside the UAE, or the current file stays | `routes.py check` |
+| Out of date | Once the feed's last day has passed, "Needs you" asks for a newer copy | `status.js needs` |
+
 ## 6. The rent check
 
 | Rule | Value | Where |
