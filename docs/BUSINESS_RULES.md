@@ -151,6 +151,15 @@ A point is a reference for the area, never a building; the page says so. Coordin
 | Ratings | One decimal | `hotel_prices.rating1`, `atlas.js r1` |
 | Holiday homes asked per pull | 80 (Xotelo) | `holiday_homes.BUDGET` |
 
+### Peaks (24 Nov)
+
+| Rule | Value | Where |
+|---|---|---|
+| Height | Median yearly rent for the home picked, scaled from the 5th percentile (sea level) to the 95th (3,600 m), power 1.25; smoothed between areas with a 1.3 km Gaussian weighted by contracts; fades to sea level where no area is near | `fun.js buildSurface` |
+| Named peaks | The 8 dearest areas with 100+ contracts, at least about 2.5 km apart; not industrial zones | `fun.js openPeaks` |
+| Good value | The 5 cheapest areas with 300+ contracts, spread out the same way | `fun.js openPeaks` |
+| Colour | The six-step blue price scale by height | `fun.js openPeaks` |
+
 ## 6. The rent check
 
 | Rule | Value | Where |

@@ -45,6 +45,7 @@ Tap an area and the card is about the view you're in. **Rent:** every home size,
 - **Market stats** (`/stats/`): the busiest rental markets, the cheapest and dearest areas for a 1-bedroom, the best yields, sale price per sq ft month by month and what moved. Plus **every area** in one sortable table (`/areas/`), the **best yields** (`/yields/`), and pages for common searches like "1-bedroom under AED 60,000" (`/rents/…`). Each opens the map on the same search.
 - **Follow the changes** with the RSS feed (`/feed.xml`): every publication's moves of 5% or more.
 - **3D**: tilt the map and see the city's buildings raised, areas still shaded by price.
+- **Peaks**: rent as a mountain range: the dearest areas rise as peaks, the cheapest sit at sea level, with the best-value areas ringed in gold.
 - **Per sq ft** on the Sale price view, **AED, USD, EUR or GBP** for every figure, and a **Near** filter for areas close to a beach, golf course, park, mall or many schools.
 - **In English and Arabic**: every market and area page has an Arabic version (`/ar/stats/`, `/ar/a/dubai-marina/`), and the map downloads its Arabic only when you choose it.
 

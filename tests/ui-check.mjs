@@ -692,7 +692,7 @@ try {
     await page.goto(BASE + q);
     await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(600);
-    const ch = await page.evaluate(() => { const bs = [...document.querySelectorAll('.viewChips button')].filter(b => !b.hidden), m = document.getElementById('map').getBoundingClientRect();
+    const ch = await page.evaluate(() => { const bs = [...document.querySelectorAll('.viewChips button[data-m]')].filter(b => !b.hidden), m = document.getElementById('map').getBoundingClientRect();
       return { n: bs.length, have: [...document.getElementById('metric').options].filter(o => document.querySelector('.views button[data-m="' + o.value + '"]')).length, inside: bs.every(b => { const r = b.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth + 1 && r.bottom <= m.top + 1; }),
         metro: !!document.querySelector('.viewSw .metroBtn'), inZoom: !!map.zoomControl.getContainer().querySelector('.metroBtn') }; });
     check(ch.n >= 3 && ch.n === ch.have && ch.inside && ch.metro && !ch.inZoom, `${w} px${q ? ' (Arabic)' : ''}: all ${ch.n} views show as chips above the map; Metro sits with the map's layer switch, not the zoom stack`);
@@ -880,6 +880,32 @@ try {
       const tip = (document.querySelector('.funTip') || {}).textContent || '', txt = document.body.innerText;
       return { tip, long: (txt.match(/rated \d\.\d{2,}/) || [''])[0], fold: !!document.querySelector('.legend details.trendFold:not([open])') || !document.querySelector('.legend .trend') }; });
     check(!/with Home/.test(st.tip) && !st.long && st.fold, `Holiday homes: the tip is about places to stay, ratings have one decimal, the key's price history is folded (${st.tip.slice(0, 40)})`);
+    await ctx.close();
+  }
+  // Peaks (24 Nov): rent as a mountain range, a sixth button in the view bar.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+    if (await page.evaluate(() => !!window.maplibregl && !document.querySelector('.views .peaksBtn').hidden)) {
+      await page.click('.views .peaksBtn');
+      await page.waitForTimeout(6000);
+      const pk = await page.evaluate(() => { const busy = AREAS.filter(a => a.lat != null && !a.staff && (a.n || 0) >= 1000 && areaValue(a, 'median', $('unit').value) != null)
+          .sort((p, q) => areaValue(q, 'median', $('unit').value) - areaValue(p, 'median', $('unit').value));
+        const hi = busy[0], lo = busy[busy.length - 1];
+        return { open: !!document.querySelector('.map3d.peaks canvas'), pressed: document.querySelector('.views .peaksBtn').getAttribute('aria-pressed'),
+          hiH: peaksHeight(hi.lat, hi.lng), loH: peaksHeight(lo.lat, lo.lng), sea: peaksHeight(24.6, 54.6), tops: document.querySelectorAll('.pk.top').length, lows: document.querySelectorAll('.pk.low').length,
+          key: (document.querySelector('.pkKey') || {}).textContent || '', hiName: hi.label, loName: lo.label }; });
+      await page.click('.map3d.peaks .m3x'); await page.waitForTimeout(300);
+      const back = await page.evaluate(() => !document.querySelector('.map3d') && document.querySelector('.views .peaksBtn').getAttribute('aria-pressed') === 'false');
+      check(pk.open && pk.pressed === 'true' && pk.hiH > pk.loH + 1000 && pk.sea === 0 && pk.tops >= 3 && pk.lows >= 2 && /Rent as mountains/.test(pk.key) && back,
+        `Peaks: rent as mountains (${pk.hiName} ${Math.round(pk.hiH)} m, ${pk.loName} ${Math.round(pk.loH)} m, open sea 0), ${pk.tops} peaks named, ${pk.lows} good-value rings; Back to the map returns`);
+    } else check(true, 'Peaks: no WebGL in this browser, so the button stays hidden');
+    check(!errors.length, `Peaks: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await ctx.close();
   }
   // Ideas from other Dubai sites: currency on the map, sale price per sq ft, what's near, 3D.

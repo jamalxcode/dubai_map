@@ -68,3 +68,23 @@
 /* Phones: the slider above the map is one slim line, its words beside the range. */
 @media (max-width:860px){.budgetSlider.out{padding:5px 10px;margin:0 0 6px}.budgetSlider.out label{flex-direction:row;align-items:center;gap:10px;font-size:11.5px}
   .budgetSlider.out label span{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}.budgetSlider.out input{flex:1 1 auto;min-width:80px}}
+/* Peaks: rent as a mountain range (fun.js openPeaks). */
+.views .peaksBtn[aria-pressed="true"]{background:var(--sign);color:var(--on-sign,#fff);border-color:var(--sign)}
+.map3d.peaks .pkKey{position:absolute;z-index:3;inset-inline-end:12px;bottom:34px;width:260px;max-width:calc(100% - 24px);display:flex;flex-direction:column;gap:4px;
+  padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--legend);color:var(--text);font-size:12px;line-height:1.35}
+.map3d.peaks .pkKey b{font:700 15px/1.15 var(--cond);letter-spacing:.01em}
+.map3d.peaks .pkBar{display:block;height:9px;border-radius:5px;margin-top:2px}
+.map3d.peaks .pkEnds{display:flex;justify-content:space-between;color:var(--muted);font-variant-numeric:tabular-nums}
+.map3d.peaks .pkKey small{display:flex;align-items:center;gap:6px}
+.map3d.peaks .pkKey .muted{color:var(--muted)}
+.pkRing{flex:none;width:14px;height:14px;border-radius:50%;border:3px solid var(--gold);box-shadow:0 0 0 2px rgba(201,162,39,.3)}
+.pk{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.pk .pkCard{display:flex;flex-direction:column;align-items:center;padding:3px 9px 4px;border-radius:8px;background:#FFFCF5;color:#2B2118;
+  border:2.5px solid var(--b6);box-shadow:0 3px 10px rgba(43,33,24,.3);white-space:nowrap}
+.pk .pkCard b{font:700 15px/1.1 var(--cond)}.pk .pkCard small{font:600 11px/1.2 var(--body);color:#5E544A}
+.pk::after{content:"";width:2px;height:22px;background:#2B2118;opacity:.7}
+.pk.low .pkCard{border-color:var(--gold)}
+.pk.low::after{width:16px;height:16px;border-radius:50%;background:transparent;border:3px solid var(--gold);box-shadow:0 0 0 4px rgba(201,162,39,.28),0 0 12px rgba(201,162,39,.6);opacity:1;margin-top:2px}
+.pk:focus-visible .pkCard{outline:3px solid var(--focus,#735B12);outline-offset:2px}
+@media (max-width:600px){.map3d.peaks .pkKey{bottom:28px;width:auto;inset-inline-start:10px;inset-inline-end:10px;padding:6px 9px;gap:3px;font-size:11px}.map3d.peaks .pkKey .muted,.map3d.peaks .pkKey .pkHow,.map3d.peaks .m3n{display:none}.map3d.peaks .pkKey b{font-size:13.5px}}
+.pk.pkOff{visibility:hidden;pointer-events:none}

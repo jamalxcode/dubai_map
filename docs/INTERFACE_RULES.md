@@ -126,6 +126,10 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - **Stays:** the key's price history folds under "Price history"; tips in Hotels and Holiday homes are about places to stay.
 - **Area card:** "Other sources differ by more than 15%" sits right under the figures.
 
+### Peaks (24 Nov)
+
+- A sixth button in the view bar (and the phone chips), "Peaks", shown when WebGL works; pressed while open. Opens a full-map overlay like 3D: "Back to the map" top-start, the key bottom-end (title, blue scale with its two ends, what heights mean, the gold value ring; trimmed on phones), Escape closes. Named peaks are light cards with a navy edge on a stem; value areas have a gold edge and a glowing gold ring at the foot.
+
 ## 6. The rent check
 
 - Fields: area (search with nicknames, DLD names and typos), optional yearly rent (written with thousands separators as you type), **Check**. No home field: the check uses the map's **Home** picker.
