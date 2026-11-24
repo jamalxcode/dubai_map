@@ -379,6 +379,124 @@
   addEventListener('keydown', e => { if (e.key === 'Escape' && m3) close3d(); });
   window.open3d = open3d; window.close3d = close3d;
 
+  // ---- Peaks: yearly rent as a mountain range (the owner's request, 24 Nov) ------------------------------------------
+  // Each area's median rent for the home picked becomes height: the dearest areas rise as peaks, the cheapest sit at sea
+  // level, and the ground between areas is smoothed (a Gaussian, about 1.3 km), fading to sea level away from any area.
+  // The terrain is drawn in the browser (MapLibre raster-dem tiles from a custom protocol): no new data, no outside
+  // service. The ground is tinted on the price key's blues, shaded like hills, with the street map draped over it.
+  const PEAK_H = 3600;            // metres for the dearest areas (95th percentile and up): a picture, not a scale model
+  const PEAK_SIGMA = 0.012;       // smoothing, in degrees of latitude (about 1.3 km)
+  const PEAK_STEP = 0.003;        // the surface's grid (about 330 m), sampled smoothly between points
+  let mP = null, boxP = null, SURF = null, surfVer = 0, protoOn = false;
+  const btnP = document.createElement('button'); btnP.type = 'button'; btnP.dataset.peaks = ''; btnP.className = 'peaksBtn';
+  btnP.textContent = T('Peaks'); btnP.title = T('See rents as a mountain range'); btnP.setAttribute('aria-pressed', 'false'); btnP.hidden = true;
+  (function addPeaksBtn() { const v = document.querySelector('.views'); if (v) v.append(btnP); else setTimeout(addPeaksBtn, 300); })();
+  setInterval(() => { const h = !canGL(); if (btnP.hidden !== h) { btnP.hidden = h; if (window.atlasState === 'ready') renderLabels(); } }, 1500);
+  btnP.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); mP ? closePeaks() : openPeaks(); });
+
+  // The surface: a grid of heights over the areas' box (pure arithmetic, from AREAS and the Home picker).
+  function weightOf(a, unit) { const bu = unit ? a.by_unit.find(u => u.u === unit) : null;
+    return bu ? (bu.n != null ? bu.n : Math.round((a.n || 0) / Math.max(1, a.by_unit.length))) || 1 : (a.n || 1); }
+  function buildSurface(unit) {
+    const pts = AREAS.filter(a => a.lat != null).map(a => ({ a, v: areaValue(a, 'median', unit), w: weightOf(a, unit) })).filter(p => p.v != null);
+    if (pts.length < 5) return null;
+    const vs = pts.map(p => p.v).sort((x, y) => x - y), q = f => vs[Math.min(vs.length - 1, Math.max(0, Math.round(f * (vs.length - 1))))];
+    const lo = q(0.05), hi = q(0.95), cx = Math.cos(25.15 * Math.PI / 180), s2 = 2 * PEAK_SIGMA * PEAK_SIGMA;
+    const lat0 = Math.min(...pts.map(p => p.a.lat)) - 0.05, lat1 = Math.max(...pts.map(p => p.a.lat)) + 0.05;
+    const lng0 = Math.min(...pts.map(p => p.a.lng)) - 0.05, lng1 = Math.max(...pts.map(p => p.a.lng)) + 0.05;
+    const ny = Math.ceil((lat1 - lat0) / PEAK_STEP) + 1, nx = Math.ceil((lng1 - lng0) / PEAK_STEP) + 1, h = new Float32Array(nx * ny);
+    for (let j = 0; j < ny; j++) { const la = lat0 + j * PEAK_STEP;
+      for (let i = 0; i < nx; i++) { const ln = lng0 + i * PEAK_STEP; let sw = 0, sv = 0, sk = 0;
+        for (const p of pts) { const dy = la - p.a.lat, dx = (ln - p.a.lng) * cx, d2 = dx * dx + dy * dy; if (d2 > 25 * s2) continue;
+          const k = Math.exp(-d2 / s2); sk += k; sw += k * p.w; sv += k * p.w * p.v; }
+        if (!sw) continue;
+        const norm = Math.min(1, Math.max(0, (sv / sw - lo) / (hi - lo || 1))), m = Math.min(1, sk / 0.6), land = m * m * (3 - 2 * m);
+        h[j * nx + i] = land * Math.pow(norm, 1.25) * PEAK_H; } }
+    return { lat0, lng0, nx, ny, h, lo, hi, pts };
+  }
+  function heightAt(la, ln) { const S = SURF; if (!S) return 0;
+    const fy = (la - S.lat0) / PEAK_STEP, fx = (ln - S.lng0) / PEAK_STEP, i = Math.floor(fx), j = Math.floor(fy);
+    if (i < 0 || j < 0 || i >= S.nx - 1 || j >= S.ny - 1) return 0;
+    const tx = fx - i, ty = fy - j, g = (a, b) => S.h[b * S.nx + a];
+    return (g(i, j) * (1 - tx) + g(i + 1, j) * tx) * (1 - ty) + (g(i, j + 1) * (1 - tx) + g(i + 1, j + 1) * tx) * ty; }
+  // Terrain tiles (Terrarium encoding) drawn on demand from the surface.
+  function peaksProtocol() { if (protoOn) return; protoOn = true;
+    maplibregl.addProtocol('peaks', async params => {
+      const [z, x, y] = params.url.replace('peaks://', '').split('?')[0].split('/').map(Number), N = 256, n = 2 ** z;
+      const cv = typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(N, N) : Object.assign(document.createElement('canvas'), { width: N, height: N });
+      const ctx = cv.getContext('2d'), img = ctx.createImageData(N, N), d = img.data;
+      for (let py = 0; py < N; py++) { const la = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + (py + 0.5) / N) / n))) * 180 / Math.PI;
+        for (let px = 0; px < N; px++) { const ln = (x + (px + 0.5) / N) / n * 360 - 180, v = heightAt(la, ln) + 32768, o = (py * N + px) * 4;
+          d[o] = Math.floor(v / 256); d[o + 1] = Math.floor(v) % 256; d[o + 2] = Math.floor((v - Math.floor(v)) * 256); d[o + 3] = 255; } }
+      ctx.putImageData(img, 0, 0);
+      const blob = cv.convertToBlob ? await cv.convertToBlob({ type: 'image/png' }) : await new Promise(r => cv.toBlob(r, 'image/png'));
+      return { data: await blob.arrayBuffer() };
+    }); }
+
+  function openPeaks() {
+    if (!canGL()) return;
+    if (m3) close3d();
+    const unit = $('unit').value; SURF = buildSurface(unit); surfVer++;
+    if (!SURF) return;
+    peaksProtocol();
+    const rs = getComputedStyle(document.documentElement), blue = k => rs.getPropertyValue('--b' + k).trim();
+    const home = ($('unit').value ? T.unit($('unit').value) : TYPENAME()).toLowerCase();
+    boxP = document.createElement('div'); boxP.className = 'map3d peaks';
+    boxP.innerHTML = '<div class="m3" id="mP"></div><button type="button" class="btn primary m3x">' + T('Back to the map') + '</button>' +
+      '<div class="pkKey"><b>' + T('Rent as mountains: {home}', { home: safe(home) }) + '</b>' +
+      '<span class="pkBar" aria-hidden="true"></span><span class="pkEnds"><span>' + safe(money(SURF.lo)) + '</span><span>' + safe(money(SURF.hi)) + '+</span></span>' +
+      '<small class="pkHow">' + T('Peaks are the dearest areas; sea level is the cheapest.') + '</small>' +
+      '<small><i class="pkRing" aria-hidden="true"></i>' + T('Good value: among the cheapest busy areas') + '</small>' +
+      '<small class="muted">' + T('Heights come from each area\'s median yearly rent, smoothed between areas: a picture of the market, not one building\'s price.') + '</small></div>' +
+      '<p class="m3n">' + T('Drag with two fingers or right-click to turn and tilt.') + '</p>';
+    document.querySelector('.mapWrap').append(boxP);
+    boxP.querySelector('.pkBar').style.background = 'linear-gradient(90deg,' + [1, 2, 3, 4, 5, 6].map(blue).join(',') + ')';
+    // Start looking from inland towards the sea, over the dearest areas (unless the map was already zoomed in on a spot).
+    const top = [...SURF.pts].filter(p => !p.a.staff && p.w >= 100).sort((p, q) => q.v - p.v).slice(0, 10);
+    const near = map.getZoom() >= 13, c = near ? map.getCenter() : { lat: top.reduce((t, p) => t + p.a.lat, 0) / top.length - 0.018, lng: top.reduce((t, p) => t + p.a.lng, 0) / top.length + 0.012 };
+    mP = new maplibregl.Map({ container: 'mP', style: styleFor(), center: [c.lng, c.lat], zoom: near ? map.getZoom() - 0.5 : 11.2, pitch: 68, bearing: -38, maxPitch: 80, attributionControl: { compact: true } });
+    btnP.setAttribute('aria-pressed', 'true'); countUse('peaks');
+    boxP.querySelector('.m3x').addEventListener('click', closePeaks);
+    mP.on('load', () => {
+      const tiles = ['peaks://{z}/{x}/{y}?v=' + surfVer];
+      mP.addSource('pkDem', { type: 'raster-dem', tiles, tileSize: 256, encoding: 'terrarium', maxzoom: 12 });
+      mP.addSource('pkShade', { type: 'raster-dem', tiles, tileSize: 256, encoding: 'terrarium', maxzoom: 12 });
+      const firstSym = (mP.getStyle().layers || []).find(l => l.type === 'symbol');
+      const before = firstSym && firstSym.id;
+      mP.addLayer({ id: 'pkColour', type: 'color-relief', source: 'pkShade', paint: { 'color-relief-opacity': 0.82,
+        'color-relief-color': ['interpolate', ['linear'], ['elevation'], 0, 'rgba(0,0,0,0)', 20, blue(1), PEAK_H * 0.15, blue(2), PEAK_H * 0.35, blue(3), PEAK_H * 0.55, blue(4), PEAK_H * 0.75, blue(5), PEAK_H, blue(6)] } }, before);
+      mP.addLayer({ id: 'pkShadeL', type: 'hillshade', source: 'pkShade', paint: { 'hillshade-exaggeration': 0.35, 'hillshade-shadow-color': '#08306B', 'hillshade-highlight-color': 'rgba(255,252,245,0.6)', 'hillshade-illumination-direction': 300 } }, before);
+      mP.setTerrain({ source: 'pkDem', exaggeration: 1 });
+      mP.setSky && mP.setSky({ 'sky-color': '#BFD3E6', 'horizon-color': '#F6F1E7', 'fog-color': '#F6F1E7', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.85 });
+      // Names on the peaks (the dearest busy areas, spread out) and gold rings on the best value (the cheapest busy areas).
+      const busy = SURF.pts.filter(p => !p.a.staff && (p.w || 0) >= 100), far = (p, list) => list.every(q => Math.hypot(p.a.lat - q.a.lat, p.a.lng - q.a.lng) > 0.025);
+      const pick = (arr, k) => arr.reduce((out, p) => (out.length < k && far(p, out) ? out.concat([p]) : out), []);
+      const tops = pick([...busy].sort((p, q) => q.v - p.v), 8), lows = pick([...busy].filter(p => p.w >= 300).sort((p, q) => p.v - q.v), 5);
+      const pkEls = [];
+      for (const [list, cls] of [[tops, 'pk top'], [lows, 'pk low']]) for (const p of list) {
+        const el = document.createElement('button'); el.type = 'button'; el.className = cls;
+        el.innerHTML = '<span class="pkCard"><b>' + safe(money(p.v)) + '</b><small>' + safe(T.place(p.a.label)) + '</small></span>';
+        el.setAttribute('aria-label', T.place(p.a.label) + ': ' + money(p.v));
+        el.addEventListener('click', () => { const a = p.a; closePeaks(); focusArea(a); });
+        new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([p.a.lng, p.a.lat]).addTo(mP); pkEls.push(el); }
+      // Peaks first, dearest first: a card that would cover one already shown waits until the view gives it room.
+      let queued = false;
+      const tidy = () => { queued = false; const kept = [];
+        pkEls.forEach(el => { const r = el.querySelector('.pkCard').getBoundingClientRect();
+          const hit = kept.some(k => r.left < k.right + 4 && r.right + 4 > k.left && r.top < k.bottom + 4 && r.bottom + 4 > k.top);
+          el.classList.toggle('pkOff', hit); if (!hit) kept.push(r); }); };
+      mP.on('move', () => { if (!queued) { queued = true; requestAnimationFrame(tidy); } }); mP.on('idle', tidy); requestAnimationFrame(tidy);
+    });
+  }
+  function closePeaks() {
+    if (!mP) return; const c = mP.getCenter(), z = mP.getZoom();
+    try { mP.remove(); } catch (_) { /* already gone */ }
+    mP = null; if (boxP) boxP.remove(); boxP = null; btnP.setAttribute('aria-pressed', 'false');
+    map.setView([c.lat, c.lng], Math.round(z + 0.3), { animate: false });
+  }
+  addEventListener('keydown', e => { if (e.key === 'Escape' && mP) closePeaks(); });
+  window.openPeaks = openPeaks; window.closePeaks = closePeaks; window.peaksHeight = heightAt;
+
   // ---- Start: the strip once the rent data is in, again when hotels, holiday homes or Metro arrive ----------
   let tries = 0;
   (function wait() {

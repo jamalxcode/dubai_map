@@ -176,7 +176,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   sel.value=b.dataset.psf;sel.dispatchEvent(new Event('change'));countUse('sale-'+(b.dataset.psf==='sale'?'total':'per-sqft'))});
 function syncViews(){
   const sel=$('metric'),have=new Set([...sel.options].map(o=>o.value));
-  [...viewCtl.getContainer().querySelectorAll('button'),...document.querySelectorAll('.viewChips button')].forEach(b=>{b.hidden=!have.has(b.dataset.m);b.setAttribute('aria-pressed',b.dataset.m===sel.value||(b.dataset.m==='sale'&&sel.value==='sale_psf'))});
+  [...viewCtl.getContainer().querySelectorAll('button[data-m]'),...document.querySelectorAll('.viewChips button[data-m]')].forEach(b=>{b.hidden=!have.has(b.dataset.m);b.setAttribute('aria-pressed',b.dataset.m===sel.value||(b.dataset.m==='sale'&&sel.value==='sale_psf'))});
   fitViewBar();
 }
 // OpenStreetMap tile usage policy: this exact HTTPS URL, visible attribution, no bulk or offline use.
