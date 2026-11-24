@@ -511,6 +511,10 @@ Done (decisions, eighty-fifth pass): the panel 58% solid with a stronger blur; t
 
 Done (decisions, eighty-sixth pass): "Bus" and "Boats" layers from RTA's GTFS feed: 182 bus routes, 2,658 stops, 15 marine routes and 22 stations, with Arabic stop names; the Tram was already on the map with the Metro. The feed copy available outside the UAE is dated Aug–Dec 2025; the status page asks for a newer copy (open item 8).
 
+### 24 Nov · "save to repo convo, decisions and lessons learned" + "give me the link to the new map"
+
+Done: the bus and boat round is in decisions (eighty-sixth pass), this log and lessons learned (check a source's coverage first; let a runner probe a source the session can't reach). Map: https://jamalxcode.github.io/dubai_map/ (Bus and Boats switches beside Metro); status: https://jamalxcode.github.io/dubai_map/status/.
+
 ## Open items
 
 1. **Dubai Pulse API key** (owner, **waiting on Digital Dubai support** since 16 Nov): data.dubai's sign-up page rejects visitors from outside the UAE. Once access to `dld_rent_contracts-open-api` is granted, add `DUBAI_PULSE_KEY` / `DUBAI_PULSE_SECRET` as repo secrets. This unlocks contract-level detail (trends, AED/m², new vs renewal) and replaces the interim sources. Ways forward: (a) follow up the Digital Dubai support case; (b) someone with a UAE connection registers on data.dubai (UAE Pass) and requests the key for this project, then the owner adds it as the two secrets; (c) meanwhile, a rent-contracts CSV downloaded by hand from Dubai Pulse or DLD's open-data page (within their terms) can be committed to `data/inbox/`: the next pull imports it (`fetch_ejari.ingest_inbox`) and removes it from main. No VPN or other way round the sign-up block.
