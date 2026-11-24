@@ -35,10 +35,6 @@ jobs:
           print("sample bus:", [(r["ref"], r["name"]) for r in d["bus"]["routes"][:25]])
           print("busiest stops:", sorted(((len(s[4]), s[2]) for s in d["bus"]["stops"]), reverse=True)[:10])
           PY
-      - name: The built file, compressed, for reading from the log
-        if: always()
-        run: |
-          [ -f routes.json ] && gzip -9c routes.json | base64 -w0 > routes.b64 && echo "ROUTES_B64_BEGIN" && cat routes.b64 && echo && echo "ROUTES_B64_END" || true
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: routes, path: routes.json, retention-days: 7 }
