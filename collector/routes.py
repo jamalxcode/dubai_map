@@ -7,11 +7,11 @@ drawn with its most-run shape (one direction), simplified to about 12 m and stor
 route's most-run trips serve (both directions), with English and Arabic names. Written to data/routes.json as
 
     {"fetched", "source", "feed": {"from": "YYYY-MM-DD", "to": "YYYY-MM-DD"},
-     "bus":    {"routes": [{"ref", "name", "line": "<encoded polyline>"}], "stops": [[lat, lng, "name", "name_ar", ["ref", ...]]]},
+     "bus":    {"routes": [{"ref", "name", "line": "<encoded polyline>", "intercity"?: true}], "stops": [[lat, lng, "name", "name_ar", ["ref", ...]]]},
      "marine": {"routes": [{"ref", "name", "kind", "line"}],               "stations": [[lat, lng, "name", "name_ar", ["ref", ...]]]}}
 
 The result is checked before it replaces the current file (at least 100 bus routes, 1,500 bus stops, 5 marine routes,
-all inside Dubai's box); otherwise the current file stays. The feed's own dates go with it, so the page can say how
+all inside the UAE: routes beyond Dubai's box are marked intercity); otherwise the current file stays. The feed's own dates go with it, so the page can say how
 current the timetable is.
 
 Usage: python3 collector/routes.py [--out data/routes.json] [--from-file gtfs.zip]
@@ -37,6 +37,7 @@ OUT = os.path.join(ROOT, "data", "routes.json")
 FEED_URL = os.environ.get("RTA_GTFS_URL") or "https://files.mobilitydatabase.org/mdb-3359/latest.zip"
 SOURCE = "Roads and Transport Authority (RTA), GTFS timetable feed (Dubai Pulse open data), via the Mobility Database"
 MIN = {"bus_routes": 100, "bus_stops": 1500, "marine_routes": 5}
+UAE = (22.5, 51.5, 26.3, 56.5)  # intercity routes run to Abu Dhabi, Al Ain, Sharjah and Hatta: fine; outside the UAE: broken data
 TOL_M = 12
 KINDS = {"3": "bus", "4": "marine"}
 
@@ -147,6 +148,8 @@ def build(z, today=None):
             continue
         ref = (r.get("route_short_name") or rid).strip()
         item = {"ref": ref, "name": (r.get("route_long_name") or "").strip(), "line": encode(simplify(line, TOL_M))}
+        if any(not (BBOX[0] <= la <= BBOX[2] and BBOX[1] <= lo <= BBOX[3]) for la, lo in line):
+            item["intercity"] = True  # runs beyond Dubai (Abu Dhabi, Sharjah, Al Ain, Hatta)
         if KINDS[r["route_type"]] == "marine":
             item["kind"] = marine_kind(ref, item["name"])
             out["marine"]["routes"].append(item)
@@ -176,8 +179,8 @@ def check(out):
         bad.append(f"only {len(out['marine']['routes'])} marine routes (at least {MIN['marine_routes']})")
     for g in ("bus", "marine"):
         for r in out[g]["routes"]:
-            if any(not (BBOX[0] - 0.3 <= la <= BBOX[2] + 0.3 and BBOX[1] - 0.3 <= lo <= BBOX[3] + 0.3) for la, lo in decode(r["line"])):
-                bad.append(f"{g} route {r['ref']} leaves the Dubai area")
+            if any(not (UAE[0] <= la <= UAE[2] and UAE[1] <= lo <= UAE[3]) for la, lo in decode(r["line"])):
+                bad.append(f"{g} route {r['ref']} leaves the UAE")
     return bad
 
 
