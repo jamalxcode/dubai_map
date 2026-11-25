@@ -474,13 +474,15 @@
       const tiles = ['peaks://{z}/{x}/{y}?v=' + surfVer];
       mP.addSource('pkDem', { type: 'raster-dem', tiles, tileSize: 256, encoding: 'terrarium', maxzoom: 12 });
       mP.addSource('pkShade', { type: 'raster-dem', tiles, tileSize: 256, encoding: 'terrarium', maxzoom: 12 });
-      const firstSym = (mP.getStyle().layers || []).find(l => l.type === 'symbol');
-      const before = firstSym && firstSym.id;
-      mP.addLayer({ id: 'pkColour', type: 'color-relief', source: 'pkShade', paint: { 'color-relief-opacity': 0.82,
+      // The price colours and hill shading go under the roads (over land and water), so roads, the Creek, the coast and
+      // every name and landmark stay on top of the mountains.
+      const lays = mP.getStyle().layers || [], under = lays.find(l => l['source-layer'] === 'transportation' || l['source-layer'] === 'building' || l.type === 'symbol');
+      const before = under && under.id;
+      mP.addLayer({ id: 'pkColour', type: 'color-relief', source: 'pkShade', paint: { 'color-relief-opacity': 0.6,
         'color-relief-color': ['interpolate', ['linear'], ['elevation'], 0, 'rgba(0,0,0,0)', 20, blue(1), PEAK_H * 0.15, blue(2), PEAK_H * 0.35, blue(3), PEAK_H * 0.55, blue(4), PEAK_H * 0.75, blue(5), PEAK_H, blue(6)] } }, before);
       mP.addLayer({ id: 'pkShadeL', type: 'hillshade', source: 'pkShade', paint: { 'hillshade-exaggeration': 0.35, 'hillshade-shadow-color': '#08306B', 'hillshade-highlight-color': 'rgba(255,252,245,0.6)', 'hillshade-illumination-direction': 300 } }, before);
       mP.setTerrain({ source: 'pkDem', exaggeration: 1 });
-      mP.setSky && mP.setSky({ 'sky-color': '#BFD3E6', 'horizon-color': '#F6F1E7', 'fog-color': '#F6F1E7', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.85 });
+      // No sky or fog: on real graphics cards the fog washed the whole street map out to ivory (25 Nov).
       // Names on the peaks (the dearest busy areas, spread out) and gold rings on the best value (the cheapest busy areas).
       // Busy: 100+ contracts (3+ places with a price for nights); value rings need 300+ contracts (5+ places). A yield's
       // peaks are already the good news, so it has no rings.
@@ -516,7 +518,7 @@
     closePeaks(); map.setView([c.lat, c.lng], Math.round(z), { animate: false }); openPeaks(); if (mP) mP.jumpTo({ center: c, zoom: z, bearing: b, pitch: pt }); };
   $('metric').addEventListener('change', () => setTimeout(redrawPeaks, 0));
   $('home').addEventListener('change', () => setTimeout(redrawPeaks, 0));
-  window.openPeaks = openPeaks; window.closePeaks = closePeaks; window.peaksHeight = heightAt;
+  window.openPeaks = openPeaks; window.closePeaks = closePeaks; window.peaksHeight = heightAt; window.peaksMap = () => mP;
 
   // ---- Start: the strip once the rent data is in, again when hotels, holiday homes or Metro arrive ----------
   let tries = 0;

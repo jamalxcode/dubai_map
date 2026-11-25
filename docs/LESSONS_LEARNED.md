@@ -285,3 +285,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** Peaks' camera looked for areas with 100+ contracts; in the hotel and holiday home views the weight is places with a price (a handful), so it found none and the map failed with a NaN position.
 - **Rule:** when a feature starts serving another measure, every threshold in it gets that measure's own value (and a fallback when nothing passes); the browser check runs it in each view.
+
+## Fog that headless never draws (25 Nov 2026)
+
+- **Problem:** Peaks' sky fog (fog-ground-blend 0.85) washed the whole tilted street map to ivory on the owner's screen; headless Chromium draws without a GPU and skipped it, so every check passed.
+- **Rule:** in 3D views, keep effects that cover the ground (fog, sky blend, opaque colour layers above roads) off; put data layers under the base map's roads and names. When a report shows something tests can't, check with a SwiftShader (GPU-emulated) run that waits for all tiles before trusting a screenshot.

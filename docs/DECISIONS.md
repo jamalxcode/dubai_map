@@ -863,6 +863,13 @@ Asked: "does Peaks apply to apartments, holiday homes, hotels? which one?" (answ
 - **Found while checking:** the camera picked its starting spot from areas with 100+ contracts, which no area has for nights, and failed (NaN position); it now uses the same busy rule as the names, falling back to every area.
 - **Checked:** a browser run through every view with Peaks open (titles, scales, labels, rings, no errors); the Peaks browser check now switches to Hotels and Yield while open; every suite passes.
 
+## Decision on 2026-11-25 (eighty-eighth pass): Peaks shows the street map and landmarks again
+
+Asked: "the map and dubai landmarks are not showing when its on peak view, fix it" (screenshot: blue mountains on a blank ivory ground, no streets, sea or names).
+- **Cause:** Peaks set a sky with fog (`setSky`, fog-ground-blend 0.85). On a real graphics card the fog covered the whole tilted ground in the sky's ivory, so only the coloured mountains showed through. Headless Chromium (software drawing) skipped the fog, so the browser checks never saw it.
+- **What changed:** no sky or fog; the price colour and hill shading go in under the roads, buildings and names (before the first transportation, building or symbol layer), so streets, motorway numbers, the sea and place names (Dubai, Dubai International Airport, Jumeirah Bay Island, Sharjah, Ajman) sit on top of the mountains; the price colour is 60% (was 82%) so the ground shows through it. `window.peaksMap()` gives tests the MapLibre map.
+- **Checked:** a GPU-emulated (SwiftShader) browser run waiting for every tile: streets, sea and labels draw over and around the peaks; the colour layer sits below the roads; the terrain still rises (the Palm about 3,600 m); every suite passes.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

@@ -128,6 +128,7 @@ One look for every block of the side panel (and the same blocks on phones): sect
 
 ### Peaks (24 Nov)
 
+- Peaks keeps the street map (25 Nov): no sky or fog; the price colour (60%) and hill shading sit under the roads, buildings and names, so streets, the sea and landmarks show over the mountains.
 - Peaks follows the view (24 Nov): its key, labels and footnote use the view's figure; the view bar stays above it on desktop and a new view redraws it in place.
 - A sixth button in the view bar (and the phone chips), "Peaks", shown when WebGL works; pressed while open. Opens a full-map overlay like 3D: "Back to the map" top-start, the key bottom-end (title, blue scale with its two ends, what heights mean, the gold value ring; trimmed on phones), Escape closes. Named peaks are small see-through cards (58% ivory, light blur, thin navy edge) on a short stem, full strength on hover or focus; value areas have a gold edge and a small glowing gold ring at the foot. The view opens wide (zoom 10.5, pitch 62) so most of Dubai shows.
 
