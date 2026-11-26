@@ -2,17 +2,17 @@
   "crosscheck": {
     "ccp": {
       "areas": 104,
-      "last_ok_at": "2026-11-24T18:29:47+00:00",
-      "last_try_at": "2026-11-24T18:29:47+00:00",
-      "rows": 356,
+      "last_ok_at": "2026-11-26T02:02:28+00:00",
+      "last_try_at": "2026-11-26T02:02:28+00:00",
+      "rows": 357,
       "state": "ok",
       "status": "ok",
-      "through": "2026-11-22"
+      "through": "2026-11-24"
     },
     "dred": {
       "areas": 30,
-      "last_ok_at": "2026-11-24T18:29:47+00:00",
-      "last_try_at": "2026-11-24T18:29:46+00:00",
+      "last_ok_at": "2026-11-26T02:02:28+00:00",
+      "last_try_at": "2026-11-26T02:02:27+00:00",
       "rows": 30,
       "state": "ok",
       "status": "ok",
@@ -20,14 +20,15 @@
     }
   },
   "datadubai": {
-    "last_ok_at": "2026-11-25T18:17:25+00:00",
+    "last_ok_at": "2026-11-26T01:50:04+00:00",
     "last_pull": {
-      "at": "2026-11-25T18:17:24+00:00",
+      "at": "2026-11-26T01:47:21+00:00",
       "export_files_updated": 0,
-      "live": "current",
-      "through": "2026-11-24"
+      "live": "updated",
+      "pages": 102,
+      "through": "2026-11-25"
     },
-    "live_checked_at": "2026-11-25T18:17:25+00:00",
+    "live_checked_at": "2026-11-26T01:50:04+00:00",
     "live_pages": 102,
     "published_seen": [
       {
@@ -53,26 +54,30 @@
       {
         "seen_at": "2026-11-25T02:19:55+00:00",
         "through": "2026-11-24"
+      },
+      {
+        "seen_at": "2026-11-26T01:50:04+00:00",
+        "through": "2026-11-25"
       }
     ],
     "state": "ok",
     "status": "ok",
-    "through": "2026-11-24"
+    "through": "2026-11-25"
   },
   "dld": {
     "state": "off",
     "status": "off (waiting for DLD's permission)"
   },
   "fx": {
-    "date": "2026-11-24",
-    "last_ok_at": "2026-11-25T02:20:16+00:00",
+    "date": "2026-11-25",
+    "last_ok_at": "2026-11-26T01:50:25+00:00",
     "state": "ok",
     "status": "ok"
   },
   "holiday_homes": {
-    "last_ok_at": "2026-11-25T18:29:18+00:00",
-    "last_run_at": "2026-11-25T18:29:18+00:00",
-    "list_at": "2026-11-25T02:27:34+00:00",
+    "last_ok_at": "2026-11-26T02:02:24+00:00",
+    "last_run_at": "2026-11-26T02:02:24+00:00",
+    "list_at": "2026-11-26T01:56:45+00:00",
     "listed": 253,
     "priced": 60,
     "state": "ok",
@@ -80,9 +85,9 @@
   },
   "hotel_prices": {
     "hotels": 382,
-    "last_ok_at": "2026-11-25T18:22:59+00:00",
-    "last_run_at": "2026-11-25T18:22:59+00:00",
-    "list_at": "2026-11-25T02:21:06+00:00",
+    "last_ok_at": "2026-11-26T01:56:15+00:00",
+    "last_run_at": "2026-11-26T01:56:15+00:00",
+    "list_at": "2026-11-26T01:51:27+00:00",
     "listed": 2625,
     "matched": 527,
     "priced": 382,
@@ -90,7 +95,7 @@
     "status": "ok"
   },
   "hotel_stats": {
-    "last_try_at": "2026-11-25T02:19:56+00:00",
+    "last_try_at": "2026-11-26T01:50:04+00:00",
     "state": "no_key",
     "status": "no credentials"
   },
@@ -101,13 +106,13 @@
   "serp_stays": {
     "homes": 240,
     "hotels": 12,
-    "last_ok_at": "2026-11-25T18:29:22+00:00",
-    "last_run_at": "2026-11-25T18:29:22+00:00",
-    "last_try_at": "2026-11-25T18:29:19+00:00",
+    "last_ok_at": "2026-11-26T02:02:27+00:00",
+    "last_run_at": "2026-11-26T02:02:27+00:00",
+    "last_try_at": "2026-11-26T02:02:24+00:00",
     "month": "2026-11",
-    "rot": 17,
+    "rot": 18,
     "state": "ok",
     "status": "ok",
-    "used": 34
+    "used": 36
   }
 }
