@@ -47,7 +47,7 @@ Registered property sales, rent contracts and the project registry of the
 [Dubai Data](https://datadubai.ae) — the same numbers that are published on the portal,
 exported from its nightly build.
 
-- **Data through:** 2026-11-25 (from datadubai.ae's daily pages)
+- **Data through:** 2026-11-26 (from datadubai.ae's daily pages)
 - **Updated:** weekly from the portal's nightly build
 - **Methodology:** https://datadubai.ae/methodology/ — outlier trimming, minimum samples, how yields are computed
 - **Sources and row counts:** https://datadubai.ae/sources/
