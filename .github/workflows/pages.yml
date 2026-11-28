@@ -45,6 +45,8 @@ jobs:
           cp data/hotels.json data/hotel_stats.json data/hotel_prices.json data/holiday_homes.json data/stay_history.json data/serp_stays.json data/fx.json data/lifestyle.json _site/data/ 2>/dev/null || true  # Hotels view (optional: the button hides without hotels.json)
           # The status page (status/) reads the data branch live; these copies are its fallback.
           for f in status.json state.json runs.jsonl; do cp "data/$f" _site/data/ 2>/dev/null || true; done
+          # The map's one small file for places-to-stay prices (the full files stay for the status page).
+          python3 scripts/stays_page.py _site/data
           mkdir -p _site/status && sed "s/__BUILD__/${GITHUB_SHA::7}/g" status/index.html > _site/status/index.html
           cp -r assets/fonts assets/app assets/vendor _site/assets/
           # Google Maps Embed key (restricted by Google to this site): Street View photos in cards and in Street. No secret: they stay off.

@@ -101,7 +101,7 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
       <div class="tableTools"><label class="tblFind"><span class="vh" data-t="f.find">Find in the table</span><input id="search" type="search" placeholder="Find in the table" data-t-ph="f.find.ph" autocomplete="off"></label>
       <button id="export" class="btn" type="button" data-t="csv">Download CSV</button></div>
     </div>
-    <div class="tableWrap" data-lenis-prevent tabindex="0" role="region" aria-label="Rents table (scrolls)" data-t-aria="table"><table><thead id="thead"></thead><tbody id="rows"><tr><td class="muted" data-t="loadingRents">Loading rents…</td></tr></tbody></table></div>
+    <div class="tableWrap" tabindex="0" role="region" aria-label="Rents table (scrolls)" data-t-aria="table"><table><thead id="thead"></thead><tbody id="rows"><tr><td class="muted" data-t="loadingRents">Loading rents…</td></tr></tbody></table></div>
   </section>
 
   <section class="about" aria-label="About the data" data-t-aria="about">
@@ -125,7 +125,7 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
         <p data-t="a.not2">Hotel and holiday home prices are samples (the lowest offer for two nights two to three weeks ahead), not live booking prices for your dates: the booking site sets the price.</p>
         <p data-t="a.src">Sources: Ejari rent contracts, <a href="https://www.dubaipulse.gov.ae/data/dld-registration/dld_rent_contracts-open" target="_blank" rel="noopener">Dubai Land Department open data</a> via Dubai Pulse. Community boundaries: <a href="https://www.dubaipulse.gov.ae/data/dm-location/dm_community-open" target="_blank" rel="noopener">Dubai Municipality</a>. Community medians: <a href="https://datadubai.ae/" target="_blank" rel="noopener">Dubai Data</a>, Continental Club Property, licensed <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> (reshaped into map labels and the table). Older districts (Deira, Bur Dubai, Karama and others): <a href="https://continentalclub.ae/data-center/" target="_blank" rel="noopener">Continental Club Property</a>, CC BY 4.0, median by unit size. A few area points and the map: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL. <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">Report a map problem</a>.</p>
         <p data-t="a.src2">Places to stay: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL. Hotel and holiday home prices: booking sites, via <a href="https://xotelo.com/" target="_blank" rel="noopener">Xotelo</a> (TripAdvisor), and Google Hotels via <a href="https://serpapi.com/" target="_blank" rel="noopener">SerpApi</a> where Xotelo has none. Official room rates, once available: Dubai's Department of Economy and Tourism, via Dubai Pulse.</p>
-        <p class="muted" data-t="a.built">Built with Leaflet (BSD-2-Clause), GSAP (standard no-charge licence), Lenis (MIT) and Barlow fonts (SIL OFL). The rolling number and title animation are our own versions of React Bits' Counter and SplitText.</p>
+        <p class="muted" data-t="a.built">Built with Leaflet (BSD-2-Clause), MapLibre GL JS (BSD-3-Clause) and Barlow fonts (SIL OFL). The rolling number and title animation are our own versions of React Bits' Counter and SplitText.</p>
       </div>
     </div>
   </section>
@@ -135,7 +135,7 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
 
 <section class="mapPane" aria-label="Map" data-t-aria="map">
   <div class="wrap">
-    <div class="mapWrap" data-lenis-prevent>
+    <div class="mapWrap">
         <div id="map" role="region" aria-label="Map of yearly rents by area" data-t-aria="mapRegion"></div>
         <div class="legend" id="legend" hidden></div>
     </div>
@@ -144,8 +144,6 @@ document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr
 </div><!-- /layout -->
 
 <script src="assets/vendor/leaflet/leaflet.js"></script>
-<script src="assets/vendor/gsap/gsap.min.js"></script>
-<script src="assets/vendor/lenis/lenis.min.js"></script>
 <script src="assets/app/i18n.js?v=__BUILD__"></script>
 <script src="assets/app/labels.js?v=__BUILD__"></script>
 <script src="assets/app/transit.js?v=__BUILD__"></script>

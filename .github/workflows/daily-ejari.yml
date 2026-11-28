@@ -110,20 +110,6 @@ jobs:
       - name: "Exchange rates for the map's currency switch (ECB via Frankfurter, once a day)"
         continue-on-error: true  # without them the map offers AED and USD (the peg) only
         run: python3 collector/fx.py
-      - name: "Hotel prices (Xotelo, free, no key; about 100 hotels a pull on two sample nights, so each is refreshed every couple of days)"
-        continue-on-error: true  # a failure keeps the last prices (shown up to 10 days) and the state says why
-        timeout-minutes: 15
-        run: python3 collector/hotel_prices.py
-      - name: "Holiday homes and serviced apartments (Xotelo, free, no key; about 50 a pull, priced like hotels)"
-        continue-on-error: true  # a failure keeps the last prices (shown up to 10 days) and the state says why
-        timeout-minutes: 10
-        run: python3 collector/holiday_homes.py
-      - name: "Google Hotels prices via SerpApi (free plan: two searches a pull, at most 240 a month; needs SERPAPI_KEY)"
-        continue-on-error: true  # without the key the state says so; a failure keeps the last prices
-        timeout-minutes: 5
-        env:
-          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-        run: python3 collector/serp_stays.py
       - name: "Cross-check: dubairealestatedata.com and continentalclub.ae rent pages (at most once a day)"
         continue-on-error: true  # a check, never a reason to stop the build
         run: python3 collector/fetch_crosscheck.py
@@ -135,9 +121,6 @@ jobs:
         env:
           ALLOW_SHRINK: ${{ inputs.allow_shrink && '1' || '0' }}
         run: python3 collector/build.py
-      - name: "Hotel and holiday home price history (each area's median a night, one snapshot a day, never deleted)"
-        continue-on-error: true  # a history gap is listed on the status page, never a reason to stop the build
-        run: python3 collector/stay_history.py
       - name: Check the data before publishing (stops the commit if it looks broken)
         run: python3 -m unittest discover -s tests -p "test_data.py" -v
       - name: Log this run (data/runs.jsonl, last 300) and when Dubai Data publishes
@@ -158,6 +141,52 @@ jobs:
   deploy:
     needs: pull
     if: needs.pull.outputs.changed == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
+
+  # Places-to-stay prices after the rents are saved and live: Xotelo answers slowly (about 4.5 s a request), so pricing
+  # hotels and holiday homes takes about 10 minutes; the rents no longer wait for it (29 Nov). Its own save and deploy.
+  stays:
+    needs: [guard, pull]
+    if: ${{ !cancelled() && needs.guard.outputs.skip != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      changed: ${{ steps.save.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Load the current data (data branch, with the rents just saved)
+        run: scripts/data-branch.sh load
+      - name: "Hotel prices (Xotelo, free, no key; about 100 hotels a pull on two sample nights, so each is refreshed every couple of days)"
+        continue-on-error: true  # a failure keeps the last prices (shown up to 10 days) and the state says why
+        timeout-minutes: 15
+        run: python3 collector/hotel_prices.py
+      - name: "Holiday homes and serviced apartments (Xotelo, free, no key; about 50 a pull, priced like hotels)"
+        continue-on-error: true  # a failure keeps the last prices (shown up to 10 days) and the state says why
+        timeout-minutes: 10
+        run: python3 collector/holiday_homes.py
+      - name: "Google Hotels prices via SerpApi (free plan: two searches a pull, at most 240 a month; needs SERPAPI_KEY)"
+        continue-on-error: true  # without the key the state says so; a failure keeps the last prices
+        timeout-minutes: 5
+        env:
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+        run: python3 collector/serp_stays.py
+      - name: "Hotel and holiday home price history (each area's median a night, one snapshot a day, never deleted)"
+        continue-on-error: true  # a history gap is listed on the status page, never a reason to stop the build
+        run: python3 collector/stay_history.py
+      - name: Save the stay prices (data branch; nothing is saved if nothing changed)
+        id: save
+        run: |
+          scripts/data-branch.sh save "data: stay prices $(TZ=Asia/Kuwait date '+%Y-%m-%d %H:%M') Kuwait"
+
+  deploy-stays:
+    needs: [stays, deploy]
+    if: ${{ !cancelled() && needs.stays.outputs.changed == 'true' }}
     permissions:
       contents: read
       pages: write

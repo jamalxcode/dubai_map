@@ -6,9 +6,6 @@
 @font-face{font-family:"Barlow Condensed";font-weight:500;font-display:swap;src:url(../fonts/barlow-condensed-latin-500-normal.woff2) format("woff2")}
 @font-face{font-family:"Barlow Condensed";font-weight:600;font-display:swap;src:url(../fonts/barlow-condensed-latin-600-normal.woff2) format("woff2")}
 @font-face{font-family:"Barlow Condensed";font-weight:700;font-display:swap;src:url(../fonts/barlow-condensed-latin-700-normal.woff2) format("woff2")}
-/* Lenis (smooth scrolling) base styles, inlined */
-html.lenis,html.lenis body{height:auto}.lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}
-.lenis [data-lenis-prevent]{overscroll-behavior:contain}.lenis.lenis-smooth iframe{pointer-events:none}
 
 /* Tokens: the "golden note" palette for text and surfaces (Oxblood primary field, Ivory paper and type,
    Gold Leaf accents, Espresso deep text, Warm Gray secondary text) and a six-step blue scale for prices only.

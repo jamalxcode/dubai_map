@@ -76,8 +76,8 @@ const overlaps = page => page.evaluate(() => {
 });
 
 async function axe(page, label) {
-  // Check the page at rest: labels fading in (GSAP) would be measured half transparent.
-  await page.waitForFunction(() => !window.gsap || !gsap.globalTimeline.getChildren(true, true, false).some(t => t.isActive()), null, { timeout: 5000 }).catch(() => {});
+  // Check the page at rest: labels fading in would be measured half transparent.
+  await page.waitForFunction(() => (!window.motionBusy || !motionBusy()), null, { timeout: 5000 }).catch(() => {});
   // …and with the map still and any breakdown fully faded in (a fly-to opens it after landing; Leaflet fades it in).
   await page.waitForFunction(() => typeof map === 'undefined' || (!map._flyToFrame && !map._animatingZoom && [...document.querySelectorAll('.leaflet-popup')].every(e => getComputedStyle(e).opacity === '1')), null, { timeout: 5000 }).catch(() => {});
   await page.waitForTimeout(250);
@@ -545,6 +545,7 @@ try {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
+    await page.route(/data\/stays\.json/, r => r.fulfill({ status: 404, body: 'not found' }));  // these checks stub the full files
     await page.route(/data\/hotel_prices\.json/, r => r.fulfill({ status: 404, body: 'not found' }));  // DET's rate is for when no hotel has a price
     await page.route(/data\/serp_stays\.json/, r => r.fulfill({ status: 404, body: 'not found' }));  // nor from Google Hotels
     await page.route(/data\/hotel_stats\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ fetched: '2026-11-18', source: 'test',
@@ -584,6 +585,7 @@ try {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
+    await page.route(/data\/stays\.json/, r => r.fulfill({ status: 404, body: 'not found' }));  // these checks stub the full files
     await page.route(/data\/hotel_prices\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify({ fetched: today, source: 'Xotelo test', currency: 'AED', keep_days: 10, hotels: rows }) }));
     // 35 days of price history for every area: 300 rising to 334 (+10% over the last four weeks' comparison window).
     const histDays = Array.from({ length: 35 }, (_, i) => ({ d: new Date(Date.now() - (34 - i) * 864e5).toISOString().slice(0, 10), v: 300 + i }));
@@ -645,6 +647,7 @@ try {
     const today = new Date().toISOString().slice(0, 10);
     const src = JSON.parse(await readFile(join(ROOT, 'data/holiday_homes.json'), 'utf8'));
     src.homes = src.homes.map(r => Object.assign([...r], { 7: today }));  // dated today, so none is hidden as old
+    await page.route(/data\/stays\.json/, r => r.fulfill({ status: 404, body: 'not found' }));  // these checks stub the full files
     await page.route(/data\/holiday_homes\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(src) }));
     await page.goto(BASE + '?view=homes');
     await page.waitForFunction(() => window.atlasState === 'ready' && HOMES && $('metric').value === 'homes', null, { timeout: 15000 }).catch(() => {});
@@ -675,6 +678,7 @@ try {
       const today = new Date().toISOString().slice(0, 10);
       const src = JSON.parse(await readFile(join(ROOT, 'data/holiday_homes.json'), 'utf8'));
       src.homes = src.homes.map(r => Object.assign([...r], { 7: today }));
+      await page.route(/data\/stays\.json/, r => r.fulfill({ status: 404, body: 'not found' }));  // these checks stub the full files
       await page.route(/data\/holiday_homes\.json/, r => r.fulfill({ contentType: 'application/json', body: JSON.stringify(src) }));
       await page.goto(BASE + '?view=homes');
       await page.waitForFunction(() => window.atlasState === 'ready' && HOMES, null, { timeout: 15000 }).catch(() => {});
@@ -886,6 +890,24 @@ try {
       const tip = (document.querySelector('.funTip') || {}).textContent || '', txt = document.body.innerText;
       return { tip, long: (txt.match(/rated \d\.\d{2,}/) || [''])[0], fold: !!document.querySelector('.legend details.trendFold:not([open])') || !document.querySelector('.legend .trend') }; });
     check(!/with Home/.test(st.tip) && !st.long && st.fold, `Holiday homes: the tip is about places to stay, ratings have one decimal, the key's price history is folded (${st.tip.slice(0, 40)})`);
+    await ctx.close();
+  }
+  // What the first load fetches (29 Nov efficiency round): places-to-stay prices in one small file (stays.json, written
+  // at deploy) or, without it, each full file once; read after the map is ready, not before; no motion library.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage(); const got = [];
+    page.on('request', r => got.push({ u: r.url().replace(BASE, ''), t: Date.now() }));
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    const ready = Date.now();
+    await page.waitForFunction(() => [...document.querySelectorAll('.views button[data-m]')].some(b => b.dataset.m === 'homes' && !b.hidden), null, { timeout: 8000 }).catch(() => {});
+    const n = re => got.filter(x => re.test(x.u)).length, slim = existsSync(join(ROOT, 'data/stays.json'));
+    const stays = got.filter(x => /data\/(stays|hotel_prices|serp_stays|holiday_homes)\.json/.test(x.u));
+    const homesBtn = await page.evaluate(() => [...document.querySelectorAll('.views button[data-m]')].some(b => b.dataset.m === 'homes' && !b.hidden));
+    check((slim ? n(/data\/stays\.json/) === 1 && n(/data\/(hotel_prices|serp_stays|holiday_homes)\.json/) === 0 : n(/data\/serp_stays\.json/) <= 1 && n(/data\/hotel_prices\.json/) <= 1)
+      && stays.every(x => x.t >= ready - 50) && !n(/gsap|lenis/) && homesBtn,
+      `first load: stays prices ${slim ? 'in one file (stays.json)' : 'from the full files, each once'}, read after the map is ready; no motion library; Holiday homes button appears`);
     await ctx.close();
   }
   // Peaks (24 Nov): rent as a mountain range, a sixth button in the view bar.
@@ -1180,7 +1202,7 @@ try {
     for (const v of views) {
       await page.evaluate(v => { const s = document.getElementById('metric'); s.value = v; s.dispatchEvent(new Event('change')); }, v);
       await page.waitForTimeout(300);
-      await page.waitForFunction(() => !map._flyToFrame && !map._animatingZoom && (!window.gsap || !gsap.globalTimeline.getChildren(true, true, false).some(t => t.isActive())), null, { timeout: 5000 }).catch(() => {});
+      await page.waitForFunction(() => !map._flyToFrame && !map._animatingZoom && (!window.motionBusy || !motionBusy()), null, { timeout: 5000 }).catch(() => {});
       await page.waitForTimeout(300);
       const hit = await page.evaluate(() => {
         const m = map.getContainer().getBoundingClientRect();

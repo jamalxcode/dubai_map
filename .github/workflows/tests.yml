@@ -34,4 +34,5 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.63.0 axe-core@4.14.1
           npx playwright install --with-deps chromium
+          python3 scripts/stays_page.py data   # the map's stays file, as the deploy writes it
           node tests/ui-check.mjs

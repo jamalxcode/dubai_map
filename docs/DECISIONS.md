@@ -920,6 +920,16 @@ Asked (screenshot of the drawn street in International City, no switch, no note)
 - **Docs:** `docs/API_KEYS.md` lists each of Google's codes with its fix.
 - **Checked:** the stand-in Google API: a refusal names its code and offers the retry, reopening Street starts Google again; every suite passes.
 
+## Decision on 2026-11-29 (ninety-fifth pass): an efficiency round
+
+Asked: "review build so far, any efficiency improvements that can be made?", then "do it all, merge on main".
+- **Measured first:** the page fetched 2.9 MB (about 700 KB compressed) before any tap; Google Hotels' file twice; the three places-to-stay files at start, carrying the collectors' own notes (SerpApi's seen list was 143 of 194 KB). The daily pull took 11 minutes, 10 of them pricing hotels and holiday homes.
+- **Page:** one small `data/stays.json` written at deploy (`scripts/stays_page.py`: price rows, Tripadvisor details for hotels on the map, no notes) replaces three files: about 45 KB compressed instead of about 145 KB, one request instead of four. It loads when the browser is idle after the map is drawn (at once for a stays view or a shared hotel or holiday home), so the Rent view never waits for it; local runs fall back to the full files, each read once. The status page still reads the full files.
+- **Motion without libraries:** GSAP and Lenis (33 KB compressed) are gone; the header's rolling number, the title, the panel's entrance, labels fading in, Compare, and the map's wide/narrow move use the browser's Web Animations with the same timings and easings (`anim`, `stagger`, `EASE` in atlas.js; `motionBusy()` for tests). Scrolling is the browser's own.
+- **Pull:** the review assumed hotels were priced one at a time; they were already three at a time, and Xotelo takes about 4.5 s an answer, so asking harder would risk being blocked. Instead the rents are built, saved and deployed first, and a second job prices places to stay and deploys again: new rents go live about 10 minutes sooner.
+- **Left as they were:** MapLibre (the base map needs it; it already waits for the data) and the 5.5-minute browser check.
+- **Checked:** a first-load check (one stays file or each full file once, read after the map is ready, no motion library, the Holiday homes button appears), tests with and without `stays.json`, the rolling number landing on the right digits and a double tap on the wide button; `tests/test_stays_page.py`; every suite passes. The next pull shows the two jobs.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

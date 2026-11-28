@@ -216,7 +216,7 @@ Every decision is written down, conversation and all:
 | Wikimedia Commons photos | Each photo's licence (mostly CC BY-SA) | Author and licence on every photo, linked to its page |
 | Google Maps, Street View, Images | [Maps URLs](https://developers.google.com/maps/documentation/urls/get-started), no key | Links only; nothing copied or embedded |
 | Hotel and holiday home prices | Xotelo (free API); Google Hotels via SerpApi (free plan) | Credited on the map and in every card; samples, never presented as live booking prices |
-| Leaflet · MapLibre · RTL text plugin · Lenis · GSAP | BSD-2 · BSD-3 · BSD-2 · MIT · GSAP standard licence | Licences in `assets/vendor/` |
+| Leaflet · MapLibre · RTL text plugin | BSD-2 · BSD-3 · BSD-2 | Licences in `assets/vendor/` |
 | Barlow fonts | SIL OFL 1.1 | Self-hosted, licence included |
 | React Bits ideas (rolling counter, title) | MIT + Commons Clause | Our own versions, credited |
 

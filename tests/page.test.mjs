@@ -33,13 +33,14 @@ test('missing or malformed date shows no warning instead of breaking', () => {
 });
 
 test('libraries are served from this site, never a CDN, and load before the page script', () => {
+  assert.doesNotMatch(page, /gsap|lenis/i, 'motion uses the browser\'s own Web Animations (no GSAP or Lenis since 29 Nov)');
   assert.doesNotMatch(page, /<script\b[^>]*\bsrc="https?:\/\//, 'no third-party script tags (the counter is added at run time, off localhost)');
   assert.doesNotMatch(page, /<link\b[^>]*rel="stylesheet"[^>]*href="https?:/);
-  const order = ['assets/vendor/leaflet/leaflet.js', 'assets/vendor/gsap/gsap.min.js', 'assets/vendor/lenis/lenis.min.js',
+  const order = ['assets/vendor/leaflet/leaflet.js',
                  'assets/app/labels.js', 'assets/app/atlas.js', 'assets/app/insights.js', 'assets/app/companion.js'].map(f => page.indexOf(f));
   assert.ok(order.every(i => i > 0), 'all scripts present');
   assert.deepEqual([...order].sort((a, b) => a - b), order, 'in dependency order');
-  for (const f of ['leaflet/leaflet.js', 'leaflet/leaflet.css', 'gsap/gsap.min.js', 'lenis/lenis.min.js', 'leaflet/LICENSE', 'lenis/LICENSE'])
+  for (const f of ['leaflet/leaflet.js', 'leaflet/leaflet.css', 'leaflet/LICENSE'])
     assert.ok(readFileSync(new URL('../assets/vendor/' + f, import.meta.url)).length > 0, f);
 });
 

@@ -5,7 +5,15 @@ const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const kuwait=iso=>iso?T('{t} Kuwait time',{t:new Date(iso).toLocaleString(T.locale,{timeZone:'Asia/Kuwait',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}):'—';
 const median=xs=>{if(!xs.length)return null;const s=[...xs].sort((a,b)=>a-b),i=s.length>>1;return s.length%2?s[i]:(s[i-1]+s[i])/2};
 const BANDS=['var(--b1)','var(--b2)','var(--b3)','var(--b4)','var(--b5)','var(--b6)']; // the price key, low to high
-const G=window.gsap,FX=!!G&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Motion through the browser's own Web Animations (no library since 29 Nov; none with reduced motion). anim() plays
+// keyframes on one element; "from" animations hold their first frame through the delay and leave no style behind.
+const FX=!!Element.prototype.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EASE={out1:'cubic-bezier(.25,.46,.45,.94)',out2:'cubic-bezier(.25,.46,.45,.94)',out3:'cubic-bezier(.215,.61,.355,1)',in3:'cubic-bezier(.55,.055,.675,.19)',io3:'cubic-bezier(.645,.045,.355,1)'};
+const MOVING=new Set();
+function anim(el,frames,o={}){const a=el.animate(frames,{duration:(o.d||.4)*1000,delay:(o.delay||0)*1000,easing:o.e||EASE.out3,fill:o.fill||'backwards'});
+  MOVING.add(a);const done=()=>MOVING.delete(a);a.finished.then(done,done);return a}
+const stagger=(els,frames,o,each)=>[...els].map((el,i)=>anim(el,frames,Object.assign({},o,{delay:(o.delay||0)+i*each})));
+window.motionBusy=()=>MOVING.size>0;
 const TYPES=[['homes',T('Homes')],['flat',T('Flats')],['studio',T('Studios')],['villa',T('Villas')],['commercial',T('Commercial')],['all',T('Everything')]];
 const KIND_IN={homes:['flat','studio','villa'],flat:['flat'],studio:['studio'],villa:['villa'],commercial:['commercial'],all:null};
 
@@ -23,7 +31,7 @@ function staleness(meta,now){
 /*</staleness>*/
 const niceDate=d=>new Date(d+'T00:00:00+04:00').toLocaleDateString(T.locale,{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Dubai'});
 
-/* Counter (React Bits "Counter", ported to plain JS + GSAP): digits roll like an odometer. */
+/* Counter (React Bits "Counter", ported to plain JS and Web Animations): digits roll like an odometer. */
 function odometer(el,value,prefix){
   el.setAttribute('aria-label',value==null?'—':(prefix||'')+fmt(value));
   if(value==null){el.textContent='—';el._sig=null;return}
@@ -36,7 +44,9 @@ function odometer(el,value,prefix){
   }
   const strips=el.querySelectorAll('.strip'),digits=txt.replace(/\D/g,'');
   strips.forEach((s,i)=>{const y=-(+digits[i])+'em';
-    if(FX)G.to(s,{y,duration:.9+i*.06,ease:'power3.out',overwrite:true});else s.style.transform='translateY('+y+')'});
+    const to='translateY('+y+')';if(!FX){s.style.transform=to;return}
+    const from=getComputedStyle(s).transform;if(s._a)s._a.cancel();s.style.transform=to; // from where it is now, even mid-roll
+    if(from&&from!=='none'||y!=='0em')s._a=anim(s,[{transform:from&&from!=='none'?from:'translateY(0em)'},{transform:to}],{d:.9+i*.06,fill:'none'})});
 }
 
 // Which features get used (GoatCounter events: a feature's name and, at most, the choice made, such as the view
@@ -279,8 +289,7 @@ function fitFocus(a){
     if(!sheetEl||sheetEl.hidden)return;
     const wrap=map.getContainer().parentNode;let box=map.getContainer().getBoundingClientRect();
     // The map off the top of the screen or low on it: bring its top up, as Compare does.
-    if(box.top<-4||box.top>innerHeight*.2){const y=wrap.getBoundingClientRect().top+scrollY-8;let ln=null;try{ln=lenis}catch(_){} // lenis is set up later in the file
-      if(ln)ln.scrollTo(y,{immediate:true,force:true});else scrollTo(0,y);box=map.getContainer().getBoundingClientRect()}
+    if(box.top<-4||box.top>innerHeight*.2){const y=wrap.getBoundingClientRect().top+scrollY-8;scrollTo(0,y);box=map.getContainer().getBoundingClientRect()}
     const sheetTop=innerHeight-sheetEl.offsetHeight; // fixed to the bottom; measured from its size, not mid-animation
     const hidden=Math.max(0,box.bottom-sheetTop);
     tl=L.point(tl0.x,tl0.y);br=L.point(10,hidden+12);
@@ -421,7 +430,7 @@ $('walk').addEventListener('change',()=>{const v=$('walk').value,n=+v;
 let CMP=null,CMP_PICK=null;const cmpLayer=L.layerGroup().addTo(map);
 const cmpColour=k=>k==='a'?'#C9A227':document.documentElement.dataset.theme==='dark'?'#D99AA5':'#6E2230';
 const pickBar=(()=>{const d=document.createElement('div');d.className='cmpPick';d.hidden=true;d.setAttribute('role','status');map.getContainer().parentNode.append(d);return d})();
-const cmpPanel=(()=>{const d=document.createElement('section');d.className='cmpPanel';d.setAttribute('data-lenis-prevent','');d.hidden=true;d.setAttribute('role','dialog');d.setAttribute('aria-label',T('Compare areas'));d.tabIndex=-1;map.getContainer().parentNode.append(d);return d})();
+const cmpPanel=(()=>{const d=document.createElement('section');d.className='cmpPanel';d.hidden=true;d.setAttribute('role','dialog');d.setAttribute('aria-label',T('Compare areas'));d.tabIndex=-1;map.getContainer().parentNode.append(d);return d})();
 const byLabel=l=>AREAS.find(x=>x.label===l);
 function startCompare(label){const a=byLabel(label);if(!a||a.lat==null)return;
   closeCompare(true);CMP_PICK=a;map.closePopup();closeSheet();clearFocus();
@@ -447,7 +456,7 @@ function drawCompare(){cmpLayer.clearLayers();map.getContainer().classList.toggl
 function openCompare(a,b,{fit=true}={}){if(!a||!b||a===b)return;
   stopPicking();map.closePopup();closeSheet();clearFocus();const fresh=cmpPanel.hidden;CMP={a,b};drawCompare();
   // Phones: the map at the top of the screen, so the two areas show above the sheet.
-  if(SHEET_MQ.matches){const w=map.getContainer().parentNode,y=w.getBoundingClientRect().top+scrollY-8;if(lenis)lenis.scrollTo(y,{immediate:true,force:true});else scrollTo(0,y)}
+  if(SHEET_MQ.matches){const w=map.getContainer().parentNode,y=w.getBoundingClientRect().top+scrollY-8;scrollTo(0,y)}
   cmpPanel.hidden=false;document.documentElement.classList.add('cmpOpen');renderCompare(fresh);
   if(fit){const pts=[...(cmpRings(a)||[[[a.lat,a.lng]]]).flat(),...(cmpRings(b)||[[[b.lat,b.lng]]]).flat()],s=map.getSize();
     const opts=SHEET_MQ.matches?{paddingTopLeft:L.point(56,20),paddingBottomRight:L.point(20,Math.max(0,Math.round(innerHeight*.6)-(innerHeight-s.y))+20),maxZoom:15}
@@ -491,17 +500,19 @@ function renderCompare(fresh){if(!CMP)return;
   // side-by-side; each area's breakdown keeps its photo strip.
   animateCompare(fresh);
 }
-// Motion (GSAP; none with reduced motion): the panel slides in once, the two rents roll up like the header's
+// Motion (Web Animations; none with reduced motion): the panel slides in once, the two rents roll up like the header's
 // figure (our version of React Bits' Counter), then the rows settle and their bars grow out from the centre.
 function animateCompare(fresh){
   const big=[...cmpPanel.querySelectorAll('.vsBig')];
   for(const el of big){const v=+el.dataset.v;if(v)odometer(el,v,'AED ')}
   if(!FX)return;
-  const tl=G.timeline({defaults:{ease:'power3.out'}});
-  if(fresh)tl.fromTo(cmpPanel,SHEET_MQ.matches?{y:40,opacity:0}:{x:24,opacity:0},{x:0,y:0,opacity:1,duration:.42,clearProps:'transform,opacity'});
-  tl.from(cmpPanel.querySelectorAll('.vsSide,.vsMid,.vsVerdict'),{y:8,opacity:0,duration:.35,stagger:.05},fresh?.12:0)
-    .from(cmpPanel.querySelectorAll('.vsRow'),{y:6,opacity:0,duration:.3,stagger:.025},'-=.15')
-    .from(cmpPanel.querySelectorAll('.vsBars i'),{scaleX:0,duration:.55,stagger:.02,ease:'power2.out'},'-=.3');
+  if(fresh)anim(cmpPanel,[{transform:SHEET_MQ.matches?'translateY(40px)':'translateX(24px)',opacity:0},{transform:'none',opacity:1}],{d:.42});
+  // The same sequence as before: sides from 0.12 s, rows as they finish, bars growing as the rows land.
+  const sides=cmpPanel.querySelectorAll('.vsSide,.vsMid,.vsVerdict'),rows=cmpPanel.querySelectorAll('.vsRow'),bars=cmpPanel.querySelectorAll('.vsBars i');
+  const t1=fresh?.12:0,t2=t1+Math.max(0,sides.length-1)*.05+.35-.15,t3=t2+Math.max(0,rows.length-1)*.025+.3-.3;
+  stagger(sides,[{transform:'translateY(8px)',opacity:0},{transform:'none',opacity:1}],{d:.35,delay:t1},.05);
+  stagger(rows,[{transform:'translateY(6px)',opacity:0},{transform:'none',opacity:1}],{d:.3,delay:t2},.025);
+  stagger(bars,[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],{d:.55,delay:t3,e:EASE.out2},.02);
 }
 cmpPanel.addEventListener('click',async e=>{const t=e.target;
   if(t.closest('[data-cmp-close]'))return closeCompare();
@@ -541,9 +552,22 @@ function loadHotels(){
     if(new URLSearchParams(location.search).get('view')==='hotels')sel.value='hotels';
     syncViews();if(sel.value==='hotels')draw()}).catch(()=>{});
   getJSON('data/hotel_stats.json').then(d=>{HOTEL_STATS=d&&d.latest?d:null;if($('metric').value==='hotels')draw()}).catch(()=>{});
-  getJSON('data/hotel_prices.json').then(d=>{if(!d||!(d.hotels||[]).length)return;HOTEL_PRICES=d;attachPrices();if($('metric').value==='hotels')draw()}).catch(()=>{});
-  getJSON('data/serp_stays.json').then(d=>{if(!d||!(d.hotels||[]).length)return;SERP=d;attachPrices();if($('metric').value==='hotels')draw()}).catch(()=>{});
 }
+// Prices for places to stay (hotels, holiday homes): one small file the deploy writes (scripts/stays_page.py), else
+// (local runs) the three full files, each read once. Loaded when the browser is idle after the map is drawn, or at once
+// when the visitor asks for a stays view or a shared hotel or holiday home; the Rent view doesn't wait for them.
+let staysP=null;
+function loadStays(){if(staysP)return staysP;
+  const full=()=>Promise.all(['hotel_prices','serp_stays','holiday_homes'].map(n=>getJSON('data/'+n+'.json').catch(()=>null))).then(([hotel_prices,serp,homes])=>({hotel_prices,serp,homes}));
+  staysP=getJSON('data/stays.json').catch(full).then(d=>{
+    if(d.hotel_prices&&(d.hotel_prices.hotels||[]).length)HOTEL_PRICES=d.hotel_prices;
+    if(d.serp&&((d.serp.hotels||[]).length||(d.serp.homes||[]).length))SERP=d.serp;
+    attachPrices();applyHomes(d.homes,d.serp);if($('metric').value==='hotels')draw();
+    if(window.funRefresh)funRefresh()}).catch(()=>{});
+  return staysP}
+function staysSoon(){const q=new URLSearchParams(location.search),o=q.get('open')||'';
+  if(STAY(q.get('view')||'')||/^[hs]:/.test(o)||STAY($('metric').value))return loadStays();
+  const go=()=>loadStays();if('requestIdleCallback' in window)requestIdleCallback(go,{timeout:3000});else setTimeout(go,1500)}
 // Which area each hotel is in (official outline, else the nearest area point within 1.5 km); once per data and outlines.
 function hotelsBy(){if(!HOTEL_BY&&HOTELS){HOTEL_BY=new Map();const lab=Transit.assign(HOTELS,AREAS.filter(a=>a.lat!=null),outlinesByLabel());
   HOTELS.forEach((h,i)=>{h.area=lab[i];if(!lab[i])return;const g=HOTEL_BY.get(lab[i])||{n:0,list:[],prices:[]};g.n++;g.list.push(h);if(h.price)g.prices.push(h.price);HOTEL_BY.set(lab[i],g)});
@@ -631,13 +655,13 @@ let HOMES=null,HOME_BY=null,HOMES_DATA=null;const homeLayer=L.layerGroup();
 const STAY=m=>m==='hotels'||m==='homes'; // the places-to-stay views: a nightly budget, any home size
 const STAY_THIN=3; // an area's typical price from fewer priced places is drawn dashed and left out of the dial's ends
 const stayPriced=m=>m==='homes'?!!HOMES:hotelPriced();
-function loadHomes(){Promise.all([getJSON('data/holiday_homes.json').catch(()=>null),getJSON('data/serp_stays.json').catch(()=>null)]).then(([d,g])=>{
+function applyHomes(d,g){if(HOMES)return;{
   const rows=((d&&d.homes)||[]).filter(r=>freshRow(r,d.keep_days)).map(r=>[r,'xotelo']).concat(((g&&g.homes)||[]).filter(r=>freshRow(r,g.keep_days)).map(r=>[r,'google']));
   if(!rows.length)return;HOMES_DATA=d||g;
   HOMES=rows.map(([r,src],i)=>({i,src,name:r[0],lat:r[1],lng:r[2],price:r[3],priceN:r[4],priceLo:r[5],priceHi:r[6],priceAt:r[7],rating:r[8],reviews:r[9],url:r[10]}));HOME_BY=null;
   const sel=$('metric');if(![...sel.options].some(o=>o.value==='homes')){const o=document.createElement('option');o.value='homes';o.textContent=T('Holiday homes');sel.append(o)}
   if(new URLSearchParams(location.search).get('view')==='homes')sel.value='homes';
-  syncViews();if(sel.value==='homes')draw()})}
+  syncViews();if(sel.value==='homes')draw()}}
 function homesBy(){if(!HOME_BY&&HOMES){HOME_BY=new Map();const lab=Transit.assign(HOMES,AREAS.filter(a=>a.lat!=null),outlinesByLabel());
   HOMES.forEach((h,i)=>{h.area=lab[i];if(!lab[i])return;const g=HOME_BY.get(lab[i])||{n:0,list:[],prices:[]};g.n++;g.list.push(h);g.prices.push(h.price);HOME_BY.set(lab[i],g)});
   HOME_BY.forEach(g=>{g.typical=Math.round(median(g.prices))})}return HOME_BY}
@@ -772,7 +796,7 @@ function renderLabels(){
   // Labels answer a filter change by settling in from the centre; plain zooming redraws instantly.
   if(FX&&animateLabels){animateLabels=false;
     const els=added.map(m=>m.getElement()&&m.getElement().firstChild).filter(Boolean);
-    G.fromTo(els,{opacity:0},{opacity:1,duration:.35,ease:'power1.out',stagger:{each:.008,from:'center'}});}
+    const mid=(els.length-1)/2;els.forEach((el,i)=>anim(el,[{opacity:0},{opacity:1}],{d:.35,e:EASE.out1,delay:Math.abs(i-mid)*.008}));}
 }
 map.on('zoomend',renderLabels);
 map.on('zoomend',()=>{if($('metric').value==='hotels'&&hotelPriced())drawHotels();if($('metric').value==='homes')drawHomes()}); // dots from zoom 12, hollow rings from street level
@@ -1147,7 +1171,7 @@ function setWide(on,save,labelsLater){
   popupMargins();if(LABEL.metric&&!labelsLater)renderLabels();
   if(on&&!WIDE_MQ.matches)wideBtn.focus({preventScroll:true});
 }
-// The same change, animated with GSAP (skipped when the visitor asks for reduced motion). Only transforms move,
+// The same change, animated (skipped when the visitor asks for reduced motion). Only transforms move,
 // so nothing is laid out or redrawn while it plays: the map is resized once, at the start (collapsing) or at the
 // end (expanding), and the motion is the side panel sliding over it while the map slides by half the panel's
 // width, which is exactly where its centre moves to. Narrow screens: the full-screen map is revealed from its old
@@ -1155,28 +1179,28 @@ function setWide(on,save,labelsLater){
 let wideAnim=null;
 function animateWide(on){
   if(!FX){setWide(on,true);return}
-  if(wideAnim){wideAnim.progress(1);wideAnim=null}
+  if(wideAnim){const a=wideAnim;wideAnim=null;a.onfinish=null;if(a._then)a._then();a.cancel()} // a second tap ends the first move at once
   const root=document.documentElement,pane=document.querySelector('.pane'),wrap=map.getContainer().parentNode;
   wideBtn.classList.toggle('flip',on); // the arrow turns as the move starts
   if(WIDE_MQ.matches){
     // Computers: the map already fills the window under the panel, so only the panel moves: it slides off the map's
     // side (and back); nothing is resized or redrawn while it plays.
-    const sign=root.dir==='rtl'?1:-1,fin=()=>{wideAnim=null;G.set(pane,{clearProps:'transform,willChange'})};
-    if(on){const W=pane.getBoundingClientRect().width;G.set(pane,{willChange:'transform'});
-      wideAnim=G.to(pane,{x:sign*W,duration:.45,ease:'power3.inOut',onComplete(){fin();setWide(true,true)}})}
-    else{setWide(false,true,true);const W=pane.getBoundingClientRect().width;
-      wideAnim=G.fromTo(pane,{x:sign*W},{x:0,duration:.45,ease:'power3.inOut',onComplete(){fin();if(LABEL.metric)renderLabels()}})}
+    const sign=root.dir==='rtl'?1:-1,W=on?pane.getBoundingClientRect().width:0;
+    const play=(from,to,then)=>{pane.style.willChange='transform';const a=anim(pane,[{transform:from},{transform:to}],{d:.45,e:EASE.io3,fill:'forwards'});wideAnim=a;
+      a._then=()=>{pane.style.willChange='';then()};a.onfinish=()=>{if(wideAnim===a)wideAnim=null;a._then();a.cancel()}};
+    if(on)play('translateX(0)','translateX('+sign*W+'px)',()=>setWide(true,true));
+    else{setWide(false,true,true);const w=pane.getBoundingClientRect().width;play('translateX('+sign*w+'px)','translateX(0)',()=>{if(LABEL.metric)renderLabels()})}
     return;
   }
   // Narrow screens: clip from the map's box on the page to the whole screen, or back.
   const r=on?wrap.getBoundingClientRect():(wrap._from||wrap.getBoundingClientRect()),vw=innerWidth,vh=innerHeight;
   const box=`inset(${Math.max(0,r.top)}px ${Math.max(0,vw-r.right)}px ${Math.max(0,vh-r.bottom)}px ${Math.max(0,r.left)}px round 12px)`,full='inset(0px 0px 0px 0px round 0px)';
   if(on){wrap._from=r;wrap.parentNode.style.minHeight=r.height+'px'; // the page keeps its place under the map
-    if(lenis)lenis.stop();setWide(true,false);
-    wideAnim=G.fromTo(wrap,{clipPath:box},{clipPath:full,duration:.42,ease:'power3.out',onComplete(){wideAnim=null;wrap.style.clipPath=''}});
+    setWide(true,false);
+    const a=anim(wrap,[{clipPath:box},{clipPath:full}],{d:.42,e:EASE.out3,fill:'none'});wideAnim=a;a._then=()=>{};a.onfinish=()=>{if(wideAnim===a)wideAnim=null};
   }else{
-    wideAnim=G.fromTo(wrap,{clipPath:full},{clipPath:box,duration:.36,ease:'power3.in',onComplete(){wideAnim=null;wrap.style.clipPath='';wrap.parentNode.style.minHeight='';
-      setWide(false,false);if(lenis)lenis.start()}});
+    const a=anim(wrap,[{clipPath:full},{clipPath:box}],{d:.36,e:EASE.in3,fill:'forwards'});wideAnim=a;
+    a._then=()=>{wrap.parentNode.style.minHeight='';setWide(false,false)};a.onfinish=()=>{if(wideAnim===a)wideAnim=null;a._then();a.cancel()};
   }
 }
 wideBtn.addEventListener('click',()=>{const on=!isWide();animateWide(on);countUse(on?'map-wide':'map-narrow')});
@@ -1525,7 +1549,7 @@ const once=new Set();['search','min','max'].forEach(id=>$(id).addEventListener('
 const RANGES={rent:{min:'',max:''},stay:{min:'',max:''}};let rangeMode='rent';
 function swapRange(){const m=STAY($('metric').value)?'stay':'rent';if(m===rangeMode)return;
   RANGES[rangeMode]={min:$('min').value,max:$('max').value};rangeMode=m;$('min').value=RANGES[m].min;$('max').value=RANGES[m].max}
-$('metric').addEventListener('change',()=>{SORT=null;swapRange();animateLabels=true;draw()});
+$('metric').addEventListener('change',()=>{SORT=null;swapRange();animateLabels=true;draw();if(STAY($('metric').value))loadStays()});
 const csvCell=x=>{const s=String(x??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
 $('export').onclick=()=>{
   if(STAY($('metric').value)){const m=$('metric').value,rows=STAY_VIEW,head=['area','typical_aed_a_night','cheapest_aed','dearest_aed','places_with_a_price'];
@@ -1537,16 +1561,13 @@ $('export').onclick=()=>{
   const a=document.createElement('a');a.href=url;a.download=name;a.click();countUse('csv');setTimeout(()=>URL.revokeObjectURL(url),1000)};
 $('staleX').onclick=()=>{$('stale').classList.remove('on');try{sessionStorage.setItem('staleHidden',(staleness(META,Date.now())||{}).through||'')}catch(e){}map.invalidateSize()};
 
-let lenis=null;
-// Smooth scrolling (Lenis). The map and the table keep their own scrolling.
-if(window.Lenis&&FX){lenis=new Lenis({lerp:.12,wheelMultiplier:1});G.ticker.add(t=>lenis.raf(t*1000));G.ticker.lagSmoothing(0)}
 
 // One opening moment: the sign's title sets in letter by letter (React Bits SplitText, ported), then the number rolls up.
 function intro(){
   if(!FX||T.lang==='ar')return; // splitting letters would break Arabic letter joining
   const h=$('title'),txt=h.textContent;h.setAttribute('aria-label',txt);
   h.innerHTML=txt.split(' ').map(w=>'<span style="display:inline-block;white-space:nowrap">'+[...w].map(c=>'<span class="ch" aria-hidden="true">'+safe(c)+'</span>').join('')+'</span>').join(' ');
-  G.from('#title .ch',{yPercent:60,opacity:0,duration:.6,ease:'power3.out',stagger:.025});
+  stagger(h.querySelectorAll('.ch'),[{transform:'translateY(60%)',opacity:0},{transform:'none',opacity:1}],{d:.6},.025);
 }
 // Dark / light mode. Follows the device until the visitor picks one; the choice is remembered on this device only.
 const SUN='<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/>';
@@ -1561,9 +1582,9 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',e=>{let sav
 paintToggle();
 // The base map comes after the rent data, and only once the map is on (or near) the screen: on phones the map
 // sits below the first screen, so MapLibre (1 MB) isn't fetched by visitors who never scroll to it.
-// The side panel's one entrance (GSAP): its sections settle in from just below, one after another, once per visit.
+// The side panel's one entrance: its sections settle in from just below, one after another, once per visit.
 // Nothing else on the page moves on its own; reduced motion skips it.
 if(FX){const secs=[...document.querySelectorAll('.controls,#companion,.facts,.fresh,.tableHead,.tableWrap')].filter(e=>e.offsetParent);
-  if(secs.length)G.from(secs,{y:14,opacity:0,duration:.55,ease:'power2.out',stagger:.07,delay:.15,clearProps:'transform,opacity'})}
-init().finally(()=>{loadOutlines();loadHotels();loadHomes();compareFromURL();const el=$('map');if(!('IntersectionObserver' in window))return vectorBase();
+  stagger(secs,[{transform:'translateY(14px)',opacity:0},{transform:'none',opacity:1}],{d:.55,e:EASE.out2,delay:.15},.07)}
+init().finally(()=>{loadOutlines();loadHotels();staysSoon();compareFromURL();const el=$('map');if(!('IntersectionObserver' in window))return vectorBase();
   const io=new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){io.disconnect();vectorBase()}},{rootMargin:'400px'});io.observe(el)});

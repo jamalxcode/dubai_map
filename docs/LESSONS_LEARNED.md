@@ -330,3 +330,13 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** after one refusal from Google, Street fell back to the drawn street for the rest of the visit with no note and no switch; the owner saw only "not showing" and nothing to act on.
 - **Rule:** a fallback names its reason (the service's own error code where it gives one), offers a retry, and never remembers a failure beyond the current attempt.
+
+## Read the code before promising a speed-up (29 Nov 2026)
+
+- **Problem:** the review promised "three requests at a time" for hotel prices from the step's duration alone; the collector already did that, and the time was Xotelo's slow answers.
+- **Rule:** before proposing a speed-up, read the code and the log line that measures it (requests, failures, seconds); recommend only what the numbers show, and say so when a measurement corrects the review.
+
+## Data a view doesn't need yet shouldn't block the first screen (29 Nov 2026)
+
+- **Problem:** the Rent view downloaded every places-to-stay file (with the collectors' notes) at start, one of them twice.
+- **Rule:** ship the page a slim copy written at deploy (the full files stay for tools like the status page), read each file once, and load what a view doesn't need yet when the browser is idle, at once when the visitor asks for it.
