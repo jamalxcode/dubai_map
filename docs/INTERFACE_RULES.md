@@ -137,7 +137,7 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - With the key (and the Maps JavaScript API allowed on it), Street opens on Google's own panorama nearest the start (within 150 m, else 600 m), filling the open part of the map (beside the panel on computers). You walk with Google's arrows, clicks and keys; our pad and photo box hide, and the bottom note says how to walk and has a "Drawn street" / "Google Street View" switch.
 - Price signs float over the photo at each nearby area's direction (Google's view about 180/2^zoom degrees wide), a little above the horizon (higher when near), smaller with distance, hidden out of sight or behind a nearer sign; "You are in" and the Google link follow Google's position.
 - Google's controls sit bottom right; its logo and terms bottom left stay visible (our note is raised to 30 px).
-- When Google can't (no key, the key refuses the Maps JavaScript API, no script, no panorama near): the drawn street takes over at the same spot with a one-line note, and the switch hides after a refusal.
+- When Google can't (no key, the key refused, no script, no panorama near): the drawn street takes over at the same spot with a one-line note; a refusal names Google's reason code in brackets and the switch offers "Try Google again". Every new opening of Street tries Google again.
 
 ### Street View photos (29 Nov)
 

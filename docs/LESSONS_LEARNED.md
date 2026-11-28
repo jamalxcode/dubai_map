@@ -325,3 +325,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** adding the Google key took several rounds (the secrets page only opens for the owner's account; the API list, website lines and the host-only Referer weren't obvious).
 - **Rule:** every outside key gets a section in `docs/API_KEYS.md`: secret name, exact console clicks, restrictions, cost and cap, what the logs say, and a symptom-to-fix table.
+
+## A fallback must say why, and try again (29 Nov 2026)
+
+- **Problem:** after one refusal from Google, Street fell back to the drawn street for the rest of the visit with no note and no switch; the owner saw only "not showing" and nothing to act on.
+- **Rule:** a fallback names its reason (the service's own error code where it gives one), offers a retry, and never remembers a failure beyond the current attempt.

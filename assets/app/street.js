@@ -242,7 +242,7 @@
     mS = new maplibregl.Map({ container: 'mS', style: styleFor(), center: [s.lng, s.lat], zoom: 16.5, pitch: 0, bearing: 0, maxPitch: 85,
       minZoom: 17, maxZoom: 22, dragPan: false, dragRotate: false, keyboard: false, attributionControl: { compact: true } });
     btn.setAttribute('aria-pressed', 'true'); countUse('street');
-    gWant = !!svKey() && !gFailed; modeLabel();
+    gFailed = false; gWant = !!svKey(); modeLabel(); // a refusal earlier in the visit doesn't stop a new try
     const mb = box.querySelector('.stMode'); if (mb) mb.addEventListener('click', () => { if (gOn) dropGoogle(''); else { const c = mS.getCenter(); gWant = true; startGoogle({ lat: c.lat, lng: c.lng }); } });
     if (gWant) startGoogle(s);
     box.querySelector('.m3x').addEventListener('click', closeStreet);
@@ -326,7 +326,12 @@
   // the Maps JavaScript API (gm_authFailure), the script doesn't load, or no panorama within 600 m. Google counts one
   // panorama load each time it starts (5,000 a month free, 29 Nov); walking inside it is free.
   let gOn = false, gPano = null, gLayer = null, gSignBox = null, gFailed = false, gSigns = [], gLoad = null, gWant = false, loaded = false, dropNow = null, gAt = null, gQ = false;
-  function modeLabel() { const b = box && box.querySelector('.stMode'); if (!b) return; b.hidden = gFailed && !gOn; b.textContent = gOn ? T('Drawn street') : T('Google Street View'); }
+  function modeLabel() { const b = box && box.querySelector('.stMode'); if (!b) return; b.hidden = false; b.textContent = gOn ? T('Drawn street') : gFailed ? T('Try Google again') : T('Google Street View'); }
+  // Google writes its reason to the console ("Google Maps JavaScript API error: RefererNotAllowedMapError"); kept so the
+  // note can name it (the owner can then fix the key: see docs/API_KEYS.md).
+  let gErr = '';
+  (function () { const ce = console.error, cw = console.warn, grab = a => { const m = /Google Maps JavaScript API (?:error|warning): (\w+)/.exec(a.map(String).join(' ')); if (m) gErr = m[1]; };
+    console.error = function (...a) { grab(a); return ce.apply(this, a); }; console.warn = function (...a) { grab(a); return cw.apply(this, a); }; })();
   function note(msg) { const n = box && box.querySelector('.stNote'); if (n) n.textContent = msg ? msg + ' ' : ''; }
   function loadGoogle() {
     if (window.google && google.maps && google.maps.StreetViewPanorama) return Promise.resolve();
@@ -341,9 +346,11 @@
     return gLoad;
   }
   // Google calls this when the key doesn't allow the Maps JavaScript API (or this address).
-  window.gm_authFailure = () => { gFailed = true; dropGoogle(T('Google Street View can\'t start yet (the key doesn\'t allow it); showing the drawn street.')); };
+  window.gm_authFailure = () => { gFailed = true; countUse('street-google-refused', gErr || 'auth');
+    setTimeout(() => dropGoogle(T('Google refused the key; showing the drawn street.') + (gErr ? ' (' + gErr + ')' : '')), 60); };
   async function startGoogle(s) {
-    if (gFailed || !svKey() || gOn) return;
+    if (!svKey() || gOn) return;
+    gFailed = false; gErr = '';
     note(T('Loading Google Street View…'));
     try { await loadGoogle(); } catch (_) { gWant = false; note(T('Google Street View didn\'t load; showing the drawn street.')); if (dropNow) dropNow(); modeLabel(); return; }
     if (!box || !gWant) return;

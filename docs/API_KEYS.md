@@ -60,7 +60,12 @@ Not used, by the owner's choice: LiteAPI (its live key needs a payment card). DL
 ### If something looks wrong
 | You see | Meaning | Fix |
 |---|---|---|
-| Street shows the drawn street with "the key doesn't allow it" | Google refused the key for the Maps JavaScript API (`gm_authFailure`) | tick Maps JavaScript API on the key, add `https://jamalxcode.github.io/*`, Save, wait 5 minutes |
+| Street shows the drawn street with "Google refused the key" and a code in brackets | Google refused the key (`gm_authFailure`); the code says why | see the codes below; then press **Try Google again** or reopen Street |
+| ... `RefererNotAllowedMapError` | the page's address isn't in the key's website list | add `https://jamalxcode.github.io/*` and `https://jamalxcode.github.io/dubai_map/*`, Save, wait 5 minutes |
+| ... `ApiNotActivatedMapError` or `ApiTargetBlockedMapError` | Maps JavaScript API isn't enabled, or isn't ticked on the key | enable it in the Library and tick it under API restrictions |
+| ... `OverQuotaMapError` | the daily cap (Quotas) or the month's allowance is used up | wait for the next day, or raise the cap a little |
+| ... `BillingNotEnabledMapError` | the project's billing account is off | relink billing under Billing |
+| ... `InvalidKeyMapError` or `ExpiredKeyMapError` | the secret holds a wrong or deleted key | create a key, update the secret `GOOGLE_MAPS_EMBED_KEY`, push any change to redeploy |
 | "Google Street View didn't load" | the script didn't arrive (network, blocker) | reload; the drawn street works meanwhile |
 | "Google has no Street View near here" | no photo within 600 m | press **Google Street View** after walking to a street, or pick another area |
 | A card's photo box shows "referer not allowed" | the website list doesn't cover the page | check both website lines above |

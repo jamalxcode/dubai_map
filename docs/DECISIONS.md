@@ -912,6 +912,14 @@ Asked: "save to repo convo, decisions and lessons learned and also api process".
 - **What:** `docs/API_KEYS.md`: every outside service (Google Maps Embed and JavaScript APIs, SerpApi, Dubai Pulse, the cron-job.org token, the booking partner, the services without keys), its key's secret name, cost and status; the general process (get, restrict, add as a secret, say "added", check the log, fallback and cap); the Google steps exactly as the owner did them, the cost cap, and a symptom-to-fix table. Linked from the README's paper trail and owner's checklist, and from CLAUDE.md.
 - **Lessons:** check the data's grain before "take me there"; write each key's process down while it is being set up.
 
+## Decision on 2026-11-29 (ninety-fourth pass): Street tries Google again, and says why it couldn't
+
+Asked (screenshot of the drawn street in International City, no switch, no note): "street view is not showing, it was showing before".
+- **Found:** the deploys still wrote the key ("Street View photos on"). Street remembered a refusal from Google (`gm_authFailure`) for the rest of the visit: every later opening skipped Google, hid the switch and said nothing, which is what the screenshot shows.
+- **What changed:** every opening of Street tries Google again; a refusal shows "Google refused the key; showing the drawn street." with Google's own reason code (read from its console message, e.g. RefererNotAllowedMapError, OverQuotaMapError), and the switch offers "Try Google again". The refusal and its code are counted (feature counts only), so it shows in GoatCounter.
+- **Docs:** `docs/API_KEYS.md` lists each of Google's codes with its fix.
+- **Checked:** the stand-in Google API: a refusal names its code and offers the retry, reopening Street starts Google again; every suite passes.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

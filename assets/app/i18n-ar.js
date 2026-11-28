@@ -337,6 +337,8 @@
     'Peaks': 'القمم',
     'See rents as a mountain range': 'شاهد الإيجارات كسلسلة جبال',
     'Back to the map': 'العودة إلى الخريطة',
+    'Try Google again': 'جرّب Google مجددًا',
+    'Google refused the key; showing the drawn street.': 'رفضت Google المفتاح؛ نعرض الشارع المرسوم.',
     'you are here': 'أنت هنا',
     '{home}: where they rent near you': '{home}: أين تُؤجَّر بالقرب منك',
     '{area}: go there': '{area}: اذهب إليها',

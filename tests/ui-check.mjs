@@ -1024,11 +1024,15 @@ try {
         return null; });
       check(!sg || (sg.open && sg.here === sg.name), `Street with Google: tapping the ${sg ? sg.name : ''} sign goes there and stays in Street (${sg ? sg.here : 'no other sign in sight'})`);
       // The key doesn't allow the Maps JavaScript API: Google says so, and the drawn street takes over at the same spot.
-      await page.evaluate(() => window.gm_authFailure()); await page.waitForTimeout(600);
+      await page.evaluate(() => { console.error('Google Maps JavaScript API error: RefererNotAllowedMapError'); window.gm_authFailure(); }); await page.waitForTimeout(600);
       const fb = await page.evaluate(() => ({ on: streetGoogle(), cls: document.querySelector('.map3d.street').classList.contains('google'), pano: !!document.querySelector('.gsv'),
-        pad: getComputedStyle(document.querySelector('.stPad')).display, note: document.querySelector('.stNote').textContent, here: (streetHere() || {}).label, mode: document.querySelector('.stMode').hidden }));
-      check(!fb.on && !fb.cls && !fb.pano && fb.pad !== 'none' && /drawn street/.test(fb.note) && !!fb.here && fb.mode,
-        `Street with Google: when the key doesn't allow it, the drawn street takes over in ${fb.here} with a note`);
+        pad: getComputedStyle(document.querySelector('.stPad')).display, note: document.querySelector('.stNote').textContent, here: (streetHere() || {}).label, mode: document.querySelector('.stMode').textContent }));
+      check(!fb.on && !fb.cls && !fb.pano && fb.pad !== 'none' && /drawn street/.test(fb.note) && /RefererNotAllowedMapError/.test(fb.note) && !!fb.here && /Try Google again/.test(fb.mode),
+        `Street with Google: when Google refuses the key, the drawn street takes over in ${fb.here}, the note names Google's reason ("${fb.note.trim()}"), and "${fb.mode}" stays offered`);
+      // Opening Street again tries Google again (a refusal earlier in the visit doesn't stick).
+      await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+      await page.evaluate(l => openStreet(AREAS.find(a => a.label === l)), a1); await page.waitForTimeout(2500);
+      check(await page.evaluate(() => streetGoogle()), 'Street with Google: opening Street again tries Google again');
       await page.keyboard.press('Escape'); await page.waitForTimeout(300);
       check(await page.evaluate(() => !document.querySelector('.map3d')), 'Street with Google: Escape returns to the map');
     } else check(true, 'Street with Google: no WebGL in this browser, so Street stays hidden');
