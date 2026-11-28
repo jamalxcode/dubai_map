@@ -870,6 +870,16 @@ Asked: "the map and dubai landmarks are not showing when its on peak view, fix i
 - **What changed:** no sky or fog; the price colour and hill shading go in under the roads, buildings and names (before the first transportation, building or symbol layer), so streets, motorway numbers, the sea and place names (Dubai, Dubai International Airport, Jumeirah Bay Island, Sharjah, Ajman) sit on top of the mountains; the price colour is 60% (was 82%) so the ground shows through it. `window.peaksMap()` gives tests the MapLibre map.
 - **Checked:** a GPU-emulated (SwiftShader) browser run waiting for every tile: streets, sea and labels draw over and around the peaks; the colour layer sits below the roads; the terrain still rises (the Palm about 3,600 m); every suite passes.
 
+## Decision on 2026-11-28 (eighty-ninth pass): Street, walk the streets with the prices on signs
+
+Asked: "add a google streetmap / gta pov view of the street with the different apartment and property prices shown".
+- **What:** a street-level view (street.js), opened from the map's "Street" switch or "Walk the streets here" in an area's card. You stand on a street at eye level among the raised buildings, with street names on the roads; each nearby area has a sign with its rent a year and price to buy for each home type, and a panel says which area you are in with its full figures. Walk with the arrow keys or W A S D (Shift faster), the on-screen pad, or by clicking the street; drag to look around. "See the real street on Google Street View" opens Google's photos of the same spot and heading in a new tab.
+- **Why not Google's imagery inside the page:** embedding Street View needs a Google Maps Embed (or JavaScript) API key with billing, which the owner hasn't set up (open item 5a); Google Maps links need no key and were already allowed. Photos can't be copied from Google. If the owner adds the key, the panel can show the real Street View photo for the spot.
+- **Why a drawn street, not a game look:** the view is our own: OpenFreeMap's buildings and roads in the site's colours, at a driving camera height; it borrows the idea of a third-person street view, not any game's art or style.
+- **Prices are area figures:** there are no per-building prices in the open data, so signs and the panel show each area's medians (Ejari contracts, registered sales) and say so; thin figures are italic, as elsewhere.
+- **Found while building:** at zoom 20 the base map's one-way arrows overflow MapLibre's symbol buffers (console errors); they are hidden in Street, and road numbers spaced out. Logical insets follow an element's own direction, so the overlay takes the page direction while the map canvas stays left to right, and the pad is placed with physical sides.
+- **Checked:** a GPU-emulated browser in Dubai Marina, JVC, Business Bay and the Palm (light, dark, Arabic, 344 px phone); the browser check opens Street from a card, checks eye level, the panel, the signs, the Google link and the pad's labels, walks with the arrow keys and returns with Escape; every suite passes.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

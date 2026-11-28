@@ -1022,7 +1022,9 @@ function popup(a){
     '<p class="see">'+[['https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a.label+', Dubai'),T('Google Maps')],
       ['https://www.google.com/maps/@?api=1&map_action=pano&viewpoint='+a.lat+','+a.lng,T('Street View')],
       ['https://www.google.com/search?tbm=isch&q='+encodeURIComponent(a.label+' Dubai'),T('Photos on Google')]]
-      .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+'</p>'+
+      .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+
+      // Walk its streets at eye level with the prices on signs (street.js), where the browser can draw it.
+      (a.lat!=null&&window.openStreet&&window.maplibregl?'<span class="sep" aria-hidden="true">·</span><a href="#" data-walk="'+safe(a.label)+'">'+T('Walk the streets here')+'</a>':'')+'</p>'+
     shareLine('a',a.label)+
     (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
     (a.staff?'<p class="staff"><small>'+T('An industrial zone: most homes here are staff accommodation, so rents run well below homes elsewhere. It is left out of comparisons with other areas.')+'</small></p>':'')+

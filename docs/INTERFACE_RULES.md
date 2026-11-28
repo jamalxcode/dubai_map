@@ -126,6 +126,16 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - **Stays:** the key's price history folds under "Price history"; tips in Hotels and Holiday homes are about places to stay.
 - **Area card:** "Other sources differ by more than 15%" sits right under the figures.
 
+### Street (28 Nov)
+
+- A "Street" switch in the map's layer bar (beside 3D, shown when WebGL works) and "Walk the streets here" in an area's card (after Google's Street View link). Opens a full-map overlay like 3D and Peaks; only one of the three is open at a time; Escape or "Back to the map" returns at that spot (zoom 16).
+- The camera drops onto the nearest street (from the base map's roads), facing along it, at zoom 20.3 and pitch 82 (about 10 m up, 70 m behind the middle of the screen); on computers the middle sits in the open part of the map (padding by `--paneW`).
+- Buildings raised in warm stone (lighter the taller; espresso tones in dark mode); each area's ground in its price colour (22%) with a 3 px edge, under roads and names; one-way arrows hidden and road numbers spaced out (600 px) at eye level. Sky: a CSS gradient behind the map (day blue, night navy in dark mode), never MapLibre fog.
+- Signs: up to 10 areas within 2.6 km, each an ivory board on a post with a thick top edge in the area's band colour (the current view's figure), its name, and rent a year and price to buy for up to five home types (thin rows italic); smaller with distance (down to half), hidden behind you, off screen or covering a nearer sign; tapping one opens the area's card. Phones draw them at 72%.
+- "You are in" panel (top end, glass): the area under you (its outline, else the nearest point within 1.5 km), its figures for up to eight home types and the note that these are area medians, not a building's price; "Open its card". Phones: one line, the table folded.
+- Moving: arrow keys or W A S D (Shift faster), a four-button pad (bottom end; left-to-right in both languages, labelled), click the street ahead (up to 500 m), drag to look around (pitch 50–85). The bottom note holds the keys and "See the real street on Google Street View" (a Maps link for the current spot and heading; phones show only the link).
+- Arabic: the overlay follows the page direction (the map canvas stays left to right); the pad moves to the left.
+
 ### Peaks (24 Nov)
 
 - Peaks keeps the street map (25 Nov): no sky or fog; the price colour (60%) and hill shading sit under the roads, buildings and names, so streets, the sea and landmarks show over the mountains.

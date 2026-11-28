@@ -328,6 +328,7 @@
   btn3d.addEventListener('click', e => { e.preventDefault(); m3 ? close3d() : open3d(); });
   function open3d() {
     if (!canGL()) return;
+    if (window.closeStreet) closeStreet();
     box3 = document.createElement('div'); box3.className = 'map3d';
     box3.innerHTML = '<div class="m3" id="m3"></div><button type="button" class="btn primary m3x">' + T('Back to 2D') + '</button><p class="m3n">' + T('Drag with two fingers or right-click to turn and tilt.') + '</p>';
     document.querySelector('.mapWrap').append(box3);
@@ -442,6 +443,7 @@
   function openPeaks() {
     if (!canGL()) return;
     if (m3) close3d();
+    if (window.closeStreet) closeStreet();
     const unit = $('unit').value, pm = peakMetric(); SURF = buildSurface(unit, pm); surfVer++;
     if (!SURF) return;
     peaksProtocol();

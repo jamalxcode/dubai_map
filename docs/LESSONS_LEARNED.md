@@ -290,3 +290,13 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** Peaks' sky fog (fog-ground-blend 0.85) washed the whole tilted street map to ivory on the owner's screen; headless Chromium draws without a GPU and skipped it, so every check passed.
 - **Rule:** in 3D views, keep effects that cover the ground (fog, sky blend, opaque colour layers above roads) off; put data layers under the base map's roads and names. When a report shows something tests can't, check with a SwiftShader (GPU-emulated) run that waits for all tiles before trusting a screenshot.
+
+## Stretched tiles multiply repeated symbols (28 Nov 2026)
+
+- **Problem:** at zoom 20 (Street's eye level) OpenFreeMap's tiles, which stop at zoom 14, are stretched six levels and the one-way arrows along every road overflowed MapLibre's symbol buffers ("opacityVertexArray.length" errors).
+- **Rule:** when a view goes far past the tiles' own zoom, hide symbols repeated along lines (arrows) and space out the rest (road numbers); check the console in a GPU-emulated run.
+
+## Logical insets follow the element's own direction (28 Nov 2026)
+
+- **Problem:** giving an overlay's note `direction: rtl` for Arabic moved it to the other side (its `inset-inline-start` flipped) and onto the movement pad.
+- **Rule:** set the direction on the whole overlay (the map canvas inside stays left to right) so every logical inset mirrors together; place anything that must keep left-to-right order (the pad) with physical sides.

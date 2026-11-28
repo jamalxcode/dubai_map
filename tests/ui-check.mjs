@@ -262,10 +262,11 @@ try {
         `${name}: the breakdown leads with the picked home's figure, highlights its row, then all homes`);
       await page.waitForSelector('.leaflet-popup-content .pics .strip img', { timeout: 5000 }).catch(() => {});
       const see = await page.evaluate(() => ({
-        links: [...document.querySelectorAll('.leaflet-popup-content .see a')].map(a => a.href),
+        links: [...document.querySelectorAll('.leaflet-popup-content .see a:not([data-walk])')].map(a => a.href),
+        walk: !!document.querySelector('.leaflet-popup-content .see a[data-walk]') || !window.maplibregl,
         photos: [...document.querySelectorAll('.leaflet-popup-content .pics .strip a')].map(a => a.textContent + ' ' + a.title) }));
-      check(see.links.length === 3 && see.links.every(u => /^https:\/\/www\.google\.com\//.test(u)) && see.links.some(u => /map_action=pano/.test(u)),
-        `${name}: the breakdown links to Google Maps, Street View and Google photos`);
+      check(see.links.length === 3 && see.links.every(u => /^https:\/\/www\.google\.com\//.test(u)) && see.links.some(u => /map_action=pano/.test(u)) && see.walk,
+        `${name}: the breakdown links to Google Maps, Street View and Google photos, and walks its streets here`);
       check(see.photos.length === 1 && /Test Photographer/.test(see.photos[0]) && /CC BY-SA 4\.0/.test(see.photos[0]),
         `${name}: photos taken nearby show with author and licence, no maps or diagrams (${see.photos.length})`);
       if (name === 'phone') {
@@ -919,6 +920,41 @@ try {
         `Peaks: rent as mountains (${pk.hiName} ${Math.round(pk.hiH)} m, ${pk.loName} ${Math.round(pk.loH)} m, open sea 0), ${pk.tops} peaks named, ${pk.lows} good-value rings; Back to the map returns`);
     } else check(true, 'Peaks: no WebGL in this browser, so the button stays hidden');
     check(!errors.length, `Peaks: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await ctx.close();
+  }
+  // Street (28 Nov): walk at eye level with each nearby area's prices on signs (street.js), opened from an area's card.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+    if (await page.evaluate(() => !!window.maplibregl && !document.querySelector('.stBtn').hidden)) {
+      const area = await page.evaluate(() => { const a = AREAS.filter(x => x.lat != null && !x.staff && (x.by_unit || []).some(u => u.median && u.sale)).sort((p, q) => q.n - p.n)[0]; focusArea(a); return a.label; });
+      await page.waitForTimeout(1200);
+      const link = await page.$(`[data-walk="${area}"]`);
+      check(!!link, `Street: "${area}" card has a "Walk the streets here" link`);
+      if (link) await link.click(); else await page.evaluate(l => openStreet(AREAS.find(a => a.label === l)), area);
+      await page.waitForTimeout(6000);
+      const s1 = await page.evaluate(() => { const m = streetMap(), g = document.querySelector('.stGoogle');
+        return { open: !!document.querySelector('.map3d.street canvas'), pressed: document.querySelector('.stBtn').getAttribute('aria-pressed'), pitch: m.getPitch(), zoom: m.getZoom(),
+          here: (streetHere() || {}).label, panel: document.querySelector('.stHere').textContent, signs: document.querySelectorAll('.stSign').length,
+          sign: (document.querySelector('.stSign') || {}).textContent || '', google: g ? g.href : '', c: m.getCenter(),
+          pad: [...document.querySelectorAll('.stPad button')].every(b => b.getAttribute('aria-label')) }; });
+      check(s1.open && s1.pressed === 'true' && s1.pitch > 75 && s1.zoom > 19 && s1.here === area && /You are in/.test(s1.panel) && /Rent a year/.test(s1.panel) && /To buy/.test(s1.panel)
+        && s1.signs >= 2 && /AED/.test(s1.sign) && /map_action=pano&viewpoint=25\.\d+,55\.\d+&heading=\d+/.test(s1.google) && s1.pad,
+        `Street: eye level (pitch ${Math.round(s1.pitch)}, zoom ${s1.zoom.toFixed(1)}) in ${s1.here}, its rents and sale prices in the panel, ${s1.signs} price signs, Google Street View link, labelled pad`);
+      await page.keyboard.down('ArrowUp'); await page.waitForTimeout(1500); await page.keyboard.up('ArrowUp');
+      await page.keyboard.down('ArrowRight'); await page.waitForTimeout(800); await page.keyboard.up('ArrowRight');
+      const s2 = await page.evaluate(() => ({ c: streetMap().getCenter() }));
+      const moved = Math.hypot((s2.c.lat - s1.c.lat) * 111320, (s2.c.lng - s1.c.lng) * 100900);
+      await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+      const back = await page.evaluate(() => !document.querySelector('.map3d') && document.querySelector('.stBtn').getAttribute('aria-pressed') === 'false' && map.getZoom() >= 15);
+      check(moved > 3 && back, `Street: the arrow keys walk (${Math.round(moved)} m), Escape returns to the map at that spot`);
+    } else check(true, 'Street: no WebGL in this browser, so the button stays hidden');
+    check(!errors.length, `Street: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await ctx.close();
   }
   // Bus and Boats (routes.js, data/routes.json from RTA's GTFS feed): two layer switches beside Metro.

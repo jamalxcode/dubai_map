@@ -95,3 +95,49 @@
 .leaflet-popup-content .rchip:hover,.leaflet-popup-content .rchip:focus-visible,.areaSheet .rchip:hover{border-color:var(--gold-ink);outline:none}
 /* Peaks follows the view: the map's view bar stays above the mountains, so a view can be picked while Peaks is open. */
 .mapWrap:has(.map3d.peaks) .leaflet-top.leaflet-right{z-index:1002}
+/* Street: walk at eye level with each area's prices on signs (street.js). */
+.map3d.street{background:linear-gradient(#BFD9EE,#EAF2F7 46%,var(--bg) 60%)}
+.map3d.street .m3{background:transparent}
+.stSign{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;transform:scale(var(--k,1));transform-origin:50% 100%}
+.stSign .stBoard{display:block;padding:5px 8px 6px;border-radius:7px;background:rgba(255,252,245,.86);color:#2B2118;border:2px solid var(--c,#4F463D);border-top-width:6px;
+  box-shadow:0 3px 10px rgba(43,33,24,.28);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);white-space:nowrap}
+.stSign .stBoard b{display:block;font:700 15px/1.1 var(--cond);margin-bottom:3px;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.stSign table,.stHere table{border-collapse:collapse;font:500 11.5px/1.35 var(--body);font-variant-numeric:tabular-nums}
+.stSign th,.stSign td,.stHere th,.stHere td{padding:0 4px;text-align:start}
+.stSign td,.stHere td{text-align:end;font-weight:700}
+.stSign tr:first-child th,.stHere tr:first-child th{font-size:10px;font-weight:600;color:#4F463D;text-align:end}
+.stSign .thin td,.stHere .thin td{font-style:italic;font-weight:500}
+.stSign::after{content:"";width:3px;height:26px;background:#4F463D;border-radius:2px;opacity:.75}
+.stSign:hover .stBoard,.stSign:focus-visible .stBoard{background:#FFFCF5}
+.stSign:focus-visible .stBoard{outline:3px solid var(--focus,#735B12);outline-offset:2px}
+.stSign.stOff{visibility:hidden;pointer-events:none}
+.map3d.street .stHere{position:absolute;z-index:3;top:12px;inset-inline-end:12px;width:270px;max-width:calc(100% - 24px);display:flex;flex-direction:column;gap:3px;padding:9px 11px;
+  border:1px solid var(--line);border-radius:10px;background:var(--glass,var(--legend));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--text);font-size:12px}
+.map3d.street .stHere b{font:700 18px/1.1 var(--cond)}
+.map3d.street .stHere .stIn{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.map3d.street .stHere summary{cursor:pointer;font-weight:600;margin:2px 0}
+.map3d.street .stHere table{width:100%;margin:2px 0 4px}
+.map3d.street .stHere tr:first-child th{color:var(--muted)}
+.map3d.street .stHere .muted{display:block;color:var(--muted);font-size:11px;line-height:1.3}
+.map3d.street .stHere .stCard{align-self:flex-start;margin-top:4px;padding:4px 10px;font-size:12.5px}
+.map3d.street .stPad{position:absolute;z-index:3;right:12px;bottom:36px;display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:4px;direction:ltr}
+.map3d.street .stPad button{all:unset;cursor:pointer;display:grid;place-items:center;border-radius:10px;background:var(--glass,var(--legend));border:1px solid var(--line);color:var(--text);
+  font:700 18px/1 var(--body);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);touch-action:none;user-select:none}
+.map3d.street .stPad [data-k="f"]{grid-column:2;grid-row:1}.map3d.street .stPad [data-k="l"]{grid-column:1;grid-row:2}
+.map3d.street .stPad [data-k="b"]{grid-column:2;grid-row:2}.map3d.street .stPad [data-k="r"]{grid-column:3;grid-row:2}
+.map3d.street .stPad button:active{background:var(--oxblood);color:var(--ivory)}
+.map3d.street .stPad button:focus-visible{outline:3px solid var(--focus,#735B12);outline-offset:2px}
+.map3d.street .stHow{max-width:calc(100% - 200px)}
+.map3d.street .stHow a{color:var(--text);font-weight:600}
+.map3d.street .m3 canvas{touch-action:none}
+@media (max-width:600px){.map3d.street .stHere{top:56px;inset-inline-start:10px;inset-inline-end:10px;width:auto;padding:6px 9px}.map3d.street .stHere b{font-size:15px}
+  .map3d.street .stHow{max-width:calc(100% - 180px);font-size:11px}.map3d.street .stPad{grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,42px);bottom:30px;right:10px}
+  [dir=rtl] .map3d.street .stPad{right:auto;left:10px}
+  .map3d.street .stHow .stTip{display:none}.stSign{transform:scale(calc(var(--k,1)*.72))}
+  .stSign .stBoard b{font-size:13px}.stSign table{font-size:10.5px}}
+/* The map container stays left to right; the street view's own text follows the page language. */
+[dir=rtl] .map3d.street{direction:rtl}[dir=rtl] .map3d.street .m3{direction:ltr}[dir=rtl] .stSign .stBoard{direction:rtl}
+[dir=rtl] .map3d.street .stPad{right:auto;left:12px}
+@media (max-width:600px){.map3d.street .stHere .stCard,.map3d.street .stHere .stIn{display:none}.map3d.street .stHere{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:8px}
+  .map3d.street .stHere details{flex-basis:100%}.map3d.street .stHere details:not([open]){flex-basis:auto}}
+[data-theme=dark] .map3d.street{background:linear-gradient(#16202B,#25303C 46%,var(--bg) 60%)}
