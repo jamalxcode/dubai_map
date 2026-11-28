@@ -47,7 +47,10 @@ test('no third-party font service, OSM tiles use the policy URL', () => {
   assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
   assert.match(html, /https:\/\/tile\.openstreetmap\.org\/\{z\}\/\{x\}\/\{y\}\.png/);
   assert.match(html, /openstreetmap\.org\/copyright/);
-  assert.doesNotMatch(html, /referrerpolicy|name="referrer"/i, 'tile policy: browsers must send a Referer');
+  assert.doesNotMatch(html, /name="referrer"/i, 'tile policy: browsers must send a Referer');
+  // The only per-element policy allowed sends more, not less: Google's Street View frame needs the full page address
+  // (its key is restricted to this site's path).
+  for (const m of html.matchAll(/referrer-?policy\s*[=:]\s*['"]?([\w-]+)/gi)) assert.equal(m[1].toLowerCase(), 'no-referrer-when-downgrade', 'no policy that hides the Referer');
 });
 
 test('elements the script relies on exist', () => {

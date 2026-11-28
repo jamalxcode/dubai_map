@@ -881,6 +881,15 @@ Asked: "add a google streetmap / gta pov view of the street with the different a
 - **After merging:** the 320 px Arabic check failed on main: the layer bar ran over the zoom column ("All of Dubai", "Near me" are wider in Arabic) and cut off its last switches. Street moved to the view bar after Peaks (a chip on phones), and on phones the layer bar now takes the room actually left beside the zoom column and scrolls. The overlap was older than Street: the check had measured before the 3D switch arrived; it now waits for it.
 - **Checked:** a GPU-emulated browser in Dubai Marina, JVC, Business Bay and the Palm (light, dark, Arabic, 344 px phone); the browser check opens Street from a card, checks eye level, the panel, the signs, the Google link and the pad's labels, walks with the arrow keys and returns with Escape; every suite passes.
 
+## Decision on 2026-11-29 (ninetieth pass): Google Street View photos inside the page
+
+Asked: "how do i get google embed", then the owner made a Maps Embed API key (restricted to the site, Maps Embed API only) and added it as the repository secret `GOOGLE_MAPS_EMBED_KEY`.
+- **What:** an area's card has "Street View photo" (folded; Google's frame for the area's point loads when opened), and Street shows "The real street (Google Street View)" for where you stand and the way you face, reloading as you walk (after 60 m or a 45° turn).
+- **The key:** never in the repo. `assets/app/keys.js` holds a placeholder that the deploy replaces with the secret; local runs and tests keep the placeholder, so the photos stay off and the outside links remain. An Embed key is visible in the page by design; Google's website restriction is what protects it.
+- **Referrer:** the key allows `https://jamalxcode.github.io/dubai_map/*`, but browsers send only the host to other sites by default, which the restriction would refuse; the frames ask for the full address (`no-referrer-when-downgrade`). The page test that bans referrer policies (OpenStreetMap needs the Referer) now allows only that one.
+- **Cost:** Google lists the Maps Embed API at no charge; the owner can set a small budget alert in Google Cloud.
+- **Checked:** the browser check uses a stand-in key and a stand-in Google page: the card's frame and Street's frame carry the key, the spot and the heading, and send the full address; every suite passes; after deploy, the live keys.js carries a key (checked without printing it).
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

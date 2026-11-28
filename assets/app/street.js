@@ -4,7 +4,7 @@
  * area's medians from Ejari contracts and registered sales, not one building's price). A panel says which area you are
  * in, with its full figures. Move with the arrow keys or W A S D (Shift to run), the on-screen pad, or by clicking
  * the street ahead; drag to look around. "Google Street View" opens the real photos of the same spot in a new tab
- * (a Maps link, no key: embedding Google's imagery needs the owner's Maps Embed key, open item 5a).
+ * (a Maps link); with the Maps Embed key (keys.js) the photo also shows in the page, following you.
  * Reads atlas.js's globals (map, viewCtl, T, safe, money, fmt, AREAS, POINTS, LABEL, OUTLINES, THIN,
  * styleFor, focusArea, countUse, visCenter, cssVar) and is wrapped in its own function.
  */
@@ -107,6 +107,7 @@
     if (!mS || !box) return; const c = mS.getCenter(), a = areaAt({ lat: c.lat, lng: c.lng });
     const g = box.querySelector('.stGoogle');
     g.href = 'https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=' + c.lat.toFixed(6) + ',' + c.lng.toFixed(6) + '&heading=' + Math.round((mS.getBearing() + 360) % 360);
+    photo();
     const key = a ? a.label : ''; if (key === hereKey) return; hereKey = key; here = a;
     const el = box.querySelector('.stHere');
     if (!a) { el.innerHTML = '<b>' + T('Between areas') + '</b><small>' + T('No figures for this spot.') + '</small>'; return; }
@@ -118,6 +119,17 @@
       '<button type="button" class="btn stCard">' + T('Open its card') + '</button>';
     el.querySelector('.stCard').addEventListener('click', () => { closeStreet(); focusArea(a); });
     if (matchMedia('(max-width:600px)').matches) { const d = el.querySelector('details'); if (d) d.open = false; }
+  }
+
+  // Google's photo of the spot and the way you face (when the Maps Embed key is set): reloaded after a move of 60 m or
+  // a turn of 45 degrees, only while its box is open.
+  let shot = null;
+  function photo() {
+    const d = box && box.querySelector('.stPhoto'); if (!d || !d.open || !mS) return;
+    const c = mS.getCenter(), b = (mS.getBearing() + 360) % 360;
+    if (shot && metres(shot, c) < 60 && Math.abs(((b - shot.b) + 540) % 360 - 180) < 45) return;
+    shot = { lat: c.lat, lng: c.lng, b };
+    const host = d.querySelector('.stPhotoBox'); host.replaceChildren(svFrame(c.lat, c.lng, b));
   }
 
   // Moving: forward or back along the way you face, turning on the spot; kept inside Dubai.
@@ -165,6 +177,7 @@
     box = document.createElement('div'); box.className = 'map3d street';
     box.innerHTML = '<div class="m3" id="mS"></div><button type="button" class="btn primary m3x">' + T('Back to the map') + '</button>' +
       '<section class="stHere" aria-live="polite"></section>' +
+      (svKey() ? '<details class="stPhoto"' + (matchMedia('(max-width:600px)').matches ? '' : ' open') + '><summary>' + T('The real street (Google Street View)') + '</summary><div class="stPhotoBox"></div></details>' : '') +
       '<div class="stPad" role="group" aria-label="' + T('Move') + '">' +
         '<button type="button" data-k="f" aria-label="' + T('Go forward') + '">▲</button>' +
         '<button type="button" data-k="l" aria-label="' + T('Turn left') + '">↶</button>' +
@@ -186,6 +199,7 @@
       b.addEventListener('click', e => { if (e.detail === 0) { go(k); setTimeout(() => stop(k), 350); } }); // a screen reader's "click"
     });
     lookDrag(mS.getCanvasContainer());
+    const ph = box.querySelector('.stPhoto'); if (ph) ph.addEventListener('toggle', () => { shot = null; photo(); if (ph.open) countUse('street-photo'); });
     const pw = parseFloat(getComputedStyle(document.querySelector('.mapWrap')).getPropertyValue('--paneW')) || 0;
     if (pw && matchMedia('(min-width:1100px)').matches) mS.setPadding(document.documentElement.dir === 'rtl' ? { right: pw } : { left: pw });
     mS.on('load', () => {
@@ -237,7 +251,7 @@
     if (!mS) return; const c = mS.getCenter();
     held.clear(); if (raf) cancelAnimationFrame(raf); raf = 0; last = 0;
     try { mS.remove(); } catch (_) { /* already gone */ }
-    mS = null; signs = []; signAt = null; hereKey = ''; here = null; if (box) box.remove(); box = null;
+    mS = null; signs = []; signAt = null; shot = null; hereKey = ''; here = null; if (box) box.remove(); box = null;
     btn.setAttribute('aria-pressed', 'false');
     map.setView([c.lat, c.lng], 16, { animate: false });
   }

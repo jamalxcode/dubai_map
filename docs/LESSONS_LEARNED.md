@@ -305,3 +305,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the phone check for the layer bar measured 0.8 s after load, before the 3D switch arrived (it waits for MapLibre); in Arabic the full bar already ran over the zoom column, and the check only caught it when CI happened to be slow.
 - **Rule:** a layout check waits for every late control to show before measuring; widths come from the room actually free (measured), not a fixed `calc(100vw - …)`.
+
+## A key restricted to a path needs the full Referer (29 Nov 2026)
+
+- **Problem:** Google's website restriction for the Embed key names the site's path (`jamalxcode.github.io/dubai_map/*`), but browsers send only the host to other sites by default (`strict-origin-when-cross-origin`), so the frame would be refused.
+- **Rule:** an embed whose key is restricted to a path sets `referrerpolicy="no-referrer-when-downgrade"` on that frame only; never a page-wide policy (OpenStreetMap's tiles need the Referer). Keys go in as repository secrets written at deploy, with a placeholder that keeps the feature off locally and in tests.

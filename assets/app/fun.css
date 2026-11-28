@@ -141,3 +141,11 @@
 @media (max-width:600px){.map3d.street .stHere .stCard,.map3d.street .stHere .stIn{display:none}.map3d.street .stHere{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:8px}
   .map3d.street .stHere details{flex-basis:100%}.map3d.street .stHere details:not([open]){flex-basis:auto}}
 [data-theme=dark] .map3d.street{background:linear-gradient(#16202B,#25303C 46%,var(--bg) 60%)}
+/* Google Street View photos (Maps Embed key): in an area's card, and in Street under the "You are in" panel. */
+.svBox{margin:4px 0 6px}.svBox summary{cursor:pointer;font-weight:600}
+.svFrame{display:block;width:100%;aspect-ratio:16/10;border:0;border-radius:8px;margin-top:4px;background:var(--line)}
+.svBox small{display:block;margin-top:3px;color:var(--muted);font-size:11px}
+.map3d.street .stPhoto{position:absolute;z-index:3;inset-inline-end:12px;bottom:150px;width:300px;max-width:calc(100% - 24px);padding:6px 8px;border:1px solid var(--line);border-radius:10px;
+  background:var(--glass,var(--legend));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--text);font-size:12px}
+.map3d.street .stPhoto summary{cursor:pointer;font-weight:600}
+@media (max-width:600px){.map3d.street .stPhoto{inset-inline-start:10px;inset-inline-end:10px;width:auto;bottom:auto;top:100px}}

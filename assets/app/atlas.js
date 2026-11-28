@@ -1027,6 +1027,8 @@ function popup(a){
       .map(([u,t])=>'<a href="'+safe(u)+'" target="_blank" rel="noopener">'+t+'</a>').join('<span class="sep" aria-hidden="true">·</span>')+
       // Walk its streets at eye level with the prices on signs (street.js), where the browser can draw it.
       (a.lat!=null&&window.openStreet&&window.maplibregl?'<span class="sep" aria-hidden="true">·</span><a href="#" data-walk="'+safe(a.label)+'">'+T('Walk the streets here')+'</a>':'')+'</p>'+
+    // Google's Street View photo of the area's point, inside the card (needs the Maps Embed key; loads when opened).
+    (a.lat!=null&&svKey()?'<details class="svBox" data-lat="'+a.lat+'" data-lng="'+a.lng+'"><summary>'+T('Street View photo')+'</summary></details>':'')+
     shareLine('a',a.label)+
     (a.lat!=null?'<div class="pics" data-lat="'+a.lat+'" data-lng="'+a.lng+'" aria-live="polite"></div>':'')+
     (a.staff?'<p class="staff"><small>'+T('An industrial zone: most homes here are staff accommodation, so rents run well below homes elsewhere. It is left out of comparisons with other areas.')+'</small></p>':'')+
@@ -1100,6 +1102,14 @@ async function loadPhotos(e){
   refitPopup(e.popup);box.querySelectorAll('img').forEach(i=>i.addEventListener('load',()=>refitPopup(e.popup),{once:true}));
 }
 map.on('popupopen',loadPhotos);
+// Google Street View inside the page (Maps Embed API, no charge; key from keys.js, restricted by Google to this site).
+// The full page address goes with the request (the key allows this site's path, not just its host).
+function svKey(){const k=window.GMAPS_EMBED_KEY||'';return /^__|^$/.test(k)?'':k}
+function svFrame(lat,lng,heading){const f=document.createElement('iframe');f.className='svFrame';f.title=T('Google Street View photo');
+  f.loading='lazy';f.allowFullscreen=true;f.referrerPolicy='no-referrer-when-downgrade';
+  f.src='https://www.google.com/maps/embed/v1/streetview?key='+encodeURIComponent(svKey())+'&location='+(+lat).toFixed(6)+','+(+lng).toFixed(6)+'&heading='+Math.round(((heading||0)%360+360)%360)+'&pitch=0&fov=90';return f}
+document.addEventListener('toggle',e=>{const d=e.target;if(!d.classList||!d.classList.contains('svBox')||!d.open||d.querySelector('iframe'))return;
+  d.append(svFrame(d.dataset.lat,d.dataset.lng,0));const n=document.createElement('small');n.className='muted';n.textContent=T('Photo: Google. Where Google has no photo here, the box stays empty.');d.append(n);countUse('street-view-photo')},true);
 map.on('popupopen',e=>{popupMargins();e.popup.options.maxHeight=e.popup.options.focusCard?Math.min(focusMaxH(),L.Popup.prototype.options.maxHeight):L.Popup.prototype.options.maxHeight;refitPopup(e.popup)});
 // Pop-ups keep clear of the map's buttons and legend (Leaflet draws controls above pop-ups): the map pans so the
 // whole card sits inside these margins, measured from the controls as they are now. Pop-ups read their options

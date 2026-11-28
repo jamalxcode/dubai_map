@@ -928,12 +928,20 @@ try {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
+    // Google Street View photos: a stand-in key (as the deploy writes it) and a stand-in Google page, never the real one.
+    const embeds = [];
+    await page.route(/assets\/app\/keys\.js/, r => r.fulfill({ contentType: 'application/javascript', body: "window.GMAPS_EMBED_KEY = 'TESTKEY';" }));
+    await page.route(/google\.com\/maps\/embed/, r => { embeds.push(r.request().url()); r.fulfill({ contentType: 'text/html', body: '<p>street photo</p>' }); });
     await page.goto(BASE);
     await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(2000);
     if (await page.evaluate(() => !!window.maplibregl && !document.querySelector('.stBtn').hidden)) {
       const area = await page.evaluate(() => { const a = AREAS.filter(x => x.lat != null && !x.staff && (x.by_unit || []).some(u => u.median && u.sale)).sort((p, q) => q.n - p.n)[0]; focusArea(a); return a.label; });
       await page.waitForTimeout(1200);
+      const card = await page.evaluate(async () => { const d = document.querySelector('.leaflet-popup-content .svBox, .areaSheet .svBox'); if (!d) return null;
+        d.open = true; await new Promise(r => setTimeout(r, 400)); const f = d.querySelector('iframe'); return f ? { src: f.src, ref: f.referrerPolicy, title: f.title } : null; });
+      check(!!card && /\/maps\/embed\/v1\/streetview\?key=TESTKEY&location=25\.\d+,55\.\d+&heading=0/.test(card.src) && card.ref === 'no-referrer-when-downgrade' && !!card.title,
+        `Street View photo in the card: opens Google's frame for the area's point with the full page address sent${card ? '' : ' (no box)'}`);
       const link = await page.$(`[data-walk="${area}"]`);
       check(!!link, `Street: "${area}" card has a "Walk the streets here" link`);
       if (link) await link.click(); else await page.evaluate(l => openStreet(AREAS.find(a => a.label === l)), area);
@@ -946,6 +954,8 @@ try {
       check(s1.open && s1.pressed === 'true' && s1.pitch > 75 && s1.zoom > 19 && s1.here === area && /You are in/.test(s1.panel) && /Rent a year/.test(s1.panel) && /To buy/.test(s1.panel)
         && s1.signs >= 2 && /AED/.test(s1.sign) && /map_action=pano&viewpoint=25\.\d+,55\.\d+&heading=\d+/.test(s1.google) && s1.pad,
         `Street: eye level (pitch ${Math.round(s1.pitch)}, zoom ${s1.zoom.toFixed(1)}) in ${s1.here}, its rents and sale prices in the panel, ${s1.signs} price signs, Google Street View link, labelled pad`);
+      const ph = await page.evaluate(() => { const f = document.querySelector('.stPhoto[open] iframe'); return f ? f.src : ''; });
+      check(/streetview\?key=TESTKEY&location=25\.\d+,55\.\d+&heading=\d+/.test(ph), `Street: Google's photo of the spot, facing the same way (${ph.replace(/.*location=/, '').slice(0, 40)})`);
       await page.keyboard.down('ArrowUp'); await page.waitForTimeout(1500); await page.keyboard.up('ArrowUp');
       await page.keyboard.down('ArrowRight'); await page.waitForTimeout(800); await page.keyboard.up('ArrowRight');
       const s2 = await page.evaluate(() => ({ c: streetMap().getCenter() }));

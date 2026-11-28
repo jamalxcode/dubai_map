@@ -29,6 +29,8 @@ jobs:
       - name: Load the data (data branch)
         run: scripts/data-branch.sh load
       - name: Assemble site (page + small JSON only, not the raw contract archive)
+        env:
+          GMAPS_EMBED_KEY: ${{ secrets.GOOGLE_MAPS_EMBED_KEY }}
         run: |
           mkdir -p _site/data _site/assets
           # Version the page's own scripts and styles so browsers never mix a new page with old cached files.
@@ -45,6 +47,8 @@ jobs:
           for f in status.json state.json runs.jsonl; do cp "data/$f" _site/data/ 2>/dev/null || true; done
           mkdir -p _site/status && sed "s/__BUILD__/${GITHUB_SHA::7}/g" status/index.html > _site/status/index.html
           cp -r assets/fonts assets/app assets/vendor _site/assets/
+          # Google Maps Embed key (restricted by Google to this site): Street View photos in cards and in Street. No secret: they stay off.
+          if [ -n "$GMAPS_EMBED_KEY" ]; then sed -i "s|__GMAPS_EMBED_KEY__|${GMAPS_EMBED_KEY}|" _site/assets/app/keys.js; echo "Street View photos on"; else echo "No GOOGLE_MAPS_EMBED_KEY: Street View photos off"; fi
           cp assets/share.png _site/assets/
           # One small page per area (a/<slug>/) so a shared link shows that area's figure in its preview.
           python3 scripts/share_pages.py _site

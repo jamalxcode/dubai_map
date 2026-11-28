@@ -126,6 +126,12 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - **Stays:** the key's price history folds under "Price history"; tips in Hotels and Holiday homes are about places to stay.
 - **Area card:** "Other sources differ by more than 15%" sits right under the figures.
 
+### Street View photos (29 Nov)
+
+- With the Maps Embed key (`keys.js`, written at deploy): an area's card has "Street View photo" folded under its links; opening it loads Google's Street View frame for the area's point (16:10, rounded), with a note that the photo is Google's and may be missing. In Street, "The real street (Google Street View)" sits above the pad (300 px; open on computers, folded on phones), following you: it reloads after 60 m or a 45° turn, only while open.
+- The frames send the full page address (`referrerpolicy="no-referrer-when-downgrade"`): the key is restricted to the site's path. No page-wide referrer policy (OpenStreetMap's tiles need the Referer).
+- Without the key nothing changes: the outside Street View links stay.
+
 ### Street (28 Nov)
 
 - Phones: the layer bar beside the zoom buttons takes the room left beside the zoom column, whichever side it is on (`fitViewBar`; the column is wider in Arabic), and scrolls inside itself when its switches don't fit.
