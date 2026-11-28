@@ -20,14 +20,15 @@
     }
   },
   "datadubai": {
-    "last_ok_at": "2026-11-27T18:17:21+00:00",
+    "last_ok_at": "2026-11-28T01:31:05+00:00",
     "last_pull": {
-      "at": "2026-11-27T18:17:20+00:00",
+      "at": "2026-11-28T01:28:21+00:00",
       "export_files_updated": 0,
-      "live": "current",
-      "through": "2026-11-26"
+      "live": "updated",
+      "pages": 102,
+      "through": "2026-11-27"
     },
-    "live_checked_at": "2026-11-27T18:17:21+00:00",
+    "live_checked_at": "2026-11-28T01:31:05+00:00",
     "live_pages": 102,
     "published_seen": [
       {
@@ -61,26 +62,30 @@
       {
         "seen_at": "2026-11-27T01:48:21+00:00",
         "through": "2026-11-26"
+      },
+      {
+        "seen_at": "2026-11-28T01:31:05+00:00",
+        "through": "2026-11-27"
       }
     ],
     "state": "ok",
     "status": "ok",
-    "through": "2026-11-26"
+    "through": "2026-11-27"
   },
   "dld": {
     "state": "off",
     "status": "off (waiting for DLD's permission)"
   },
   "fx": {
-    "date": "2026-11-26",
-    "last_ok_at": "2026-11-27T01:48:42+00:00",
+    "date": "2026-11-27",
+    "last_ok_at": "2026-11-28T01:31:26+00:00",
     "state": "ok",
     "status": "ok"
   },
   "holiday_homes": {
-    "last_ok_at": "2026-11-27T18:27:31+00:00",
-    "last_run_at": "2026-11-27T18:27:31+00:00",
-    "list_at": "2026-11-27T01:55:06+00:00",
+    "last_ok_at": "2026-11-28T01:43:24+00:00",
+    "last_run_at": "2026-11-28T01:43:24+00:00",
+    "list_at": "2026-11-28T01:37:46+00:00",
     "listed": 253,
     "priced": 61,
     "state": "ok",
@@ -88,9 +93,9 @@
   },
   "hotel_prices": {
     "hotels": 383,
-    "last_ok_at": "2026-11-27T18:22:03+00:00",
-    "last_run_at": "2026-11-27T18:22:03+00:00",
-    "list_at": "2026-11-27T01:49:38+00:00",
+    "last_ok_at": "2026-11-28T01:37:16+00:00",
+    "last_run_at": "2026-11-28T01:37:16+00:00",
+    "list_at": "2026-11-28T01:32:27+00:00",
     "listed": 2625,
     "matched": 527,
     "priced": 383,
@@ -98,7 +103,7 @@
     "status": "ok"
   },
   "hotel_stats": {
-    "last_try_at": "2026-11-27T01:48:21+00:00",
+    "last_try_at": "2026-11-28T01:31:05+00:00",
     "state": "no_key",
     "status": "no credentials"
   },
@@ -109,13 +114,13 @@
   "serp_stays": {
     "homes": 292,
     "hotels": 12,
-    "last_ok_at": "2026-11-27T18:27:36+00:00",
-    "last_run_at": "2026-11-27T18:27:36+00:00",
-    "last_try_at": "2026-11-27T18:27:31+00:00",
+    "last_ok_at": "2026-11-28T01:43:27+00:00",
+    "last_run_at": "2026-11-28T01:43:27+00:00",
+    "last_try_at": "2026-11-28T01:43:24+00:00",
     "month": "2026-11",
-    "rot": 23,
+    "rot": 24,
     "state": "ok",
     "status": "ok",
-    "used": 46
+    "used": 48
   }
 }
