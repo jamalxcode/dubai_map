@@ -890,6 +890,14 @@ Asked: "how do i get google embed", then the owner made a Maps Embed API key (re
 - **Cost:** Google lists the Maps Embed API at no charge; the owner can set a small budget alert in Google Cloud.
 - **Checked:** the browser check uses a stand-in key and a stand-in Google page: the card's frame and Street's frame carry the key, the spot and the heading, and send the full address; every suite passes; after deploy, the live keys.js carries a key (checked without printing it).
 
+## Decision on 2026-11-29 (ninety-first pass): Google Street View as Street's main view
+
+Asked (with a screenshot of the photo in its side box): "i need the actual view to be a street view, not a side window, can we do that?" Offered: (A) Google's free embedded photo full screen, moved by our pad with a reload each step and blind to Google's own arrows, or (B) Google's Maps JavaScript panorama, which tells the page where you are and which way you face. The owner chose B.
+- **What:** Street opens on Google's real panorama; you walk with Google's arrows. The price signs are drawn over the photo in each area's direction and turn with you; "You are in" changes as you walk into another area. The drawn street stays underneath, kept at the same spot, as the fallback and behind a "Drawn street" switch.
+- **Cost:** Google counts one Dynamic Street View load each time Street starts on Google (5,000 a month free as listed on 29 Nov, then $14 per 1,000); walking inside it is free. The owner sets a daily cap in Google Cloud so a busy day can't run up a bill; past the cap Google refuses and the drawn street takes over.
+- **Key:** the same key; the owner adds "Maps JavaScript API" to its allowed APIs. Until then Google calls `gm_authFailure` and the drawn street shows with a note. The script's own requests send only the site's host, so the key's website list also needs `https://jamalxcode.github.io/*`.
+- **Checked:** a stand-in Google API in the browser check: the panorama fills the view, signs change as you turn, "You are in" follows a move to another area, a refusal hands over to the drawn street at the same spot, Escape returns; with Google unreachable the drawn street works as before; every suite passes.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

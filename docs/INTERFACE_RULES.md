@@ -126,6 +126,13 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - **Stays:** the key's price history folds under "Price history"; tips in Hotels and Holiday homes are about places to stay.
 - **Area card:** "Other sources differ by more than 15%" sits right under the figures.
 
+### Street with Google Street View as the main view (29 Nov)
+
+- With the key (and the Maps JavaScript API allowed on it), Street opens on Google's own panorama nearest the start (within 150 m, else 600 m), filling the open part of the map (beside the panel on computers). You walk with Google's arrows, clicks and keys; our pad and photo box hide, and the bottom note says how to walk and has a "Drawn street" / "Google Street View" switch.
+- Price signs float over the photo at each nearby area's direction (Google's view about 180/2^zoom degrees wide), a little above the horizon (higher when near), smaller with distance, hidden out of sight or behind a nearer sign; "You are in" and the Google link follow Google's position.
+- Google's controls sit bottom right; its logo and terms bottom left stay visible (our note is raised to 30 px).
+- When Google can't (no key, the key refuses the Maps JavaScript API, no script, no panorama near): the drawn street takes over at the same spot with a one-line note, and the switch hides after a refusal.
+
 ### Street View photos (29 Nov)
 
 - With the Maps Embed key (`keys.js`, written at deploy): an area's card has "Street View photo" folded under its links; opening it loads Google's Street View frame for the area's point (16:10, rounded), with a note that the photo is Google's and may be missing. In Street, "The real street (Google Street View)" sits above the pad (300 px; open on computers, folded on phones), following you: it reloads after 60 m or a 45° turn, only while open.

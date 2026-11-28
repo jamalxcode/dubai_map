@@ -67,12 +67,18 @@
   const head = () => '<tr><th></th><th scope="col">' + T('Rent a year') + '</th><th scope="col">' + T('To buy') + '</th></tr>';
   const colourOf = a => { const p = POINTS.find(q => q.a.label === a.label); return p && LABEL.colorOf ? cssVar(LABEL.colorOf(p.v)) : ''; };
 
-  function sign(a) {
+  function board(a) {
     const el = document.createElement('button'); el.type = 'button'; el.className = 'stSign';
     const c = colourOf(a); if (c) el.style.setProperty('--c', c);
     el.innerHTML = '<span class="stBoard"><b>' + safe(T.place(a.label)) + '</b><table>' + head() + rows(a, 5) + '</table></span>';
     el.setAttribute('aria-label', T('{area}: open its card', { area: T.place(a.label) }));
     el.addEventListener('click', ev => { ev.stopPropagation(); closeStreet(); focusArea(a); });
+    return el;
+  }
+  const nearAreas = p => AREAS.filter(a => a.lat != null && (a.by_unit || []).some(u => u.median || u.sale)).map(a => ({ a, d: metres(p, a) }))
+    .filter(x => x.d < NEAR_M).sort((x, y) => x.d - y.d).slice(0, MAX_SIGNS).map(x => x.a);
+  function sign(a) {
+    const el = board(a);
     const mk = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([a.lng, a.lat]).addTo(mS);
     return { a, el, mk };
   }
@@ -83,8 +89,7 @@
     if (!mS) return; const c = mS.getCenter(), p = { lat: c.lat, lng: c.lng };
     if (!signAt || metres(signAt, p) > 400) {
       signAt = p;
-      const want = AREAS.filter(a => a.lat != null && (a.by_unit || []).some(u => u.median || u.sale)).map(a => ({ a, d: metres(p, a) }))
-        .filter(x => x.d < NEAR_M).sort((x, y) => x.d - y.d).slice(0, MAX_SIGNS).map(x => x.a);
+      const want = nearAreas(p);
       const keep = new Set(want.map(a => a.label));
       signs = signs.filter(s => { if (keep.has(s.a.label)) return true; s.mk.remove(); return false; });
       for (const a of want) if (!signs.some(s => s.a.label === a.label)) signs.push(sign(a));
@@ -125,7 +130,7 @@
   // a turn of 45 degrees, only while its box is open.
   let shot = null;
   function photo() {
-    const d = box && box.querySelector('.stPhoto'); if (!d || !d.open || !mS) return;
+    const d = box && box.querySelector('.stPhoto'); if (!d || !d.open || !mS || gOn) return;
     const c = mS.getCenter(), b = (mS.getBearing() + 360) % 360;
     if (shot && metres(shot, c) < 60 && Math.abs(((b - shot.b) + 540) % 360 - 180) < 45) return;
     shot = { lat: c.lat, lng: c.lng, b };
@@ -152,6 +157,7 @@
   function onKey(e) {
     if (!mS || typing(e)) return;
     if (e.key === 'Escape') { closeStreet(); return; }
+    if (gOn) return; // Google's panorama has its own keys
     if (e.key === 'Shift') { e.type === 'keydown' ? held.add('run') : held.delete('run'); return; }
     const k = KEYS[e.key]; if (!k) return; e.preventDefault();
     if (e.type === 'keydown') { if (e.shiftKey) held.add('run'); go(k); } else stop(k);
@@ -183,12 +189,17 @@
         '<button type="button" data-k="l" aria-label="' + T('Turn left') + '">↶</button>' +
         '<button type="button" data-k="b" aria-label="' + T('Go back') + '">▼</button>' +
         '<button type="button" data-k="r" aria-label="' + T('Turn right') + '">↷</button></div>' +
-      '<p class="m3n stHow"><span class="stTip">' + T('Arrow keys or W A S D to move, Shift to go faster; drag to look around; click the street to go there.') + '</span>' +
+      '<p class="m3n stHow"><span class="stNote" role="status"></span><span class="stTip">' + T('Arrow keys or W A S D to move, Shift to go faster; drag to look around; click the street to go there.') + '</span>' +
+        '<span class="stTipG">' + T('Walk with Google\'s arrows or click the street; drag to look around.') + '</span>' +
+        (svKey() ? ' <button type="button" class="stMode"></button>' : '') +
         ' <a class="stGoogle" target="_blank" rel="noopener" href="#">' + T('See the real street on Google Street View') + '</a></p>';
     document.querySelector('.mapWrap').append(box);
     mS = new maplibregl.Map({ container: 'mS', style: styleFor(), center: [s.lng, s.lat], zoom: 16.5, pitch: 0, bearing: 0, maxPitch: 85,
       minZoom: 17, maxZoom: 22, dragPan: false, dragRotate: false, keyboard: false, attributionControl: { compact: true } });
     btn.setAttribute('aria-pressed', 'true'); countUse('street');
+    gWant = !!svKey() && !gFailed; modeLabel();
+    const mb = box.querySelector('.stMode'); if (mb) mb.addEventListener('click', () => { if (gOn) dropGoogle(''); else { const c = mS.getCenter(); gWant = true; startGoogle({ lat: c.lat, lng: c.lng }); } });
+    if (gWant) startGoogle(s);
     box.querySelector('.m3x').addEventListener('click', closeStreet);
     box.querySelectorAll('.stPad button').forEach(b => {
       const k = b.dataset.k;
@@ -224,7 +235,13 @@
       if (src) mS.addLayer({ id: 'stBld', type: 'fill-extrusion', source: src, 'source-layer': 'building', minzoom: 14, filter: ['!=', ['get', 'hide_3d'], true],
         paint: { 'fill-extrusion-color': ['interpolate', ['linear'], ['coalesce', ['get', 'render_height'], 8], 0, dark ? '#4F463D' : '#CFC3AF', 60, dark ? '#6B6158' : '#E3D9C8', 250, dark ? '#8A7F72' : '#F3ECDF'],
           'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 8], 'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0], 'fill-extrusion-opacity': 0.92 } }, under);
-      // Drop onto the nearest street, facing along it, then tilt up to eye level.
+      loaded = true; dropIn();
+    });
+    // Drop onto the nearest street, facing along it, then tilt up to eye level (with Google on, its panorama sets the spot).
+    function dropIn() {
+      if (!mS || !loaded) return;
+      if (gWant) { mS.jumpTo({ zoom: ZOOM, pitch: PITCH }); return; }
+      const st = mS.getStyle(), c0 = mS.getCenter(), s = { lat: c0.lat, lng: c0.lng };
       let at = { lat: s.lat, lng: s.lng }, face = mS.getBearing();
       try {
         const roads = mS.queryRenderedFeatures({ layers: (st.layers || []).filter(l => l['source-layer'] === 'transportation' && l.type === 'line').map(l => l.id) })
@@ -239,7 +256,8 @@
       } catch (_) { /* no roads drawn yet: start on the point */ }
       mS.easeTo({ center: [at.lng, at.lat], zoom: ZOOM, pitch: PITCH, bearing: face, duration: matchMedia('(prefers-reduced-motion:reduce)').matches ? 0 : 1600 });
       signAt = null; placeSigns(); updateHere();
-    });
+    }
+    dropNow = dropIn;
     let q = false;
     mS.on('move', () => { if (!q) { q = true; requestAnimationFrame(() => { q = false; placeSigns(); }); } });
     mS.on('moveend', updateHere);
@@ -248,12 +266,98 @@
       mS.easeTo({ center: e.lngLat, duration: Math.min(1800, 300 + d * 3) }); });
   }
   function closeStreet() {
-    if (!mS) return; const c = mS.getCenter();
+    if (!mS) return; const c = gOn ? (p => ({ lat: p.lat, lng: p.lng }))(gPos()) : mS.getCenter();
+    gOn = false; gPano = null; gSigns = []; gWant = false; loaded = false; dropNow = null; gLayer = gSignBox = null;
     held.clear(); if (raf) cancelAnimationFrame(raf); raf = 0; last = 0;
     try { mS.remove(); } catch (_) { /* already gone */ }
     mS = null; signs = []; signAt = null; shot = null; hereKey = ''; here = null; if (box) box.remove(); box = null;
     btn.setAttribute('aria-pressed', 'false');
     map.setView([c.lat, c.lng], 16, { animate: false });
   }
+  // ---- Google Street View as the main view (Maps JavaScript API, the owner's choice on 29 Nov) ----
+  // Google's panorama fills the screen; you walk with its own arrows. Its position and the way you face drive the price
+  // signs (drawn over the photo in the right direction, smaller with distance) and the "You are in" panel. The drawn
+  // street stays underneath, kept at the same spot, and takes over when Google can't: no key, the key doesn't allow
+  // the Maps JavaScript API (gm_authFailure), the script doesn't load, or no panorama within 600 m. Google counts one
+  // panorama load each time it starts (5,000 a month free, 29 Nov); walking inside it is free.
+  let gOn = false, gPano = null, gLayer = null, gSignBox = null, gFailed = false, gSigns = [], gLoad = null, gWant = false, loaded = false, dropNow = null, gAt = null, gQ = false;
+  function modeLabel() { const b = box && box.querySelector('.stMode'); if (!b) return; b.hidden = gFailed && !gOn; b.textContent = gOn ? T('Drawn street') : T('Google Street View'); }
+  function note(msg) { const n = box && box.querySelector('.stNote'); if (n) n.textContent = msg ? msg + ' ' : ''; }
+  function loadGoogle() {
+    if (window.google && google.maps && google.maps.StreetViewPanorama) return Promise.resolve();
+    if (gLoad) return gLoad;
+    gLoad = new Promise((res, rej) => {
+      window.__atlasGmReady = () => res();
+      const sc = document.createElement('script'); sc.async = true;
+      sc.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(svKey()) + '&v=weekly&loading=async&callback=__atlasGmReady&language=' + (T.lang === 'ar' ? 'ar' : 'en') + '&region=AE';
+      sc.onerror = () => rej(new Error('script')); document.head.append(sc); setTimeout(() => rej(new Error('timeout')), 15000);
+    });
+    gLoad.catch(() => { gLoad = null; });
+    return gLoad;
+  }
+  // Google calls this when the key doesn't allow the Maps JavaScript API (or this address).
+  window.gm_authFailure = () => { gFailed = true; dropGoogle(T('Google Street View can\'t start yet (the key doesn\'t allow it); showing the drawn street.')); };
+  async function startGoogle(s) {
+    if (gFailed || !svKey() || gOn) return;
+    note(T('Loading Google Street View…'));
+    try { await loadGoogle(); } catch (_) { gWant = false; note(T('Google Street View didn\'t load; showing the drawn street.')); if (dropNow) dropNow(); modeLabel(); return; }
+    if (!box || !gWant) return;
+    let data = null;
+    const svc = new google.maps.StreetViewService();
+    for (const radius of [150, 600]) { try { data = (await svc.getPanorama({ location: { lat: s.lat, lng: s.lng }, radius, source: google.maps.StreetViewSource.OUTDOOR })).data; break; } catch (_) { /* wider */ } }
+    if (!box || !gWant || gFailed) return;
+    if (!data) { gWant = false; note(T('Google has no Street View near here; showing the drawn street.')); if (dropNow) dropNow(); modeLabel(); return; }
+    gLayer = document.createElement('div'); gLayer.className = 'gsv';
+    gSignBox = document.createElement('div'); gSignBox.className = 'gsvSigns';
+    box.querySelector('.m3').after(gLayer, gSignBox);
+    const heading = (data.links && data.links[0] && data.links[0].heading) || 0;
+    gPano = new google.maps.StreetViewPanorama(gLayer, { pano: data.location.pano, pov: { heading, pitch: 0 }, zoom: 1, addressControl: false, fullscreenControl: false,
+      motionTracking: false, motionTrackingControl: false, enableCloseButton: false, showRoadLabels: true, zoomControl: !matchMedia('(max-width:600px)').matches,
+      // Its controls bottom right (our "You are in" panel is top right); its logo and terms bottom left stay clear of our note.
+      zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM }, panControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM } });
+    gOn = true; gAt = null; box.classList.add('google'); note(''); modeLabel(); countUse('street-google');
+    gPano.addListener('position_changed', gMoved); gPano.addListener('pov_changed', gSoon); gPano.addListener('zoom_changed', gSoon);
+    gMoved();
+  }
+  function dropGoogle(msg) {
+    if (!box) return;
+    const was = gOn, p = gOn && gPano ? gPos() : null;
+    gOn = false; gWant = false; gPano = null; gSigns = []; gAt = null;
+    if (gLayer) gLayer.remove(); if (gSignBox) gSignBox.remove(); gLayer = gSignBox = null;
+    box.classList.remove('google'); note(msg); modeLabel();
+    if (was && p && mS) { mS.jumpTo({ center: [p.lng, p.lat], bearing: p.b, zoom: ZOOM, pitch: PITCH }); signAt = null; placeSigns(); updateHere(); }
+    else if (dropNow) dropNow();
+  }
+  function gPos() { const q = gPano.getPosition(), v = gPano.getPov(); return { lat: q.lat(), lng: q.lng(), b: v.heading || 0, pitch: v.pitch || 0, zoom: gPano.getZoom() || 1 }; }
+  function gMoved() {
+    if (!gOn || !gPano || !gPano.getPosition()) return; const p = gPos();
+    if (mS) mS.jumpTo({ center: [p.lng, p.lat], bearing: p.b });
+    if (!gAt || metres(gAt, p) > 250) { gAt = p; const want = nearAreas(p), keep = new Set(want.map(a => a.label));
+      gSigns = gSigns.filter(x => { if (keep.has(x.a.label)) return true; x.el.remove(); return false; });
+      for (const a of want) if (!gSigns.some(x => x.a.label === a.label)) { const el = board(a); gSignBox.append(el); gSigns.push({ a, el }); } }
+    gDraw(); updateHere();
+  }
+  function gSoon() { if (!gQ) { gQ = true; requestAnimationFrame(() => { gQ = false; if (gOn && gPano) { const p = gPos(); if (mS) mS.jumpTo({ bearing: p.b }); gDraw(); } }); } }
+  // Each sign at its area's direction: Google's view is a rectilinear camera, about 180/2^zoom degrees wide; the board
+  // sits a little above the horizon, higher the nearer it is.
+  function gDraw() {
+    if (!gOn || !gSignBox) return; const p = gPos(), W = gSignBox.clientWidth, H = gSignBox.clientHeight; if (!W || !H) return;
+    const rad = Math.PI / 180, hf = Math.max(10, Math.min(150, 180 / Math.pow(2, p.zoom))) * rad, th = Math.tan(hf / 2), tv = th * H / W, kept = [];
+    gSigns.map(x => ({ x, d: Math.max(30, metres(p, x.a)) })).sort((u, v) => u.d - v.d).forEach(({ x, d }) => {
+      const rel = (((bearingTo(p, x.a) - p.b) + 540) % 360 - 180) * rad;
+      if (Math.abs(rel) > hf / 2 + 0.15) { x.el.classList.add('stOff'); return; }
+      const e = Math.atan(8 / d) - p.pitch * rad, X = W / 2 + W / 2 * Math.tan(rel) / th, Y = H / 2 - H / 2 * Math.tan(e) / tv;
+      x.el.style.left = X.toFixed(1) + 'px'; x.el.style.top = Y.toFixed(1) + 'px';
+      x.el.style.setProperty('--k', Math.max(0.5, Math.min(1, 1.15 - d / 3000)).toFixed(2));
+      x.el.classList.remove('stOff');
+      const r = x.el.querySelector('.stBoard').getBoundingClientRect(), V = gSignBox.getBoundingClientRect();
+      if (r.right < V.left || r.left > V.right || r.bottom < V.top || r.top > V.bottom) { x.el.classList.add('stOff'); return; }
+      const hit = kept.some(k => r.left < k.right && r.right > k.left && r.top < k.bottom && r.bottom > k.top);
+      x.el.classList.toggle('stOff', hit); if (!hit) kept.push(r);
+    });
+  }
+  addEventListener('resize', () => { if (gOn) gDraw(); });
+  window.streetGoogle = () => gOn;
+
   window.openStreet = openStreet; window.closeStreet = closeStreet; window.streetMap = () => mS; window.streetHere = () => here;
 })();

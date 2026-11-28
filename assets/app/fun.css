@@ -149,3 +149,17 @@
   background:var(--glass,var(--legend));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--text);font-size:12px}
 .map3d.street .stPhoto summary{cursor:pointer;font-weight:600}
 @media (max-width:600px){.map3d.street .stPhoto{inset-inline-start:10px;inset-inline-end:10px;width:auto;bottom:auto;top:100px}}
+/* Street with Google Street View as the main view (street.js startGoogle): Google's panorama fills the open part of
+   the map, the price signs float over it; the drawn street, its pad and the photo box wait underneath. */
+.map3d.street .gsv{position:absolute;inset:0;z-index:1;background:#2B2118}
+.map3d.street .gsvSigns{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.gsvSigns .stSign{position:absolute;pointer-events:auto;transform:translate(-50%,-100%) scale(var(--k,1))}
+.map3d.street.google .m3,.map3d.street.google .stPad,.map3d.street.google .stPhoto,.map3d.street.google .stTip{display:none}
+.map3d.street:not(.google) .stTipG{display:none}
+.map3d.street.google .stHow{bottom:30px}
+.map3d.street .stMode{all:unset;cursor:pointer;margin-inline-start:6px;padding:1px 8px;border:1px solid var(--line);border-radius:999px;font-weight:600;color:var(--text)}
+.map3d.street .stMode:focus-visible{outline:2px solid var(--focus,#735B12);outline-offset:2px}
+.map3d.street .stMode[hidden]{display:none}
+.map3d.street .stNote:empty{display:none}.map3d.street .stNote{font-weight:600;color:var(--text)}
+@media (min-width:1100px){.mapWrap .map3d.street .gsv,.mapWrap .map3d.street .gsvSigns{inset-inline-start:var(--paneW)}}
+@media (max-width:600px){.gsvSigns .stSign{transform:translate(-50%,-100%) scale(calc(var(--k,1)*.72))}}

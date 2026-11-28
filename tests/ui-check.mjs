@@ -932,6 +932,7 @@ try {
     const embeds = [];
     await page.route(/assets\/app\/keys\.js/, r => r.fulfill({ contentType: 'application/javascript', body: "window.GMAPS_EMBED_KEY = 'TESTKEY';" }));
     await page.route(/google\.com\/maps\/embed/, r => { embeds.push(r.request().url()); r.fulfill({ contentType: 'text/html', body: '<p>street photo</p>' }); });
+    await page.route(/maps\.googleapis\.com/, r => r.abort()); // Google's panorama unreachable: the drawn street takes over
     await page.goto(BASE);
     await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(2000);
@@ -965,6 +966,58 @@ try {
       check(moved > 3 && back, `Street: the arrow keys walk (${Math.round(moved)} m), Escape returns to the map at that spot`);
     } else check(true, 'Street: no WebGL in this browser, so the button stays hidden');
     check(!errors.length, `Street: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
+    await ctx.close();
+  }
+
+  // Street with Google Street View as the main view: a stand-in for Google's Maps JavaScript API (never the real one).
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1350, height: 900 } });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    const FAKE = `(function(){ const L = (a, b) => ({ lat: () => a, lng: () => b });
+      class Pano { constructor(el, o) { this.el = el; this.pov = o.pov; this.z = o.zoom; this.ev = {}; this.p = window.__fakeLoc; el.innerHTML = '<div class="fakePano">panorama ' + o.pano + '</div>'; window.__pano = this; }
+        addListener(n, f) { (this.ev[n] = this.ev[n] || []).push(f); } fire(n) { (this.ev[n] || []).forEach(f => f()); }
+        getPosition() { return L(this.p.lat, this.p.lng); } getPov() { return this.pov; } getZoom() { return this.z; }
+        setPosition(q) { this.p = q; this.fire('position_changed'); } setPov(v) { this.pov = v; this.fire('pov_changed'); } }
+      window.google = { maps: { ControlPosition: { RIGHT_BOTTOM: 9 }, StreetViewSource: { OUTDOOR: 'outdoor' }, StreetViewPanorama: Pano,
+        StreetViewService: class { getPanorama(r) { window.__fakeLoc = { lat: r.location.lat + 0.0003, lng: r.location.lng };
+          return Promise.resolve({ data: { location: { pano: 'P1', latLng: L(window.__fakeLoc.lat, window.__fakeLoc.lng) }, links: [{ heading: 90 }] } }); } } } };
+      const cb = new URLSearchParams(document.currentScript.src.split('?')[1]).get('callback'); setTimeout(() => window[cb](), 50); })();`;
+    let loads = 0;
+    await page.route(/assets\/app\/keys\.js/, r => r.fulfill({ contentType: 'application/javascript', body: "window.GMAPS_EMBED_KEY = 'TESTKEY';" }));
+    await page.route(/maps\.googleapis\.com\/maps\/api\/js/, r => { loads++; r.fulfill({ contentType: 'application/javascript', body: FAKE }); });
+    await page.route(/google\.com\/maps\/embed/, r => r.fulfill({ contentType: 'text/html', body: '<p>photo</p>' }));
+    await page.goto(BASE);
+    await page.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(2000);
+    if (await page.evaluate(() => !!window.maplibregl && !document.querySelector('.stBtn').hidden)) {
+      const [a1, a2] = await page.evaluate(() => { const busy = AREAS.filter(x => x.lat != null && !x.staff && (x.by_unit || []).some(u => u.median)).sort((p, q) => q.n - p.n);
+        const a = busy[0], b = busy.find(x => Math.hypot(x.lat - a.lat, x.lng - a.lng) > 0.03); openStreet(a); return [a.label, b.label]; });
+      await page.waitForTimeout(3000);
+      const g1 = await page.evaluate(() => ({ on: streetGoogle(), cls: document.querySelector('.map3d.street').classList.contains('google'), pano: !!document.querySelector('.gsv .fakePano'),
+        here: (streetHere() || {}).label, signs: document.querySelectorAll('.gsvSigns .stSign').length, shown: document.querySelectorAll('.gsvSigns .stSign:not(.stOff)').length,
+        pad: getComputedStyle(document.querySelector('.stPad')).display, mode: document.querySelector('.stMode').textContent }));
+      check(g1.on && g1.cls && g1.pano && g1.here === a1 && g1.signs >= 2 && g1.pad === 'none' && /Drawn street/.test(g1.mode) && loads === 1,
+        `Street with Google: its panorama fills the view in ${g1.here}, ${g1.signs} price signs over it (${g1.shown} in sight), our pad hidden, one script load`);
+      // Turning: the signs in sight change with the way you face.
+      const turn = await page.evaluate(async () => { const vis = () => [...document.querySelectorAll('.gsvSigns .stSign:not(.stOff)')].map(e => e.textContent.slice(0, 18)).join('|');
+        const out = []; for (const h of [0, 90, 180, 270]) { __pano.setPov({ heading: h, pitch: 0 }); await new Promise(r => setTimeout(r, 120)); out.push(vis()); } return out; });
+      check(new Set(turn).size >= 2, `Street with Google: turning shows different signs (${turn.map(t => t.split('|').filter(Boolean).length).join(', ')} in sight at N, E, S, W)`);
+      // Walking with Google's arrows: the panel follows.
+      const moved = await page.evaluate(async l => { const b = AREAS.find(x => x.label === l); __pano.setPosition({ lat: b.lat, lng: b.lng }); await new Promise(r => setTimeout(r, 400));
+        return { here: (streetHere() || {}).label, link: document.querySelector('.stGoogle').href }; }, a2);
+      check(moved.here === a2 && /viewpoint=25\.\d+,55\.\d+/.test(moved.link), `Street with Google: walking to ${a2} updates "You are in" (${moved.here})`);
+      // The key doesn't allow the Maps JavaScript API: Google says so, and the drawn street takes over at the same spot.
+      await page.evaluate(() => window.gm_authFailure()); await page.waitForTimeout(600);
+      const fb = await page.evaluate(() => ({ on: streetGoogle(), cls: document.querySelector('.map3d.street').classList.contains('google'), pano: !!document.querySelector('.gsv'),
+        pad: getComputedStyle(document.querySelector('.stPad')).display, note: document.querySelector('.stNote').textContent, here: (streetHere() || {}).label, mode: document.querySelector('.stMode').hidden }));
+      check(!fb.on && !fb.cls && !fb.pano && fb.pad !== 'none' && /drawn street/.test(fb.note) && fb.here === a2 && fb.mode,
+        `Street with Google: when the key doesn't allow it, the drawn street takes over in ${fb.here} with a note`);
+      await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+      check(await page.evaluate(() => !document.querySelector('.map3d')), 'Street with Google: Escape returns to the map');
+    } else check(true, 'Street with Google: no WebGL in this browser, so Street stays hidden');
+    check(!errors.length, `Street with Google: no script errors${errors.length ? ': ' + errors.join('; ') : ''}`);
     await ctx.close();
   }
   // Bus and Boats (routes.js, data/routes.json from RTA's GTFS feed): two layer switches beside Metro.

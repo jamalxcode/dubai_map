@@ -310,3 +310,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** Google's website restriction for the Embed key names the site's path (`jamalxcode.github.io/dubai_map/*`), but browsers send only the host to other sites by default (`strict-origin-when-cross-origin`), so the frame would be refused.
 - **Rule:** an embed whose key is restricted to a path sets `referrerpolicy="no-referrer-when-downgrade"` on that frame only; never a page-wide policy (OpenStreetMap's tiles need the Referer). Keys go in as repository secrets written at deploy, with a placeholder that keeps the feature off locally and in tests.
+
+## Ask before a feature that can bill the owner (29 Nov 2026)
+
+- **Problem:** the owner's "make it the main view" had a free way (an embedded photo, blind to where you walk) and a paid-past-a-free-allowance way (Google's panorama API, which reports position and heading).
+- **Rule:** when two ways differ in cost or in what the owner must set up, ask with both laid out; build the paid one with a free fallback that takes over by itself (here the drawn street on `gm_authFailure`, load failure or no coverage), and give the owner a cap to set.
