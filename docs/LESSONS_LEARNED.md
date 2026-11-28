@@ -300,3 +300,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** giving an overlay's note `direction: rtl` for Arabic moved it to the other side (its `inset-inline-start` flipped) and onto the movement pad.
 - **Rule:** set the direction on the whole overlay (the map canvas inside stays left to right) so every logical inset mirrors together; place anything that must keep left-to-right order (the pad) with physical sides.
+
+## Measure a bar after everything has joined it (28 Nov 2026)
+
+- **Problem:** the phone check for the layer bar measured 0.8 s after load, before the 3D switch arrived (it waits for MapLibre); in Arabic the full bar already ran over the zoom column, and the check only caught it when CI happened to be slow.
+- **Rule:** a layout check waits for every late control to show before measuring; widths come from the room actually free (measured), not a fixed `calc(100vw - …)`.

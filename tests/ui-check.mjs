@@ -987,6 +987,8 @@ try {
     for (const [w, q] of [[390, ''], [320, '?lang=ar']]) {
       const pc = await browser.newContext({ viewport: { width: w, height: 800 } }); const pp = await pc.newPage();
       await pp.goto(BASE + q); await pp.waitForFunction(() => window.atlasState === 'ready', null, { timeout: 15000 }).catch(() => {});
+      // The 3D switch joins the bar once MapLibre is in (up to 1.5 s later): measure the full bar.
+      await pp.waitForFunction(() => !window.maplibregl || !document.querySelector('.d3Btn').hidden, null, { timeout: 8000 }).catch(() => {});
       await pp.waitForTimeout(800);
       const bar = await pp.evaluate(() => { const v = document.querySelector('.viewSw').getBoundingClientRect(), z = map.zoomControl.getContainer().getBoundingClientRect();
         return { clear: v.left >= z.right || v.right <= z.left || v.top >= z.bottom, n: document.querySelectorAll('.viewSw .metroBtn:not([hidden])').length }; });

@@ -5,7 +5,7 @@
  * in, with its full figures. Move with the arrow keys or W A S D (Shift to run), the on-screen pad, or by clicking
  * the street ahead; drag to look around. "Google Street View" opens the real photos of the same spot in a new tab
  * (a Maps link, no key: embedding Google's imagery needs the owner's Maps Embed key, open item 5a).
- * Reads atlas.js's globals (map, viewCtl, namesBtn, T, safe, money, fmt, AREAS, POINTS, LABEL, OUTLINES, THIN,
+ * Reads atlas.js's globals (map, viewCtl, T, safe, money, fmt, AREAS, POINTS, LABEL, OUTLINES, THIN,
  * styleFor, focusArea, countUse, visCenter, cssVar) and is wrapped in its own function.
  */
 (function () {
@@ -25,11 +25,12 @@
   const inRing = (x, y, r) => { let inside = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j];
     if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside; } return inside; };
 
-  const btn = document.createElement('a'); btn.className = 'metroBtn d3Btn stBtn'; btn.href = '#'; btn.role = 'button'; btn.textContent = T('Street');
+  // In the view bar after Peaks (phones show it as one more chip): the layer bar beside the zoom buttons is full at 320 px.
+  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'peaksBtn stBtn'; btn.textContent = T('Street');
   btn.title = T('Walk the streets at eye level, with each area\'s prices'); btn.setAttribute('aria-pressed', 'false'); btn.hidden = true;
-  viewCtl.getContainer().insertBefore(btn, namesBtn());
+  (function addBtn() { const v = document.querySelector('.views'), pk = v && v.querySelector('.peaksBtn'); if (pk) pk.after(btn); else setTimeout(addBtn, 300); })();
   setInterval(() => { const h = !canGL(); if (btn.hidden !== h) { btn.hidden = h; if (window.atlasState === 'ready' && typeof renderLabels === "function") renderLabels(); } }, 1500);
-  btn.addEventListener('click', e => { e.preventDefault(); mS ? closeStreet() : openStreet(); });
+  btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); mS ? closeStreet() : openStreet(); });
   // "Walk the street" in an area's card (atlas.js writes the link; it carries the area's name).
   document.addEventListener('click', e => { const l = e.target.closest && e.target.closest('[data-walk]'); if (!l) return;
     const a = AREAS.find(x => x.label === l.dataset.walk); if (!a || !canGL()) return; e.preventDefault(); openStreet(a); });
@@ -174,7 +175,7 @@
     document.querySelector('.mapWrap').append(box);
     mS = new maplibregl.Map({ container: 'mS', style: styleFor(), center: [s.lng, s.lat], zoom: 16.5, pitch: 0, bearing: 0, maxPitch: 85,
       minZoom: 17, maxZoom: 22, dragPan: false, dragRotate: false, keyboard: false, attributionControl: { compact: true } });
-    btn.setAttribute('aria-pressed', 'true'); btn.classList.add('on'); countUse('street');
+    btn.setAttribute('aria-pressed', 'true'); countUse('street');
     box.querySelector('.m3x').addEventListener('click', closeStreet);
     box.querySelectorAll('.stPad button').forEach(b => {
       const k = b.dataset.k;
@@ -237,7 +238,7 @@
     held.clear(); if (raf) cancelAnimationFrame(raf); raf = 0; last = 0;
     try { mS.remove(); } catch (_) { /* already gone */ }
     mS = null; signs = []; signAt = null; hereKey = ''; here = null; if (box) box.remove(); box = null;
-    btn.setAttribute('aria-pressed', 'false'); btn.classList.remove('on');
+    btn.setAttribute('aria-pressed', 'false');
     map.setView([c.lat, c.lng], 16, { animate: false });
   }
   window.openStreet = openStreet; window.closeStreet = closeStreet; window.streetMap = () => mS; window.streetHere = () => here;

@@ -164,8 +164,10 @@ const viewCtl=new L.Control.View().addTo(map);
 // On narrow maps the five views don't fit beside the zoom buttons: the bar gets the width that's left and scrolls,
 // with the chosen view scrolled into sight.
 function fitViewBar(){const bar=viewCtl.getContainer(),z=map.zoomControl&&map.zoomControl.getContainer();if(!bar||!z)return;
-  if(typeof CHIP_MQ!=='undefined'&&CHIP_MQ.matches){bar.style.maxWidth='';return} // phones: the views are chips above the map
   const m=map.getContainer().getBoundingClientRect(),zr=z.getBoundingClientRect();if(!m.width)return;
+  // Phones: the views are chips above the map; the layer switches get the room beside the zoom column (wider in
+  // Arabic: "All of Dubai", "Near me"), whichever side it is on, and scroll inside it.
+  if(typeof CHIP_MQ!=='undefined'&&CHIP_MQ.matches){bar.style.maxWidth=Math.max(120,Math.max(zr.left-m.left,m.right-zr.right)-18)+'px';return}
   const cov=typeof coverX==='function'?coverX():null,u1=cov&&cov.x0>1?m.left+cov.x0:m.right; // the side panel may cover the far side
   bar.style.maxWidth=Math.max(140,(cov?u1-zr.right:document.documentElement.dir==='rtl'?zr.left-m.left:m.right-zr.right)-20)+'px';
   const v=bar.querySelector('.views'),on=v&&v.querySelector('button[aria-pressed="true"]');
