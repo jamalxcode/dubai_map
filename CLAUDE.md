@@ -14,6 +14,7 @@ Read before changing behaviour:
 - `docs/DECISIONS.md`: why things are the way they are (numbered passes); add a pass for each piece of work.
 - `docs/CONVERSATION.md`: the owner's requests, in order, and the open items.
 - `docs/DATA_PIPELINE.md`: how a pull fetches, builds, checks, saves and deploys the data. Keep it in step with the workflows and collectors.
+- `docs/API_KEYS.md`: every outside service and key (secret names, costs, the owner's setup steps, troubleshooting). Update it when a key or service is added or changes.
 
 ## Commands
 

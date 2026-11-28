@@ -162,6 +162,8 @@ scripts/                data branch, freshness check, area pages, share image
 
 **Hotel prices from Google.** Sign up at [serpapi.com](https://serpapi.com/) on the Free plan, copy the API key, and add it as the repository secret `SERPAPI_KEY`. Two searches a pull, at most 240 a month.
 
+**Google Street View.** A Google Maps key (Maps Embed API and Maps JavaScript API) as the repository secret `GOOGLE_MAPS_EMBED_KEY`: photos in cards and Google's panorama in Street. Steps, restrictions and the daily cap: [API keys](docs/API_KEYS.md).
+
 **A booking partner's live prices.** Join an affiliate programme (Travelpayouts, or Booking.com's via Awin or CJ), create a Dubai hotel widget, and put its link in `assets/app/partners.js`; hotel cards then offer "Show live prices".
 
 **Your own domain.** Card links follow the site by themselves. Add a `CNAME` file and the DNS record, set `SITE_URL` for the area pages and the freshness check, and update the two `og:` addresses in `index.html`.
@@ -195,6 +197,7 @@ Every decision is written down, conversation and all:
 | [**Interface rules**](docs/INTERFACE_RULES.md) | Layouts, colours, labels, motion: how it looks and behaves |
 | [**Decisions**](docs/DECISIONS.md) | Why things are the way they are, pass by pass |
 | [**Lessons learned**](docs/LESSONS_LEARNED.md) | Every pitfall hit, and the rule it left behind |
+| [**API keys**](docs/API_KEYS.md) | Every outside service and key, and the steps to set each up |
 | [**Conversation**](docs/CONVERSATION.md) | The owner's requests, in order, and the open items |
 | [**CLAUDE.md**](CLAUDE.md) | Notes for coding sessions |
 

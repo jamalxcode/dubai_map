@@ -315,3 +315,13 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the owner's "make it the main view" had a free way (an embedded photo, blind to where you walk) and a paid-past-a-free-allowance way (Google's panorama API, which reports position and heading).
 - **Rule:** when two ways differ in cost or in what the owner must set up, ask with both laid out; build the paid one with a free fallback that takes over by itself (here the drawn street on `gm_authFailure`, load failure or no coverage), and give the owner a cap to set.
+
+## Say what "there" can be before building "take me there" (29 Nov 2026)
+
+- **Problem:** "select the 2 bedroom and get taken there" assumed prices belong to places; the open data has each area's medians by home type, and real points for only about 100 buildings (sale prices for all homes together).
+- **Rule:** check the data's grain first (area, building, unit) and build to it: here a list of nearby areas with that home type's figures, each one a jump; say plainly in the reply that it is per area, not per building.
+
+## Write the key process down while the owner is doing it (29 Nov 2026)
+
+- **Problem:** adding the Google key took several rounds (the secrets page only opens for the owner's account; the API list, website lines and the host-only Referer weren't obvious).
+- **Rule:** every outside key gets a section in `docs/API_KEYS.md`: secret name, exact console clicks, restrictions, cost and cap, what the logs say, and a symptom-to-fix table.

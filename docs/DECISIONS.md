@@ -906,6 +906,12 @@ Asked (with a screenshot of Street on Google in Downtown): "now i want to select
 - **Cost:** moving Google's panorama to another place reuses it, so no new load is counted.
 - **Checked:** the stand-in Google API: tapping 2-bedroom sets Home, lists 8 nearby areas with rent, price to buy and distance, and going to the last moves the panorama and "You are in" there; every suite passes.
 
+## Decision on 2026-11-29 (ninety-third pass): the API process written down
+
+Asked: "save to repo convo, decisions and lessons learned and also api process".
+- **What:** `docs/API_KEYS.md`: every outside service (Google Maps Embed and JavaScript APIs, SerpApi, Dubai Pulse, the cron-job.org token, the booking partner, the services without keys), its key's secret name, cost and status; the general process (get, restrict, add as a secret, say "added", check the log, fallback and cap); the Google steps exactly as the owner did them, the cost cap, and a symptom-to-fix table. Linked from the README's paper trail and owner's checklist, and from CLAUDE.md.
+- **Lessons:** check the data's grain before "take me there"; write each key's process down while it is being set up.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".
