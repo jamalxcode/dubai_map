@@ -928,7 +928,8 @@ Asked: "review build so far, any efficiency improvements that can be made?", the
 - **Motion without libraries:** GSAP and Lenis (33 KB compressed) are gone; the header's rolling number, the title, the panel's entrance, labels fading in, Compare, and the map's wide/narrow move use the browser's Web Animations with the same timings and easings (`anim`, `stagger`, `EASE` in atlas.js; `motionBusy()` for tests). Scrolling is the browser's own.
 - **Pull:** the review assumed hotels were priced one at a time; they were already three at a time, and Xotelo takes about 4.5 s an answer, so asking harder would risk being blocked. Instead the rents are built, saved and deployed first, and a second job prices places to stay and deploys again: new rents go live about 10 minutes sooner.
 - **Left as they were:** MapLibre (the base map needs it; it already waits for the data) and the 5.5-minute browser check.
-- **Checked:** a first-load check (one stays file or each full file once, read after the map is ready, no motion library, the Holiday homes button appears), tests with and without `stays.json`, the rolling number landing on the right digits and a double tap on the wide button; `tests/test_stays_page.py`; every suite passes. The next pull shows the two jobs.
+- **Checked:** a first-load check (one stays file or each full file once, read after the map is ready, no motion library, the Holiday homes button appears), tests with and without `stays.json`, the rolling number landing on the right digits and a double tap on the wide button; `tests/test_stays_page.py`; every suite passes.
+- **After merging:** a test pull showed the rents live 26 s after it started (they used to wait about 11 minutes), but the second deploy failed: two artifacts named "github-pages" in one run. `pages.yml` now takes the artifact's name as an input (`github-pages-stays` for the stay prices).
 
 ## Change log
 

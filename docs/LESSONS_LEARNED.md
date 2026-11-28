@@ -340,3 +340,8 @@ Grouped by topic; newest lessons are mixed in where they belong. The decisions t
 
 - **Problem:** the Rent view downloaded every places-to-stay file (with the collectors' notes) at start, one of them twice.
 - **Rule:** ship the page a slim copy written at deploy (the full files stay for tools like the status page), read each file once, and load what a view doesn't need yet when the browser is idle, at once when the visitor asks for it.
+
+## Two Pages deploys in one run need two artifact names (29 Nov 2026)
+
+- **Problem:** the pull's second deploy (stay prices) failed with "Multiple artifacts named github-pages": both deploys in the run uploaded under the default name.
+- **Rule:** every deploy after the first in one workflow run passes its own `artifact` name to `pages.yml` (upload and deploy both use it); test a new workflow shape with a real run before calling it done.

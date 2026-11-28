@@ -6,6 +6,12 @@ on:
   push:
     branches: [main]
   workflow_call:
+    inputs:
+      artifact:
+        # A run that deploys twice (daily-ejari.yml: the rents, then the stay prices) needs a different artifact name
+        # each time: two artifacts called "github-pages" in one run make the second deploy fail.
+        type: string
+        default: github-pages
   workflow_dispatch:
 
 permissions:
@@ -61,10 +67,13 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+          name: ${{ inputs.artifact || 'github-pages' }}
       - name: Deploy
         id: deployment
         continue-on-error: true  # GitHub's artifact list sometimes lags the upload ("No artifacts named github-pages"); try again below
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ inputs.artifact || 'github-pages' }}
       - name: Wait before trying again
         if: steps.deployment.outcome == 'failure'
         run: sleep 45
@@ -72,3 +81,5 @@ jobs:
         id: retry
         if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ inputs.artifact || 'github-pages' }}
