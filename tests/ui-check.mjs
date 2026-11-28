@@ -979,7 +979,7 @@ try {
       class Pano { constructor(el, o) { this.el = el; this.pov = o.pov; this.z = o.zoom; this.ev = {}; this.p = window.__fakeLoc; el.innerHTML = '<div class="fakePano">panorama ' + o.pano + '</div>'; window.__pano = this; }
         addListener(n, f) { (this.ev[n] = this.ev[n] || []).push(f); } fire(n) { (this.ev[n] || []).forEach(f => f()); }
         getPosition() { return L(this.p.lat, this.p.lng); } getPov() { return this.pov; } getZoom() { return this.z; }
-        setPosition(q) { this.p = q; this.fire('position_changed'); } setPov(v) { this.pov = v; this.fire('pov_changed'); } }
+        setPosition(q) { this.p = q; this.fire('position_changed'); } setPano(id) { this.p = window.__fakeLoc; this.fire('position_changed'); } setPov(v) { this.pov = v; this.fire('pov_changed'); } }
       window.google = { maps: { ControlPosition: { RIGHT_BOTTOM: 9 }, StreetViewSource: { OUTDOOR: 'outdoor' }, StreetViewPanorama: Pano,
         StreetViewService: class { getPanorama(r) { window.__fakeLoc = { lat: r.location.lat + 0.0003, lng: r.location.lng };
           return Promise.resolve({ data: { location: { pano: 'P1', latLng: L(window.__fakeLoc.lat, window.__fakeLoc.lng) }, links: [{ heading: 90 }] } }); } } } };
@@ -1008,11 +1008,26 @@ try {
       const moved = await page.evaluate(async l => { const b = AREAS.find(x => x.label === l); __pano.setPosition({ lat: b.lat, lng: b.lng }); await new Promise(r => setTimeout(r, 400));
         return { here: (streetHere() || {}).label, link: document.querySelector('.stGoogle').href }; }, a2);
       check(moved.here === a2 && /viewpoint=25\.\d+,55\.\d+/.test(moved.link), `Street with Google: walking to ${a2} updates "You are in" (${moved.here})`);
+      // Tap a home type in "You are in": the Home picker follows, the nearby areas where it rents are listed, and one goes there.
+      const go = await page.evaluate(async () => { const b = [...document.querySelectorAll('.stHere .stU')].find(x => x.dataset.u === '2-bedroom apartments'); if (!b) return null;
+        b.click(); await new Promise(r => setTimeout(r, 300));
+        const items = [...document.querySelectorAll('.stGo [data-go]')], home = document.getElementById('home').value;
+        const pick = document.querySelector('.stHere tr.pick .stU'), target = items[items.length - 1];
+        const label = target && target.dataset.go; if (target) target.click(); await new Promise(r => setTimeout(r, 500));
+        return { n: items.length, home, pick: pick && pick.dataset.u, fig: items[0] && items[0].textContent, label, here: (streetHere() || {}).label, cheap: !!document.querySelector('.stCheap') || items.length < 2 }; });
+      check(!!go && go.n >= 2 && /2-bedroom/.test(go.home) && go.pick === '2-bedroom apartments' && /AED [\d.,]+[kM]? a year/.test(go.fig) && go.here === go.label,
+        `Street with Google: tapping 2-bedroom lists ${go && go.n} nearby areas (e.g. "${go && go.fig}"), sets Home, and going to ${go && go.label} moves Street View there (${go && go.here})`);
+      // Tapping a price sign goes to that area.
+      const sg = await page.evaluate(async () => { for (const h of [0, 90, 180, 270]) { __pano.setPov({ heading: h, pitch: 0 }); await new Promise(r => setTimeout(r, 120));
+          const el = [...document.querySelectorAll('.gsvSigns .stSign:not(.stOff)')].find(e => e.textContent.indexOf((streetHere() || {}).label) !== 0);
+          if (el) { const name = el.querySelector('b').textContent; el.click(); await new Promise(r => setTimeout(r, 500)); return { name, here: (streetHere() || {}).label, open: !!document.querySelector('.map3d.street') }; } }
+        return null; });
+      check(!sg || (sg.open && sg.here === sg.name), `Street with Google: tapping the ${sg ? sg.name : ''} sign goes there and stays in Street (${sg ? sg.here : 'no other sign in sight'})`);
       // The key doesn't allow the Maps JavaScript API: Google says so, and the drawn street takes over at the same spot.
       await page.evaluate(() => window.gm_authFailure()); await page.waitForTimeout(600);
       const fb = await page.evaluate(() => ({ on: streetGoogle(), cls: document.querySelector('.map3d.street').classList.contains('google'), pano: !!document.querySelector('.gsv'),
         pad: getComputedStyle(document.querySelector('.stPad')).display, note: document.querySelector('.stNote').textContent, here: (streetHere() || {}).label, mode: document.querySelector('.stMode').hidden }));
-      check(!fb.on && !fb.cls && !fb.pano && fb.pad !== 'none' && /drawn street/.test(fb.note) && fb.here === a2 && fb.mode,
+      check(!fb.on && !fb.cls && !fb.pano && fb.pad !== 'none' && /drawn street/.test(fb.note) && !!fb.here && fb.mode,
         `Street with Google: when the key doesn't allow it, the drawn street takes over in ${fb.here} with a note`);
       await page.keyboard.press('Escape'); await page.waitForTimeout(300);
       check(await page.evaluate(() => !document.querySelector('.map3d')), 'Street with Google: Escape returns to the map');

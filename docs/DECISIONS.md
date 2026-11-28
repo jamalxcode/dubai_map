@@ -898,6 +898,14 @@ Asked (with a screenshot of the photo in its side box): "i need the actual view 
 - **Key:** the same key; the owner adds "Maps JavaScript API" to its allowed APIs. Until then Google calls `gm_authFailure` and the drawn street shows with a note. The script's own requests send only the site's host, so the key's website list also needs `https://jamalxcode.github.io/*`.
 - **Checked:** a stand-in Google API in the browser check: the panorama fills the view, signs change as you turn, "You are in" follows a move to another area, a refusal hands over to the drawn street at the same spot, Escape returns; with Google unreachable the drawn street works as before; every suite passes.
 
+## Decision on 2026-11-29 (ninety-second pass): Street, go to where a home type rents
+
+Asked (with a screenshot of Street on Google in Downtown): "now i want to select for example the 2 bedroom, and get taken there via street view, can we do that?"
+- **What there is to go to:** the open data has no prices or places per building and home type (Dubai Data's project list has real points for about 100 buildings, with sale prices for all homes together), so "there" is an area: tapping 2-bedroom lists the nearby areas where 2-bedroom apartments rent, with their figures, and picking one takes Street View there. Price signs take you to their area too.
+- **One control per job:** tapping a home type sets the map's Home picker, so the map, the signs and the list all follow it.
+- **Cost:** moving Google's panorama to another place reuses it, so no new load is counted.
+- **Checked:** the stand-in Google API: tapping 2-bedroom sets Home, lists 8 nearby areas with rent, price to buy and distance, and going to the last moves the panorama and "You are in" there; every suite passes.
+
 ## Change log
 
 - 2026-11-18: Night prices: a booking partner's widget in hotel cards (loads when tapped) and DET's official rate on the night dial; "1 place to stay".

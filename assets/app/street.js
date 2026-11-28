@@ -58,10 +58,13 @@
   }
 
   // An area's figures for each home type: yearly rent and sale price (medians), thin rows marked.
-  function rows(a, max) {
+  // pick: the home type chosen in the Home picker, highlighted; links: home types as buttons (the "You are in" panel).
+  function rows(a, max, links) {
+    const pick = $('unit').value;
     return (a.by_unit || []).filter(u => u.median || u.sale).slice(0, max).map(u => {
-      const thin = u.n != null && u.n < THIN;
-      return '<tr' + (thin ? ' class="thin" title="' + safe(T('Fewer than {n} contracts: a thin figure', { n: THIN })) + '"' : '') + '><th scope="row">' + safe(T.unit(u.u)) + '</th><td>' +
+      const thin = u.n != null && u.n < THIN, cls = (thin ? 'thin' : '') + (u.u === pick ? ' pick' : '');
+      return '<tr' + (cls.trim() ? ' class="' + cls.trim() + '"' : '') + (thin ? ' title="' + safe(T('Fewer than {n} contracts: a thin figure', { n: THIN })) + '"' : '') + '><th scope="row">' +
+        (links ? '<button type="button" class="stU" data-u="' + safe(u.u) + '" aria-label="' + safe(T('{home}: where they rent near you', { home: T.unit(u.u) })) + '">' + safe(T.unit(u.u)) + '</button>' : safe(T.unit(u.u))) + '</th><td>' +
         (u.median ? safe(money(u.median)) : '—') + '</td><td>' + (u.sale ? safe(money(u.sale)) : '—') + '</td></tr>'; }).join('');
   }
   const head = () => '<tr><th></th><th scope="col">' + T('Rent a year') + '</th><th scope="col">' + T('To buy') + '</th></tr>';
@@ -71,8 +74,8 @@
     const el = document.createElement('button'); el.type = 'button'; el.className = 'stSign';
     const c = colourOf(a); if (c) el.style.setProperty('--c', c);
     el.innerHTML = '<span class="stBoard"><b>' + safe(T.place(a.label)) + '</b><table>' + head() + rows(a, 5) + '</table></span>';
-    el.setAttribute('aria-label', T('{area}: open its card', { area: T.place(a.label) }));
-    el.addEventListener('click', ev => { ev.stopPropagation(); closeStreet(); focusArea(a); });
+    el.setAttribute('aria-label', T('{area}: go there', { area: T.place(a.label) }));
+    el.addEventListener('click', ev => { ev.stopPropagation(); goTo(a); });
     return el;
   }
   const nearAreas = p => AREAS.filter(a => a.lat != null && (a.by_unit || []).some(u => u.median || u.sale)).map(a => ({ a, d: metres(p, a) }))
@@ -116,15 +119,57 @@
     const key = a ? a.label : ''; if (key === hereKey) return; hereKey = key; here = a;
     const el = box.querySelector('.stHere');
     if (!a) { el.innerHTML = '<b>' + T('Between areas') + '</b><small>' + T('No figures for this spot.') + '</small>'; return; }
-    const r = rows(a, 8);
+    const r = rows(a, 8, true);
     el.innerHTML = '<small class="stIn">' + T('You are in') + '</small><b>' + safe(T.place(a.label)) + '</b>' +
       (r ? '<details class="stMore" open><summary>' + T('Prices here') + '</summary><table>' + head() + r + '</table>' +
+        '<small class="muted stHint">' + T('Tap a home type to see where it rents nearby and go there.') + '</small>' +
         '<small class="muted">' + T('Medians for the whole area, from Ejari contracts and registered sales: not one building\'s price.') + '</small></details>'
         : '<small>' + T('No figures for this area yet.') + '</small>') +
       '<button type="button" class="btn stCard">' + T('Open its card') + '</button>';
     el.querySelector('.stCard').addEventListener('click', () => { closeStreet(); focusArea(a); });
+    el.querySelectorAll('.stU').forEach(b => b.addEventListener('click', () => pickUnit(b.dataset.u)));
     if (matchMedia('(max-width:600px)').matches) { const d = el.querySelector('details'); if (d) d.open = false; }
   }
+
+  // A home type tapped in the panel: the Home picker follows (one control per job), the signs highlight it, and a list
+  // shows the nearby areas where it rents (nearest first, within 8 km, the cheapest marked); tapping one goes there.
+  function pickUnit(u) {
+    if (window.setMapHome) window.setMapHome(u);
+    refreshBoards(); hereKey = ''; updateHere(); countUse('street-home', u);
+    const p = here0(), list = AREAS.filter(a => a.lat != null && !a.staff).map(a => ({ a, u: (a.by_unit || []).find(x => x.u === u), d: metres(p, a) }))
+      .filter(x => x.u && x.u.median && x.d < 8000).sort((x, y) => x.d - y.d).slice(0, 8);
+    const cheap = list.filter(x => !(x.u.n != null && x.u.n < THIN)).reduce((b, x) => !b || x.u.median < b.u.median ? x : b, null);
+    const el = box.querySelector('.stHere'); let go = el.querySelector('.stGo'); if (go) go.remove();
+    go = document.createElement('div'); go.className = 'stGo';
+    go.innerHTML = '<div class="stGoHead"><b>' + safe(T('Where {home} rent near you', { home: T.unit(u).toLowerCase() })) + '</b><button type="button" class="stGoX" aria-label="' + T('Close') + '">×</button></div>' +
+      (list.length ? '<ol>' + list.map(x => '<li><button type="button" data-go="' + safe(x.a.label) + '"><span class="stGoName">' + safe(T.place(x.a.label)) +
+        (cheap && x === cheap ? ' <i class="stCheap">' + T('cheapest nearby') + '</i>' : '') + '</span><span class="stGoFig">' + safe(money(x.u.median)) + ' ' + T('a year') +
+        (x.u.sale ? ' · ' + safe(money(x.u.sale)) + ' ' + T('to buy') : '') + ' · ' + (x.d < 60 ? T('you are here') : x.d < 950 ? T('{m} m', { m: Math.round(x.d / 50) * 50 }) : T('{km} km', { km: (x.d / 1000).toFixed(1) })) + '</span></button></li>').join('') + '</ol>'
+        : '<small>' + T('No area within 8 km has this home type.') + '</small>');
+    el.append(go);
+    go.querySelector('.stGoX').addEventListener('click', () => go.remove());
+    go.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { const a = AREAS.find(x => x.label === b.dataset.go); go.remove(); if (a) goTo(a); }));
+    const d = el.querySelector('details'); if (d && matchMedia('(max-width:600px)').matches) d.open = false;
+  }
+  const here0 = () => { if (gOn && gPano) { const q = gPos(); return { lat: q.lat, lng: q.lng }; } const c = mS.getCenter(); return { lat: c.lat, lng: c.lng }; };
+  function refreshBoards() { for (const x of signs.concat(gSigns)) { const t = x.el.querySelector('table'); if (t) t.innerHTML = head() + rows(x.a, 5); } }
+  // Go to an area: Google moves its panorama there (the same panorama, so no new load is counted), facing the same way;
+  // the drawn street glides there.
+  async function goTo(a) {
+    if (!a || a.lat == null || !mS) return;
+    countUse('street-go');
+    if (gOn && gPano) {
+      note(T('Taking you to {area}…', { area: T.place(a.label) }));
+      const svc = new google.maps.StreetViewService(); let data = null;
+      for (const radius of [150, 600]) { try { data = (await svc.getPanorama({ location: { lat: a.lat, lng: a.lng }, radius, source: google.maps.StreetViewSource.OUTDOOR })).data; break; } catch (_) { /* wider */ } }
+      if (!gOn || !gPano) return;
+      if (!data) { note(T('Google has no Street View near {area}; staying here.', { area: T.place(a.label) })); return; }
+      note(''); gPano.setPano(data.location.pano); return;
+    }
+    const c = mS.getCenter(), d = metres({ lat: c.lat, lng: c.lng }, a);
+    mS.easeTo({ center: [a.lng, a.lat], duration: matchMedia('(prefers-reduced-motion:reduce)').matches ? 0 : Math.min(4000, 800 + d / 4) });
+  }
+  if ($('home')) $('home').addEventListener('change', () => { if (box) { refreshBoards(); hereKey = ''; updateHere(); } });
 
   // Google's photo of the spot and the way you face (when the Maps Embed key is set): reloaded after a move of 60 m or
   // a turn of 45 degrees, only while its box is open.

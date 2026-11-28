@@ -163,3 +163,19 @@
 .map3d.street .stNote:empty{display:none}.map3d.street .stNote{font-weight:600;color:var(--text)}
 @media (min-width:1100px){.mapWrap .map3d.street .gsv,.mapWrap .map3d.street .gsvSigns{inset-inline-start:var(--paneW)}}
 @media (max-width:600px){.gsvSigns .stSign{transform:translate(-50%,-100%) scale(calc(var(--k,1)*.72))}}
+/* Street: home types in "You are in" go to where they rent (street.js pickUnit); the picked type is highlighted. */
+.map3d.street .stHere .stU{all:unset;cursor:pointer;text-decoration:underline;text-decoration-color:var(--gold-ink);text-underline-offset:2px;font-weight:600}
+.map3d.street .stHere .stU:hover,.map3d.street .stHere .stU:focus-visible{color:var(--oxblood);outline:none;text-decoration-thickness:2px}
+.map3d.street .stHere tr.pick th,.map3d.street .stHere tr.pick td,.stSign tr.pick th,.stSign tr.pick td{background:rgba(201,162,39,.22)}
+.stSign tr.pick th{font-weight:700}
+.map3d.street .stHere .stHint{display:block;margin-top:2px}
+.map3d.street .stGo{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
+.map3d.street .stGoHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.map3d.street .stGoHead b{font:700 14px/1.2 var(--cond)}
+.map3d.street .stGoX{all:unset;cursor:pointer;font-size:18px;line-height:1;padding:0 4px;color:var(--muted)}
+.map3d.street .stGo ol{list-style:none;margin:4px 0 0;padding:0;max-height:240px;overflow:auto}
+.map3d.street .stGo li button{all:unset;cursor:pointer;display:flex;flex-direction:column;width:100%;box-sizing:border-box;padding:4px 6px;border-radius:6px}
+.map3d.street .stGo li button:hover,.map3d.street .stGo li button:focus-visible{background:rgba(201,162,39,.18);outline:none}
+.map3d.street .stGoName{font-weight:700}.map3d.street .stGoFig{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.map3d.street .stCheap{font-style:normal;font-size:10.5px;font-weight:700;color:var(--gold-ink);margin-inline-start:4px}
+@media (max-width:600px){.map3d.street .stGo ol{max-height:160px}}

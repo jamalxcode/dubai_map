@@ -126,6 +126,12 @@ One look for every block of the side panel (and the same blocks on phones): sect
 - **Stays:** the key's price history folds under "Price history"; tips in Hotels and Holiday homes are about places to stay.
 - **Area card:** "Other sources differ by more than 15%" sits right under the figures.
 
+### Street: go to a home type or an area (29 Nov)
+
+- In "You are in", each home type is a link (underlined in gold ink): tapping one sets the Home picker (`setMapHome`, one control per job), highlights that row on the panel and on every sign (a gold tint), and lists the nearby areas where it rents: nearest first, within 8 km, up to 8, each with its rent a year, price to buy and distance ("you are here" under 60 m), the cheapest (not thin) marked "cheapest nearby". Tapping one takes you there.
+- Tapping a price sign takes you to that area and stays in Street ("Open its card" in the panel leaves for the map).
+- Going there: Google moves its panorama to the nearest photo (150 m, else 600 m; the same panorama, so Google counts no new load), facing the same way, or says it has none; the drawn street glides there.
+
 ### Street with Google Street View as the main view (29 Nov)
 
 - With the key (and the Maps JavaScript API allowed on it), Street opens on Google's own panorama nearest the start (within 150 m, else 600 m), filling the open part of the map (beside the panel on computers). You walk with Google's arrows, clicks and keys; our pad and photo box hide, and the bottom note says how to walk and has a "Drawn street" / "Google Street View" switch.
